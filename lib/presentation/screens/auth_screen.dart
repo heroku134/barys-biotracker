@@ -2,9 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
-import '../widgets/circa_breathing_retina.dart';
+import '../widgets/circa_film_grain.dart';
+import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
 import 'main_shell.dart';
 
@@ -40,17 +43,17 @@ class _AuthScreenState extends State<AuthScreen> {
     final name = _nameController.text.trim();
 
     if (email.isEmpty || pass.isEmpty || (_isSignUp && name.isEmpty)) {
-      setState(() => _errorMessage = 'Заполните все обязательные поля');
+      setState(() => _errorMessage = AppStrings.tr('auth_err_empty'));
       return;
     }
 
     if (!email.contains('@')) {
-      setState(() => _errorMessage = 'Введите корректный email адрес');
+      setState(() => _errorMessage = AppStrings.tr('auth_err_email'));
       return;
     }
 
     if (pass.length < 6) {
-      setState(() => _errorMessage = 'Пароль должен содержать минимум 6 символов');
+      setState(() => _errorMessage = AppStrings.tr('auth_err_pass_length'));
       return;
     }
 
@@ -121,204 +124,259 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Future<void> _loginDemo() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 400));
-    await UserProfileRepository.setAuthenticated(true);
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => MainShell(bleBridge: widget.bleBridge),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.stage,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Живая дышащая био-ретина CIRCA ONE (респираторный цикл 4.8 сек)
-                const Center(
-                  child: CircaBreathingRetina(
-                    size: 145,
-                    isScanning: true,
-                    accentColor: AppColors.sage,
-                  ),
-                ),
-                const SizedBox(height: 22),
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: AppLocaleNotifier.instance,
+      builder: (context, language, _) {
+        return Scaffold(
+          backgroundColor: AppColors.stage,
+          body: CircaFilmGrainBackground(
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 14),
 
-                // Заголовок бренда
-                const Text(
-                  'CIRCA ONE',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 3.2,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _isSignUp ? 'Создание аккаунта' : 'Вход в биосистему',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.fg,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Синхронизация биометрии браслета с Барыс-Батыром',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // Форма ввода
-                if (_isSignUp) ...[
-                  CircaTextField(
-                    label: 'Ваше имя',
-                    hint: 'Батыр / Алихан',
-                    controller: _nameController,
-                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.muted, size: 20),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                CircaTextField(
-                  label: 'Email',
-                  hint: 'user@domain.com',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: const Icon(Icons.mail_outline, color: AppColors.muted, size: 20),
-                ),
-                const SizedBox(height: 16),
-
-                CircaTextField(
-                  label: 'Пароль',
-                  hint: '••••••••',
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.muted, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                      color: AppColors.muted,
-                      size: 20,
-                    ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                ),
-
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.rose.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.rose.withValues(alpha: 0.4)),
-                    ),
-                    child: Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: AppColors.rose, fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 24),
-
-                // Кнопка входа
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.amber,
-                    foregroundColor: AppColors.stage,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.stage),
-                        )
-                      : Text(
-                          _isSignUp ? 'ЗАРЕГИСТРИРОВАТЬСЯ' : 'ВОЙТИ В СИСТЕМУ',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.5,
+                          // Священная пословица при входе в биосистему
+                          Text(
+                            AppStrings.tr('entrance_quote', language),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.fg,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.2,
+                              height: 1.3,
+                            ),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            AppStrings.tr('entrance_quote_sub', language),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.amber,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              fontStyle: FontStyle.italic,
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Богатое пульсирующее лого CIRCA
+                          const Center(
+                            child: CircaPulsingLogo(
+                              size: 115,
+                              primaryColor: AppColors.amber,
+                              secondaryColor: AppColors.sage,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Заголовок бренда
+                          Text(
+                            AppStrings.tr('auth_brand', language),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 3.0,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _isSignUp
+                                ? AppStrings.tr('auth_signup_title', language)
+                                : AppStrings.tr('auth_login_title', language),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.fg,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            AppStrings.tr('auth_subtitle', language),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 12.5,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Форма ввода
+                          if (_isSignUp) ...[
+                            CircaTextField(
+                              label: AppStrings.tr('auth_name_label', language),
+                              hint: AppStrings.tr('auth_name_hint', language),
+                              controller: _nameController,
+                              prefixIcon: const Icon(Icons.person_outline, color: AppColors.muted, size: 20),
+                            ),
+                            const SizedBox(height: 14),
+                          ],
+
+                          CircaTextField(
+                            label: AppStrings.tr('auth_email_label', language),
+                            hint: 'barys@circa.health',
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            prefixIcon: const Icon(Icons.alternate_email, color: AppColors.muted, size: 20),
+                          ),
+                          const SizedBox(height: 14),
+
+                          CircaTextField(
+                            label: AppStrings.tr('auth_password_label', language),
+                            hint: '••••••••',
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            prefixIcon: const Icon(Icons.lock_outline, color: AppColors.muted, size: 20),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                color: AppColors.muted,
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+
+                          // Ошибка
+                          if (_errorMessage != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.rose.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.rose.withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.error_outline, color: AppColors.rose, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: const TextStyle(color: AppColors.rose, fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 22),
+
+                          // Кнопка входа
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.amber,
+                              foregroundColor: AppColors.stage,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              elevation: 0,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.stage),
+                                  )
+                                : Text(
+                                    _isSignUp
+                                        ? AppStrings.tr('auth_button_signup', language)
+                                        : AppStrings.tr('auth_button_login', language),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.5,
+                                    ),
+                                  ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          // Переключение Вход / Регистрация
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isSignUp = !_isSignUp;
+                                _errorMessage = null;
+                              });
+                            },
+                            child: Text(
+                              _isSignUp
+                                  ? AppStrings.tr('auth_to_login', language)
+                                  : AppStrings.tr('auth_to_signup', language),
+                              style: const TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Переключатель языка [RU | KG] в правом верхнем углу
+                  Positioned(
+                    top: 10,
+                    right: 18,
+                    child: GestureDetector(
+                      onTap: () {
+                        AppLocaleNotifier.toggleLanguage();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.line),
                         ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Переключение Вход / Регистрация
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isSignUp = !_isSignUp;
-                      _errorMessage = null;
-                    });
-                  },
-                  child: Text(
-                    _isSignUp
-                        ? 'Уже есть аккаунт? Войти'
-                        : 'Нет аккаунта? Создать новый профиль',
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              language.flag,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              language.shortTitle,
+                              style: const TextStyle(
+                                color: AppColors.amber,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.sync_alt, color: AppColors.muted, size: 12),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 20),
-                const Divider(color: AppColors.line, height: 1),
-                const SizedBox(height: 20),
-
-                // Быстрый гостевой вход в демо-режиме
-                OutlinedButton.icon(
-                  onPressed: _loginDemo,
-                  icon: const Icon(Icons.bolt, color: AppColors.sage, size: 18),
-                  label: const Text(
-                    'БЫСТРЫЙ ДЕМО-ВХОД БЕЗ ПАРОЛЯ',
-                    style: TextStyle(
-                      color: AppColors.fg,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.line),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../domain/avatar/avatar_manager.dart';
@@ -632,24 +634,27 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     final isMorningTime = now.hour >= 5 && now.hour < 12;
     final progress = AvatarManager.getEvolutionProgress(_profile.level, _profile.currentXp);
 
-    return Scaffold(
-      backgroundColor: AppColors.stage,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'БАРЫС-БАТЫР',
-          style: TextStyle(
-            color: AppColors.fg,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 2.4,
-          ),
-        ),
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: AppLocaleNotifier.instance,
+      builder: (context, language, _) {
+        return Scaffold(
+          backgroundColor: AppColors.stage,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: Text(
+              AppStrings.tr('mascot_title', language),
+              style: const TextStyle(
+                color: AppColors.fg,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2.4,
+              ),
+            ),
         centerTitle: true,
         actions: [
           IconButton(
@@ -1055,6 +1060,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 

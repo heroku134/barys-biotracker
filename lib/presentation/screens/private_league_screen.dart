@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/private_league_repository.dart';
@@ -211,37 +213,40 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
     final maxCount = league.maxMembers;
     final avgScore = league.averageRecoveryScore.round();
 
-    return Scaffold(
-      backgroundColor: AppColors.stage,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Column(
-          children: [
-            Text(
-              'КРУГ ДОВЕРИЯ · ЛИГА',
-              style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 9.5,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.2,
-              ),
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: AppLocaleNotifier.instance,
+      builder: (context, language, _) {
+        return Scaffold(
+          backgroundColor: AppColors.stage,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
+              onPressed: () => Navigator.of(context).pop(),
             ),
-            SizedBox(height: 2),
-            Text(
-              'Приватная лига CIRCA',
-              style: TextStyle(
-                color: AppColors.fg,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
+            title: Column(
+              children: [
+                Text(
+                  AppStrings.tr('league_appbar_sub', language),
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  AppStrings.tr('league_appbar_title', language),
+                  style: const TextStyle(
+                    color: AppColors.fg,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
         centerTitle: true,
         actions: [
           IconButton(
@@ -591,6 +596,8 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 }

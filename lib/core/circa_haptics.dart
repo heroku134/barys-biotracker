@@ -22,6 +22,14 @@ class CircaHaptics {
     } catch (_) {}
   }
 
+  /// Выбор / переключение элемента
+  static Future<void> selectionClick() async {
+    try {
+      await HapticFeedback.selectionClick();
+      CircaAcoustics.playMechanicalClick();
+    } catch (_) {}
+  }
+
   /// Старт тренировочной сессии: четкий тактильный импульс включения хронометра
   static Future<void> workoutStart() async {
     try {

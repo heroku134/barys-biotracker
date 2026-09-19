@@ -3,6 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/personal_baseline.dart';
@@ -163,44 +165,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final telemetry = widget.bleBridge.currentTelemetry;
 
-    return Scaffold(
-      backgroundColor: AppColors.stage,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ЛИЧНЫЙ ПРОФИЛЬ',
-              style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.2,
-              ),
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: AppLocaleNotifier.instance,
+      builder: (context, language, _) {
+        return Scaffold(
+          backgroundColor: AppColors.stage,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Column(
+              children: [
+                Text(
+                  AppStrings.tr('profile_title', language),
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2.2,
+                  ),
+                ),
+                Text(
+                  language == AppLanguage.kyrgyz ? 'Биометрия жана Орнотуулар' : 'Биометрия и Настройки',
+                  style: const TextStyle(
+                    color: AppColors.fg,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              'Биометрия и Настройки',
-              style: TextStyle(
-                color: AppColors.fg,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout, color: AppColors.rose, size: 20),
+                tooltip: AppStrings.tr('profile_logout', language),
+                onPressed: _logout,
               ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.rose, size: 20),
-            tooltip: 'Выйти из аккаунта',
-            onPressed: _logout,
+            ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           children: [
             // Баннер тревоги при активном режиме «ГРОЗА»
             if (_isCrisisMode)
@@ -523,6 +527,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
+            // Язык интерфейса / Интерфейс тили (RU / KG)
+            _buildLanguageSelectorCard(language),
+            const SizedBox(height: 24),
+
             // Версия прошивки с 7-кратным тапом для инженерного меню
             Center(
               child: GestureDetector(
@@ -542,6 +550,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 30),
+          ],
+        ),
+      ),
+    );
+      },
+    );
+  }
+
+  Widget _buildLanguageSelectorCard(AppLanguage currentLanguage) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppStrings.tr('profile_language_section', currentLanguage),
+          style: const TextStyle(
+            color: AppColors.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2.0,
+          ),
+        ),
+        const SizedBox(height: 10),
+        GlassCard(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.language, color: AppColors.amber, size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        'Тил тандоо / Выбор языка',
+                        style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      currentLanguage.shortTitle,
+                      style: const TextStyle(color: AppColors.amber, fontSize: 10, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildLangButton(
+                      language: AppLanguage.russian,
+                      isActive: currentLanguage == AppLanguage.russian,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildLangButton(
+                      language: AppLanguage.kyrgyz,
+                      isActive: currentLanguage == AppLanguage.kyrgyz,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLangButton({required AppLanguage language, required bool isActive}) {
+    return GestureDetector(
+      onTap: () {
+        AppLocaleNotifier.setLanguage(language);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.amber.withValues(alpha: 0.16) : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? AppColors.amber : AppColors.line,
+            width: isActive ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(language.flag, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(
+              '${language.title} (${language.shortTitle})',
+              style: TextStyle(
+                color: isActive ? AppColors.fg : AppColors.muted,
+                fontSize: 13,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),

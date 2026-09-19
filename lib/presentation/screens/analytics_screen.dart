@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/history/biometrics_history_repository.dart';
 import '../../domain/intelligence/healthspan_engine.dart';
@@ -47,34 +49,37 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       _ => HistoryPeriod.months6,
     };
 
-    return Scaffold(
-      backgroundColor: AppColors.stage,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'CIRCA BIOMETRICS',
-              style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.2,
-              ),
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: AppLocaleNotifier.instance,
+      builder: (context, language, _) {
+        return Scaffold(
+          backgroundColor: AppColors.stage,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'CIRCA BIOMETRICS',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2.2,
+                  ),
+                ),
+                Text(
+                  AppStrings.tr('analytics_title', language),
+                  style: const TextStyle(
+                    color: AppColors.fg,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              'Анализ сна и ВСР',
-              style: TextStyle(
-                color: AppColors.fg,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -283,6 +288,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 

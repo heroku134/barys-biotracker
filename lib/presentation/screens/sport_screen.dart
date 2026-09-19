@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/workout_repository.dart';
@@ -207,33 +209,36 @@ class _SportScreenState extends State<SportScreen> {
     final telemetry = widget.bleBridge.currentTelemetry;
     final currentBpm = telemetry.heartRate;
 
-    return Scaffold(
-      backgroundColor: AppColors.stage,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'CIRCA SPORT',
-              style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.2,
-              ),
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: AppLocaleNotifier.instance,
+      builder: (context, language, _) {
+        return Scaffold(
+          backgroundColor: AppColors.stage,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'CIRCA SPORT',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2.2,
+                  ),
+                ),
+                Text(
+                  AppStrings.tr('sport_title', language),
+                  style: const TextStyle(
+                    color: AppColors.fg,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            Text(
-              'Тренировки и Нагрузка',
-              style: TextStyle(
-                color: AppColors.fg,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
@@ -279,7 +284,7 @@ class _SportScreenState extends State<SportScreen> {
                           color: isSelected ? AppColors.stage : AppColors.muted,
                         ),
                         label: Text(
-                          sport.title,
+                          sport.localizedTitle(language.code),
                           style: TextStyle(
                             color: isSelected ? AppColors.stage : AppColors.fg,
                             fontSize: 12,
@@ -682,6 +687,8 @@ class _SportScreenState extends State<SportScreen> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

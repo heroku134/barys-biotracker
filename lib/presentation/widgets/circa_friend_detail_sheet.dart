@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../core/circa_haptics.dart';
 import '../../domain/models/private_league.dart';
 import '../../domain/models/readiness.dart';
@@ -33,17 +35,20 @@ class CircaFriendDetailSheet extends StatelessWidget {
         ? AppColors.sage
         : (member.recoveryZone == RecoveryZone.moderate ? AppColors.amber : AppColors.rose);
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.stage,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(top: BorderSide(color: AppColors.line, width: 1.0)),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: AppLocaleNotifier.instance,
+      builder: (context, language, _) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: AppColors.stage,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(top: BorderSide(color: AppColors.line, width: 1.0)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // Drag handle
           Center(
             child: Container(
@@ -160,9 +165,9 @@ class CircaFriendDetailSheet extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'ВОССТАНОВЛЕНИЕ (RECOVERY)',
-                      style: TextStyle(
+                    Text(
+                      AppStrings.tr('friend_detail_recovery', language),
+                      style: const TextStyle(
                         color: AppColors.muted,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -186,8 +191,10 @@ class CircaFriendDetailSheet extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           member.recoveryZone == RecoveryZone.optimal
-                              ? 'Зеленый коридор'
-                              : (member.recoveryZone == RecoveryZone.moderate ? 'Адаптивный коридор' : 'Зона отдыха'),
+                              ? (language == AppLanguage.kyrgyz ? 'Жашыл коридор' : 'Зеленый коридор')
+                              : (member.recoveryZone == RecoveryZone.moderate
+                                  ? (language == AppLanguage.kyrgyz ? 'Адаптивдүү коридор' : 'Адаптивный коридор')
+                                  : (language == AppLanguage.kyrgyz ? 'Эс алуу зонасы' : 'Зона отдыха')),
                           style: TextStyle(
                             color: zoneColor,
                             fontSize: 12,
@@ -219,9 +226,9 @@ class CircaFriendDetailSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildMetricTile(
-                  label: 'НАГРУЗКА ДНЯ',
+                  label: AppStrings.tr('friend_detail_strain', language),
                   value: '${member.currentDayStrain.toStringAsFixed(1)} / 21',
-                  sub: 'Суточный Strain',
+                  sub: language == AppLanguage.kyrgyz ? 'Күндүк Strain' : 'Суточный Strain',
                   icon: Icons.bolt,
                   color: AppColors.amber,
                 ),
@@ -229,9 +236,9 @@ class CircaFriendDetailSheet extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _buildMetricTile(
-                  label: 'СОН И КАЧЕСТВО',
+                  label: AppStrings.tr('friend_detail_sleep', language),
                   value: '${member.sleepHours.toStringAsFixed(1)}ч',
-                  sub: '${member.sleepPerformance}% эффективности',
+                  sub: '${member.sleepPerformance}% ${language == AppLanguage.kyrgyz ? 'натыйжалуулук' : 'эффективности'}',
                   icon: Icons.bedtime_outlined,
                   color: AppColors.sage,
                 ),
@@ -243,9 +250,9 @@ class CircaFriendDetailSheet extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildMetricTile(
-                  label: 'ВСР (HRV)',
+                  label: AppStrings.tr('friend_detail_hrv', language),
                   value: '${member.hrv.round()} мс',
-                  sub: 'Баланс вегетатики',
+                  sub: language == AppLanguage.kyrgyz ? 'Вегетативдик тең салмак' : 'Баланс вегетатики',
                   icon: Icons.graphic_eq,
                   color: AppColors.sage,
                 ),
@@ -253,9 +260,9 @@ class CircaFriendDetailSheet extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _buildMetricTile(
-                  label: 'ЧСС ПОКОЯ',
+                  label: AppStrings.tr('friend_detail_rhr', language),
                   value: '${member.restingHeartRate} bpm',
-                  sub: 'База миокарда',
+                  sub: language == AppLanguage.kyrgyz ? 'Миокард базасы' : 'База миокарда',
                   icon: Icons.monitor_heart_outlined,
                   color: AppColors.rose,
                 ),
@@ -304,14 +311,14 @@ class CircaFriendDetailSheet extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.auto_awesome, size: 16),
-                    SizedBox(width: 8),
+                    const Icon(Icons.auto_awesome, size: 16),
+                    const SizedBox(width: 8),
                     Text(
-                      'ОТПРАВИТЬ ИМПУЛЬС СИЛЫ БАРЫСА ✦',
-                      style: TextStyle(
+                      AppStrings.tr('league_send_impulse', language),
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.0,
@@ -323,6 +330,8 @@ class CircaFriendDetailSheet extends StatelessWidget {
             ),
         ],
       ),
+    );
+      },
     );
   }
 

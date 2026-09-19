@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
 import '../../core/circa_haptics.dart';
 import '../intelligence/readiness_engine.dart';
 import '../intelligence/strain_engine.dart';
@@ -73,6 +74,48 @@ enum AvatarVisualState {
     this.xpBonusMultiplier,
     this.assetPath,
   );
+
+  String localizedTitle([AppLanguage? lang]) {
+    final l = lang ?? AppLocaleNotifier.current;
+    if (l == AppLanguage.kyrgyz) {
+      switch (this) {
+        case AvatarVisualState.charged:
+          return 'Барыс сергек жана кубаттуу';
+        case AvatarVisualState.normal:
+          return 'Барыс тонуста';
+        case AvatarVisualState.tired:
+          return 'Барыс чарчаган (эс алуу)';
+        case AvatarVisualState.sleep:
+          return 'Барыс уктап жатат (түн)';
+        case AvatarVisualState.postWorkout:
+          return 'Барыс машыгуудан кийин';
+        case AvatarVisualState.meditation:
+          return 'Барыс дзенде (тынчтануу)';
+      }
+    }
+    return title;
+  }
+
+  String localizedBadgeText([AppLanguage? lang]) {
+    final l = lang ?? AppLocaleNotifier.current;
+    if (l == AppLanguage.kyrgyz) {
+      switch (this) {
+        case AvatarVisualState.charged:
+          return 'КУБАТТУУ';
+        case AvatarVisualState.normal:
+          return 'ТОНУСТА';
+        case AvatarVisualState.tired:
+          return 'ЭС АЛУУ';
+        case AvatarVisualState.sleep:
+          return 'УКТОО';
+        case AvatarVisualState.postWorkout:
+          return 'МАШЫГУУ';
+        case AvatarVisualState.meditation:
+          return 'БАЛАНС';
+      }
+    }
+    return badgeText;
+  }
 }
 
 /// 4 ступени визуальной эволюции Барыса (Кадет → Сарбаз → Батыр → Аксакал)
@@ -137,6 +180,40 @@ enum BarysEvolutionTier {
     this.unlockBenefit,
     this.auraColor,
   );
+
+  String localizedTitle([AppLanguage? lang]) {
+    final l = lang ?? AppLocaleNotifier.current;
+    if (l == AppLanguage.kyrgyz) {
+      switch (this) {
+        case BarysEvolutionTier.cadet:
+          return 'Илбирс-Кадет';
+        case BarysEvolutionTier.sarbaz:
+          return 'Талаа Сарбазы';
+        case BarysEvolutionTier.batyr:
+          return 'Хан Батыры';
+        case BarysEvolutionTier.aksakal:
+          return 'Даанышман Аксакал';
+      }
+    }
+    return title;
+  }
+
+  String localizedShortName([AppLanguage? lang]) {
+    final l = lang ?? AppLocaleNotifier.current;
+    if (l == AppLanguage.kyrgyz) {
+      switch (this) {
+        case BarysEvolutionTier.cadet:
+          return 'Кадет';
+        case BarysEvolutionTier.sarbaz:
+          return 'Сарбаз';
+        case BarysEvolutionTier.batyr:
+          return 'Батыр';
+        case BarysEvolutionTier.aksakal:
+          return 'Аксакал';
+      }
+    }
+    return shortName;
+  }
 }
 
 class DailyQuest {
@@ -165,6 +242,16 @@ class DailyQuest {
     this.actionLabel = '',
     this.icon,
   });
+
+  String localizedTitle([AppLanguage? lang]) {
+    final l = lang ?? AppLocaleNotifier.current;
+    if (l == AppLanguage.kyrgyz) {
+      if (id == 'strain') return 'Күндүк Strain жүктөмүн жабуу';
+      if (id == 'journal') return 'Био-журналга белгилөө';
+      if (id == 'sleep') return 'Циркаддык уктоо (22:30 чейин)';
+    }
+    return title;
+  }
 }
 
 class AvatarProfile {
@@ -193,6 +280,23 @@ class AvatarProfile {
     required this.quests,
     this.isPauseMode = false,
   });
+
+  String localizedRankTitle([AppLanguage? lang]) {
+    final l = lang ?? AppLocaleNotifier.current;
+    if (l == AppLanguage.kyrgyz) {
+      switch (evolutionTier) {
+        case BarysEvolutionTier.cadet:
+          return 'Илбирс-Кадет';
+        case BarysEvolutionTier.sarbaz:
+          return 'Талаа Сарбазы';
+        case BarysEvolutionTier.batyr:
+          return 'Хан Батыры';
+        case BarysEvolutionTier.aksakal:
+          return 'Даанышман Аксакал';
+      }
+    }
+    return rankTitle;
+  }
 
   double get progressRatio => (currentXp / maxXp).clamp(0.0, 1.0);
 

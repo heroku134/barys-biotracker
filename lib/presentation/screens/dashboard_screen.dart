@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
@@ -93,13 +95,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             side: const BorderSide(color: AppColors.rose, width: 1.0),
           ),
           content: Row(
-            children: const [
-              Icon(Icons.favorite, color: AppColors.rose, size: 18),
-              SizedBox(width: 10),
+            children: [
+              const Icon(Icons.favorite, color: AppColors.rose, size: 18),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Оптический замер ЧСС и фотоплетизмограммы запущен через сенсор CIRCA',
-                  style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
+                  AppStrings.tr('today_pulse_measuring'),
+                  style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -131,198 +133,203 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final directiveType = directiveAnalysis.directiveType;
     final weekdayName = _getWeekdayName();
 
-    return Scaffold(
-      backgroundColor: AppColors.stage,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // 1. Фирменный хедер CIRCA ONE: Голова Барыса в кольце готовности + Приветствие
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
-                child: Row(
-                  children: [
-                    // Аватар Барыса в кольце зоны готовности
-                    GestureDetector(
-                      onTap: widget.onOpenAvatar,
-                      child: Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: readiness.zone.color,
-                            width: 2.0,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            avatarProfile.state.assetPath,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Приветствие и день недели
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'CIRCA ONE',
-                            style: TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 2.2,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            'Привет, $_userName · $weekdayName',
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.fg,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Правые контролы: Утренний брифинг + Поделиться + Заряд
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.wb_sunny_outlined, color: AppColors.amber, size: 20),
-                      tooltip: 'Утренний отчёт 07:00',
-                      onPressed: () => CircaMorningBriefingDialog.show(context, _telemetry, _baseline),
-                    ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(Icons.ios_share, color: AppColors.fg, size: 19),
-                      tooltip: 'Поделиться днем',
-                      onPressed: () => CircaShareSheet.show(
-                        context,
-                        telemetry: _telemetry,
-                        baseline: _baseline,
-                        userName: _userName,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: widget.onOpenDeviceSettings,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.raised,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.line),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.battery_std, size: 14, color: AppColors.sage),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${_telemetry.batteryLevel}%',
-                              style: const TextStyle(
-                                color: AppColors.fg,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // 2. Утренний «пик» (выезжает сверху с Haptic-волной при входе)
-            SliverToBoxAdapter(
-              child: CircaMorningPeakBanner(
-                telemetry: _telemetry,
-                baseline: _baseline,
-                recoveryScore: readiness.score,
-              ),
-            ),
-
-            // 3. Главный показатель 1: ВОССТАНОВЛЕНИЕ (Recovery Ring Card)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
-                child: GestureDetector(
-                  onTap: () => CircaRecoveryBreakdownSheet.show(
-                    context,
-                    readiness,
-                    telemetry: _telemetry,
-                    baseline: _baseline,
-                    userName: _userName,
-                  ),
-                  child: GlassCard(
-                    borderRadius: 20,
-                    padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
-                    child: Column(
+    return ValueListenableBuilder<AppLanguage>(
+      valueListenable: AppLocaleNotifier.instance,
+      builder: (context, language, _) {
+        return Scaffold(
+          backgroundColor: AppColors.stage,
+          body: SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                // 1. Фирменный хедер CIRCA ONE: Голова Барыса в кольце готовности + Приветствие
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                    child: Row(
                       children: [
-                        CircaReadinessRing(
-                          score: readiness.score,
-                          zone: readiness.zone,
-                          size: 200,
-                        ),
-                        // Стрик-двигатель (монохромная пиктограмма звена цепи)
-                        Container(
-                          margin: const EdgeInsets.only(top: 10, bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: (readiness.zone == RecoveryZone.optimal ? AppColors.sage : AppColors.amber).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: (readiness.zone == RecoveryZone.optimal ? AppColors.sage : AppColors.amber).withValues(alpha: 0.3),
-                              width: 0.8,
+                        // Аватар Барыса в кольце зоны готовности
+                        GestureDetector(
+                          onTap: widget.onOpenAvatar,
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: readiness.zone.color,
+                                width: 2.0,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                avatarProfile.state.assetPath,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        ),
+                        const SizedBox(width: 12),
+                        // Приветствие и день недели
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.link,
-                                size: 13,
-                                color: readiness.zone == RecoveryZone.optimal ? AppColors.sage : AppColors.amber,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                'В ЗЕЛЁНОЙ ЗОНЕ 5 ДНЕЙ ПОДРЯД',
+                              const Text(
+                                'CIRCA ONE',
                                 style: TextStyle(
-                                  color: readiness.zone == RecoveryZone.optimal ? AppColors.sage : AppColors.amber,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.0,
+                                  color: AppColors.muted,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 2.2,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                language == AppLanguage.kyrgyz
+                                    ? 'Салам, $_userName · $weekdayName'
+                                    : 'Привет, $_userName · $weekdayName',
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.fg,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.2,
                                 ),
                               ),
                             ],
                           ),
                         ),
-
-                        // 3 ключевые метрики входа
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildMetricChip('ВСР', '${_telemetry.hrv.round()} мс'),
-                            const SizedBox(width: 8),
-                            Container(width: 3, height: 3, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.faint)),
-                            const SizedBox(width: 8),
-                            _buildMetricChip('Покой', '${_telemetry.restingHeartRate} bpm'),
-                            const SizedBox(width: 8),
-                            Container(width: 3, height: 3, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.faint)),
-                            const SizedBox(width: 8),
-                            _buildMetricChip('Кожа', '${_telemetry.skinTempDeviation >= 0 ? '+' : ''}${_telemetry.skinTempDeviation.toStringAsFixed(1)} °C'),
-                          ],
+                        // Правые контролы: Утренний брифинг + Поделиться + Заряд
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.wb_sunny_outlined, color: AppColors.amber, size: 20),
+                          tooltip: 'Утренний отчёт 07:00',
+                          onPressed: () => CircaMorningBriefingDialog.show(context, _telemetry, _baseline),
                         ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.ios_share, color: AppColors.fg, size: 19),
+                          tooltip: 'Поделиться днем',
+                          onPressed: () => CircaShareSheet.show(
+                            context,
+                            telemetry: _telemetry,
+                            baseline: _baseline,
+                            userName: _userName,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: widget.onOpenDeviceSettings,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.raised,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.line),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.battery_std, size: 14, color: AppColors.sage),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${_telemetry.batteryLevel}%',
+                                  style: const TextStyle(
+                                    color: AppColors.fg,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // 2. Утренний «пик» (выезжает сверху с Haptic-волной при входе)
+                SliverToBoxAdapter(
+                  child: CircaMorningPeakBanner(
+                    telemetry: _telemetry,
+                    baseline: _baseline,
+                    recoveryScore: readiness.score,
+                  ),
+                ),
+
+                // 3. Главный показатель 1: ВОССТАНОВЛЕНИЕ (Recovery Ring Card)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+                    child: GestureDetector(
+                      onTap: () => CircaRecoveryBreakdownSheet.show(
+                        context,
+                        readiness,
+                        telemetry: _telemetry,
+                        baseline: _baseline,
+                        userName: _userName,
+                      ),
+                      child: GlassCard(
+                        borderRadius: 20,
+                        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
+                        child: Column(
+                          children: [
+                            CircaReadinessRing(
+                              score: readiness.score,
+                              zone: readiness.zone,
+                              size: 200,
+                            ),
+                            // Стрик-двигатель (монохромная пиктограмма звена цепи)
+                            Container(
+                              margin: const EdgeInsets.only(top: 10, bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: (readiness.zone == RecoveryZone.optimal ? AppColors.sage : AppColors.amber).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: (readiness.zone == RecoveryZone.optimal ? AppColors.sage : AppColors.amber).withValues(alpha: 0.3),
+                                  width: 0.8,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.link,
+                                    size: 13,
+                                    color: readiness.zone == RecoveryZone.optimal ? AppColors.sage : AppColors.amber,
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    AppStrings.tr('today_streak_badge', language),
+                                    style: TextStyle(
+                                      color: readiness.zone == RecoveryZone.optimal ? AppColors.sage : AppColors.amber,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // 3 ключевые метрики входа
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildMetricChip(AppStrings.tr('today_hrv', language), '${_telemetry.hrv.round()} мс'),
+                                const SizedBox(width: 8),
+                                Container(width: 3, height: 3, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.faint)),
+                                const SizedBox(width: 8),
+                                _buildMetricChip(AppStrings.tr('today_rhr', language), '${_telemetry.restingHeartRate} bpm'),
+                                const SizedBox(width: 8),
+                                Container(width: 3, height: 3, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.faint)),
+                                const SizedBox(width: 8),
+                                _buildMetricChip(AppStrings.tr('today_skin_temp', language), '${_telemetry.skinTempDeviation >= 0 ? '+' : ''}${_telemetry.skinTempDeviation.toStringAsFixed(1)} °C'),
+                              ],
+                            ),
                         const SizedBox(height: 16),
 
                         // Магнитный акцентный блок: Разбор 5 факторов (Основной 2-й тап дня)
@@ -350,9 +357,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'РАЗБОР 5 ФАКТОРОВ ВОССТАНОВЛЕНИЯ',
-                                      style: TextStyle(
+                                    Text(
+                                      AppStrings.tr('today_5factors_title', language),
+                                      style: const TextStyle(
                                         color: AppColors.fg,
                                         fontSize: 10.5,
                                         fontWeight: FontWeight.w800,
@@ -361,7 +368,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Почему сегодня ${readiness.score}%? Анализ ВСР, сна и температуры',
+                                      language == AppLanguage.kyrgyz
+                                          ? 'Эмне үчүн бүгүн ${readiness.score}%? ЖЖВ, уйку жана температура талдоосу'
+                                          : 'Почему сегодня ${readiness.score}%? Анализ ВСР, сна и температуры',
                                       style: const TextStyle(
                                         color: AppColors.muted,
                                         fontSize: 10,
@@ -666,12 +675,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Row(
-                              children: const [
-                                Icon(Icons.shield_outlined, color: AppColors.amber, size: 16),
-                                SizedBox(width: 8),
+                              children: [
+                                const Icon(Icons.shield_outlined, color: AppColors.amber, size: 16),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'КРУГ ДОВЕРИЯ · ПРИВАТНАЯ ЛИГА',
-                                  style: TextStyle(
+                                  AppStrings.tr('today_league_card_title', language),
+                                  style: const TextStyle(
                                     color: AppColors.muted,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
@@ -686,9 +695,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 color: AppColors.amber.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text(
-                                '4 / 5 МЕСТ',
-                                style: TextStyle(
+                              child: Text(
+                                AppStrings.trParams('league_slots_format', {'current': 4, 'max': 5}, language),
+                                style: const TextStyle(
                                   color: AppColors.amber,
                                   fontSize: 9,
                                   fontWeight: FontWeight.w800,
@@ -771,9 +780,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Text(
-                                  'ПУЛЬС В РЕАЛЬНОМ ВРЕМЕНИ',
-                                  style: TextStyle(
+                                Text(
+                                  AppStrings.tr('today_live_pulse', language),
+                                  style: const TextStyle(
                                     color: AppColors.muted,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
@@ -796,7 +805,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                                 const Text(
-                                  ' уд/мин',
+                                  ' bpm',
                                   style: TextStyle(
                                     color: AppColors.rose,
                                     fontSize: 12,
@@ -821,7 +830,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Вариабельность: ${_telemetry.hrv.round()} мс · В норме',
+                              language == AppLanguage.kyrgyz
+                                  ? 'Вариабелдүүлүк: ${_telemetry.hrv.round()} мс · Ченемде'
+                                  : 'Вариабельность: ${_telemetry.hrv.round()} мс · В норме',
                               style: const TextStyle(
                                 color: AppColors.faint,
                                 fontSize: 11,
@@ -829,10 +840,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             Row(
-                              children: const [
+                              children: [
                                 Text(
-                                  'Запустить замер',
-                                  style: TextStyle(
+                                  AppStrings.tr('today_trigger_pulse', language),
+                                  style: const TextStyle(
                                     color: AppColors.rose,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
@@ -853,6 +864,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 

@@ -23,6 +23,28 @@ enum SportType {
       orElse: () => SportType.runOutdoor,
     );
   }
+
+  String localizedTitle([String? languageCode]) {
+    if (languageCode == 'ky') {
+      switch (this) {
+        case SportType.runOutdoor:
+          return 'Тышта чуркоо';
+        case SportType.runIndoor:
+          return 'Чуркоо тренажеру';
+        case SportType.strength:
+          return 'Күч машыгуусу';
+        case SportType.hiit:
+          return 'Интервалдык HIIT';
+        case SportType.cycling:
+          return 'Велоспорт';
+        case SportType.swimming:
+          return 'Бассейнде сүзүү';
+        case SportType.yoga:
+          return 'Йога жана чоюлуу';
+      }
+    }
+    return title;
+  }
 }
 
 class CompletedWorkout {
