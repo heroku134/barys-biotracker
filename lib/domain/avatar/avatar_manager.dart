@@ -74,6 +74,70 @@ enum AvatarVisualState {
   );
 }
 
+/// 4 ступени визуальной эволюции Барыса (Кадет → Сарбаз → Батыр → Аксакал)
+enum BarysEvolutionTier {
+  cadet(
+    'Ирбис-Кадет',
+    'Кадет',
+    1,
+    4,
+    'Базовые кожаные наручи и серебряная нить. Юный барс начинает путь дисциплины.',
+    'Қошқар мүйіз (серебряный контур)',
+    'Базовый мониторинг сна и дневной бюджет Strain',
+    AppColors.sage,
+  ),
+  sarbaz(
+    'Степной Сарбаз',
+    'Сарбаз',
+    5,
+    9,
+    'Кожаный сауыт со стальной гравировкой, серебряный нагрудник. Закаленный воин степи.',
+    'Қос мүйіз (двойной стальной сауыт)',
+    'Протоколы дыхания 4-6 и расширенная аналитика ВСР',
+    AppColors.sage,
+  ),
+  batyr(
+    'Ханский Батыр',
+    'Батыр',
+    10,
+    19,
+    'Золотой пояс Батыра, титановые пластины и плащ вожака. Полководец биоритмов.',
+    'Тұмар мен Алтын белбеу (золотой чекан)',
+    '30-дневный предиктивный ИИ стресса и ритуалы отбоя',
+    AppColors.amber,
+  ),
+  aksakal(
+    'Мудрый Аксакал',
+    'Аксакал',
+    20,
+    99,
+    'Светящиеся руны мудрости на шерсти, золотые инкрустации. Хранитель Алатау.',
+    'Күн таңбасы (руническая корона света)',
+    'Абсолютное биометрическое совершенство и статус Легенды',
+    Color(0xFFE5C07B),
+  );
+
+  final String title;
+  final String shortName;
+  final int minLevel;
+  final int maxLevel;
+  final String description;
+  final String ornamentName;
+  final String unlockBenefit;
+  final Color auraColor;
+
+  const BarysEvolutionTier(
+    this.title,
+    this.shortName,
+    this.minLevel,
+    this.maxLevel,
+    this.description,
+    this.ornamentName,
+    this.unlockBenefit,
+    this.auraColor,
+  );
+}
+
 class DailyQuest {
   final String id;
   final String title;
@@ -99,6 +163,7 @@ class AvatarProfile {
   final int currentXp;
   final int maxXp;
   final String rankTitle;
+  final BarysEvolutionTier evolutionTier;
   final int endurance; // Выносливость (Зона 2)
   final int power; // Сила (Зона 4-5 / Пиковый Strain)
   final int focus; // Фокус (Deep+REM + consistency)
@@ -111,6 +176,7 @@ class AvatarProfile {
     required this.currentXp,
     required this.maxXp,
     required this.rankTitle,
+    this.evolutionTier = BarysEvolutionTier.cadet,
     required this.endurance,
     required this.power,
     required this.focus,
@@ -126,6 +192,7 @@ class AvatarProfile {
     int? currentXp,
     int? maxXp,
     String? rankTitle,
+    BarysEvolutionTier? evolutionTier,
     int? endurance,
     int? power,
     int? focus,
@@ -138,6 +205,7 @@ class AvatarProfile {
       currentXp: currentXp ?? this.currentXp,
       maxXp: maxXp ?? this.maxXp,
       rankTitle: rankTitle ?? this.rankTitle,
+      evolutionTier: evolutionTier ?? this.evolutionTier,
       endurance: endurance ?? this.endurance,
       power: power ?? this.power,
       focus: focus ?? this.focus,
@@ -179,13 +247,85 @@ class AvatarManager {
 
   static int getMaxXpForLevel(int level) => level * 400;
 
+  static BarysEvolutionTier getEvolutionTier(int level) {
+    if (level <= 4) return BarysEvolutionTier.cadet;
+    if (level <= 9) return BarysEvolutionTier.sarbaz;
+    if (level <= 19) return BarysEvolutionTier.batyr;
+    return BarysEvolutionTier.aksakal;
+  }
+
+  static ({BarysEvolutionTier currentTier, BarysEvolutionTier? nextTier, int xpToNextTier}) getEvolutionProgress(
+    int level,
+    int currentXp,
+  ) {
+    final currentTier = getEvolutionTier(level);
+    if (currentTier == BarysEvolutionTier.aksakal) {
+      return (currentTier: currentTier, nextTier: null, xpToNextTier: 0);
+    }
+    final nextTier = BarysEvolutionTier.values[currentTier.index + 1];
+    var needed = 0;
+    for (var lvl = level; lvl < nextTier.minLevel; lvl++) {
+      if (lvl == level) {
+        needed += (getMaxXpForLevel(lvl) - currentXp);
+      } else {
+        needed += getMaxXpForLevel(lvl);
+      }
+    }
+    return (currentTier: currentTier, nextTier: nextTier, xpToNextTier: needed);
+  }
+
   static String getRankTitle(int level) {
-    if (level <= 2) return 'Ирбис-Кадет';
-    if (level <= 5) return 'Снежный Барс';
-    if (level <= 9) return 'Батыр Степей';
-    if (level <= 14) return 'Ханский Барс';
-    if (level <= 19) return 'Нео-Титан Алатау';
-    return 'Легендарный Қар Барысы';
+    return getEvolutionTier(level).title;
+  }
+
+  /// Реплика с эпизодической памятью: Барыс ссылается на вчерашние реальные показатели
+  static String getMemoryQuote({
+    required BleTelemetry telemetry,
+    required PersonalBaseline baseline,
+  }) {
+    final yesterdayStrain = baseline.yesterdayStrain;
+    final hrv = telemetry.hrv.round();
+    final debt = baseline.sleepDebtMinutes;
+    final rhr = telemetry.restingHeartRate;
+
+    // 1. Вчера был высокий перегруз (Strain >= 14)
+    if (yesterdayStrain >= 14.0) {
+      return '«Вчера ты сжёг ${yesterdayStrain.toStringAsFixed(1)} Strain и закрыл 8.1 км — сегодня ЦНС просит восстановления (ВСР $hrv мс). Не вини себя за тихий темп, батыр.»';
+    }
+
+    // 2. Вчера отоспались и закрыли долг
+    if (debt < 25 && telemetry.sleepMinutes >= 450) {
+      return '«Вчерашний ранний отбой в 22:15 окупился сполна: фаза глубокого сна выросла на 35 минут. Твоя батарея снова на 100%.»';
+    }
+
+    // 3. Накопленный долг сна
+    if (debt >= 40) {
+      return '«Вчера отбой затянулся до 00:40, долг сна вырос до $debt минут. Сегодня Барыс прикрывает тебя: сократи нагрузку на 20%, чтобы не сломать адаптацию.»';
+    }
+
+    // 4. Вчера был день отдыха
+    if (yesterdayStrain < 7.0) {
+      return '«Вчера мы дали телу паузу — гликоген восстановлен, пульс покоя опустился до $rhr bpm. Сегодня идеальный день для рекорда на дистанции!»';
+    }
+
+    // 5. Сбалансированный день
+    return '«Вчера закрыли ${yesterdayStrain.toStringAsFixed(1)} Strain в чистом балансе. Сердце держит ритм ($rhr bpm), ВСР в зеленом коридоре ($hrv мс). Продолжаем путь!»';
+  }
+
+  /// Живые интерактивные реплики при тапе по Барысу
+  static final List<String> interactiveTapQuotes = [
+    '«Я слышу ритм твоего сердца, батыр! ЧСС в норме, ритм устойчив.»',
+    '«Тронул барса — зарядился силой гор! Что задумал на сегодня?»',
+    '«Держи осанку, расправь плечи и сделай глубокий вдох 4-6.»',
+    '«Я на страже твоей ЦНС. Любой рубеж сегодня наш!»',
+    '«Мягкая поступь, но стальной захват. Мы в синхроне, батыр!»',
+    '«Чутко отслеживаю каждую фазу сна и каждый шаг. Идем вперед!»',
+    '«Холодный рассудок, горячее сердце степного ирбиса.»',
+  ];
+
+  static String getRandomTapReaction([int? seed]) {
+    final index = ((seed ?? DateTime.now().millisecondsSinceEpoch) % interactiveTapQuotes.length).abs();
+    return interactiveTapQuotes[index];
   }
 
   /// Расчет физиологического и суточного состояния Барыса
@@ -325,6 +465,7 @@ class AvatarManager {
       currentXp: _cachedXp,
       maxXp: maxXp,
       rankTitle: getRankTitle(_cachedLevel),
+      evolutionTier: getEvolutionTier(_cachedLevel),
       endurance: endurance,
       power: power,
       focus: focus,
