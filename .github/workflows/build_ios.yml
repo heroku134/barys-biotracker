@@ -27,6 +27,11 @@ jobs:
       - name: Check Flutter version
         run: flutter --version
 
+      - name: Pre-create build directories for Flutter iOS
+        run: |
+          mkdir -p build/ios/SourcePackages
+          mkdir -p ios/Flutter
+
       - name: Install dependencies
         run: flutter pub get
 
