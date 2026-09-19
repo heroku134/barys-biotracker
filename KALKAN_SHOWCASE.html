@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KALKAN SPORT · Бренд-презентация СААТ-1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&family=Orbitron:wght@800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #060709;
+      --surface: #0E121B;
+      --card: #131824;
+      --border: #1E283A;
+      --border-bright: #334155;
+      --mint: #00FFA3;
+      --mint-glow: rgba(0, 255, 163, 0.35);
+      --amber: #F59E0B;
+      --cyan: #00F0FF;
+      --purple: #A855F7;
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --faint: #475569;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.5;
+      padding: 40px 24px 100px;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 48px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 255, 163, 0.1);
+      border: 1px solid rgba(0, 255, 163, 0.3);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--mint);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--mint);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--mint);
+    }
+    h1 {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+    }
+    .subtitle {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 820px;
+    }
+
+    /* Comparison Box */
+    .compare-box {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(0, 255, 163, 0.08));
+      border: 1px solid var(--border-bright);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .compare-item h3 {
+      font-size: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .compare-item.old h3 { color: #F87171; }
+    .compare-item.new h3 { color: var(--mint); }
+    .compare-item p { font-size: 14px; color: var(--muted); }
+
+    /* Grid of Concepts */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(620px, 1fr));
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-bright);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    .card.highlight {
+      border-color: var(--mint);
+      box-shadow: 0 0 30px rgba(0, 255, 163, 0.15);
+    }
+
+    .card-tag {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 1.5px;
+    }
+    .card-tag.mint { background: rgba(0, 255, 163, 0.15); color: var(--mint); border: 1px solid rgba(0, 255, 163, 0.4); }
+    .card-tag.amber { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .card-tag.cyan { background: rgba(0, 240, 255, 0.15); color: var(--cyan); border: 1px solid rgba(0, 240, 255, 0.4); }
+    .card-tag.purple { background: rgba(168, 85, 247, 0.15); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.4); }
+
+    .card-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    /* Logo Preview Canvas */
+    .preview-canvas {
+      background: #080A10;
+      border: 1px solid #1A2234;
+      border-radius: 16px;
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .preview-canvas::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(0, 255, 163, 0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .card h2 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .card-desc {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .specs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #1E293B;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    .spec-item span { display: block; color: var(--faint); margin-bottom: 2px; }
+    .spec-item strong { color: var(--text); font-weight: 700; }
+
+    /* Mockup Section */
+    .watch-showcase {
+      background: linear-gradient(180deg, #0D121D 0%, #06080D 100%);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      margin-top: 40px;
+      text-align: center;
+    }
+    .watch-bezel {
+      width: 280px;
+      height: 280px;
+      margin: 30px auto;
+      border-radius: 50%;
+      background: radial-gradient(circle, #151C28 0%, #0A0D14 85%, #050608 100%);
+      border: 14px solid #1F2937;
+      box-shadow: 0 0 0 2px #374151, 0 25px 60px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.8);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .watch-bezel::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      width: 4px;
+      height: 12px;
+      background: var(--mint);
+      box-shadow: 0 0 8px var(--mint);
+    }
+    .watch-brand {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #FFF;
+      margin-top: 10px;
+    }
+    .watch-model {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--mint);
+      margin-bottom: 8px;
+    }
+    .watch-stat {
+      font-family: 'Orbitron', monospace;
+      font-size: 32px;
+      font-weight: 900;
+      color: #FFF;
+    }
+    .watch-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      color: var(--faint);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <header>
+      <div class="badge">
+        <div class="badge-dot"></div>
+        KALKAN SPORT · HARDWARE DESIGN LAB
+      </div>
+      <h1>Агрессивный Редизайн Логотипа «KALKAN»</h1>
+      <p class="subtitle">
+        <strong>Калкан</strong> (кырг. <em>«Щит»</em>) — боевой щит кочевников, символ несокрушимости, батырской брони и биометрического щита сердечно-сосудистой системы атлета. Для линейки спортивных часов <strong>«СААТ-1»</strong>.
+      </p>
+    </header>
+
+    <div class="compare-box">
+      <div class="compare-item old">
+        <h3>✕ ИСХОДНЫЙ СИМВОЛ (KALKAN.SVG)</h3>
+        <p>Две мягкие округлые дуги (остаток старой концепции Tengri). Нет ощущения щита, нет спортивной мускулатуры, углов атаки и агрессии. Воспринимается слишком спокойно и просто.</p>
+      </div>
+      <div class="compare-item new">
+        <h3>✓ НОВАЯ АГРЕССИВНАЯ ГЕОМЕТРИЯ</h3>
+        <p>Баллистический рубленый щит, острые углы 45°, хищные грани стелс-истребителя и когтей барса. В контур органично вплетена буква <strong>«К»</strong> и лазерная насечка для гравировки часов <strong>«СААТ-1»</strong>.</p>
+      </div>
+    </div>
+
+    <!-- 4 CONCEPTS GRID -->
+    <div class="grid">
+
+      <!-- CONCEPT 1 -->
+      <div class="card highlight">
+        <div class="card-tag mint">ФЛАГМАН · ТОП ВЫБОР</div>
+        <div class="card-num">ВАРИАНТ 01</div>
+        <div class="preview-canvas">
+          <svg width="340" height="140" viewBox="0 0 500 200">
+            <!-- Stealth Shield Vector -->
+            <g transform="translate(10, -25) scale(0.9)">
+              <path d="M 60,30 L 122,12 L 122,228 L 60,185 L 52,110 Z" fill="#FFFFFF" />
+              <path d="M 122,12 L 122,228 L 98,206 L 98,34 Z" fill="#94A3B8" />
+              <circle cx="85" cy="120" r="4" fill="#00FFA3" />
+              <path d="M 144,20 L 238,52 L 182,118 L 144,118 Z" fill="#00FFA3" />
+              <path d="M 144,134 L 208,134 L 144,244 Z" fill="#00FFA3" />
+              <path d="M 215,134 L 250,90 L 250,158 L 156,254 L 144,244 Z" fill="#CBD5E1" />
+            </g>
+            <!-- Typography -->
+            <g transform="translate(235, 75)">
+              <text x="0" y="32" font-family="'Montserrat', sans-serif" font-weight="900" font-size="44" fill="#FFFFFF" letter-spacing="8">КАЛКАН</text>
+              <text x="4" y="68" font-family="'Montserrat', sans-serif" font-weight="800" font-size="16" fill="#00FFA3" letter-spacing="12">СПОРТ</text>
+              <text x="4" y="94" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="11" fill="#64748B" letter-spacing="2">СААТ-1 · TITANIUM</text>
+            </g>
+          </svg>
+        </div>
+        <h2>«Stealth Apex Shield»</h2>
+        <p class="card-desc">
+          Баллистический граненый щит спецназа и сакских воинов с встроенной хищной литерой «К». Углы под 45° в духе Oakley, Lockheed F-117 и Richard Mille. Центральный световой рассекатель символизирует живой пульс.
+        </p>
+        <div class="specs">
+          <div class="spec-item"><span>ГЕОМЕТРИЯ:</span><strong>Баллистика / Стелс</strong></div>
+          <div class="spec-item"><span>СИМВОЛИЗМ:</span><strong>Щит + Литера «К»</strong></div>
+          <div class="spec-item"><span>ПРИМЕНЕНИЕ:</span><strong>Безель СААТ-1, App Icon</strong></div>
+        </div>
+      </div>
+
+      <!-- CONCEPT 2 -->
+      <div class="card">
+        <div class="card-tag amber">МАКСИМАЛЬНАЯ АГРЕССИЯ</div>
+        <div class="card-num">ВАРИАНТ 02</div>
+        <div class="preview-canvas">
+          <svg width="340" height="140" viewBox="0 0 500 200">
+            <!-- Predator Claws Vector -->
+            <g transform="translate(15, -20) scale(0.9)">
+              <path d="M 45,40 L 95,18 L 85,210 L 45,170 Z" fill="#CBD5E1" />
+              <path d="M 102,95 L 205,25 L 225,52 L 132,122 Z" fill="#F59E0B" />
+              <path d="M 110,132 L 220,115 L 205,148 L 115,160 Z" fill="#FFFFFF" />
+              <path d="M 105,170 L 195,160 L 135,232 L 95,200 Z" fill="#F59E0B" />
+            </g>
+            <!-- Typography -->
+            <g transform="translate(235, 75)">
+              <text x="0" y="32" font-family="'Montserrat', sans-serif" font-weight="900" font-size="44" fill="#FFFFFF" letter-spacing="8">КАЛКАН</text>
+              <text x="4" y="68" font-family="'Montserrat', sans-serif" font-weight="800" font-size="16" fill="#F59E0B" letter-spacing="12">СПОРТ</text>
+              <text x="4" y="94" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="11" fill="#64748B" letter-spacing="2">СААТ-1 · PREDATOR</text>
+            </g>
+          </svg>
+        </div>
+        <h2>«Predator Barys Claws»</h2>
+        <p class="card-desc">
+          Щит, рассеченный тремя яростными диагональными когтями ирбиса. Прямой мост к образу Барыс-Батыра. Максимальный спортивный напор, динамика скорости и преодоления предела.
+        </p>
+        <div class="specs">
+          <div class="spec-item"><span>ГЕОМЕТРИЯ:</span><strong>Хищные слэши</strong></div>
+          <div class="spec-item"><span>СИМВОЛИЗМ:</span><strong>Когти Барса + Щит</strong></div>
+          <div class="spec-item"><span>ПРИМЕНЕНИЕ:</span><strong>Ремешок, Анимация XP</strong></div>
+        </div>
+      </div>
+
+      <!-- CONCEPT 3 -->
+      <div class="card">
+        <div class="card-tag cyan">ТЕХНО-ШЕВРОН</div>
+        <div class="card-num">ВАРИАНТ 03</div>
+        <div class="preview-canvas">
+          <svg width="340" height="140" viewBox="0 0 500 200">
+            <!-- Kinetic Crest Vector -->
+            <g transform="translate(20, -20) scale(0.9)">
+              <path d="M 50,25 L 105,25 L 105,225 L 50,185 Z" fill="#FFFFFF" />
+              <rect x="76" y="80" width="8" height="65" rx="4" fill="#00F0FF" />
+              <path d="M 120,105 L 195,30 L 235,30 L 155,115 Z" fill="#00F0FF" />
+              <path d="M 120,135 L 155,125 L 235,210 L 195,210 Z" fill="#00F0FF" />
+            </g>
+            <!-- Typography -->
+            <g transform="translate(235, 75)">
+              <text x="0" y="32" font-family="'Montserrat', sans-serif" font-weight="900" font-size="44" fill="#FFFFFF" letter-spacing="8">KALKAN</text>
+              <text x="4" y="68" font-family="'Montserrat', sans-serif" font-weight="800" font-size="16" fill="#00F0FF" letter-spacing="12">SPORT</text>
+              <text x="4" y="94" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="11" fill="#64748B" letter-spacing="2">SAAT-1 · KINETIC</text>
+            </g>
+          </svg>
+        </div>
+        <h2>«Kinetic K-Chevron»</h2>
+        <p class="card-desc">
+          Сверхчистая технократичная геометрия: монолитная левая опора (стальная стойкость) и двойные стрелы-шевроны (Жебе / Стрела), устремленные вперед. Идеально для микро-размеров и гравировки заводной головки.
+        </p>
+        <div class="specs">
+          <div class="spec-item"><span>ГЕОМЕТРИЯ:</span><strong>Острый шеврон</strong></div>
+          <div class="spec-item"><span>СИМВОЛИЗМ:</span><strong>Стрела (Жебе) + Воля</strong></div>
+          <div class="spec-item"><span>ПРИМЕНЕНИЕ:</span><strong>Заводная головка, UI</strong></div>
+        </div>
+      </div>
+
+      <!-- CONCEPT 4 -->
+      <div class="card">
+        <div class="card-tag purple">НОМАДИЧЕСКИЙ КИБЕР-ЩИТ</div>
+        <div class="card-num">ВАРИАНТ 04</div>
+        <div class="preview-canvas">
+          <svg width="340" height="140" viewBox="0 0 500 200">
+            <!-- Octagon Shield Vector -->
+            <g transform="translate(25, -20) scale(0.9)">
+              <polygon points="125,15 195,45 225,115 195,195 125,235 55,195 25,115 55,45" fill="#1E293B" stroke="#A855F7" stroke-width="4" />
+              <path d="M 75,70 L 115,115 L 75,160 Z" fill="#A855F7" />
+              <path d="M 125,45 L 175,70 L 135,115 Z" fill="#FFFFFF" />
+              <path d="M 135,125 L 175,170 L 125,195 Z" fill="#A855F7" />
+              <circle cx="125" cy="120" r="10" fill="#A855F7" />
+            </g>
+            <!-- Typography -->
+            <g transform="translate(235, 75)">
+              <text x="0" y="32" font-family="'Montserrat', sans-serif" font-weight="900" font-size="44" fill="#FFFFFF" letter-spacing="8">КАЛКАН</text>
+              <text x="4" y="68" font-family="'Montserrat', sans-serif" font-weight="800" font-size="16" fill="#A855F7" letter-spacing="12">СПОРТ</text>
+              <text x="4" y="94" font-family="'JetBrains Mono', monospace" font-weight="700" font-size="11" fill="#64748B" letter-spacing="2">СААТ-1 · DEFENDER</text>
+            </g>
+          </svg>
+        </div>
+        <h2>«Nomadic Defender (Түндүк)»</h2>
+        <p class="card-desc">
+          Октагональный боевой калкан кочевников с сакральным перекрестием түндүка и центральным оптическим сенсором биометрии. Сочетает историческое наследие Центральной Азии и титановую архитектуру умных часов.
+        </p>
+        <div class="specs">
+          <div class="spec-item"><span>ГЕОМЕТРИЯ:</span><strong>Октагон брони</strong></div>
+          <div class="spec-item"><span>СИМВОЛИЗМ:</span><strong>Түндүк + Циферблат</strong></div>
+          <div class="spec-item"><span>ПРИМЕНЕНИЕ:</span><strong>Задняя крышка сенсоров</strong></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- WATCH MOCKUP SHOWCASE -->
+    <div class="watch-showcase">
+      <div class="badge">ИНТЕГРАЦИЯ С ЖЕЛЕЗОМ</div>
+      <h2 style="font-size: 32px; font-weight: 900; margin-bottom: 8px;">Смарт-часы «СААТ-1» (KALKAN SPORT)</h2>
+      <p style="color: var(--muted); max-width: 600px; margin: 0 auto;">
+        Как агрессивный логотип «Stealth Apex» органично смотрится на титановом безеле и циферблате флагманской модели.
+      </p>
+
+      <div class="watch-bezel">
+        <svg width="60" height="60" viewBox="0 0 260 260">
+          <g transform="translate(0,0)">
+            <path d="M 60,30 L 122,12 L 122,228 L 60,185 L 52,110 Z" fill="#FFFFFF" />
+            <path d="M 144,20 L 238,52 L 182,118 L 144,118 Z" fill="#00FFA3" />
+            <path d="M 144,134 L 208,134 L 144,244 Z" fill="#00FFA3" />
+            <path d="M 215,134 L 250,90 L 250,158 L 156,254 L 144,244 Z" fill="#CBD5E1" />
+          </g>
+        </svg>
+        <div class="watch-brand">KALKAN</div>
+        <div class="watch-model">СААТ-1 · PRO</div>
+        <div class="watch-stat">79<span style="font-size: 16px; color: var(--mint);">%</span></div>
+        <div class="watch-sub">RECOVERY · SAGE ZONE</div>
+      </div>
+
+      <p style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--muted);">
+        Векторные исходники сохранены в: <code style="color: var(--mint); background: #131824; padding: 4px 8px; border-radius: 4px;">KALKAN.svg</code> и <code style="color: var(--mint); background: #131824; padding: 4px 8px; border-radius: 4px;">KALKAN_OPTIONS.svg</code>
+      </p>
+    </div>
+
+    <footer>
+      KALKAN DEFENSE TECH · HARDWARE CALIBRE: СААТ-1 · ALMATY / BISHKEK · 2026
+    </footer>
+
+  </div>
+</body>
+</html>
