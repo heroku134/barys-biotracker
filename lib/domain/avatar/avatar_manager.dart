@@ -232,10 +232,12 @@ class AvatarManager {
   static const String _keyQuestBedtime = 'quest_bedtime_';
 
   static int _cachedLevel = 1;
-  static int _cachedXp = 0;
+  static int _cachedXp = 298;
   static bool _isLoaded = false;
   static DateTime? _lastWorkoutTime;
   static AvatarVisualState? _demoStateOverride;
+
+  static final ValueNotifier<int> xpNotifier = ValueNotifier<int>(_cachedXp);
 
   static bool _isJournalLoggedToday = false;
   static bool _isBedtimeLockedToday = false;
@@ -245,6 +247,11 @@ class AvatarManager {
 
   static void setJournalLoggedForTesting(bool val) => _isJournalLoggedToday = val;
   static void setBedtimeLockedForTesting(bool val) => _isBedtimeLockedToday = val;
+  static void setXpForTesting(int xp, {int level = 1}) {
+    _cachedXp = xp;
+    _cachedLevel = level;
+    xpNotifier.value = xp;
+  }
 
   static Future<void> completeJournalQuest() async {
     if (_isJournalLoggedToday) return;
@@ -275,14 +282,16 @@ class AvatarManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       _cachedLevel = prefs.getInt(_keyLevel) ?? 1;
-      _cachedXp = prefs.getInt(_keyXp) ?? 0;
+      _cachedXp = prefs.getInt(_keyXp) ?? 298;
+      xpNotifier.value = _cachedXp;
       final dateStr = DateTime.now().toIso8601String().substring(0, 10);
       _isJournalLoggedToday = prefs.getBool('$_keyQuestJournal$dateStr') ?? false;
       _isBedtimeLockedToday = prefs.getBool('$_keyQuestBedtime$dateStr') ?? false;
       _isLoaded = true;
     } catch (_) {
       _cachedLevel = 1;
-      _cachedXp = 0;
+      _cachedXp = 298;
+      xpNotifier.value = _cachedXp;
     }
   }
 
@@ -587,6 +596,7 @@ class AvatarManager {
 
     _cachedLevel = level;
     _cachedXp = currentXp;
+    xpNotifier.value = currentXp;
 
     try {
       final prefs = await SharedPreferences.getInstance();

@@ -8,6 +8,7 @@ import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import '../widgets/bio_avatar_widget.dart';
+import '../widgets/circa_edge_fade.dart';
 import '../widgets/glass_card.dart';
 
 class BioAvatarScreen extends StatefulWidget {
@@ -38,6 +39,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
 
     _checkMorningWakingStatus();
 
+    AvatarManager.xpNotifier.addListener(_onXpChanged);
+
     widget.bleBridge.telemetryStream.listen((data) {
       if (mounted) {
         setState(() {
@@ -46,6 +49,20 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
         });
       }
     });
+  }
+
+  void _onXpChanged() {
+    if (mounted) {
+      setState(() {
+        _profile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    AvatarManager.xpNotifier.removeListener(_onXpChanged);
+    super.dispose();
   }
 
   Future<void> _checkMorningWakingStatus() async {
@@ -165,18 +182,28 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
               ),
               const SizedBox(height: 16),
 
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildScenarioChip(null, 'Автономный (ИИ)'),
-                  _buildScenarioChip(AvatarVisualState.charged, 'Бодрый (Recovery ≥75%)'),
-                  _buildScenarioChip(AvatarVisualState.normal, 'В тонусе (50–74%)'),
-                  _buildScenarioChip(AvatarVisualState.tired, 'Уставший (<34%)'),
-                  _buildScenarioChip(AvatarVisualState.sleep, 'Сон / Отбой'),
-                  _buildScenarioChip(AvatarVisualState.postWorkout, 'После спорта'),
-                  _buildScenarioChip(AvatarVisualState.meditation, 'Баланс / Дзен'),
-                ],
+              CircaEdgeFade(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [
+                      _buildScenarioChip(null, 'Автономный (ИИ)'),
+                      const SizedBox(width: 8),
+                      _buildScenarioChip(AvatarVisualState.charged, 'Бодрый (≥75%)'),
+                      const SizedBox(width: 8),
+                      _buildScenarioChip(AvatarVisualState.normal, 'В тонусе (50–74%)'),
+                      const SizedBox(width: 8),
+                      _buildScenarioChip(AvatarVisualState.tired, 'Уставший (<34%)'),
+                      const SizedBox(width: 8),
+                      _buildScenarioChip(AvatarVisualState.sleep, 'Сон / Отбой'),
+                      const SizedBox(width: 8),
+                      _buildScenarioChip(AvatarVisualState.postWorkout, 'После спорта'),
+                      const SizedBox(width: 8),
+                      _buildScenarioChip(AvatarVisualState.meditation, 'Баланс / Дзен'),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),

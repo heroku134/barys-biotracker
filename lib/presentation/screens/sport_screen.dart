@@ -8,6 +8,7 @@ import '../../data/storage/workout_repository.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/workout_session.dart';
+import '../widgets/circa_edge_fade.dart';
 import '../widgets/glass_card.dart';
 
 class SportScreen extends StatefulWidget {
@@ -259,44 +260,47 @@ class _SportScreenState extends State<SportScreen> {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           children: [
-            // Селектор спортивных категорий
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: SportType.values.map((sport) {
-                  final isSelected = _selectedSport == sport;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      selected: isSelected,
-                      showCheckmark: false,
-                      avatar: Icon(
-                        sport.icon,
-                        size: 16,
-                        color: isSelected ? AppColors.stage : AppColors.muted,
-                      ),
-                      label: Text(
-                        sport.title,
-                        style: TextStyle(
-                          color: isSelected ? AppColors.stage : AppColors.fg,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+            // Селектор спортивных категорий с аналоговым Edge-Fade затуханием
+            CircaEdgeFade(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: SportType.values.map((sport) {
+                    final isSelected = _selectedSport == sport;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        selected: isSelected,
+                        showCheckmark: false,
+                        avatar: Icon(
+                          sport.icon,
+                          size: 16,
+                          color: isSelected ? AppColors.stage : AppColors.muted,
                         ),
+                        label: Text(
+                          sport.title,
+                          style: TextStyle(
+                            color: isSelected ? AppColors.stage : AppColors.fg,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        selectedColor: AppColors.amber,
+                        backgroundColor: AppColors.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: isSelected ? AppColors.amber : AppColors.line),
+                        ),
+                        onSelected: (selected) {
+                          if (selected && !_isWorkoutActive) {
+                            setState(() => _selectedSport = sport);
+                          }
+                        },
                       ),
-                      selectedColor: AppColors.amber,
-                      backgroundColor: AppColors.surface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: isSelected ? AppColors.amber : AppColors.line),
-                      ),
-                      onSelected: (selected) {
-                        if (selected && !_isWorkoutActive) {
-                          setState(() => _selectedSport = sport);
-                        }
-                      },
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
             const SizedBox(height: 16),

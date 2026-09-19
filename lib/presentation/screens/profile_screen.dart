@@ -12,6 +12,8 @@ import '../widgets/circa_text_field.dart';
 import '../widgets/glass_card.dart';
 import 'auth_screen.dart';
 import 'device_settings_screen.dart';
+import 'private_league_screen.dart';
+import '../../core/circa_haptics.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -458,6 +460,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'СОХРАНИТЬ ПРОФИЛЬ',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
                       ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Сообщество и Приватные лиги
+            const Text(
+              'СООБЩЕСТВО И ПРИВАТНЫЕ ЛИГИ',
+              style: TextStyle(
+                color: AppColors.muted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2.0,
+              ),
+            ),
+            const SizedBox(height: 10),
+            GlassCard(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  CircaHaptics.ringZoneTick();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.amber.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.shield_outlined, color: AppColors.amber, size: 20),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Приватная лига: «КРУГ БАТЫРОВ»',
+                              style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              '4 из 5 участников · Узкий круг доверия',
+                              style: TextStyle(color: AppColors.muted, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.faint),
+                    ],
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 24),

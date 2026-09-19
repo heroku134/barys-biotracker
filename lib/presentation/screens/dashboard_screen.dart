@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/avatar/avatar_manager.dart';
@@ -18,6 +19,7 @@ import '../widgets/circa_share_sheet.dart';
 import '../widgets/circa_strain_milestone_badge.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/live_pulse_wave.dart';
+import 'private_league_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -76,6 +78,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
     final now = DateTime.now();
     return weekdays[(now.weekday - 1).clamp(0, 6)];
+  }
+
+  void _triggerPulseMeasurement() {
+    CircaHaptics.ringZoneTick();
+    widget.bleBridge.triggerHeartRateMeasurement();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.surface,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.rose, width: 1.0),
+          ),
+          content: Row(
+            children: const [
+              Icon(Icons.favorite, color: AppColors.rose, size: 18),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Оптический замер ЧСС и фотоплетизмограммы запущен через сенсор CIRCA',
+                  style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -611,74 +643,209 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // 7. Живой пульс в реальном времени с волной
+            // 7. Круг доверия CIRCA (Приватная лига 3-5 друзей)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: GestureDetector(
+                  onTap: () {
+                    CircaHaptics.ringZoneTick();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge),
+                      ),
+                    );
+                  },
+                  child: GlassCard(
+                    borderRadius: 20,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: const [
+                                Icon(Icons.shield_outlined, color: AppColors.amber, size: 16),
+                                SizedBox(width: 8),
+                                Text(
+                                  'КРУГ ДОВЕРИЯ · ПРИВАТНАЯ ЛИГА',
+                                  style: TextStyle(
+                                    color: AppColors.muted,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 2.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.amber.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                '4 / 5 МЕСТ',
+                                style: TextStyle(
+                                  color: AppColors.amber,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildFriendAvatarChip('ДС', 'Даурен', 86, AppColors.sage),
+                            _buildFriendAvatarChip('АМ', 'Алия', 68, AppColors.amber),
+                            _buildFriendAvatarChip('ТК', 'Тимур', 92, AppColors.sage),
+                            _buildFriendAvatarChip('ВЫ', 'Вы', readiness.score, readiness.zone.color),
+                            _buildAddFriendSlotChip(),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(height: 1, color: AppColors.line),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: const [
+                            Text(
+                              'Ср. баланс круга: 81% · Зеленый коридор',
+                              style: TextStyle(
+                                color: AppColors.faint,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Вся лига',
+                                  style: TextStyle(
+                                    color: AppColors.amber,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.amber),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 8. Живой пульс в реальном времени с волной (интерактивный замер)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                child: GlassCard(
-                  borderRadius: 20,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColors.rose,
+                child: GestureDetector(
+                  onTap: _triggerPulseMeasurement,
+                  child: GlassCard(
+                    borderRadius: 20,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.rose,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'ПУЛЬС В РЕАЛЬНОМ ВРЕМЕНИ',
-                                style: TextStyle(
-                                  color: AppColors.muted,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 2.0,
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'ПУЛЬС В РЕАЛЬНОМ ВРЕМЕНИ',
+                                  style: TextStyle(
+                                    color: AppColors.muted,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 2.0,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                '${_telemetry.heartRate}',
-                                style: const TextStyle(
-                                  color: AppColors.fg,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -1.0,
+                              ],
+                            ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  '${_telemetry.heartRate}',
+                                  style: const TextStyle(
+                                    color: AppColors.fg,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -1.0,
+                                  ),
                                 ),
-                              ),
-                              const Text(
-                                ' уд/мин',
-                                style: TextStyle(
-                                  color: AppColors.rose,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
+                                const Text(
+                                  ' уд/мин',
+                                  style: TextStyle(
+                                    color: AppColors.rose,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 48,
-                        child: LivePulseWaveWidget(
-                          bpm: _telemetry.heartRate,
+                              ],
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 48,
+                          child: LivePulseWaveWidget(
+                            bpm: _telemetry.heartRate,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(height: 1, color: AppColors.line),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Вариабельность: ${_telemetry.hrv.round()} мс · В норме',
+                              style: const TextStyle(
+                                color: AppColors.faint,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Row(
+                              children: const [
+                                Text(
+                                  'Запустить замер',
+                                  style: TextStyle(
+                                    color: AppColors.rose,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.rose),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -704,6 +871,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
             fontSize: 12,
             fontWeight: FontWeight.w700,
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFriendAvatarChip(String initials, String name, int score, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.surface,
+                border: Border.all(color: color, width: 1.8),
+              ),
+              child: Center(
+                child: Text(
+                  initials,
+                  style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.stage,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: color, width: 0.8),
+              ),
+              child: Text(
+                '$score%',
+                style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          name,
+          style: const TextStyle(color: AppColors.fg, fontSize: 10.5, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddFriendSlotChip() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.line, width: 1.2),
+          ),
+          child: const Center(
+            child: Icon(Icons.add, color: AppColors.faint, size: 16),
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          '+Друг',
+          style: TextStyle(color: AppColors.faint, fontSize: 10.5, fontWeight: FontWeight.w500),
         ),
       ],
     );
