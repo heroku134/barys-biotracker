@@ -8,7 +8,9 @@ import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
+import '../widgets/circa_calibration_card.dart';
 import '../widgets/circa_morning_briefing_dialog.dart';
+import '../widgets/circa_morning_peak_banner.dart';
 import '../widgets/circa_readiness_ring.dart';
 import '../widgets/circa_recovery_breakdown_sheet.dart';
 import '../widgets/circa_share_sheet.dart';
@@ -199,37 +201,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // 2. Калибровочный баннер (если первые 14 дней)
-            if (_baseline.isCalibrating)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.amber.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.tune, color: AppColors.amber, size: 16),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Калибровка: день ${_baseline.calibrationDaysDone} из 14 · строим персональный профиль',
-                            style: const TextStyle(
-                              color: AppColors.fg,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+            // 2. Утренний «пик» (выезжает сверху с Haptic-волной при входе)
+            SliverToBoxAdapter(
+              child: CircaMorningPeakBanner(
+                telemetry: _telemetry,
+                baseline: _baseline,
+                recoveryScore: readiness.score,
               ),
+            ),
 
             // 3. Главный показатель 1: ВОССТАНОВЛЕНИЕ (Recovery Ring Card)
             SliverToBoxAdapter(
@@ -498,7 +477,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // 6. Живой пульс в реальном времени с волной
+            // 6. Прогресс-карточка первой калибровки (Commitment Device: «База формируется: день 1/14»)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                child: CircaCalibrationCard(
+                  currentDay: _baseline.calibrationDaysDone,
+                  totalDays: 14,
+                ),
+              ),
+            ),
+
+            // 7. Живой пульс в реальном времени с волной
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),

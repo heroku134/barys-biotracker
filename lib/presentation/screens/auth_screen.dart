@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
-import '../widgets/circa_band_radar.dart';
+import '../widgets/circa_breathing_retina.dart';
 import '../widgets/circa_text_field.dart';
 import 'main_shell.dart';
 
@@ -145,15 +145,15 @@ class _AuthScreenState extends State<AuthScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Визуальный радар / логотип браслета CIRCA
+                // Живая дышащая био-ретина CIRCA ONE (респираторный цикл 4.8 сек)
                 const Center(
-                  child: CircaBandRadar(
-                    size: 140,
+                  child: CircaBreathingRetina(
+                    size: 145,
                     isScanning: true,
-                    isConnected: false,
+                    accentColor: AppColors.sage,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 22),
 
                 // Заголовок бренда
                 const Text(
