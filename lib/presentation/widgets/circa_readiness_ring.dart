@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../domain/models/readiness.dart';
 
@@ -23,13 +24,16 @@ class _CircaReadinessRingState extends State<CircaReadinessRing>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _progressAnim;
+  bool _hitRoseZone = false;
+  bool _hitAmberZone = false;
 
   @override
   void initState() {
     super.initState();
+    // 1.2 сек кинематографичного дозаполнения (утренний unboxing в стиле Duolingo)
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
     );
     _progressAnim = Tween<double>(
       begin: 0.0,
@@ -38,6 +42,27 @@ class _CircaReadinessRingState extends State<CircaReadinessRing>
       parent: _controller,
       curve: Curves.easeOutCubic,
     ));
+
+    // Микро-вибрация Apple Haptic при пересечении зон восстановления
+    _controller.addListener(() {
+      final currentScore = (widget.score * _controller.value).round();
+      if (currentScore >= 33 && !_hitRoseZone) {
+        _hitRoseZone = true;
+        HapticFeedback.lightImpact();
+      }
+      if (currentScore >= 66 && !_hitAmberZone) {
+        _hitAmberZone = true;
+        HapticFeedback.mediumImpact();
+      }
+    });
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        // Финальный глубокий щелчок фиксации показателя дня
+        HapticFeedback.heavyImpact();
+      }
+    });
+
     _controller.forward();
   }
 
@@ -45,6 +70,8 @@ class _CircaReadinessRingState extends State<CircaReadinessRing>
   void didUpdateWidget(covariant CircaReadinessRing oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.score != widget.score) {
+      _hitRoseZone = false;
+      _hitAmberZone = false;
       _progressAnim = Tween<double>(
         begin: _progressAnim.value,
         end: widget.score / 100.0,

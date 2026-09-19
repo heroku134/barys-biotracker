@@ -384,6 +384,68 @@ class AvatarManager {
     return (level: level, didLevelUp: didLevelUp);
   }
 
+  /// Ежедневный «директивный контраст»: смысл фразы Барыса меняется
+  /// по динамической разнице между Recovery и Strain (провокация vs забота/остановка)
+  static ({String directiveType, String quote}) getDirectiveContrastQuote({
+    required int recoveryScore,
+    required double currentStrain,
+    required double targetStrainMin,
+    required double targetStrainMax,
+    AvatarVisualState? state,
+  }) {
+    // 1. Опасный перетрен: Низкий Recovery (< 45%), но Strain растет (>= 7.0) -> СТРОГАЯ ЗАБОТА
+    if (recoveryScore < 45 && currentStrain >= 7.0) {
+      return (
+        directiveType: 'ЗАБОТА И ОСТАНОВКА',
+        quote:
+            '«Стой, батыр. ЦНС истощена ($recoveryScore%), а ты продолжаешь жечь резервы (${currentStrain.toStringAsFixed(1)} Strain). Сегодня только сауна, магний и ранний отбой до 22:30. Не ломай тело.»',
+      );
+    }
+
+    // 2. Охранительный режим: Низкий Recovery (< 45%), Strain спокойный (< 7.0) -> ПОДДЕРЖКА
+    if (recoveryScore < 45) {
+      return (
+        directiveType: 'ОХРАНИТЕЛЬНЫЙ РЕЖИМ',
+        quote:
+            '«Мудрое решение. Барыс копит силы у костра. Сегодня день клеточного восстановления — прогулка и глубокое дыхание.»',
+      );
+    }
+
+    // 3. Провокация: Высокий Recovery (>= 75%), но Strain простаивает (< 6.0) -> ПРОВОКАЦИЯ
+    if (recoveryScore >= 75 && currentStrain < 6.0) {
+      return (
+        directiveType: 'ПРОВОКАЦИЯ К ДЕЙСТВИЮ',
+        quote:
+            '«Твоя нервная система на пике ($recoveryScore%), а тело простаивает (${currentStrain.toStringAsFixed(1)} Strain). Пора дать взрывной импульс — горы не ждут, Батыр!»',
+      );
+    }
+
+    // 4. Синхрония: Высокий/Оптимальный Recovery (>= 67%), Strain в целевой зоне -> ОДОБРЕНИЕ
+    if (recoveryScore >= 67 && currentStrain >= targetStrainMin && currentStrain <= targetStrainMax + 1.0) {
+      return (
+        directiveType: 'ТОЧНАЯ СИНХРОНИЯ',
+        quote:
+            '«Идеальный синхрон. Нагрузка (${currentStrain.toStringAsFixed(1)}) точно ложится в адаптационный резерв дня. Держи этот темп до вечера.»',
+      );
+    }
+
+    // 5. Перегрузка: дневной Strain сильно превысил максимум -> ТЕРАПИЯ
+    if (currentStrain > targetStrainMax + 1.5) {
+      return (
+        directiveType: 'СНЯТИЕ КОРТИЗОЛА',
+        quote:
+            '«Лимит дня превышен (${currentStrain.toStringAsFixed(1)} / ${targetStrainMax.toStringAsFixed(1)}). Обязательно включи 10 минут вечерней медитации, чтобы сбить кортизол перед сном.»',
+      );
+    }
+
+    // 6. Умеренная зона: Зона 2 и ровный темп -> БАЛАНС
+    return (
+      directiveType: 'БАЛАНС ВЫНОСЛИВОСТИ',
+      quote:
+          '«Ровный пульс в Зоне 2 — фундамент выносливости сердца. Добери целевые ${targetStrainMin.toStringAsFixed(1)} Strain без надрыва.»',
+    );
+  }
+
   /// Мудрое напутствие Барыса для ритуала дня
   static String getRitualQuote([dynamic context]) {
     if (context is AvatarVisualState) {

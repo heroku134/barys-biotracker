@@ -105,6 +105,38 @@ void main() {
       final chargedQuote = AvatarManager.getRitualQuote(AvatarVisualState.charged);
       expect(chargedQuote, contains('Strain'));
     });
+
+    test('Directive contrast quotes correctly switch between provocation and care', () {
+      // 1. Провокация: Высокий Recovery (91%), низкий Strain (2.0)
+      final provocation = AvatarManager.getDirectiveContrastQuote(
+        recoveryScore: 91,
+        currentStrain: 2.0,
+        targetStrainMin: 12.0,
+        targetStrainMax: 15.0,
+      );
+      expect(provocation.directiveType, contains('ПРОВОКАЦИЯ'));
+      expect(provocation.quote, contains('простаивает'));
+
+      // 2. Забота: Низкий Recovery (35%), растущий Strain (8.5)
+      final care = AvatarManager.getDirectiveContrastQuote(
+        recoveryScore: 35,
+        currentStrain: 8.5,
+        targetStrainMin: 6.0,
+        targetStrainMax: 9.0,
+      );
+      expect(care.directiveType, contains('ЗАБОТА'));
+      expect(care.quote, contains('Стой, батыр'));
+
+      // 3. Синхрония: Оптимальный Recovery (80%), Strain в целевом бюджете (13.5)
+      final sync = AvatarManager.getDirectiveContrastQuote(
+        recoveryScore: 80,
+        currentStrain: 13.5,
+        targetStrainMin: 12.0,
+        targetStrainMax: 15.0,
+      );
+      expect(sync.directiveType, contains('СИНХРОНИЯ'));
+      expect(sync.quote, contains('Идеальный синхрон'));
+    });
   });
 
   group('Quiet Luxury Share Card Tests', () {
