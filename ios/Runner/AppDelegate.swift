@@ -13,7 +13,14 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
+    if window == nil {
+      window = UIWindow(frame: UIScreen.main.bounds)
+    }
+    let controller : FlutterViewController = (window?.rootViewController as? FlutterViewController) ?? FlutterViewController(project: nil, initialRoute: nil, nibName: nil, bundle: nil)
+    if window?.rootViewController == nil {
+      window?.rootViewController = controller
+      window?.makeKeyAndVisible()
+    }
 
     // 1. MethodChannel для команд с Flutter
     let methodChannel = FlutterMethodChannel(name: methodChannelName, binaryMessenger: controller.binaryMessenger)
