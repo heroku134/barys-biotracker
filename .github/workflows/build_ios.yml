@@ -51,7 +51,18 @@ jobs:
         run: flutter pub get
 
       - name: Build iOS application without code signing
-        run: flutter build ios --release --no-codesign
+        run: |
+          flutter build ios --config-only --no-codesign
+          xcodebuild build \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR="$(pwd)/build/ios/iphoneos"
 
       - name: Package Payload into IPA
         run: |
