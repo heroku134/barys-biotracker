@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1600" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&amp;display=swap');
+      .label-mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; fill: #666666; letter-spacing: 2px; }
+      .sub-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; fill: #999999; letter-spacing: 1px; }
+    </style>
+    
+    <g id="flagship-crest">
+      <polygon points="400.0,202.0 435.0,380.0 400.0,558.0 365.0,380.0" fill="#000000" />
+<polygon points="394.0,126.0 210.0,156.0 165.0,280.0 240.0,320.0 260.0,280.0 215.0,255.0 245.0,195.0 394.0,170.0" fill="#000000" />
+<polygon points="406.0,126.0 590.0,156.0 635.0,280.0 560.0,320.0 540.0,280.0 585.0,255.0 555.0,195.0 406.0,170.0" fill="#000000" />
+<polygon points="180.0,310.0 255.0,350.0 345.0,475.0 394.0,525.0 394.0,640.0 280.0,530.0 168.0,400.0" fill="#000000" />
+<polygon points="620.0,310.0 545.0,350.0 455.0,475.0 406.0,525.0 406.0,640.0 520.0,530.0 632.0,400.0" fill="#000000" />
+
+    </g>
+
+    <g id="quad-crest">
+      <polygon points="394.0,145.0 205.0,145.0 165.0,280.0 260.0,280.0 278.0,235.0 212.0,235.0 232.0,190.0 394.0,190.0" fill="#000000" />
+<polygon points="406.0,145.0 595.0,145.0 635.0,280.0 540.0,280.0 522.0,235.0 588.0,235.0 568.0,190.0 406.0,190.0" fill="#000000" />
+<polygon points="180.0,312.0 272.0,312.0 394.0,445.0 394.0,635.0 270.0,515.0 180.0,405.0" fill="#000000" />
+<polygon points="620.0,312.0 528.0,312.0 406.0,445.0 406.0,635.0 530.0,515.0 620.0,405.0" fill="#000000" />
+
+    </g>
+  </defs>
+
+  <!-- Pure White Canvas -->
+  <rect width="2400" height="1600" fill="#FFFFFF" />
+
+  <!-- Outer Border Frame (Subtle, Restrained) -->
+  <rect x="60" y="60" width="2280" height="1480" fill="none" stroke="#E5E5E5" stroke-width="1.5" />
+
+  <!-- SECTION 1: PRIMARY FLAGSHIP (5 ELEMENTS) -->
+  <g transform="translate(180, 140)">
+    <use href="#flagship-crest" transform="scale(1.2)" />
+    <text x="480" y="850" class="label-mono" text-anchor="middle">FLAGSHIP · 5 GEOMETRIC ELEMENTS</text>
+    <text x="480" y="875" class="sub-mono" text-anchor="middle">«АРКАР-КАЛКАН» (TEKE MÜYÜZ HERITAGE SHIELD)</text>
+  </g>
+
+  <!-- SECTION 2: EXPLODED VIEW (SHOWING EXACTLY 5 PIECES) -->
+  <g transform="translate(1250, 160)">
+    <text x="450" y="30" class="label-mono" text-anchor="middle">EXPLODED GEOMETRIC ANATOMY (5 PIECES)</text>
+    
+    <!-- Exploded 5 Parts -->
+    <!-- 1. Center Diamond -->
+    <g transform="translate(200, 40) scale(0.65)">
+      <polygon points="400.0,202.0 435.0,380.0 400.0,558.0 365.0,380.0" fill="#000000" />
+    </g>
+    <!-- 2. Left Horn (exploded left & up) -->
+    <g transform="translate(140, -10) scale(0.65)">
+      <polygon points="394.0,126.0 210.0,156.0 165.0,280.0 240.0,320.0 260.0,280.0 215.0,255.0 245.0,195.0 394.0,170.0" fill="#000000" />
+    </g>
+    <!-- 3. Right Horn (exploded right & up) -->
+    <g transform="translate(260, -10) scale(0.65)">
+      <polygon points="406.0,126.0 590.0,156.0 635.0,280.0 560.0,320.0 540.0,280.0 585.0,255.0 555.0,195.0 406.0,170.0" fill="#000000" />
+    </g>
+    <!-- 4. Left Blade (exploded left & down) -->
+    <g transform="translate(140, 90) scale(0.65)">
+      <polygon points="180.0,310.0 255.0,350.0 345.0,475.0 394.0,525.0 394.0,640.0 280.0,530.0 168.0,400.0" fill="#000000" />
+    </g>
+    <!-- 5. Right Blade (exploded right & down) -->
+    <g transform="translate(260, 90) scale(0.65)">
+      <polygon points="620.0,310.0 545.0,350.0 455.0,475.0 406.0,525.0 406.0,640.0 520.0,530.0 632.0,400.0" fill="#000000" />
+    </g>
+
+    <!-- Scale test bar -->
+    <g transform="translate(150, 520)">
+      <text x="0" y="0" class="label-mono">MICRO-SCALE TEST (WATCH CROWN &amp; FABRIC):</text>
+      <!-- 64px -->
+      <g transform="translate(0, 30) scale(0.08)">
+        <use href="#flagship-crest" />
+      </g>
+      <!-- 32px -->
+      <g transform="translate(100, 46) scale(0.04)">
+        <use href="#flagship-crest" />
+      </g>
+      <!-- 16px (Physical 3mm Crown) -->
+      <g transform="translate(170, 54) scale(0.02)">
+        <use href="#flagship-crest" />
+      </g>
+      <!-- 10px Micro -->
+      <g transform="translate(220, 58) scale(0.0125)">
+        <use href="#flagship-crest" />
+      </g>
+    </g>
+  </g>
+
+  <!-- SECTION 3: 4-ELEMENT VARIANT (PURE QUAD) -->
+  <g transform="translate(1250, 840)">
+    <line x1="0" y1="0" x2="900" y2="0" stroke="#E5E5E5" stroke-width="1" />
+    
+    <g transform="translate(0, 60)">
+      <g transform="translate(80, 0) scale(0.7)">
+        <use href="#quad-crest" />
+      </g>
+      <text x="560" y="240" class="label-mono">ALTERNATIVE · 4 GEOMETRIC ELEMENTS</text>
+      <text x="560" y="270" class="sub-mono">«КОШ МҮЙҮЗ» (PURE QUAD HORN-SHIELD)</text>
+      <text x="560" y="300" class="sub-mono">Negative space cuts the sacred arrow-cross</text>
+    </g>
+  </g>
+
+</svg>
