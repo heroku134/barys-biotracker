@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../core/circa_haptics.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/readiness_engine.dart';
 import '../../domain/intelligence/strain_engine.dart';
@@ -80,12 +81,13 @@ class _CircaShareSheetState extends State<CircaShareSheet>
   }
 
   void _handleShare(String actionTitle) {
-    HapticFeedback.heavyImpact();
+    CircaHaptics.cardExport();
     setState(() => _isExporting = true);
 
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() => _isExporting = false);
+        CircaAcoustics.playMechanicalClick();
         final subtitle = _isMotionMode
             ? 'Живая видео-история (5 сек, 60 FPS) готова к публикации'
             : '$actionTitle: карточка 9:16 готова к публикации';

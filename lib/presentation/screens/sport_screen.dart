@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/workout_repository.dart';
 import '../../domain/avatar/avatar_manager.dart';
@@ -50,7 +51,7 @@ class _SportScreenState extends State<SportScreen> {
   }
 
   void _startWorkout() {
-    HapticFeedback.heavyImpact();
+    CircaHaptics.workoutStart();
     setState(() {
       _isWorkoutActive = true;
       _isWorkoutPaused = false;
@@ -86,7 +87,7 @@ class _SportScreenState extends State<SportScreen> {
 
   Future<void> _stopWorkout() async {
     _timer?.cancel();
-    HapticFeedback.heavyImpact();
+    CircaHaptics.workoutFinish();
 
     final duration = _elapsedSeconds;
     final avgHr = widget.bleBridge.currentTelemetry.heartRate;

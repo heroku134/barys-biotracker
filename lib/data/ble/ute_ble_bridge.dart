@@ -69,6 +69,11 @@ class UteBleBridge {
     _simulator.toggleCrisisDemo(crisis);
   }
 
+  void setDemoStrain(double strain) {
+    _useSimulator = true;
+    _simulator.setSimulatedStrain(strain);
+  }
+
   Future<void> startScan() async {
     try {
       await _methodChannel.invokeMethod('startScan');

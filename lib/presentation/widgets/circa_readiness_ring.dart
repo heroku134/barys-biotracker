@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../core/circa_haptics.dart';
 import '../../domain/models/readiness.dart';
 
 class CircaReadinessRing extends StatefulWidget {
@@ -48,18 +48,18 @@ class _CircaReadinessRingState extends State<CircaReadinessRing>
       final currentScore = (widget.score * _controller.value).round();
       if (currentScore >= 33 && !_hitRoseZone) {
         _hitRoseZone = true;
-        HapticFeedback.lightImpact();
+        CircaHaptics.ringZoneTick();
       }
       if (currentScore >= 66 && !_hitAmberZone) {
         _hitAmberZone = true;
-        HapticFeedback.mediumImpact();
+        CircaHaptics.ringZoneTick();
       }
     });
 
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        // Финальный глубокий щелчок фиксации показателя дня
-        HapticFeedback.heavyImpact();
+        // Финальный глубокий щелчок закрытия кольца с механическим звуком
+        CircaHaptics.ringClosure();
       }
     });
 

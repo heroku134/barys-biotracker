@@ -6,6 +6,7 @@ import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/readiness_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
+import '../widgets/circa_film_grain.dart';
 import 'analytics_screen.dart';
 import 'bio_avatar_screen.dart';
 import 'dashboard_screen.dart';
@@ -58,19 +59,21 @@ class _MainShellState extends State<MainShell> {
 
     return Scaffold(
       backgroundColor: AppColors.stage,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: [
-          DashboardScreen(
-            bleBridge: widget.bleBridge,
-            onOpenAvatar: _openAvatarScreen,
-            onOpenDeviceSettings: _openDeviceSettings,
-          ),
-          AnalyticsScreen(bleBridge: widget.bleBridge),
-          BioAvatarScreen(bleBridge: widget.bleBridge),
-          SportScreen(bleBridge: widget.bleBridge),
-          ProfileScreen(bleBridge: widget.bleBridge),
-        ],
+      body: CircaFilmGrainBackground(
+        child: IndexedStack(
+          index: _currentIndex,
+          children: [
+            DashboardScreen(
+              bleBridge: widget.bleBridge,
+              onOpenAvatar: _openAvatarScreen,
+              onOpenDeviceSettings: _openDeviceSettings,
+            ),
+            AnalyticsScreen(bleBridge: widget.bleBridge),
+            BioAvatarScreen(bleBridge: widget.bleBridge),
+            SportScreen(bleBridge: widget.bleBridge),
+            ProfileScreen(bleBridge: widget.bleBridge),
+          ],
+        ),
       ),
 
       // Премиальная 5-сегментная навигационная панель с ЦЕНТРАЛЬНОЙ КНОПКОЙ-МАСКОТОМ

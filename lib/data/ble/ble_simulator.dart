@@ -129,6 +129,11 @@ class BleSimulator {
     _controller.add(_generateTelemetry());
   }
 
+  void setSimulatedStrain(double strain) {
+    _currentDayStrain = strain;
+    _controller.add(_generateTelemetry());
+  }
+
   BleTelemetry _generateTelemetry() {
     return BleTelemetry(
       heartRate: _heartRate,

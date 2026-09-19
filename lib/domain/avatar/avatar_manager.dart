@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_colors.dart';
+import '../../core/circa_haptics.dart';
 import '../intelligence/readiness_engine.dart';
 import '../intelligence/strain_engine.dart';
 import '../models/personal_baseline.dart';
@@ -141,20 +142,28 @@ enum BarysEvolutionTier {
 class DailyQuest {
   final String id;
   final String title;
+  final String subtitle;
   final int current;
   final int target;
   final String unit;
   final int rewardXp;
   final bool isCompleted;
+  final bool isInteractive;
+  final String actionLabel;
+  final IconData? icon;
 
   const DailyQuest({
     required this.id,
     required this.title,
+    this.subtitle = '',
     required this.current,
     required this.target,
     required this.unit,
     required this.rewardXp,
     required this.isCompleted,
+    this.isInteractive = false,
+    this.actionLabel = '',
+    this.icon,
   });
 }
 
@@ -219,6 +228,8 @@ class AvatarProfile {
 class AvatarManager {
   static const String _keyLevel = 'barys_level';
   static const String _keyXp = 'barys_xp';
+  static const String _keyQuestJournal = 'quest_journal_';
+  static const String _keyQuestBedtime = 'quest_bedtime_';
 
   static int _cachedLevel = 1;
   static int _cachedXp = 0;
@@ -226,12 +237,48 @@ class AvatarManager {
   static DateTime? _lastWorkoutTime;
   static AvatarVisualState? _demoStateOverride;
 
+  static bool _isJournalLoggedToday = false;
+  static bool _isBedtimeLockedToday = false;
+
+  static bool get isJournalLoggedToday => _isJournalLoggedToday;
+  static bool get isBedtimeLockedToday => _isBedtimeLockedToday;
+
+  static void setJournalLoggedForTesting(bool val) => _isJournalLoggedToday = val;
+  static void setBedtimeLockedForTesting(bool val) => _isBedtimeLockedToday = val;
+
+  static Future<void> completeJournalQuest() async {
+    if (_isJournalLoggedToday) return;
+    _isJournalLoggedToday = true;
+    final dateStr = DateTime.now().toIso8601String().substring(0, 10);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('$_keyQuestJournal$dateStr', true);
+    } catch (_) {}
+    await addXp(250);
+    await CircaHaptics.questCompleted();
+  }
+
+  static Future<void> completeBedtimeQuest() async {
+    if (_isBedtimeLockedToday) return;
+    _isBedtimeLockedToday = true;
+    final dateStr = DateTime.now().toIso8601String().substring(0, 10);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('$_keyQuestBedtime$dateStr', true);
+    } catch (_) {}
+    await addXp(250);
+    await CircaHaptics.questCompleted();
+  }
+
   static Future<void> init() async {
     if (_isLoaded) return;
     try {
       final prefs = await SharedPreferences.getInstance();
       _cachedLevel = prefs.getInt(_keyLevel) ?? 1;
       _cachedXp = prefs.getInt(_keyXp) ?? 0;
+      final dateStr = DateTime.now().toIso8601String().substring(0, 10);
+      _isJournalLoggedToday = prefs.getBool('$_keyQuestJournal$dateStr') ?? false;
+      _isBedtimeLockedToday = prefs.getBool('$_keyQuestBedtime$dateStr') ?? false;
       _isLoaded = true;
     } catch (_) {
       _cachedLevel = 1;
@@ -417,46 +464,67 @@ class AvatarManager {
         base.recentRecoveryScores.every((s) => s < 34) &&
         readiness.score < 34;
 
-    // Квесты привязаны к реальной физиологии
+    // Квесты привязаны к реальной физиологии: чек-лист из 3 микро-квестов
     final quests = isPause
         ? [
             const DailyQuest(
               id: 'pause_rest',
               title: 'Защита ЦНС: постельный режим и сон >9ч',
+              subtitle: 'Критическое истощение. Принудительная регенерация.',
               current: 1,
               target: 1,
               unit: 'день',
               rewardXp: 300,
               isCompleted: true,
+              actionLabel: 'АКТИВЕН',
+              icon: Icons.shield_outlined,
             ),
           ]
         : [
+            // 1. Закрыть целевой Strain
             DailyQuest(
-              id: 'strain_budget',
-              title: 'Попасть в целевой бюджет нагрузки (${strainResult.targetStrainMin.toStringAsFixed(1)}+ Strain)',
-              current: telemetry.currentDayStrain.round(),
-              target: strainResult.targetStrainMin.round(),
+              id: 'quest_strain',
+              title: 'Закрыть целевой Strain (${strainResult.targetStrainMin.toStringAsFixed(1)}+)',
+              subtitle: '${telemetry.currentDayStrain.toStringAsFixed(1)} / ${strainResult.targetStrainMin.toStringAsFixed(1)} Strain',
+              current: (telemetry.currentDayStrain * 10).round(),
+              target: (strainResult.targetStrainMin * 10).round(),
               unit: 'Strain',
               rewardXp: 300,
               isCompleted: telemetry.currentDayStrain >= strainResult.targetStrainMin,
+              actionLabel: telemetry.currentDayStrain >= strainResult.targetStrainMin ? 'ЗАКРЫТ' : 'В ПРОЦЕССЕ',
+              icon: Icons.bolt_outlined,
             ),
+            // 2. Залогировать био-журнал
             DailyQuest(
-              id: 'sleep_quality',
-              title: 'Качественный сон (восстановление ≥ 85%)',
-              current: (telemetry.sleepEfficiency * 100).round(),
-              target: 85,
-              unit: '%',
+              id: 'quest_journal',
+              title: 'Залогировать вечерний био-журнал',
+              subtitle: _isJournalLoggedToday
+                  ? 'Контекст дня зафиксирован в хронологии'
+                  : 'Отметь вечерний статус или причину стресса',
+              current: _isJournalLoggedToday ? 1 : 0,
+              target: 1,
+              unit: 'запись',
               rewardXp: 250,
-              isCompleted: telemetry.sleepEfficiency >= 0.85,
+              isCompleted: _isJournalLoggedToday,
+              isInteractive: !_isJournalLoggedToday,
+              actionLabel: _isJournalLoggedToday ? 'ЗАЛОГИРОВАНО' : 'ОТМЕТИТЬ',
+              icon: Icons.edit_note_outlined,
             ),
+            // 3. Лечь по расписанию
             DailyQuest(
-              id: 'hrv_range',
-              title: 'ВСР в коридоре личной нормы',
-              current: telemetry.hrv.round(),
-              target: base.hrvNormalMin.round(),
-              unit: 'мс',
-              rewardXp: 200,
-              isCompleted: telemetry.hrv >= base.hrvNormalMin,
+              id: 'quest_bedtime',
+              title: 'Лечь по расписанию (до 22:30)',
+              subtitle: _isBedtimeLockedToday
+                  ? 'Ритуал отбоя зафиксирован на 22:15'
+                  : 'При отбое до 22:30 вероятность зеленой зоны: 84%',
+              current: _isBedtimeLockedToday ? 1 : 0,
+              target: 1,
+              unit: 'ритуал',
+              rewardXp: 250,
+              isCompleted: _isBedtimeLockedToday,
+              isInteractive: !_isBedtimeLockedToday,
+              actionLabel: _isBedtimeLockedToday ? 'ЗАФИКСИРОВАНО' : 'ЗАФИКСИРОВАТЬ',
+              icon: Icons.bedtime_outlined,
             ),
           ];
 
@@ -511,6 +579,10 @@ class AvatarManager {
       level++;
       maxXp = getMaxXpForLevel(level);
       didLevelUp = true;
+    }
+
+    if (didLevelUp) {
+      CircaHaptics.levelUp();
     }
 
     _cachedLevel = level;
