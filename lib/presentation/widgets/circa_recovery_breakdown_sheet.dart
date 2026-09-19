@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../domain/models/readiness.dart';
 
@@ -167,55 +168,8 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                 ),
 
-              // Карточка главного сдерживающего фактора
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.line),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.info_outline, size: 16, color: AppColors.rose),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'КЛЮЧЕВОЙ ВЫВОД',
-                          style: TextStyle(
-                            color: AppColors.rose,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      readiness.primaryNegativeFactor,
-                      style: const TextStyle(
-                        color: AppColors.fg,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      readiness.primaryPositiveFactor,
-                      style: const TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // «Один фактор в фокусе дня» (Каузальный анализ: причина -> следствие)
+              _buildCausalHeroFocusCard(),
               const SizedBox(height: 18),
 
               // Список 5 ночных биомаркеров
@@ -304,6 +258,9 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // Прогноз возврата в зеленую зону (Инструмент вечернего решения)
+              _buildReturnForecastCard(context),
 
               if (telemetry != null && baseline != null) ...[
                 const SizedBox(height: 16),
@@ -442,6 +399,330 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               backgroundColor: AppColors.raised,
               valueColor: AlwaysStoppedAnimation<Color>(color),
               minHeight: 3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Выделенный главный фактор дня с каузальным языком («причина -> следствие»)
+  Widget _buildCausalHeroFocusCard() {
+    final bool isHigh = readiness.score >= 70;
+    final Color accentColor = isHigh ? AppColors.sage : (readiness.score >= 45 ? AppColors.amber : AppColors.rose);
+
+    final String headline;
+    final String causeStory;
+    final String impactText;
+
+    if (readiness.score >= 75) {
+      if (readiness.hrvDiffPercent >= 0) {
+        headline = 'ВСР на +${readiness.hrvDiffPercent}% выше 60-дневной нормы';
+        causeStory = 'Сработал стабильный отбой в 22:15 и 1ч 45м глубокого сна. Блуждающий нерв полностью сбалансировал парасимпатическую систему.';
+        impactText = '+22% к готовности';
+      } else {
+        headline = 'Пульс покоя на ${readiness.rhrDiffBpm.abs()} bpm ниже базы — сердце отдохнуло';
+        causeStory = 'Отсутствие позднего ужина снизило ночные метаболические затраты до минимума.';
+        impactText = '+18% к готовности';
+      }
+    } else if (readiness.score < 50) {
+      if (readiness.hrvDiffPercent < 0) {
+        headline = 'ВСР просела на ${readiness.hrvDiffPercent.abs()}% — виноват поздний отбой в 23:41';
+        causeStory = 'Сдвиг циркадного ритма на 1.5 часа сократил восстановительную фазу медленного сна на 35%. ЦНС осталась в напряжении.';
+        impactText = '-26% от готовности';
+      } else {
+        headline = 'Пульс покоя повышен на +${readiness.rhrDiffBpm} bpm — поздняя нагрузка';
+        causeStory = 'Вечерняя тренировка закончилась слишком близко ко сну. Температура ядра тела не успела снизиться.';
+        impactText = '-20% от готовности';
+      }
+    } else {
+      headline = 'Баланс ВСР и пульса в пределах нормы (Зона 2)';
+      causeStory = 'Фазы сна сбалансированы, но накопленный дневной стресс сдержал выход в суперкомпенсацию.';
+      impactText = 'Стабильная Зона 2';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withValues(alpha: 0.4), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.1),
+            blurRadius: 14,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accentColor,
+                  boxShadow: [
+                    BoxShadow(color: accentColor.withValues(alpha: 0.8), blurRadius: 6),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'ОДИН ФАКТОР В ФОКУСЕ ДНЯ',
+                style: TextStyle(
+                  color: accentColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.6,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  impactText,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            headline,
+            style: const TextStyle(
+              color: AppColors.fg,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            causeStory,
+            style: const TextStyle(
+              color: AppColors.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Прогноз «когда вернусь в зону»: инструмент принятия вечернего решения для возвращаемости
+  Widget _buildReturnForecastCard(BuildContext context) {
+    final int greenProbabilityEarly = readiness.score >= 70 ? 88 : 84;
+    final int greenProbabilityLate = readiness.score >= 70 ? 54 : 46;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 14, bottom: 6),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.sage.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.sage.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'ПРОГНОЗ ВОЗВРАТА В ЗЕЛЕНУЮ ЗОНУ',
+                style: TextStyle(
+                  color: AppColors.sage,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.6,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: AppColors.sage.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'ИНСТРУМЕНТ ВЕЧЕРА',
+                  style: TextStyle(
+                    color: AppColors.sage,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Какое вечернее решение вернет вас на пик адаптации завтра:',
+            style: TextStyle(
+              color: AppColors.muted,
+              fontSize: 11.5,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Сценарий 1: Отбой до 22:30 (Оптимум)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.raised,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.sage.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.sage.withValues(alpha: 0.18),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.bedtime_outlined, size: 16, color: AppColors.sage),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Отбой до 22:30 (Рекомендация CIRCA)',
+                        style: TextStyle(
+                          color: AppColors.fg,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Вероятность зеленой зоны завтра: $greenProbabilityEarly%',
+                        style: const TextStyle(
+                          color: AppColors.sage,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.sage,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$greenProbabilityEarly%',
+                    style: const TextStyle(
+                      color: AppColors.stage,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Сценарий 2: Поздний отбой
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.raised.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.muted),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'При отбое после 23:45 шанс падает до $greenProbabilityLate% (желтая зона)',
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Кнопка фиксации напоминания
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.sage,
+                side: const BorderSide(color: AppColors.sage, width: 1.0),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.notifications_active_outlined, size: 15),
+              label: const Text(
+                'ЗАФИКСИРОВАТЬ РИТУАЛ ОТБОЯ НА 22:15',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppColors.surface,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: AppColors.sage),
+                    ),
+                    content: const Row(
+                      children: [
+                        Icon(Icons.check_circle_outline, color: AppColors.sage, size: 18),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Ритуал зафиксирован: Барыс напомнит об отбое в 22:15.',
+                            style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
