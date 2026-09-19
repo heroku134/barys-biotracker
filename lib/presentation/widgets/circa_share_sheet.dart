@@ -43,32 +43,71 @@ class CircaShareSheet extends StatefulWidget {
   State<CircaShareSheet> createState() => _CircaShareSheetState();
 }
 
-class _CircaShareSheetState extends State<CircaShareSheet> {
+class _CircaShareSheetState extends State<CircaShareSheet>
+    with SingleTickerProviderStateMixin {
   ShareCardTheme _selectedTheme = ShareCardTheme.recovery;
   final GlobalKey _cardKey = GlobalKey();
   bool _isExporting = false;
+  bool _isMotionMode = false;
+  late AnimationController _motionController;
+
+  @override
+  void initState() {
+    super.initState();
+    _motionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 5000),
+    );
+  }
+
+  @override
+  void dispose() {
+    _motionController.dispose();
+    super.dispose();
+  }
+
+  void _toggleMotionMode(bool enabled) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _isMotionMode = enabled;
+      if (enabled) {
+        _motionController.repeat();
+      } else {
+        _motionController.stop();
+        _motionController.reset();
+      }
+    });
+  }
 
   void _handleShare(String actionTitle) {
     HapticFeedback.heavyImpact();
     setState(() => _isExporting = true);
 
-    Future.delayed(const Duration(milliseconds: 450), () {
+    Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() => _isExporting = false);
+        final subtitle = _isMotionMode
+            ? 'Живая видео-история (5 сек, 60 FPS) готова к публикации'
+            : '$actionTitle: карточка 9:16 готова к публикации';
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: AppColors.sage, width: 1.0),
+              side: const BorderSide(color: AppColors.amber, width: 1.0),
             ),
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: AppColors.sage, size: 20),
+                Icon(
+                  _isMotionMode ? Icons.movie_filter_outlined : Icons.check_circle,
+                  color: AppColors.amber,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '$actionTitle: карточка 9:16 готова к публикации',
+                    subtitle,
                     style: const TextStyle(
                       color: AppColors.fg,
                       fontSize: 12,
@@ -153,7 +192,94 @@ class _CircaShareSheetState extends State<CircaShareSheet> {
               ],
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
+
+            // Переключатель формата: СТАТИЧНЫЙ PNG vs ЖИВАЯ СТОРИС 5 СЕК
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _toggleMotionMode(false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        decoration: BoxDecoration(
+                          color: !_isMotionMode ? AppColors.raised : Colors.transparent,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.photo_outlined,
+                                size: 14,
+                                color: !_isMotionMode ? AppColors.fg : AppColors.muted,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'СТАТИЧНЫЙ PNG',
+                                style: TextStyle(
+                                  color: !_isMotionMode ? AppColors.fg : AppColors.muted,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _toggleMotionMode(true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _isMotionMode ? AppColors.amber.withValues(alpha: 0.2) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(9),
+                          border: _isMotionMode
+                              ? Border.all(color: AppColors.amber.withValues(alpha: 0.5))
+                              : null,
+                        ),
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.movie_creation_outlined,
+                                size: 14,
+                                color: _isMotionMode ? AppColors.amber : AppColors.muted,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'ЖИВАЯ СТОРИС (5 СЕК)',
+                                style: TextStyle(
+                                  color: _isMotionMode ? AppColors.amber : AppColors.muted,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 10),
 
             // Переключатель тем карточки
             Container(
@@ -198,33 +324,39 @@ class _CircaShareSheetState extends State<CircaShareSheet> {
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
             // Превью карточки 9:16 с масштабированием
             ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.52,
+                maxHeight: MediaQuery.of(context).size.height * 0.48,
               ),
               child: Center(
                 child: FittedBox(
                   fit: BoxFit.contain,
                   child: RepaintBoundary(
                     key: _cardKey,
-                    child: CircaShareCardWidget(
-                      theme: _selectedTheme,
-                      telemetry: widget.telemetry,
-                      baseline: widget.baseline,
-                      readiness: readiness,
-                      avatarProfile: avatarProfile,
-                      strainResult: strainResult,
-                      userName: widget.userName,
+                    child: AnimatedBuilder(
+                      animation: _motionController,
+                      builder: (context, _) {
+                        return CircaShareCardWidget(
+                          theme: _selectedTheme,
+                          telemetry: widget.telemetry,
+                          baseline: widget.baseline,
+                          readiness: readiness,
+                          avatarProfile: avatarProfile,
+                          strainResult: strainResult,
+                          userName: widget.userName,
+                          animationProgress: _isMotionMode ? _motionController.value : null,
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
 
             // Кнопки действий
             Row(
@@ -243,7 +375,7 @@ class _CircaShareSheetState extends State<CircaShareSheet> {
                     ),
                     onPressed: _isExporting
                         ? null
-                        : () => _handleShare('Поделиться'),
+                        : () => _handleShare(_isMotionMode ? 'Экспорт видео-сторис' : 'Поделиться'),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -257,11 +389,11 @@ class _CircaShareSheetState extends State<CircaShareSheet> {
                             ),
                           )
                         else ...[
-                          const Icon(Icons.ios_share, size: 18),
+                          Icon(_isMotionMode ? Icons.movie_filter : Icons.ios_share, size: 18),
                           const SizedBox(width: 8),
-                          const Text(
-                            'ПОДЕЛИТЬСЯ',
-                            style: TextStyle(
+                          Text(
+                            _isMotionMode ? 'ЭКСПОРТ СТОРИС 5s' : 'ПОДЕЛИТЬСЯ',
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.2,
@@ -287,15 +419,15 @@ class _CircaShareSheetState extends State<CircaShareSheet> {
                     onPressed: _isExporting
                         ? null
                         : () => _handleShare('Сохранено в галерею'),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.download, size: 18, color: AppColors.muted),
-                        SizedBox(width: 4),
+                        const Icon(Icons.download, size: 16, color: AppColors.muted),
+                        const SizedBox(width: 4),
                         Text(
-                          'PNG',
-                          style: TextStyle(
-                            fontSize: 12,
+                          _isMotionMode ? 'MP4' : 'PNG',
+                          style: const TextStyle(
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.0,
                           ),

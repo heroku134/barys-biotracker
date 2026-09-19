@@ -43,7 +43,24 @@ class BleSimulator {
 
       // Физиологическое естественное колебание пульса
       final drift = (math.sin(_phase) * 4).round();
-      if (_isSimulatedTired) {
+      if (_isCrisisDemo) {
+        _heartRate = 118 + (math.sin(_phase) * 2).round();
+        _hrv = 22.0 + (math.cos(_phase) * 2);
+        _restingHeartRate = 78;
+        _respiratoryRate = 19.5;
+        _skinTempDeviation = 0.95;
+        _sleepMinutes = 240;
+        _deepSleepMinutes = 20;
+        _remSleepMinutes = 30;
+        _timeInBedMinutes = 360;
+        _sleepEfficiency = 0.62;
+        _sleepConsistency = 0.50;
+        _restorativeSleepRatio = 0.25;
+        _currentDayStrain = 18.5;
+        _yesterdayStrain = 19.0;
+        _zoneMinutes = [15, 20, 45, 55, 35];
+        _currentStressScore = 89;
+      } else if (_isSimulatedTired) {
         _heartRate = 88 + drift; // Тахикардия при усталости
         _hrv = 34.0 + (math.cos(_phase) * 3);
         _restingHeartRate = 62;
@@ -83,8 +100,27 @@ class BleSimulator {
     });
   }
 
+  bool _isCrisisDemo = false;
+  bool get isCrisisDemo => _isCrisisDemo;
+  bool get isSimulatedTired => _isSimulatedTired;
+
   void toggleTiredDemo(bool tired) {
     _isSimulatedTired = tired;
+    _controller.add(_generateTelemetry());
+  }
+
+  void toggleCrisisDemo(bool crisis) {
+    _isCrisisDemo = crisis;
+    if (crisis) {
+      _heartRate = 118;
+      _hrv = 22.0;
+      _restingHeartRate = 78;
+      _respiratoryRate = 19.5;
+      _skinTempDeviation = 0.95;
+      _currentDayStrain = 18.5;
+      _yesterdayStrain = 19.0;
+      _currentStressScore = 89;
+    }
     _controller.add(_generateTelemetry());
   }
 

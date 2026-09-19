@@ -27,6 +27,8 @@ class CircaShareCardWidget extends StatelessWidget {
   final StrainCalculationResult strainResult;
   final String userName;
   final String cityName;
+  final double? animationProgress;
+  final String? customSerialNo;
 
   const CircaShareCardWidget({
     super.key,
@@ -38,17 +40,51 @@ class CircaShareCardWidget extends StatelessWidget {
     required this.strainResult,
     this.userName = 'Данияр',
     this.cityName = 'ALMATY',
+    this.animationProgress,
+    this.customSerialNo,
   });
+
+  /// Проверка на редкую карточку (Рекорд готовности ≥95 или высокий синхрон)
+  bool get isRareGold =>
+      readiness.score >= 95 || (readiness.score >= 90 && strainResult.currentStrain >= 14.0);
+
+  /// Серийный номер карточки в ювелирном формате
+  String get serialNumber {
+    if (customSerialNo != null) return customSerialNo!;
+    switch (theme) {
+      case ShareCardTheme.recovery:
+        final numStr = isRareGold ? '007' : '048';
+        return 'RECOVERY №$numStr / 2026';
+      case ShareCardTheme.strain:
+        return 'STRAIN №112 / 2026';
+      case ShareCardTheme.barys:
+        return 'BATYR №019 / 2026';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final progress = (animationProgress ?? 1.0).clamp(0.0, 1.0);
+
     return Container(
       width: 360,
       height: 640,
       decoration: BoxDecoration(
         color: AppColors.stage,
-        border: Border.all(color: AppColors.line, width: 1.0),
+        border: Border.all(
+          color: isRareGold ? AppColors.amber : AppColors.line,
+          width: isRareGold ? 1.6 : 1.0,
+        ),
         borderRadius: BorderRadius.circular(24),
+        boxShadow: isRareGold
+            ? [
+                BoxShadow(
+                  color: AppColors.amber.withValues(alpha: 0.24),
+                  blurRadius: 28,
+                  spreadRadius: 2,
+                ),
+              ]
+            : null,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
       child: Column(
@@ -57,43 +93,91 @@ class CircaShareCardWidget extends StatelessWidget {
           // 1. Верхняя архитектурная сетка (Header)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'CIRCA ONE',
-                    style: TextStyle(
-                      color: AppColors.fg,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 3.2,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          const Text(
+                            'CIRCA ONE',
+                            style: TextStyle(
+                              color: AppColors.fg,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 3.2,
+                            ),
+                          ),
+                          if (isRareGold) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.amber.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.amber.withValues(alpha: 0.6)),
+                              ),
+                              child: const Text(
+                                'EDITION PRIVÉE',
+                                style: TextStyle(
+                                  color: AppColors.amber,
+                                  fontSize: 7,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'BIO-METRIC ATELIER · $cityName',
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.8,
+                    const SizedBox(height: 3),
+                    Text(
+                      'BIO-METRIC ATELIER · $cityName',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.8,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      serialNumber,
+                      style: TextStyle(
+                        color: isRareGold ? AppColors.amber : AppColors.faint,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: isRareGold
+                      ? AppColors.amber.withValues(alpha: 0.15)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.line),
+                  border: Border.all(
+                    color: isRareGold
+                        ? AppColors.amber
+                        : AppColors.line,
+                    width: 1.0,
+                  ),
                 ),
                 child: Text(
-                  theme.code,
+                  isRareGold ? 'GOLD EMBOSS' : theme.code,
                   style: TextStyle(
-                    color: _getAccentColor(),
+                    color: isRareGold ? AppColors.amber : _getAccentColor(),
                     fontSize: 9,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.5,
@@ -103,18 +187,18 @@ class CircaShareCardWidget extends StatelessWidget {
             ],
           ),
 
+          const SizedBox(height: 14),
+          Container(height: 1, color: isRareGold ? AppColors.amber.withValues(alpha: 0.3) : AppColors.line),
           const SizedBox(height: 16),
-          Container(height: 1, color: AppColors.line),
-          const SizedBox(height: 18),
 
           // 2. Основное тело карточки в зависимости от темы
           Expanded(
-            child: _buildThemeBody(),
+            child: _buildThemeBody(progress),
           ),
 
-          const SizedBox(height: 14),
-          Container(height: 1, color: AppColors.line),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
+          Container(height: 1, color: isRareGold ? AppColors.amber.withValues(alpha: 0.3) : AppColors.line),
+          const SizedBox(height: 12),
 
           // 3. Швейцарский подвал (Quiet Luxury Footer)
           Row(
@@ -136,12 +220,12 @@ class CircaShareCardWidget extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'AUTONOMIC RECOVERY INDEX',
+                    Text(
+                      isRareGold ? 'GOLD PROOF OF FORM · CERTIFIED' : 'AUTONOMIC RECOVERY INDEX',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: AppColors.faint,
+                        color: isRareGold ? AppColors.amber : AppColors.faint,
                         fontSize: 7,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1.0,
@@ -153,8 +237,8 @@ class CircaShareCardWidget extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'CIRCA ONE · $cityName · 2026',
-                style: const TextStyle(
-                  color: AppColors.muted,
+                style: TextStyle(
+                  color: isRareGold ? AppColors.amber : AppColors.muted,
                   fontSize: 8,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.6,
@@ -168,6 +252,7 @@ class CircaShareCardWidget extends StatelessWidget {
   }
 
   Color _getAccentColor() {
+    if (isRareGold) return AppColors.amber;
     switch (theme) {
       case ShareCardTheme.recovery:
         return readiness.zone.color;
@@ -178,34 +263,59 @@ class CircaShareCardWidget extends StatelessWidget {
     }
   }
 
-  Widget _buildThemeBody() {
+  Widget _buildThemeBody(double progress) {
     switch (theme) {
       case ShareCardTheme.recovery:
-        return _buildRecoveryBody();
+        return _buildRecoveryBody(progress);
       case ShareCardTheme.strain:
-        return _buildStrainBody();
+        return _buildStrainBody(progress);
       case ShareCardTheme.barys:
-        return _buildBarysBody();
+        return _buildBarysBody(progress);
     }
   }
 
   // --- ТЕМА 1: ВОССТАНОВЛЕНИЕ (RECOVERY) ---
-  Widget _buildRecoveryBody() {
-    final zoneColor = readiness.zone.color;
-    final zoneLabel = readiness.zone == RecoveryZone.optimal
-        ? 'PRIME RECOVERY'
-        : (readiness.zone == RecoveryZone.moderate ? 'BALANCED ADAPTATION' : 'REST & REGEN');
+  Widget _buildRecoveryBody(double progress) {
+    final zoneColor = isRareGold ? AppColors.amber : readiness.zone.color;
+    final animatedScore = (readiness.score * progress).round();
+
+    final zoneLabel = isRareGold
+        ? 'GOLD PRIME RECOVERY'
+        : (readiness.zone == RecoveryZone.optimal
+            ? 'PRIME RECOVERY'
+            : (readiness.zone == RecoveryZone.moderate ? 'BALANCED ADAPTATION' : 'REST & REGEN'));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'DAILY BIO-STATUS',
-          style: TextStyle(
-            color: AppColors.muted,
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 2.0,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'DAILY BIO-STATUS',
+                style: TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 2.0,
+                ),
+              ),
+              if (isRareGold) ...[
+                const SizedBox(width: 12),
+                const Text(
+                  '✦ RARE GOLD RECORD ✦',
+                  style: TextStyle(
+                    color: AppColors.amber,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         const SizedBox(height: 6),
@@ -216,7 +326,7 @@ class CircaShareCardWidget extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              '${readiness.score}',
+              '$animatedScore',
               style: TextStyle(
                 color: zoneColor,
                 fontSize: 82,
@@ -250,11 +360,13 @@ class CircaShareCardWidget extends StatelessWidget {
 
         const SizedBox(height: 10),
         Text(
-          readiness.zone == RecoveryZone.optimal
-              ? 'Тонус блуждающего нерва оптимален. Миокард полностью восстановился и готов к пиковым нагрузкам.'
-              : (readiness.zone == RecoveryZone.moderate
-                  ? 'Ровный физиологический фон. Рекомендуется аэробный объем во 2-й пульсовой зоне.'
-                  : 'ЦНС перегружена. Высокий симпатический стресс требует постельного покоя и сна до 22:40.'),
+          isRareGold
+              ? 'Идеальная физиологическая форма. ЦНС на абсолютном пике восстановления, парасимпатический тонус на максимуме.'
+              : (readiness.zone == RecoveryZone.optimal
+                  ? 'Тонус блуждающего нерва оптимален. Миокард полностью восстановился и готов к пиковым нагрузкам.'
+                  : (readiness.zone == RecoveryZone.moderate
+                      ? 'Ровный физиологический фон. Рекомендуется аэробный объем во 2-й пульсовой зоне.'
+                      : 'ЦНС перегружена. Высокий симпатический стресс требует постельного покоя и сна до 22:40.')),
           style: const TextStyle(
             color: AppColors.fg,
             fontSize: 12,
@@ -271,11 +383,13 @@ class CircaShareCardWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.line),
+            border: Border.all(
+              color: isRareGold ? AppColors.amber.withValues(alpha: 0.4) : AppColors.line,
+            ),
           ),
           child: Row(
             children: [
-              Expanded(child: _buildMetricColumn('HRV rMSSD', '${telemetry.hrv.round()}', 'мс')),
+              Expanded(child: _buildMetricColumn('HRV rMSSD', '${(telemetry.hrv * progress).round()}', 'мс')),
               _buildVerticalHairline(),
               Expanded(child: _buildMetricColumn('RHR NADIR', '${telemetry.restingHeartRate}', 'bpm')),
               _buildVerticalHairline(),
@@ -307,7 +421,9 @@ class CircaShareCardWidget extends StatelessWidget {
   }
 
   // --- ТЕМА 2: НАГРУЗКА (STRAIN) ---
-  Widget _buildStrainBody() {
+  Widget _buildStrainBody(double progress) {
+    final animatedStrain = telemetry.currentDayStrain * progress;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -327,7 +443,7 @@ class CircaShareCardWidget extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              telemetry.currentDayStrain.toStringAsFixed(1),
+              animatedStrain.toStringAsFixed(1),
               style: const TextStyle(
                 color: AppColors.amber,
                 fontSize: 76,
@@ -384,14 +500,14 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Expanded(child: _buildMetricColumn('КАЛОРИИ', '${telemetry.calories}', 'ккал')),
+              Expanded(child: _buildMetricColumn('КАЛОРИИ', '${(telemetry.calories * progress).round()}', 'ккал')),
               _buildVerticalHairline(),
-              Expanded(child: _buildMetricColumn('ШАГИ', '${telemetry.steps}', 'день')),
+              Expanded(child: _buildMetricColumn('ШАГИ', '${(telemetry.steps * progress).round()}', 'день')),
               _buildVerticalHairline(),
               Expanded(
                 child: _buildMetricColumn(
                   'ЗОНА 2 (ЧСС)',
-                  '${telemetry.zoneMinutes.length > 1 ? telemetry.zoneMinutes[1] : 45}',
+                  '${telemetry.zoneMinutes.length > 1 ? (telemetry.zoneMinutes[1] * progress).round() : 45}',
                   'мин',
                 ),
               ),
@@ -405,7 +521,7 @@ class CircaShareCardWidget extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
-            value: (telemetry.currentDayStrain / 21.0).clamp(0.0, 1.0),
+            value: (animatedStrain / 21.0).clamp(0.0, 1.0),
             backgroundColor: AppColors.raised,
             valueColor: const AlwaysStoppedAnimation(AppColors.amber),
             minHeight: 10,
@@ -416,7 +532,7 @@ class CircaShareCardWidget extends StatelessWidget {
   }
 
   // --- ТЕМА 3: БАРЫС-БАТЫР (MASCOT) ---
-  Widget _buildBarysBody() {
+  Widget _buildBarysBody(double progress) {
     final badgeColor = avatarProfile.state.badgeColor;
 
     return Column(
@@ -458,21 +574,21 @@ class CircaShareCardWidget extends StatelessWidget {
         ),
 
         const SizedBox(height: 14),
-
         Center(
           child: Text(
-            avatarProfile.rankTitle.toUpperCase(),
+            avatarProfile.state.title.toUpperCase(),
             style: TextStyle(
               color: badgeColor,
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: FontWeight.w900,
-              letterSpacing: 1.8,
+              letterSpacing: 2.0,
             ),
           ),
         ),
+        const SizedBox(height: 4),
         Center(
           child: Text(
-            avatarProfile.state.title,
+            '${avatarProfile.rankTitle} · Уровень ${avatarProfile.level}',
             style: const TextStyle(
               color: AppColors.muted,
               fontSize: 11,
@@ -481,45 +597,53 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 12),
+        const Spacer(),
 
-        // Напутствие Барыса
+        // 3 RPG атрибута
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.line),
           ),
-          child: Text(
-            '«${AvatarManager.getRitualQuote(avatarProfile.state)}»',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.fg,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              height: 1.4,
-            ),
+          child: Row(
+            children: [
+              Expanded(child: _buildMetricColumn('ВЫНОСЛИВОСТЬ', '${(avatarProfile.endurance * progress).round()}', '/99')),
+              _buildVerticalHairline(),
+              Expanded(child: _buildMetricColumn('СИЛА', '${(avatarProfile.power * progress).round()}', '/99')),
+              _buildVerticalHairline(),
+              Expanded(child: _buildMetricColumn('ФОКУС', '${(avatarProfile.focus * progress).round()}', '/99')),
+            ],
           ),
         ),
 
-        const Spacer(),
+        const SizedBox(height: 14),
 
-        // Характеристики Батыра
-        Row(
-          children: [
-            Expanded(
-              child: _buildMascotStat('ВЫНОСЛИВОСТЬ', avatarProfile.endurance, AppColors.sage),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildMascotStat('СИЛА', avatarProfile.power, AppColors.amber),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _buildMascotStat('ФОКУС', avatarProfile.focus, AppColors.sage),
-            ),
-          ],
+        // Реплика Барыса
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.raised,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.line),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.format_quote, color: AppColors.amber, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  AvatarManager.getRitualQuote(avatarProfile.state),
+                  style: const TextStyle(
+                    color: AppColors.fg,
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -528,85 +652,52 @@ class CircaShareCardWidget extends StatelessWidget {
   Widget _buildMetricColumn(String label, String value, String unit) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
           label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
           style: const TextStyle(
             color: AppColors.muted,
-            fontSize: 7,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.6,
+            fontSize: 8,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.0,
           ),
         ),
         const SizedBox(height: 2),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                color: AppColors.fg,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: AppColors.fg,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-            ),
-            const SizedBox(width: 2),
-            Text(
-              unit,
-              style: const TextStyle(
-                color: AppColors.faint,
-                fontSize: 8,
+              const SizedBox(width: 2),
+              Text(
+                unit,
+                style: const TextStyle(
+                  color: AppColors.faint,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
-    );
-  }
-
-  Widget _buildMascotStat(String label, int val, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '$val',
-            style: const TextStyle(
-              color: AppColors.fg,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 1),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 8,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.6,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildVerticalHairline() {
     return Container(
       width: 1,
-      height: 24,
+      height: 26,
       color: AppColors.line,
     );
   }
@@ -614,36 +705,38 @@ class CircaShareCardWidget extends StatelessWidget {
 
 class _MinimalistCardiacPainter extends CustomPainter {
   final Color color;
+
   _MinimalistCardiacPainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withValues(alpha: 0.75)
-      ..strokeWidth = 2.0
+      ..color = color.withValues(alpha: 0.85)
+      ..strokeWidth = 1.8
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     final path = Path();
     final h = size.height;
     final w = size.width;
 
-    path.moveTo(0, h * 0.65);
-    path.lineTo(w * 0.20, h * 0.65);
-    path.lineTo(w * 0.25, h * 0.58);
-    path.lineTo(w * 0.30, h * 0.65);
-    path.lineTo(w * 0.42, h * 0.65);
-    path.lineTo(w * 0.46, h * 0.75); // Q
-    path.lineTo(w * 0.50, h * 0.15); // R
-    path.lineTo(w * 0.54, h * 0.88); // S
-    path.lineTo(w * 0.58, h * 0.65);
-    path.lineTo(w * 0.66, h * 0.55); // T
-    path.lineTo(w * 0.74, h * 0.65);
-    path.lineTo(w, h * 0.65);
+    path.moveTo(0, h * 0.5);
+    path.lineTo(w * 0.20, h * 0.5);
+    path.lineTo(w * 0.25, h * 0.40);
+    path.lineTo(w * 0.30, h * 0.5);
+    path.lineTo(w * 0.42, h * 0.5);
+    path.lineTo(w * 0.46, h * 0.85);
+    path.lineTo(w * 0.52, h * 0.05);
+    path.lineTo(w * 0.58, h * 0.70);
+    path.lineTo(w * 0.64, h * 0.5);
+    path.lineTo(w * 0.76, h * 0.35);
+    path.lineTo(w * 0.86, h * 0.5);
+    path.lineTo(w, h * 0.5);
 
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _MinimalistCardiacPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

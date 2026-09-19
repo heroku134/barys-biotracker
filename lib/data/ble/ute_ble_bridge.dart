@@ -56,9 +56,17 @@ class UteBleBridge {
     }
   }
 
+  bool get isTiredDemo => _simulator.isSimulatedTired;
+  bool get isCrisisDemo => _simulator.isCrisisDemo;
+
   void setDemoTired(bool tired) {
     _useSimulator = true;
     _simulator.toggleTiredDemo(tired);
+  }
+
+  void setDemoCrisis(bool crisis) {
+    _useSimulator = true;
+    _simulator.toggleCrisisDemo(crisis);
   }
 
   Future<void> startScan() async {
