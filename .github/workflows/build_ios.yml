@@ -12,11 +12,16 @@ permissions:
 
 jobs:
   build-ipa:
-    name: Build Unsigned IPA on macOS
-    runs-on: macos-14
+    name: Build Unsigned IPA on macOS (Xcode 16)
+    runs-on: macos-15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Select Xcode 16 (Swift 6)
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app || sudo xcode-select -s /Applications/Xcode_16.app || sudo xcode-select -s /Applications/Xcode.app
+          xcodebuild -version
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
