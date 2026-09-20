@@ -1,0 +1,339 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2400 1600" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&amp;family=JetBrains+Mono:wght@500;700;800&amp;family=Orbitron:wght@700;900&amp;display=swap');
+      .font-sans { font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif; }
+      .font-mono { font-family: 'JetBrains Mono', monospace; }
+      .font-display { font-family: 'Orbitron', 'Montserrat', sans-serif; }
+      .title-kalkan { font-family: 'Montserrat', sans-serif; font-weight: 900; letter-spacing: 12px; }
+      .sub-sport { font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 18px; }
+      .tag-saat { font-family: 'JetBrains Mono', monospace; font-weight: 800; letter-spacing: 4px; }
+    </style>
+
+    <!-- Deep Obsidian Matte Background -->
+    <linearGradient id="bg-plate" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050608" />
+      <stop offset="40%" stop-color="#0A0D14" />
+      <stop offset="100%" stop-color="#040507" />
+    </linearGradient>
+
+    <!-- Card Background -->
+    <linearGradient id="card-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#121622" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#090B10" stop-opacity="0.95" />
+    </linearGradient>
+
+    <!-- Cyber Mint Neon (KALKAN Signature) -->
+    <linearGradient id="neon-mint" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00FFA3" />
+      <stop offset="60%" stop-color="#00E575" />
+      <stop offset="100%" stop-color="#00B050" />
+    </linearGradient>
+
+    <!-- Electric Cyan Pulse -->
+    <linearGradient id="neon-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#00FFA3" />
+    </linearGradient>
+
+    <!-- Brushed Titanium Silver -->
+    <linearGradient id="titanium-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#E2E8F0" />
+      <stop offset="70%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#64748B" />
+    </linearGradient>
+
+    <!-- Dark Carbon Metal -->
+    <linearGradient id="carbon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2A3241" />
+      <stop offset="100%" stop-color="#151A24" />
+    </linearGradient>
+
+    <!-- Amber Gold Accent -->
+    <linearGradient id="gold-amber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+
+    <!-- Glow Filter for Neon Accents -->
+    <filter id="neon-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur1" />
+      <feGaussianBlur stdDeviation="18" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Subtle Drop Shadow -->
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.65" />
+    </filter>
+
+    <!-- ================================================================ -->
+    <!-- CONCEPT 1: STEALTH APEX SHIELD (Баллистический Стелс-Щит "K")    -->
+    <!-- ================================================================ -->
+    <g id="emblem-c1">
+      <!-- Left Titanium Armor Pillar (Left edge of Shield & K spine) -->
+      <path d="M 40,30 L 95,15 L 95,215 L 50,175 L 40,110 Z" fill="url(#titanium-grad)" />
+      <!-- Left Inner Shadow Bevel -->
+      <path d="M 95,15 L 95,215 L 75,195 L 75,35 Z" fill="#000000" opacity="0.25" />
+      
+      <!-- Top Dynamic Blade (Upper K arm / Top shield facet) -->
+      <path d="M 115,22 L 205,48 L 155,108 L 115,108 Z" fill="url(#neon-mint)" filter="url(#neon-glow)" />
+      
+      <!-- Bottom Kinetic Spear (Lower K arm / Shield Apex V-tip) -->
+      <path d="M 115,124 L 175,124 L 115,225 Z" fill="url(#neon-mint)" />
+      <!-- Secondary Steel Wedge completing the Shield silhouette -->
+      <path d="M 180,124 L 215,80 L 215,145 L 125,235 L 115,225 Z" fill="url(#titanium-grad)" />
+      
+      <!-- Tactical Precision Cross-hair notch -->
+      <circle cx="95" cy="116" r="4" fill="#00FFA3" />
+    </g>
+
+    <!-- ================================================================ -->
+    <!-- CONCEPT 2: PREDATOR BARYS CLAWS (Яростный Щит: Когти Ирбиса)      -->
+    <!-- ================================================================ -->
+    <g id="emblem-c2">
+      <!-- Claw 1: Left Heavy Armored Backing -->
+      <path d="M 45,40 L 95,18 L 85,210 L 45,170 Z" fill="url(#carbon-grad)" stroke="#334155" stroke-width="2" />
+      <path d="M 60,32 L 85,22 L 78,195 L 60,175 Z" fill="url(#titanium-grad)" />
+
+      <!-- Claw 2: Upper Razor Slash (High Kinetic Strike) -->
+      <path d="M 102,95 L 205,25 L 225,52 L 132,122 Z" fill="url(#neon-mint)" filter="url(#neon-glow)" />
+      
+      <!-- Claw 3: Mid/Lower Penetrating Barb -->
+      <path d="M 110,132 L 220,115 L 205,148 L 115,160 Z" fill="url(#titanium-grad)" />
+
+      <!-- Claw 4: Bottom Aggressive Shield Fang (Ground Anchor) -->
+      <path d="M 105,170 L 195,160 L 135,232 L 95,200 Z" fill="url(#neon-mint)" />
+    </g>
+
+    <!-- ================================================================ -->
+    <!-- CONCEPT 3: KINETIC K-CREST (Стреловидный Тактический Калкан)       -->
+    <!-- ================================================================ -->
+    <g id="emblem-c3">
+      <!-- Solid Tactical Chevron Spine -->
+      <path d="M 50,25 L 105,25 L 105,225 L 50,185 Z" fill="url(#titanium-grad)" />
+      <path d="M 68,45 L 92,45 L 92,205 L 68,172 Z" fill="#0B0F17" />
+      <!-- Center Cyber Indicator in spine -->
+      <rect x="76" y="80" width="8" height="65" rx="4" fill="url(#neon-mint)" />
+
+      <!-- Upper Forward Arrowhead -->
+      <path d="M 120,105 L 195,30 L 235,30 L 155,115 Z" fill="url(#neon-mint)" />
+      
+      <!-- Lower Interlocking Armor Flank -->
+      <path d="M 120,135 L 155,125 L 235,210 L 195,210 Z" fill="url(#neon-mint)" />
+      
+      <!-- Stealth Cutout Notch -->
+      <polygon points="175,120 185,110 185,130" fill="#00FFA3" />
+    </g>
+
+    <!-- ================================================================ -->
+    <!-- CONCEPT 4: BARYS DEFENDER TUNDUK (Боевой Калкан «СААТ-1»)         -->
+    <!-- ================================================================ -->
+    <g id="emblem-c4">
+      <!-- Octagonal Faceted Shield Plate -->
+      <polygon points="125,15 195,45 225,115 195,195 125,235 55,195 25,115 55,45" fill="url(#carbon-grad)" stroke="#1E293B" stroke-width="4" />
+      
+      <!-- Inner Chiseled Titanium Rim -->
+      <polygon points="125,28 185,54 210,115 185,184 125,220 65,184 40,115 65,54" fill="none" stroke="url(#titanium-grad)" stroke-width="5" />
+
+      <!-- Four Nomadic Armor Cross-Slashes (Түндүк & Саат) -->
+      <!-- Left & Right Shield Wings forming an aggressive stylized 'K' -->
+      <path d="M 75,70 L 115,115 L 75,160 Z" fill="url(#neon-mint)" />
+      <path d="M 125,45 L 175,70 L 135,115 Z" fill="url(#titanium-grad)" />
+      <path d="M 135,125 L 175,170 L 125,195 Z" fill="url(#neon-mint)" filter="url(#neon-glow)" />
+
+      <!-- Central Watch Core (СААТ-1 Dial Origin) -->
+      <circle cx="125" cy="120" r="14" fill="#00FFA3" />
+      <circle cx="125" cy="120" r="6" fill="#050608" />
+    </g>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="2400" height="1600" fill="url(#bg-plate)" />
+
+  <!-- Subtle Tactical Grid Overlay -->
+  <g opacity="0.07" stroke="#00FFA3" stroke-width="1">
+    <line x1="0" y1="200" x2="2400" y2="200" />
+    <line x1="0" y1="880" x2="2400" y2="880" />
+    <line x1="0" y1="1560" x2="2400" y2="1560" />
+    <line x1="1200" y1="0" x2="1200" y2="1600" />
+    <line x1="600" y1="0" x2="600" y2="1600" />
+    <line x1="1800" y1="0" x2="1800" y2="1600" />
+  </g>
+
+  <!-- ================================================================ -->
+  <!-- MAIN HEADER: BRAND & WATCH SYSTEM IDENTITY                       -->
+  <!-- ================================================================ -->
+  <g transform="translate(100, 80)">
+    <!-- Top System Badge -->
+    <rect x="0" y="0" width="2200" height="74" rx="14" fill="#0C1019" stroke="#1E293B" stroke-width="1.5" />
+    <circle cx="30" cy="37" r="6" fill="#00FFA3" filter="url(#neon-glow)" />
+    <text x="52" y="44" class="font-mono" font-size="16" font-weight="700" fill="#00FFA3" letter-spacing="3">KALKAN SPORT LAB · BRAND IDENTITY ARCHITECTURE</text>
+    <text x="1480" y="44" class="font-mono" font-size="15" font-weight="700" fill="#64748B" letter-spacing="2">HARDWARE: SMARTWATCH «СААТ-1» (TITANIUM / 100M)</text>
+
+    <!-- Main Title Section -->
+    <text x="0" y="150" class="font-sans" font-size="52" font-weight="900" fill="#FFFFFF" letter-spacing="2">КОНЦЕПЦИИ АГРЕССИВНОГО ЛОГОТИПА «KALKAN»</text>
+    <text x="0" y="190" class="font-sans" font-size="20" font-weight="500" fill="#94A3B8">
+      Калкан (кырг. Щит) — символ несокрушимой защиты, батырской брони и биометрического контроля сердечного ритма.
+    </text>
+  </g>
+
+  <!-- ================================================================ -->
+  <!-- 4 CARDS: CONCEPTS SHOWCASE                                       -->
+  <!-- ================================================================ -->
+
+  <!-- ---------------- CARD 1: STEALTH APEX (TOP LEFT) ---------------- -->
+  <g transform="translate(100, 310)" filter="url(#card-shadow)">
+    <rect width="1060" height="580" rx="24" fill="url(#card-bg)" stroke="#00FFA3" stroke-width="1.8" stroke-opacity="0.8" />
+    
+    <!-- Top Card Badge -->
+    <rect x="36" y="32" width="165" height="28" rx="6" fill="#00FFA3" fill-opacity="0.15" />
+    <text x="48" y="51" class="font-mono" font-size="12" font-weight="800" fill="#00FFA3" letter-spacing="2">ВАРИАНТ 01 · ФЛАГМАН</text>
+    <text x="215" y="51" class="font-sans" font-size="13" font-weight="700" fill="#64748B">РЕКОМЕНДОВАННЫЙ ДИЗАЙН</text>
+
+    <!-- Emblem Container -->
+    <g transform="translate(60, 110)">
+      <use href="#emblem-c1" />
+    </g>
+
+    <!-- Wordmark -->
+    <g transform="translate(340, 150)">
+      <text x="0" y="70" class="title-kalkan" font-size="78" fill="#FFFFFF">КАЛКАН</text>
+      <text x="4" y="130" class="sub-sport" font-size="30" fill="#00FFA3">СПОРТ</text>
+      
+      <line x1="4" y1="155" x2="620" y2="155" stroke="#1E293B" stroke-width="1.5" />
+
+      <!-- Watch Device Tag -->
+      <g transform="translate(4, 185)">
+        <rect width="185" height="32" rx="8" fill="#0B131E" stroke="#334155" stroke-width="1" />
+        <text x="16" y="21" class="tag-saat" font-size="14" fill="#FFFFFF">СААТ-1</text>
+        <text x="96" y="21" class="font-mono" font-size="12" fill="#00FFA3">PRO SPORT</text>
+        <text x="210" y="21" class="font-mono" font-size="13" fill="#64748B">ТИТАНОВЫЙ КОРПУС · БЕЗЕЛЬ 46 ММ</text>
+      </g>
+    </g>
+
+    <!-- Bottom Description Box -->
+    <rect x="36" y="440" width="988" height="105" rx="14" fill="#06090F" stroke="#172033" stroke-width="1" />
+    <text x="60" y="475" class="font-sans" font-size="16" font-weight="700" fill="#E2E8F0">«STEALTH APEX» — Баллистический граненый щит с хищной литерой «К»</text>
+    <text x="60" y="505" class="font-sans" font-size="13.5" font-weight="400" fill="#8896AB" width="900">
+      Острые грани под 45° в эстетике стелс-истребителя F-117 и часов Richard Mille. В контур щита встроена острая монограмма «К», устремленная вперед. Идеально гравируется лазером на титановом безеле часов «СААТ-1».
+    </text>
+  </g>
+
+  <!-- ---------------- CARD 2: PREDATOR CLAWS (TOP RIGHT) --------------- -->
+  <g transform="translate(1240, 310)" filter="url(#card-shadow)">
+    <rect width="1060" height="580" rx="24" fill="url(#card-bg)" stroke="#1E293B" stroke-width="1.5" />
+    
+    <rect x="36" y="32" width="130" height="28" rx="6" fill="#F59E0B" fill-opacity="0.15" />
+    <text x="48" y="51" class="font-mono" font-size="12" font-weight="800" fill="#F59E0B" letter-spacing="2">ВАРИАНТ 02</text>
+    <text x="180" y="51" class="font-sans" font-size="13" font-weight="700" fill="#64748B">МАКСИМАЛЬНАЯ АГРЕССИЯ</text>
+
+    <!-- Emblem Container -->
+    <g transform="translate(60, 110)">
+      <use href="#emblem-c2" />
+    </g>
+
+    <!-- Wordmark -->
+    <g transform="translate(340, 150)">
+      <text x="0" y="70" class="title-kalkan" font-size="78" fill="#FFFFFF">КАЛКАН</text>
+      <text x="4" y="130" class="sub-sport" font-size="30" fill="#F59E0B">СПОРТ</text>
+      
+      <line x1="4" y1="155" x2="620" y2="155" stroke="#1E293B" stroke-width="1.5" />
+
+      <!-- Watch Device Tag -->
+      <g transform="translate(4, 185)">
+        <rect width="185" height="32" rx="8" fill="#0B131E" stroke="#334155" stroke-width="1" />
+        <text x="16" y="21" class="tag-saat" font-size="14" fill="#FFFFFF">СААТ-1</text>
+        <text x="96" y="21" class="font-mono" font-size="12" fill="#F59E0B">PREDATOR</text>
+        <text x="210" y="21" class="font-mono" font-size="13" fill="#64748B">УГЛЕРОДНЫЙ КАРБОН · БАРЫС-EDITION</text>
+      </g>
+    </g>
+
+    <!-- Bottom Description Box -->
+    <rect x="36" y="440" width="988" height="105" rx="14" fill="#06090F" stroke="#172033" stroke-width="1" />
+    <text x="60" y="475" class="font-sans" font-size="16" font-weight="700" fill="#E2E8F0">«PREDATOR BARYS» — Щит, пробитый когтями снежного барса</text>
+    <text x="60" y="505" class="font-sans" font-size="13.5" font-weight="400" fill="#8896AB">
+      Прямая связь с духом Барыс-Батыра. Три яростных диагональных слэша рассекают композицию, символизируя прорыв сквозь усталость и непреклонную спортивную ярость. Высокая узнаваемость на силиконовом ремешке.
+    </text>
+  </g>
+
+  <!-- ---------------- CARD 3: KINETIC K-CREST (BOTTOM LEFT) ------------ -->
+  <g transform="translate(100, 930)" filter="url(#card-shadow)">
+    <rect width="1060" height="580" rx="24" fill="url(#card-bg)" stroke="#1E293B" stroke-width="1.5" />
+    
+    <rect x="36" y="32" width="130" height="28" rx="6" fill="#00F0FF" fill-opacity="0.15" />
+    <text x="48" y="51" class="font-mono" font-size="12" font-weight="800" fill="#00F0FF" letter-spacing="2">ВАРИАНТ 03</text>
+    <text x="180" y="51" class="font-sans" font-size="13" font-weight="700" fill="#64748B">ШВЕЙЦАРСКИЙ ТЕХНО-СПОРТ</text>
+
+    <!-- Emblem Container -->
+    <g transform="translate(60, 110)">
+      <use href="#emblem-c3" />
+    </g>
+
+    <!-- Wordmark -->
+    <g transform="translate(340, 150)">
+      <text x="0" y="70" class="title-kalkan" font-size="78" fill="#FFFFFF">KALKAN</text>
+      <text x="4" y="130" class="sub-sport" font-size="30" fill="#00F0FF">SPORT</text>
+      
+      <line x1="4" y1="155" x2="620" y2="155" stroke="#1E293B" stroke-width="1.5" />
+
+      <!-- Watch Device Tag -->
+      <g transform="translate(4, 185)">
+        <rect width="185" height="32" rx="8" fill="#0B131E" stroke="#334155" stroke-width="1" />
+        <text x="16" y="21" class="tag-saat" font-size="14" fill="#FFFFFF">SAAT-1</text>
+        <text x="96" y="21" class="font-mono" font-size="12" fill="#00F0FF">KINETIC</text>
+        <text x="210" y="21" class="font-mono" font-size="13" fill="#64748B">МИКРО-ТОЧНОСТЬ · ТАКТИЧЕСКИЙ ЧЕВРОН</text>
+      </g>
+    </g>
+
+    <!-- Bottom Description Box -->
+    <rect x="36" y="440" width="988" height="105" rx="14" fill="#06090F" stroke="#172033" stroke-width="1" />
+    <text x="60" y="475" class="font-sans" font-size="16" font-weight="700" fill="#E2E8F0">«KINETIC CHEVRON» — Острый шеврон-стрела (Жебе) и бронеплита</text>
+    <text x="60" y="505" class="font-sans" font-size="13.5" font-weight="400" fill="#8896AB">
+      Стремительный аэродинамичный дизайн в духе Oakley и Suunto. Левая монолитная опора олицетворяет стальную волю, правые двойные стрелы — постоянное движение вперед. Идеально смотрится в роли иконки мобильного приложения.
+    </text>
+  </g>
+
+  <!-- ---------------- CARD 4: BARYS DEFENDER (BOTTOM RIGHT) ----------- -->
+  <g transform="translate(1240, 930)" filter="url(#card-shadow)">
+    <rect width="1060" height="580" rx="24" fill="url(#card-bg)" stroke="#1E293B" stroke-width="1.5" />
+    
+    <rect x="36" y="32" width="130" height="28" rx="6" fill="#A855F7" fill-opacity="0.15" />
+    <text x="48" y="51" class="font-mono" font-size="12" font-weight="800" fill="#A855F7" letter-spacing="2">ВАРИАНТ 04</text>
+    <text x="180" y="51" class="font-sans" font-size="13" font-weight="700" fill="#64748B">НОМАДИЧЕСКИЙ КИБЕР-ЩИТ</text>
+
+    <!-- Emblem Container -->
+    <g transform="translate(60, 110)">
+      <use href="#emblem-c4" />
+    </g>
+
+    <!-- Wordmark -->
+    <g transform="translate(340, 150)">
+      <text x="0" y="70" class="title-kalkan" font-size="78" fill="#FFFFFF">КАЛКАН</text>
+      <text x="4" y="130" class="sub-sport" font-size="30" fill="#A855F7">СПОРТ</text>
+      
+      <line x1="4" y1="155" x2="620" y2="155" stroke="#1E293B" stroke-width="1.5" />
+
+      <!-- Watch Device Tag -->
+      <g transform="translate(4, 185)">
+        <rect width="185" height="32" rx="8" fill="#0B131E" stroke="#334155" stroke-width="1" />
+        <text x="16" y="21" class="tag-saat" font-size="14" fill="#FFFFFF">СААТ-1</text>
+        <text x="96" y="21" class="font-mono" font-size="12" fill="#A855F7">DEFENDER</text>
+        <text x="210" y="21" class="font-mono" font-size="13" fill="#64748B">ТАКТИЧЕСКИЙ ОКТАГОН · САПФИРОВОЕ СТЕКЛО</text>
+      </g>
+    </g>
+
+    <!-- Bottom Description Box -->
+    <rect x="36" y="440" width="988" height="105" rx="14" fill="#06090F" stroke="#172033" stroke-width="1" />
+    <text x="60" y="475" class="font-sans" font-size="16" font-weight="700" fill="#E2E8F0">«NOMADIC DEFENDER» — Октагональный батырский щит и циферблат СААТ-1</text>
+    <text x="60" y="505" class="font-sans" font-size="13.5" font-weight="400" fill="#8896AB">
+      Синтез традиционного кочевого щита батыра и современного циферблата умных часов. Центральный неоновый оптический сенсор окружен 4 защитными сегментами брони, отсылающими к геометрии юрты и түндүка.
+    </text>
+  </g>
+</svg>

@@ -1,0 +1,488 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2600 2000" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@500;700;800&amp;display=swap');
+      .font-sans { font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif; }
+      .font-mono { font-family: 'JetBrains Mono', monospace; }
+      .brand-title { font-family: 'Montserrat', sans-serif; font-weight: 900; letter-spacing: 12px; }
+      .brand-sub { font-family: 'Montserrat', sans-serif; font-weight: 700; letter-spacing: 16px; }
+      .saat-tag { font-family: 'JetBrains Mono', monospace; font-weight: 700; letter-spacing: 2.5px; }
+    </style>
+
+    <!-- Card Background Plate -->
+    <rect id="card-plate" width="760" height="520" rx="20" fill="#0C0E14" stroke="#1E2330" stroke-width="1.5" />
+    <rect id="card-plate-highlight" width="760" height="520" rx="20" fill="#0C0E14" stroke="#00FFA3" stroke-width="1.8" />
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 1: CHRONO CIRCLE K-SHIELD (Круглый Калкан + СААТ-1)  -->
+    <!-- ============================================================ -->
+    <g id="icon-c1">
+      <!-- Outer Round Shield Rim (Безель часов и обод калкана) -->
+      <circle cx="100" cy="100" r="76" fill="none" stroke="#FFFFFF" stroke-width="10" />
+      <!-- 12 o'clock Chrono Indicator -->
+      <line x1="100" y1="20" x2="100" y2="34" stroke="#00FFA3" stroke-width="5" stroke-linecap="round" />
+      <!-- Left Titanium Backbone -->
+      <rect x="66" y="52" width="13" height="96" rx="3" fill="#FFFFFF" />
+      <!-- Chevron K-Wings -->
+      <path d="M 134,54 L 95,100 L 134,146" fill="none" stroke="#00FFA3" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 2: TWO BARS K-APEX (Два штриха: Стержень + Шеврон)   -->
+    <!-- ============================================================ -->
+    <g id="icon-c2">
+      <!-- Left Vertical Anchor Bar (Опора, Стойкость, Титан) -->
+      <rect x="58" y="28" width="18" height="144" rx="4" fill="#FFFFFF" />
+      <!-- Right Minimal Chevron / Shield Apex (Скорость, Защита) -->
+      <path d="M 144,32 L 96,100 L 144,168" fill="none" stroke="#00FFA3" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 3: NEGATIVE SPACE K-SHIELD (Монолитный Щит с вырезом) -->
+    <!-- ============================================================ -->
+    <g id="icon-c3">
+      <!-- Solid Penta Shield with precision K cutout via EvenOdd rule -->
+      <path fill-rule="evenodd" fill="#FFFFFF" d="
+        M 44,28 L 156,28 L 156,114 L 100,180 L 44,114 Z
+        M 72,46 L 86,46 L 86,154 L 72,154 Z
+        M 86,104 L 136,50 L 148,62 L 98,116 Z
+        M 98,84 L 148,138 L 136,150 L 86,96 Z
+      " />
+    </g>
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 4: LINEAR WIREFRAME CREST (Контур + Точка СААТ)      -->
+    <!-- ============================================================ -->
+    <g id="icon-c4">
+      <!-- Pure Single Line Shield Contour -->
+      <path d="M 48,34 L 152,34 L 152,112 C 152,152 100,178 100,178 C 100,178 48,152 48,112 Z" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+      <!-- Central Watch Point (Ось часов СААТ-1 / Биометрия) -->
+      <circle cx="100" cy="106" r="14" fill="#00FFA3" />
+      <!-- Subtle crosshair ticks -->
+      <line x1="100" y1="46" x2="100" y2="58" stroke="#00FFA3" stroke-width="4" stroke-linecap="round" />
+      <line x1="100" y1="154" x2="100" y2="166" stroke="#00FFA3" stroke-width="4" stroke-linecap="round" />
+    </g>
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 5: TRI-SLAB K-SHIELD (3 клиновидные плашки)          -->
+    <!-- ============================================================ -->
+    <g id="icon-c5">
+      <!-- Left Titanium Pillar -->
+      <rect x="58" y="32" width="18" height="136" rx="2" fill="#FFFFFF" />
+      <!-- Top Blade 45° -->
+      <polygon points="94,100 148,46 148,72 104,116" fill="#FFFFFF" />
+      <!-- Bottom Blade 45° pointing to Shield Tip -->
+      <polygon points="104,84 148,128 148,154 94,100" fill="#00FFA3" />
+    </g>
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 6: NOMAD DUAL CHEVRONS (Сдвоенный шеврон «Жебе»)     -->
+    <!-- ============================================================ -->
+    <g id="icon-c6">
+      <!-- First Kinetic Chevron (Defense) -->
+      <path d="M 60,40 L 115,100 L 60,160" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+      <!-- Second Kinetic Chevron (Forward Speed & Attack) -->
+      <path d="M 105,40 L 160,100 L 105,160" fill="none" stroke="#00FFA3" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+  </defs>
+
+  <!-- Canvas Background: Deep Matte Obsidian Carbon -->
+  <rect width="2600" height="2000" fill="#060709" />
+
+  <!-- ============================================================== -->
+  <!-- HEADER SECTION                                                 -->
+  <!-- ============================================================== -->
+  <g transform="translate(120, 80)">
+    <rect x="0" y="0" width="310" height="32" rx="16" fill="#00FFA3" fill-opacity="0.12" stroke="#00FFA3" stroke-width="1.2" stroke-opacity="0.5" />
+    <circle cx="18" cy="16" r="4.5" fill="#00FFA3" />
+    <text x="32" y="21" class="font-mono" font-size="12" font-weight="700" fill="#00FFA3" letter-spacing="2">KALKAN SPORT · HARDWARE IDENTITY</text>
+
+    <text x="0" y="80" class="font-sans" font-size="44" font-weight="900" fill="#FFFFFF" letter-spacing="-0.5">
+      ПРОСТЫЕ МИНИМАЛИСТИЧНЫЕ КОНЦЕПТЫ «KALKAN»
+    </text>
+    <text x="0" y="118" class="font-sans" font-size="18" font-weight="400" fill="#94A3B8">
+      Радикальная простота: от 1 до 3 чистых геометрических линий. Ноль шума, ноль градиентов. Читаемость на безеле часов «СААТ-1» и заводной головке 3 мм.
+    </text>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- TOP ROW: 3 CONCEPTS                                            -->
+  <!-- ============================================================== -->
+
+  <!-- CARD 1: CHRONO CIRCLE -->
+  <g transform="translate(120, 240)">
+    <use href="#card-plate" />
+    <!-- Tag -->
+    <rect x="580" y="24" width="156" height="28" rx="6" fill="#1E283A" />
+    <text x="600" y="43" class="font-mono" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="1.5">ВАРИАНТ 01</text>
+    <text x="40" y="52" class="font-mono" font-size="12" font-weight="700" fill="#00FFA3" letter-spacing="2">«ТЕГЕРЕК КАЛКАН · СААТ-1»</text>
+
+    <!-- Icon Big Preview -->
+    <g transform="translate(40, 75) scale(1.15)">
+      <rect width="200" height="200" rx="14" fill="#080A10" stroke="#1A2234" />
+      <use href="#icon-c1" />
+    </g>
+
+    <!-- Typography Lockup -->
+    <g transform="translate(300, 115)">
+      <text x="0" y="45" class="brand-title" font-size="48" fill="#FFFFFF">КАЛКАН</text>
+      <text x="2" y="82" class="brand-sub" font-size="17" fill="#00FFA3">СПОРТ</text>
+      <text x="2" y="118" class="saat-tag" font-size="12" fill="#64748B">СААТ-1 · CHRONO SHIELD DIAL</text>
+    </g>
+
+    <!-- Micro Scale Test -->
+    <g transform="translate(40, 335)">
+      <text x="0" y="0" class="font-mono" font-size="11" fill="#64748B" letter-spacing="1">ТЕСТ МАСШТАБА (48px / 28px / 16px):</text>
+      <!-- 48px -->
+      <g transform="translate(260, -28) scale(0.24)">
+        <use href="#icon-c1" />
+      </g>
+      <!-- 28px -->
+      <g transform="translate(330, -22) scale(0.14)">
+        <use href="#icon-c1" />
+      </g>
+      <!-- 16px -->
+      <g transform="translate(380, -17) scale(0.08)">
+        <use href="#icon-c1" />
+      </g>
+    </g>
+
+    <!-- Description -->
+    <g transform="translate(40, 395)">
+      <text x="0" y="0" class="font-sans" font-size="14" font-weight="600" fill="#FFFFFF">Круглый щит кочевников + часовой циферблат</text>
+      <text x="0" y="24" class="font-sans" font-size="13" fill="#8E9AA8">Исторический «тегерек калкан» был круглым. Форма идеально</text>
+      <text x="0" y="44" class="font-sans" font-size="13" fill="#8E9AA8">повторяет 46 мм корпус часов СААТ-1 с меткой на 12 часах.</text>
+    </g>
+  </g>
+
+  <!-- CARD 2: TWO BARS (HIGHLIGHT RECOMMENDED) -->
+  <g transform="translate(920, 240)">
+    <use href="#card-plate-highlight" />
+    <!-- Tag -->
+    <rect x="560" y="24" width="176" height="28" rx="6" fill="#00FFA3" fill-opacity="0.15" stroke="#00FFA3" stroke-width="1" />
+    <text x="578" y="43" class="font-mono" font-size="11" font-weight="700" fill="#00FFA3" letter-spacing="1.5">РЕКОМЕНДАЦИЯ</text>
+    <text x="40" y="52" class="font-mono" font-size="12" font-weight="700" fill="#00FFA3" letter-spacing="2">«TWO BARS K-APEX» · ТОП ВЫБОР</text>
+
+    <!-- Icon Big Preview -->
+    <g transform="translate(40, 75) scale(1.15)">
+      <rect width="200" height="200" rx="14" fill="#080A10" stroke="#1A2234" />
+      <use href="#icon-c2" />
+    </g>
+
+    <!-- Typography Lockup -->
+    <g transform="translate(300, 115)">
+      <text x="0" y="45" class="brand-title" font-size="48" fill="#FFFFFF">КАЛКАН</text>
+      <text x="2" y="82" class="brand-sub" font-size="17" fill="#00FFA3">СПОРТ</text>
+      <text x="2" y="118" class="saat-tag" font-size="12" fill="#00FFA3">СААТ-1 · POLARIS APEX</text>
+    </g>
+
+    <!-- Micro Scale Test -->
+    <g transform="translate(40, 335)">
+      <text x="0" y="0" class="font-mono" font-size="11" fill="#64748B" letter-spacing="1">ТЕСТ МАСШТАБА (48px / 28px / 16px):</text>
+      <g transform="translate(260, -28) scale(0.24)">
+        <use href="#icon-c2" />
+      </g>
+      <g transform="translate(330, -22) scale(0.14)">
+        <use href="#icon-c2" />
+      </g>
+      <g transform="translate(380, -17) scale(0.08)">
+        <use href="#icon-c2" />
+      </g>
+    </g>
+
+    <!-- Description -->
+    <g transform="translate(40, 395)">
+      <text x="0" y="0" class="font-sans" font-size="14" font-weight="600" fill="#FFFFFF">Предельный минимализм: всего два штриха</text>
+      <text x="0" y="24" class="font-sans" font-size="13" fill="#8E9AA8">Вертикаль (титан) + острый шеврон (острие щита и буква К).</text>
+      <text x="0" y="44" class="font-sans" font-size="13" fill="#8E9AA8">Стиль Polestar, On Running, Braun. Идеально для ЧПУ-фрезеровки.</text>
+    </g>
+  </g>
+
+  <!-- CARD 3: NEGATIVE SPACE K-SHIELD -->
+  <g transform="translate(1720, 240)">
+    <use href="#card-plate" />
+    <!-- Tag -->
+    <rect x="580" y="24" width="156" height="28" rx="6" fill="#1E283A" />
+    <text x="600" y="43" class="font-mono" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="1.5">ВАРИАНТ 03</text>
+    <text x="40" y="52" class="font-mono" font-size="12" font-weight="700" fill="#00FFA3" letter-spacing="2">«NEGATIVE SPACE SHIELD»</text>
+
+    <!-- Icon Big Preview -->
+    <g transform="translate(40, 75) scale(1.15)">
+      <rect width="200" height="200" rx="14" fill="#080A10" stroke="#1A2234" />
+      <use href="#icon-c3" />
+    </g>
+
+    <!-- Typography Lockup -->
+    <g transform="translate(300, 115)">
+      <text x="0" y="45" class="brand-title" font-size="48" fill="#FFFFFF">KALKAN</text>
+      <text x="2" y="82" class="brand-sub" font-size="17" fill="#8E9AA8">SPORT</text>
+      <text x="2" y="118" class="saat-tag" font-size="12" fill="#00FFA3">SAAT-1 · MONOLITH CREST</text>
+    </g>
+
+    <!-- Micro Scale Test -->
+    <g transform="translate(40, 335)">
+      <text x="0" y="0" class="font-mono" font-size="11" fill="#64748B" letter-spacing="1">ТЕСТ МАСШТАБА (48px / 28px / 16px):</text>
+      <g transform="translate(260, -28) scale(0.24)">
+        <use href="#icon-c3" />
+      </g>
+      <g transform="translate(330, -22) scale(0.14)">
+        <use href="#icon-c3" />
+      </g>
+      <g transform="translate(380, -17) scale(0.08)">
+        <use href="#icon-c3" />
+      </g>
+    </g>
+
+    <!-- Description -->
+    <g transform="translate(40, 395)">
+      <text x="0" y="0" class="font-sans" font-size="14" font-weight="600" fill="#FFFFFF">Монолитный плоский щит с высеченной литерой К</text>
+      <text x="0" y="24" class="font-sans" font-size="13" fill="#8E9AA8">Лаконичный силуэт брони с негативной прорезью буквы К.</text>
+      <text x="0" y="44" class="font-sans" font-size="13" fill="#8E9AA8">Геральдика уровня Roger Federer и Tesla.</text>
+    </g>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- BOTTOM ROW: 3 MORE CONCEPTS                                    -->
+  <!-- ============================================================== -->
+
+  <!-- CARD 4: LINEAR WIREFRAME CREST -->
+  <g transform="translate(120, 800)">
+    <use href="#card-plate" />
+    <!-- Tag -->
+    <rect x="580" y="24" width="156" height="28" rx="6" fill="#1E283A" />
+    <text x="600" y="43" class="font-mono" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="1.5">ВАРИАНТ 04</text>
+    <text x="40" y="52" class="font-mono" font-size="12" font-weight="700" fill="#00FFA3" letter-spacing="2">«LINEAR WIREFRAME CREST»</text>
+
+    <!-- Icon Big Preview -->
+    <g transform="translate(40, 75) scale(1.15)">
+      <rect width="200" height="200" rx="14" fill="#080A10" stroke="#1A2234" />
+      <use href="#icon-c4" />
+    </g>
+
+    <!-- Typography Lockup -->
+    <g transform="translate(300, 115)">
+      <text x="0" y="45" class="brand-title" font-size="48" fill="#FFFFFF">КАЛКАН</text>
+      <text x="2" y="82" class="brand-sub" font-size="17" fill="#8E9AA8">СПОРТ</text>
+      <text x="2" y="118" class="saat-tag" font-size="12" fill="#00FFA3">СААТ-1 · QUIET LUXURY</text>
+    </g>
+
+    <!-- Micro Scale Test -->
+    <g transform="translate(40, 335)">
+      <text x="0" y="0" class="font-mono" font-size="11" fill="#64748B" letter-spacing="1">ТЕСТ МАСШТАБА (48px / 28px / 16px):</text>
+      <g transform="translate(260, -28) scale(0.24)">
+        <use href="#icon-c4" />
+      </g>
+      <g transform="translate(330, -22) scale(0.14)">
+        <use href="#icon-c4" />
+      </g>
+      <g transform="translate(380, -17) scale(0.08)">
+        <use href="#icon-c4" />
+      </g>
+    </g>
+
+    <!-- Description -->
+    <g transform="translate(40, 395)">
+      <text x="0" y="0" class="font-sans" font-size="14" font-weight="600" fill="#FFFFFF">Контурная геометрия в одну линию + точка СААТ</text>
+      <text x="0" y="24" class="font-sans" font-size="13" fill="#8E9AA8">Швейцарская часовая тонкость (Leica, Bang &amp; Olufsen).</text>
+      <text x="0" y="44" class="font-sans" font-size="13" fill="#8E9AA8">Единственная точка — ось стрелок и сердце биометрии.</text>
+    </g>
+  </g>
+
+  <!-- CARD 5: TRI-SLAB K-SHIELD -->
+  <g transform="translate(920, 800)">
+    <use href="#card-plate" />
+    <!-- Tag -->
+    <rect x="580" y="24" width="156" height="28" rx="6" fill="#1E283A" />
+    <text x="600" y="43" class="font-mono" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="1.5">ВАРИАНТ 05</text>
+    <text x="40" y="52" class="font-mono" font-size="12" font-weight="700" fill="#00FFA3" letter-spacing="2">«TRI-SLAB KINETIC SHIELD»</text>
+
+    <!-- Icon Big Preview -->
+    <g transform="translate(40, 75) scale(1.15)">
+      <rect width="200" height="200" rx="14" fill="#080A10" stroke="#1A2234" />
+      <use href="#icon-c5" />
+    </g>
+
+    <!-- Typography Lockup -->
+    <g transform="translate(300, 115)">
+      <text x="0" y="45" class="brand-title" font-size="48" fill="#FFFFFF">КАЛКАН</text>
+      <text x="2" y="82" class="brand-sub" font-size="17" fill="#8E9AA8">СПОРТ</text>
+      <text x="2" y="118" class="saat-tag" font-size="12" fill="#00FFA3">СААТ-1 · KINETIC ARCHITECTURE</text>
+    </g>
+
+    <!-- Micro Scale Test -->
+    <g transform="translate(40, 335)">
+      <text x="0" y="0" class="font-mono" font-size="11" fill="#64748B" letter-spacing="1">ТЕСТ МАСШТАБА (48px / 28px / 16px):</text>
+      <g transform="translate(260, -28) scale(0.24)">
+        <use href="#icon-c5" />
+      </g>
+      <g transform="translate(330, -22) scale(0.14)">
+        <use href="#icon-c5" />
+      </g>
+      <g transform="translate(380, -17) scale(0.08)">
+        <use href="#icon-c5" />
+      </g>
+    </g>
+
+    <!-- Description -->
+    <g transform="translate(40, 395)">
+      <text x="0" y="0" class="font-sans" font-size="14" font-weight="600" fill="#FFFFFF">Три геометрических клина без скруглений</text>
+      <text x="0" y="24" class="font-sans" font-size="13" fill="#8E9AA8">Углы строго 45°, одинаковый воздушный зазор.</text>
+      <text x="0" y="44" class="font-sans" font-size="13" fill="#8E9AA8">Спортивная резкость, динамика бега в духе Oakley.</text>
+    </g>
+  </g>
+
+  <!-- CARD 6: NOMAD DUAL CHEVRON -->
+  <g transform="translate(1720, 800)">
+    <use href="#card-plate" />
+    <!-- Tag -->
+    <rect x="580" y="24" width="156" height="28" rx="6" fill="#1E283A" />
+    <text x="600" y="43" class="font-mono" font-size="11" font-weight="700" fill="#94A3B8" letter-spacing="1.5">ВАРИАНТ 06</text>
+    <text x="40" y="52" class="font-mono" font-size="12" font-weight="700" fill="#00FFA3" letter-spacing="2">«NOMAD DUAL CHEVRONS»</text>
+
+    <!-- Icon Big Preview -->
+    <g transform="translate(40, 75) scale(1.15)">
+      <rect width="200" height="200" rx="14" fill="#080A10" stroke="#1A2234" />
+      <use href="#icon-c6" />
+    </g>
+
+    <!-- Typography Lockup -->
+    <g transform="translate(300, 115)">
+      <text x="0" y="45" class="brand-title" font-size="48" fill="#FFFFFF">KALKAN</text>
+      <text x="2" y="82" class="brand-sub" font-size="17" fill="#8E9AA8">SPORT</text>
+      <text x="2" y="118" class="saat-tag" font-size="12" fill="#00FFA3">SAAT-1 · DUAL ARROW</text>
+    </g>
+
+    <!-- Micro Scale Test -->
+    <g transform="translate(40, 335)">
+      <text x="0" y="0" class="font-mono" font-size="11" fill="#64748B" letter-spacing="1">ТЕСТ МАСШТАБА (48px / 28px / 16px):</text>
+      <g transform="translate(260, -28) scale(0.24)">
+        <use href="#icon-c6" />
+      </g>
+      <g transform="translate(330, -22) scale(0.14)">
+        <use href="#icon-c6" />
+      </g>
+      <g transform="translate(380, -17) scale(0.08)">
+        <use href="#icon-c6" />
+      </g>
+    </g>
+
+    <!-- Description -->
+    <g transform="translate(40, 395)">
+      <text x="0" y="0" class="font-sans" font-size="14" font-weight="600" fill="#FFFFFF">Двойная стрела «Жебе» и острие щита</text>
+      <text x="0" y="24" class="font-sans" font-size="13" fill="#8E9AA8">Два параллельных шеврона: белый (защита) и неоновый (скорость).</text>
+      <text x="0" y="44" class="font-sans" font-size="13" fill="#8E9AA8">Максимальная простота спортивной экипировки.</text>
+    </g>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- HARDWARE INTEGRATION: MOCKUP DIAL «СААТ-1» & CROWN ENGRAVING  -->
+  <!-- ============================================================== -->
+  <g transform="translate(120, 1360)">
+    <rect width="2360" height="560" rx="24" fill="#090B10" stroke="#1F2636" stroke-width="1.5" />
+
+    <text x="50" y="55" class="font-mono" font-size="13" font-weight="700" fill="#00FFA3" letter-spacing="2.5">
+      ФИЗИЧЕСКОЕ ВОПЛОЩЕНИЕ НА ЧАСАХ «СААТ-1» (46MM TITANIUM)
+    </text>
+
+    <!-- SUB-CARD 1: ROUND WATCH DIAL -->
+    <g transform="translate(260, 310)">
+      <!-- Watch Case Shadow -->
+      <circle cx="0" cy="0" r="190" fill="#000000" opacity="0.6" filter="blur(10px)" />
+      <!-- Titanium Bezel -->
+      <circle cx="0" cy="0" r="180" fill="#131722" stroke="#2D3748" stroke-width="12" />
+      <!-- Inner Bezel Minute Index -->
+      <circle cx="0" cy="0" r="166" fill="none" stroke="#1E293B" stroke-width="1.5" stroke-dasharray="3 7" />
+      <!-- 12-Hour Markers -->
+      <line x1="0" y1="-165" x2="0" y2="-148" stroke="#00FFA3" stroke-width="4" />
+      <line x1="165" y1="0" x2="148" y2="0" stroke="#475569" stroke-width="3" />
+      <line x1="0" y1="165" x2="0" y2="148" stroke="#475569" stroke-width="3" />
+      <line x1="-165" y1="0" x2="-148" y2="0" stroke="#475569" stroke-width="3" />
+
+      <!-- Sapphire Dial Center -->
+      <circle cx="0" cy="0" r="142" fill="#06080D" />
+
+      <!-- Minimal Logo on Dial (Variant B: Two Bars) -->
+      <g transform="translate(-24, -85) scale(0.24)">
+        <use href="#icon-c2" />
+      </g>
+
+      <text x="0" y="-18" class="font-sans" font-size="16" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="5">KALKAN</text>
+      <text x="0" y="2" class="font-mono" font-size="10" font-weight="700" fill="#00FFA3" text-anchor="middle" letter-spacing="2.5">СААТ-1</text>
+
+      <!-- Big Time Readout -->
+      <text x="0" y="48" class="font-sans" font-size="38" font-weight="900" fill="#FFFFFF" text-anchor="middle">08:45</text>
+      
+      <!-- Recovery Metric Sub -->
+      <rect x="-56" y="68" width="112" height="24" rx="12" fill="#111827" stroke="#00FFA3" stroke-width="1" />
+      <text x="0" y="84" class="font-mono" font-size="10" font-weight="700" fill="#00FFA3" text-anchor="middle" letter-spacing="1">⚡ 94% RECOVERY</text>
+    </g>
+
+    <!-- SUB-CARD 2: 3MM CROWN MICRO-ENGRAVING -->
+    <g transform="translate(850, 140)">
+      <rect width="420" height="340" rx="16" fill="#0E121B" stroke="#1E283A" />
+      <text x="30" y="45" class="font-mono" font-size="11" font-weight="700" fill="#00FFA3" letter-spacing="1.5">3-ММ ЗАВОДНАЯ ГОЛОВКА</text>
+      <text x="30" y="75" class="font-sans" font-size="18" font-weight="800" fill="#FFFFFF">Микро-гравировка лазером</text>
+
+      <!-- Crown Dial Macro View -->
+      <g transform="translate(210, 185)">
+        <circle cx="0" cy="0" r="60" fill="#1A202C" stroke="#4A5568" stroke-width="8" stroke-dasharray="6 3" />
+        <circle cx="0" cy="0" r="50" fill="#0A0D14" />
+        <!-- Scaled Mini Icon -->
+        <g transform="translate(-18, -18) scale(0.18)">
+          <use href="#icon-c2" />
+        </g>
+      </g>
+      <text x="30" y="295" class="font-sans" font-size="12" fill="#8E9AA8">
+        Благодаря отсутствию мелких зубцов символ сохраняет 100% читаемости даже на 3-миллиметровом торце кнопки.
+      </text>
+    </g>
+
+    <!-- SUB-CARD 3: SILICONE STRAP EMBOSSING -->
+    <g transform="translate(1330, 140)">
+      <rect width="420" height="340" rx="16" fill="#0E121B" stroke="#1E283A" />
+      <text x="30" y="45" class="font-mono" font-size="11" font-weight="700" fill="#00FFA3" letter-spacing="1.5">СИЛИКОНОВЫЙ РЕМЕШОК</text>
+      <text x="30" y="75" class="font-sans" font-size="18" font-weight="800" fill="#FFFFFF">Тиснение в матовом каучуке</text>
+
+      <!-- Strap Segment -->
+      <g transform="translate(80, 120)">
+        <rect x="0" y="0" width="260" height="120" rx="10" fill="#11151F" stroke="#242C3D" />
+        <!-- Texture ridges -->
+        <line x1="30" y1="0" x2="30" y2="120" stroke="#181F2E" stroke-width="2" />
+        <line x1="60" y1="0" x2="60" y2="120" stroke="#181F2E" stroke-width="2" />
+        <line x1="200" y1="0" x2="200" y2="120" stroke="#181F2E" stroke-width="2" />
+        <line x1="230" y1="0" x2="230" y2="120" stroke="#181F2E" stroke-width="2" />
+        <!-- Embossed Minimal Symbol -->
+        <g transform="translate(100, 30) scale(0.3)">
+          <rect x="58" y="28" width="18" height="144" rx="4" fill="#1E283A" />
+          <path d="M 144,32 L 96,100 L 144,168" fill="none" stroke="#2A374D" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+        </g>
+      </g>
+
+      <text x="30" y="295" class="font-sans" font-size="12" fill="#8E9AA8">
+        Глубокое объемное литье в пресс-форме (deboss) без потери четкости углов.
+      </text>
+    </g>
+
+    <!-- SUB-CARD 4: APP ICON OLED -->
+    <g transform="translate(1810, 140)">
+      <rect width="420" height="340" rx="16" fill="#0E121B" stroke="#1E283A" />
+      <text x="30" y="45" class="font-mono" font-size="11" font-weight="700" fill="#00FFA3" letter-spacing="1.5">APP ICON НА СМАРТФОНЕ</text>
+      <text x="30" y="75" class="font-sans" font-size="18" font-weight="800" fill="#FFFFFF">Иконка iOS / Android</text>
+
+      <!-- App Icon Squircle -->
+      <g transform="translate(150, 120)">
+        <rect x="0" y="0" width="120" height="120" rx="28" fill="#000000" stroke="#1E2330" stroke-width="1.5" />
+        <g transform="translate(30, 30) scale(0.3)">
+          <use href="#icon-c2" />
+        </g>
+      </g>
+
+      <text x="30" y="295" class="font-sans" font-size="12" fill="#8E9AA8">
+        Премиальный черный фон, идеальный контраст на экране OLED.
+      </text>
+    </g>
+
+  </g>
+
+</svg>

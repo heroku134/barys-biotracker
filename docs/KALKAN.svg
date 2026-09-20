@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2150 780" width="215mm" height="78mm">
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap');
+      .font-sans { font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+      .font-mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050506" />
+      <stop offset="50%" stop-color="#0D0E12" />
+      <stop offset="100%" stop-color="#050506" />
+    </linearGradient>
+
+    <!-- Фирменная палитра KALKAN SPORT: Янтарь #C4A574 -> Шалфей #7D9A92 -->
+    <linearGradient id="kalkan-amber-sage" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C4A574" />
+      <stop offset="50%" stop-color="#E5A93C" />
+      <stop offset="100%" stop-color="#7D9A92" />
+    </linearGradient>
+
+    <linearGradient id="metal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#E2E6EC" />
+      <stop offset="100%" stop-color="#7E8494" />
+    </linearGradient>
+
+    <!-- 100% PURE MATHEMATICAL VECTOR LOGO (ZERO RASTER BITMAPS, INFINITELY SHARP) -->
+    <g id="kalkan-logo-symbol">
+      <path d="M 39,165 C 77,72 209,90 295,143 C 189,104 118,120 39,165 Z" fill="url(#kalkan-amber-sage)" />
+      <path d="M 52,195 C 130,103 247,103 325,195" fill="none" stroke="#E2E6EC" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <g id="kalkan-logo">
+      <g transform="translate(-486, -148)">
+        <!-- Pure Vector Emblem Arcs -->
+        <use href="#kalkan-logo-symbol" />
+        <!-- Pure Vector Text КАЛКАН -->
+        <text x="385" y="142" class="font-sans" font-weight="900" font-size="94" fill="#E2E6EC" letter-spacing="10">КАЛКАН</text>
+        <!-- Pure Vector Text СПОРТ (Палитра Amber #C4A574) -->
+        <text y="218" class="font-sans" font-weight="800" font-size="38" fill="#C4A574">
+          <tspan x="403">С</tspan>
+          <tspan x="481">П</tspan>
+          <tspan x="558">О</tspan>
+          <tspan x="641">Р</tspan>
+          <tspan x="716">Т</tspan>
+        </text>
+        <!-- Pure Vector Hardware Tag: СААТ-1 -->
+        <text x="390" y="270" class="font-mono" font-weight="700" font-size="19" fill="#7D9A92" letter-spacing="4">ЧАСЫ СААТ-1 · HARDWARE CALIBRE</text>
+      </g>
+    </g>
+  </defs>
+
+  <!-- Base Background -->
+  <rect width="2150" height="780" fill="url(#bg-grad)" />
+
+  <!-- Center Brand Logo -->
+  <g transform="translate(1075, 340) scale(0.85)">
+    <use href="#kalkan-logo" />
+  </g>
+</svg>

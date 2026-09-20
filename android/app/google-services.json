@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1053191910543",
+    "firebase_url": "https://mjal-9b4f3-default-rtdb.firebaseio.com",
+    "project_id": "mjal-9b4f3",
+    "storage_bucket": "mjal-9b4f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1053191910543:android:8b5628048ed9f400d12cfa",
+        "android_client_info": {
+          "package_name": "watch.circle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0r-2GDAzSf30vOBun2uYMWyTADXOI9p4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

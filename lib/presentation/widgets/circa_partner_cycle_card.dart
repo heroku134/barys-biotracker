@@ -1,0 +1,257 @@
+import 'package:flutter/material.dart';
+import '../../core/app_colors.dart';
+import '../../domain/models/partner_cycle_data.dart';
+import 'glass_card.dart';
+
+/// Карточка «Партнёр» на главном экране (отображение данных и советов по биоритму партнёрши)
+class CircaPartnerCycleCard extends StatelessWidget {
+  final PartnerCycleData data;
+  final VoidCallback onTap;
+
+  const CircaPartnerCycleCard({
+    super.key,
+    required this.data,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pColor = data.phaseColor;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: GlassCard(
+        borderRadius: 22,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Шапка: Иконка сердца, Имя партнерши и бейдж фазы
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.rose.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.favorite,
+                    color: AppColors.rose,
+                    size: 15,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'БИОРИТМ ПАРТНЁРА · ${data.partnerName.toUpperCase()}',
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'День ${data.cycleDay} из ${data.cycleLength} · СААТ-1',
+                        style: const TextStyle(
+                          color: AppColors.fg,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: pColor.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: pColor.withValues(alpha: 0.45)),
+                  ),
+                  child: Text(
+                    data.phaseTitle,
+                    style: TextStyle(
+                      color: pColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // 2. Индикатор прогресса цикла (28-дневная дорожка с отметкой текущего дня)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                height: 5,
+                child: Row(
+                  children: [
+                    // Менструальная фаза (1-5 дни: 18%)
+                    Expanded(
+                      flex: 5,
+                      child: Container(color: AppColors.rose.withValues(alpha: data.cycleDay <= 5 ? 0.9 : 0.25)),
+                    ),
+                    const SizedBox(width: 2),
+                    // Фолликулярная (6-13 дни: 28%)
+                    Expanded(
+                      flex: 8,
+                      child: Container(color: AppColors.sage.withValues(alpha: (data.cycleDay > 5 && data.cycleDay <= 13) ? 0.9 : 0.25)),
+                    ),
+                    const SizedBox(width: 2),
+                    // Овуляция (14-16 дни: 11%)
+                    Expanded(
+                      flex: 3,
+                      child: Container(color: AppColors.amber.withValues(alpha: (data.cycleDay > 13 && data.cycleDay <= 16) ? 0.9 : 0.25)),
+                    ),
+                    const SizedBox(width: 2),
+                    // Лютеиновая (17-28 дни: 43%)
+                    Expanded(
+                      flex: 12,
+                      child: Container(color: const Color(0xFFA685B8).withValues(alpha: data.cycleDay > 16 ? 0.9 : 0.25)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 3. Блок метрик (Температура, Энергия, Настроение)
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.raised,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.line),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ТЕРМОСЕНСОР',
+                          style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          '${data.skinTempDeviation >= 0 ? '+' : ''}${data.skinTempDeviation.toStringAsFixed(2)}°C',
+                          style: const TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.raised,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.line),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ЭНЕРГИЯ',
+                          style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          '${data.energyEmoji} ${data.energyScore}/5',
+                          style: TextStyle(color: pColor, fontSize: 12, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: AppColors.raised,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.line),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'НАСТРОЕНИЕ',
+                          style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          data.mood.split(' ').first,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // 4. Совет для партнера
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.raised.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.lightbulb_outline, color: AppColors.amber, size: 14),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      data.partnerGuidance,
+                      style: const TextStyle(
+                        color: AppColors.fg,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // 5. Футер
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Подробнее о цикле партнёрши →',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
