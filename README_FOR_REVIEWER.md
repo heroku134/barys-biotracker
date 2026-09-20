@@ -130,6 +130,18 @@ flutter build apk --debug
 
 Готовый APK появится по пути: `build/app/outputs/flutter-apk/app-debug.apk`.
 
+### Сборка iOS IPA через Git & GitHub Actions:
+Поскольку сборка iOS `.ipa` требует macOS и Xcode, в репозитории настроен автоматический CI/CD workflow:
+- **Файл конфигурации:** `.github/workflows/build_ipa.yml` (работает на виртуальной машине `macos-14` с Apple Silicon M1).
+- **Как запустить сборку IPA:**
+  1. Создайте репозиторий на GitHub.
+  2. Привяжите и отправьте проект с помощью скрипта:
+     ```powershell
+     .\git_push.ps1 https://github.com/ВАШ_АККАУНТ/ВАШ_РЕПОЗИТОРИЙ.git
+     ```
+  3. GitHub Actions автоматически запустит сборку, проведет анализ, прогонит тесты и скомпилирует `KALKAN_SPORT.ipa`.
+  4. Скачайте готовый `.ipa` во вкладке **Actions** -> **Artifacts** -> **`KALKAN_SPORT_iOS_IPA`**.
+
 ---
 
 ## 📱 6. Виджеты iOS (WidgetKit & SwiftUI)
