@@ -80,15 +80,15 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
     final controller = TextEditingController(text: slot.userTag ?? '');
 
     const presets = [
-      '💼 Переговоры',
-      '⏰ Дедлайн',
-      '🚗 Дорога / Пробка',
-      '☕ Кофеин',
-      '🏋️ Тренировка',
-      '🔥 Конфликт',
-      '📱 Соцсети',
-      '🧘 Медитация',
-      '🥗 Обед / Пища',
+      'Переговоры',
+      'Дедлайн',
+      'Дорога / Пробка',
+      'Кофеин',
+      'Тренировка',
+      'Конфликт',
+      'Соцсети',
+      'Медитация',
+      'Обед / Пища',
     ];
 
     final newTag = await showModalBottomSheet<String>(

@@ -97,8 +97,8 @@ class AppStrings {
       AppLanguage.kyrgyz: 'Талдоо',
     },
     'nav_barys': {
-      AppLanguage.russian: '🐯 БАРЫС',
-      AppLanguage.kyrgyz: '🐯 БАРЫС',
+      AppLanguage.russian: 'БАРЫС',
+      AppLanguage.kyrgyz: 'БАРЫС',
     },
     'nav_sport': {
       AppLanguage.russian: 'Спорт',
@@ -299,8 +299,8 @@ class AppStrings {
       AppLanguage.kyrgyz: 'Данбар ишеним чөйрөсү (3–5 адам)',
     },
     'profile_crisis_mode': {
-      AppLanguage.russian: '⚡ Режим «ГРОЗА» (Кризис и тревога)',
-      AppLanguage.kyrgyz: '⚡ «ЧАГЫЛГАН» режими (Кризис жана кооптонуу)',
+      AppLanguage.russian: 'Режим «ГРОЗА» (Кризис и тревога)',
+      AppLanguage.kyrgyz: '«ЧАГЫЛГАН» режими (Кризис жана кооптонуу)',
     },
     'profile_crisis_sub': {
       AppLanguage.russian: 'ЧСС 118, ВСР 22мс, стресс 89% (Red Zone)',
@@ -441,20 +441,20 @@ class AppStrings {
       AppLanguage.kyrgyz: 'АЯЛДАР БИОРИТМИ · СААТ-1',
     },
     'cycle_phase_menstrual': {
-      AppLanguage.russian: 'Менструальная фаза',
-      AppLanguage.kyrgyz: 'Этек кир фазасы',
+      AppLanguage.russian: 'Менструация',
+      AppLanguage.kyrgyz: 'Этек кир',
     },
     'cycle_phase_follicular': {
-      AppLanguage.russian: 'Фолликулярная фаза',
-      AppLanguage.kyrgyz: 'Фолликулярдык фаза',
+      AppLanguage.russian: 'Фолликулярная',
+      AppLanguage.kyrgyz: 'Фолликулярдык',
     },
     'cycle_phase_ovulatory': {
-      AppLanguage.russian: 'Овуляция (Пик сил)',
-      AppLanguage.kyrgyz: 'Овуляция (Күч чокусу)',
+      AppLanguage.russian: 'Овуляция',
+      AppLanguage.kyrgyz: 'Овуляция',
     },
     'cycle_phase_luteal': {
-      AppLanguage.russian: 'Лютеиновая фаза',
-      AppLanguage.kyrgyz: 'Лютеиндик фаза',
+      AppLanguage.russian: 'Лютеиновая',
+      AppLanguage.kyrgyz: 'Лютеиндик',
     },
     'cycle_day_counter': {
       AppLanguage.russian: 'День {day} из {total}',

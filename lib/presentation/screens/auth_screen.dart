@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
-import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/user_profile.dart';
+import '../widgets/circa_ai_language_pill.dart';
 import '../widgets/circa_film_grain.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
@@ -162,56 +162,19 @@ class _AuthScreenState extends State<AuthScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 24),
 
-                          // Священная пословица при входе в биосистему
-                          Text(
-                            AppStrings.tr('entrance_quote', language),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.fg,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.2,
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            AppStrings.tr('entrance_quote_sub', language),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.amber,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              fontStyle: FontStyle.italic,
-                              height: 1.3,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Богатое пульсирующее лого CIRCA
+                          // Богатое пульсирующее лого КАЛКАН
                           const Center(
                             child: CircaPulsingLogo(
-                              size: 115,
+                              size: 110,
                               primaryColor: AppColors.amber,
                               secondaryColor: AppColors.sage,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
 
-                          // Заголовок бренда
-                          Text(
-                            AppStrings.tr('auth_brand', language),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 3.0,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
+                          // Заголовок экрана входа
                           Text(
                             _isSignUp
                                 ? AppStrings.tr('auth_signup_title', language)
@@ -222,16 +185,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            AppStrings.tr('auth_subtitle', language),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 12.5,
-                              height: 1.35,
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -271,10 +224,6 @@ class _AuthScreenState extends State<AuthScreen> {
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
-                          const SizedBox(height: 16),
-
-                          // Селектор пола атлета (Мужской / Женский)
-                          _buildGenderSelector(language),
 
                           // Ошибка
                           if (_errorMessage != null) ...[
@@ -357,43 +306,11 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
 
-                  // Переключатель языка [RU | KG] в правом верхнем углу
-                  Positioned(
+                  // Переключатель языка (AI Oval Capsule)
+                  const Positioned(
                     top: 10,
                     right: 18,
-                    child: GestureDetector(
-                      onTap: () {
-                        AppLocaleNotifier.toggleLanguage();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.line),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              language.flag,
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              language.shortTitle,
-                              style: const TextStyle(
-                                color: AppColors.amber,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.sync_alt, color: AppColors.muted, size: 12),
-                          ],
-                        ),
-                      ),
-                    ),
+                    child: CircaAiLanguagePill(),
                   ),
                 ],
               ),
@@ -401,90 +318,6 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildGenderSelector(AppLanguage language) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppStrings.tr('gender_label', language).toUpperCase(),
-          style: const TextStyle(
-            color: AppColors.muted,
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _buildGenderOption(
-                gender: Gender.male,
-                title: AppStrings.tr('gender_male', language),
-                icon: Icons.male,
-                isSelected: _selectedGender == Gender.male,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildGenderOption(
-                gender: Gender.female,
-                title: AppStrings.tr('gender_female', language),
-                icon: Icons.female,
-                isSelected: _selectedGender == Gender.female,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGenderOption({
-    required Gender gender,
-    required String title,
-    required IconData icon,
-    required bool isSelected,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        CircaHaptics.selectionClick();
-        setState(() => _selectedGender = gender);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.raised : AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.amber : AppColors.line,
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected ? AppColors.amber : AppColors.muted,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              title,
-              style: TextStyle(
-                color: isSelected ? AppColors.fg : AppColors.muted,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

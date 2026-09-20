@@ -86,6 +86,22 @@ class CircaHaptics {
       CircaAcoustics.playMechanicalClick();
     } catch (_) {}
   }
+
+  /// Предупреждение / экстренное действие
+  static Future<void> heavyAlert() async {
+    try {
+      await HapticFeedback.heavyImpact();
+      CircaAcoustics.playAlertSound();
+    } catch (_) {}
+  }
+
+  /// Открытие всплывающего модального окна / шита
+  static Future<void> sheetOpen() async {
+    try {
+      await HapticFeedback.mediumImpact();
+      CircaAcoustics.playMechanicalClick();
+    } catch (_) {}
+  }
 }
 
 /// Акустический слой тактильной обратной связи.

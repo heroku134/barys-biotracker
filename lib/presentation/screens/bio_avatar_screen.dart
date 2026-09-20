@@ -374,259 +374,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     );
   }
 
-  void _showWorkoutStartDialog() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.stage,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border(top: BorderSide(color: AppColors.line, width: 1.5)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.faint,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'РЕГИСТРАЦИЯ ТРЕНИРОВКИ (STRAIN)',
-                style: TextStyle(
-                  color: AppColors.muted,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2.0,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'XP Барысу начисляется строго за физиологическую нагрузку:',
-                style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 14),
 
-              _buildWorkoutOption(
-                title: 'Аэробный кросс (Зона 2)',
-                sub: '40 мин · +8.5 Strain · Выносливость миокарда',
-                strain: 8.5,
-                color: AppColors.sage,
-              ),
-              _buildWorkoutOption(
-                title: 'Интервальный HIIT (Зона 4-5)',
-                sub: '25 мин · +12.0 Strain · Сила и анаэробная емкость',
-                strain: 12.0,
-                color: AppColors.amber,
-              ),
-              _buildWorkoutOption(
-                title: 'Силовая сессия в зале',
-                sub: '50 мин · +9.8 Strain · Мышечный тонус',
-                strain: 9.8,
-                color: AppColors.sage,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildWorkoutOption({
-    required String title,
-    required String sub,
-    required double strain,
-    required Color color,
-  }) {
-    return GestureDetector(
-      onTap: () async {
-        Navigator.pop(context);
-        HapticFeedback.heavyImpact();
-
-        final result = await AvatarManager.recordWorkoutReward(activityStrain: strain);
-
-        if (mounted) {
-          setState(() {
-            _profile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: AppColors.surface,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: AppColors.line),
-              ),
-              content: Row(
-                children: [
-                  const Icon(Icons.bolt, color: AppColors.amber, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Нагрузка +$strain Strain зачтена! +${result.addedXp} XP',
-                    style: const TextStyle(
-                      color: AppColors.fg,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-
-          if (result.didLevelUp) {
-            _showLevelUpDialog(result.level);
-          }
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.line),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.directions_run, color: color, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: AppColors.fg,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    sub,
-                    style: const TextStyle(color: AppColors.muted, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              '+${(strain * 35).round()} XP',
-              style: const TextStyle(
-                color: AppColors.amber,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLevelUpDialog(int newLevel) {
-    final tier = AvatarManager.getEvolutionTier(newLevel);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: tier.auraColor, width: 1.5),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.emoji_events, color: tier.auraColor, size: 24),
-              const SizedBox(width: 10),
-              Text(
-                'НОВЫЙ УРОВЕНЬ $newLevel',
-                style: TextStyle(
-                  color: tier.auraColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                tier.title,
-                style: const TextStyle(
-                  color: AppColors.fg,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                tier.description,
-                style: const TextStyle(
-                  color: AppColors.muted,
-                  fontSize: 12,
-                  height: 1.35,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.raised,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Разблокировано: ${tier.unlockBenefit}',
-                  style: const TextStyle(
-                    color: AppColors.amber,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'ПРОДОЛЖИТЬ ПУТЬ',
-                style: TextStyle(
-                  color: AppColors.amber,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -762,78 +510,6 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                           ],
                         ),
                       ),
-
-                    // 3. Реплика с памятью о вчерашнем дне (Эпизодическая память)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.line),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 2),
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.amber.withValues(alpha: 0.15),
-                            ),
-                            child: const Icon(
-                              Icons.history_toggle_off,
-                              color: AppColors.amber,
-                              size: 16,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'ПАМЯТЬ БАРЫСА О ВЧЕРАШНЕМ ДНЕ',
-                                      style: TextStyle(
-                                        color: AppColors.muted,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                    Text(
-                                      'ВЧЕРА → СЕГОДНЯ',
-                                      style: TextStyle(
-                                        color: AppColors.amber,
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  AvatarManager.getMemoryQuote(
-                                    telemetry: _telemetry,
-                                    baseline: _baseline,
-                                  ),
-                                  style: const TextStyle(
-                                    color: AppColors.fg,
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic,
-                                    height: 1.35,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
                     // 4. Карточка прогрессии эволюции (Кадет → Сарбаз → Батыр → Аксакал)
                     GlassCard(
@@ -989,71 +665,13 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 10),
-
-                    // 6. Три RPG характеристики от РЕАЛЬНЫХ сенсоров
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildCircaStat('ВЫНОСЛИВОСТЬ', _profile.endurance, 'Зона 2 ЧСС', AppColors.sage),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildCircaStat('СИЛА', _profile.power, 'Пик Strain / Z5', AppColors.amber),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildCircaStat('ФОКУС', _profile.focus, 'Deep+REM сон', AppColors.sage),
-                        ),
-                      ],
-                    ),
-
                     const SizedBox(height: 14),
 
-                    // 7. Полноценный интерактивный чек-лист микро-квестов
+                    // 6. Полноценный чек-лист задач
                     _buildDailyQuestsChecklist(),
 
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 24),
                   ],
-                ),
-              ),
-            ),
-
-            // Кнопка реальной тренировки (НЕ кликер!)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: const BoxDecoration(
-                color: AppColors.stage,
-                border: Border(top: BorderSide(color: AppColors.line, width: 1.0)),
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _profile.isPauseMode ? AppColors.raised : AppColors.amber,
-                    foregroundColor: _profile.isPauseMode ? AppColors.muted : AppColors.stage,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: _profile.isPauseMode ? null : _showWorkoutStartDialog,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(_profile.isPauseMode ? Icons.bedtime : Icons.directions_run, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        _profile.isPauseMode ? 'РЕЖИМ ЗАЩИТЫ ЦНС (ОТДЫХ)' : 'ЗАФИКСИРОВАТЬ ТРЕНИРОВКУ (STRAIN)',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),
@@ -1109,42 +727,6 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     );
   }
 
-  Widget _buildCircaStat(String title, int value, String sub, Color color) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      child: Column(
-        children: [
-          Text(
-            '$value',
-            style: const TextStyle(
-              color: AppColors.fg,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: TextStyle(
-              color: color,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 1),
-          Text(
-            sub,
-            style: const TextStyle(
-              color: AppColors.faint,
-              fontSize: 8,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildDailyQuestsChecklist() {
     final completedCount = _profile.quests.where((q) => q.isCompleted).length;
     final totalCount = _profile.quests.length;
@@ -1158,7 +740,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              _profile.isPauseMode ? 'РЕЖИМ ПАУЗЫ (ЦНС)' : 'ЕЖЕДНЕВНЫЕ ЗАДАЧИ НАГРУЗКИ',
+              _profile.isPauseMode ? 'РЕЖИМ ВОССТАНОВЛЕНИЯ (ЦНС)' : 'ЕЖЕДНЕВНЫЕ ЗАДАЧИ АКТИВНОСТИ',
               style: const TextStyle(
                 color: AppColors.muted,
                 fontSize: 10,
@@ -1203,117 +785,88 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
         ..._profile.quests.map((quest) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: () => _handleQuestTap(quest),
-                child: GlassCard(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  child: Row(
-                    children: [
-                      // Интерактивный чекбокс с тактильным откликом
-                      Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: quest.isCompleted
-                              ? AppColors.sage.withValues(alpha: 0.18)
-                              : AppColors.raised,
-                          border: Border.all(
-                            color: quest.isCompleted ? AppColors.sage : AppColors.line,
-                            width: quest.isCompleted ? 1.5 : 1.0,
-                          ),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            quest.isCompleted ? Icons.check : (quest.icon ?? Icons.radio_button_unchecked),
-                            color: quest.isCompleted ? AppColors.sage : AppColors.muted,
-                            size: quest.isCompleted ? 15 : 13,
-                          ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => _handleQuestTap(quest),
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    // Индикатор выполнения сенсором
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: quest.isCompleted
+                            ? AppColors.sage.withValues(alpha: 0.18)
+                            : AppColors.raised,
+                        border: Border.all(
+                          color: quest.isCompleted ? AppColors.sage : AppColors.line,
+                          width: quest.isCompleted ? 1.5 : 1.0,
                         ),
                       ),
-                      const SizedBox(width: 12),
-
-                      // Текст квеста и статус
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              quest.title,
-                              style: TextStyle(
-                                color: quest.isCompleted ? AppColors.fg : AppColors.fg.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12.5,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              quest.subtitle.isNotEmpty
-                                  ? quest.subtitle
-                                  : '${quest.current} / ${quest.target} ${quest.unit}',
-                              style: TextStyle(
-                                color: quest.isCompleted ? AppColors.sage.withValues(alpha: 0.85) : AppColors.faint,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                      child: Center(
+                        child: Icon(
+                          quest.isCompleted ? Icons.check : (quest.icon ?? Icons.radio_button_unchecked),
+                          color: quest.isCompleted ? AppColors.sage : AppColors.muted,
+                          size: quest.isCompleted ? 15 : 13,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                    ),
+                    const SizedBox(width: 12),
 
-                      // Кнопка действия / индикатор XP
-                      if (quest.isInteractive && !quest.isCompleted)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: AppColors.amber.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.amber.withValues(alpha: 0.5)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                quest.actionLabel,
-                                style: const TextStyle(
-                                  color: AppColors.amber,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.arrow_forward_ios, size: 8, color: AppColors.amber),
-                            ],
-                          ),
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: quest.isCompleted
-                                ? AppColors.sage.withValues(alpha: 0.12)
-                                : AppColors.raised,
-                            borderRadius: BorderRadius.circular(8),
-                            border: quest.isCompleted
-                                ? Border.all(color: AppColors.sage.withValues(alpha: 0.4))
-                                : null,
-                          ),
-                          child: Text(
-                            '+${quest.rewardXp} XP',
+                    // Текст квеста и статус
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            quest.title,
                             style: TextStyle(
-                              color: quest.isCompleted ? AppColors.sage : AppColors.amber,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
+                              color: quest.isCompleted ? AppColors.fg : AppColors.fg.withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
                             ),
                           ),
+                          const SizedBox(height: 2),
+                          Text(
+                            quest.subtitle.isNotEmpty
+                                ? quest.subtitle
+                                : '${quest.current} / ${quest.target} ${quest.unit}',
+                            style: TextStyle(
+                              color: quest.isCompleted ? AppColors.sage.withValues(alpha: 0.85) : AppColors.faint,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Индикатор XP / статуса выполнения сенсором
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: quest.isCompleted
+                            ? AppColors.sage.withValues(alpha: 0.12)
+                            : AppColors.raised,
+                        borderRadius: BorderRadius.circular(8),
+                        border: quest.isCompleted
+                            ? Border.all(color: AppColors.sage.withValues(alpha: 0.4))
+                            : null,
+                      ),
+                      child: Text(
+                        quest.isCompleted ? 'ВЫПОЛНЕНО' : '+${quest.rewardXp} XP',
+                        style: TextStyle(
+                          color: quest.isCompleted ? AppColors.sage : AppColors.amber,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
                         ),
-                    ],
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -1361,130 +914,46 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
 
   void _handleQuestTap(DailyQuest quest) {
     CircaHaptics.ringZoneTick();
-    if (quest.isCompleted) return;
-
-    if (quest.id == 'quest_journal') {
-      _showJournalLoggingSheet();
-    } else if (quest.id == 'quest_bedtime') {
-      _lockBedtimeRitual();
+    String message;
+    if (quest.isCompleted) {
+      message = 'Задание выполнено! Сенсоры KALKAN СААТ-1 зафиксировали целевой показатель.';
+    } else if (quest.id == 'quest_strain') {
+      message = 'Дневная нагрузка накапливается автоматически при ношении СААТ-1 во время активности.';
+    } else if (quest.id == 'quest_steps') {
+      message = 'Шаги учитываются акселерометром СААТ-1 автоматически в режиме реального времени.';
+    } else if (quest.id == 'quest_sleep') {
+      message = 'Сон и фазы восстановления анализируются датчиками СААТ-1 во время ночного отдыха.';
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.surface,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-            side: const BorderSide(color: AppColors.line),
-          ),
-          content: const Text(
-            'Нагрузка накапливается автоматически через тренировки в разделе Спорт',
-            style: TextStyle(color: AppColors.fg, fontSize: 12),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      message = 'Показатели регистрируются датчиками KALKAN СААТ-1 автоматически.';
     }
-  }
 
-  void _showJournalLoggingSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.stage,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border(top: BorderSide(color: AppColors.line, width: 1.0)),
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: AppColors.surface,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(color: AppColors.line),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        content: Row(
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.faint,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+            Icon(
+              quest.isCompleted ? Icons.check_circle_outline : Icons.sensors,
+              color: quest.isCompleted ? AppColors.sage : AppColors.amber,
+              size: 18,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'ВЕЧЕРНИЙ БИО-ЖУРНАЛ KALKAN',
-              style: TextStyle(
-                color: AppColors.amber,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 2.0,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Зафиксируй контекст сегодняшнего дня (+250 XP)',
-              style: TextStyle(color: AppColors.fg, fontSize: 15, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                '💼 Рабочий спринт',
-                '🧘 Медитация / баланс',
-                '🏃 Активная тренировка',
-                '☕ Кофеин / поздний чай',
-                '🥗 Чистое питание',
-                '⚡ Психологический стресс',
-              ].map((tag) => ActionChip(
-                backgroundColor: AppColors.surface,
-                side: const BorderSide(color: AppColors.line),
-                label: Text(tag, style: const TextStyle(color: AppColors.fg, fontSize: 11)),
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  await AvatarManager.completeJournalQuest();
-                  setState(() {
-                    _profile = AvatarManager.getProfile(widget.bleBridge.currentTelemetry, baseline: const PersonalBaseline());
-                  });
-                },
-              )).toList(),
             ),
           ],
         ),
+        duration: const Duration(seconds: 3),
       ),
     );
-  }
-
-  void _lockBedtimeRitual() async {
-    await AvatarManager.completeBedtimeQuest();
-    setState(() {
-      _profile = AvatarManager.getProfile(widget.bleBridge.currentTelemetry, baseline: const PersonalBaseline());
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.surface,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-            side: const BorderSide(color: AppColors.amber),
-          ),
-          content: Row(
-            children: const [
-              Icon(Icons.bedtime_outlined, color: AppColors.amber, size: 18),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Ритуал отбоя зафиксирован на 22:15. Шанс зеленой зоны завтра: 84% (+250 XP)',
-                  style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    }
   }
 }

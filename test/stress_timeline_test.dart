@@ -42,19 +42,19 @@ void main() {
       final summary = StressEngine.analyze(
         currentScore: 50,
         customTags: {
-          'slot_3': '💼 Совет директоров',
+          'slot_3': 'Совет директоров',
         },
       );
 
       final slot3 = summary.timeline.firstWhere((s) => s.id == 'slot_3');
-      expect(slot3.contextTitle, '💼 Совет директоров');
-      expect(slot3.userTag, '💼 Совет директоров');
+      expect(slot3.contextTitle, 'Совет директоров');
+      expect(slot3.userTag, 'Совет директоров');
     });
 
     test('Slot tagging persistence via SharedPreferences', () async {
-      await StressEngine.saveSlotTag('slot_3', '⏰ Срочный дедлайн');
+      await StressEngine.saveSlotTag('slot_3', 'Срочный дедлайн');
       final savedTag = await StressEngine.getSlotTag('slot_3');
-      expect(savedTag, '⏰ Срочный дедлайн');
+      expect(savedTag, 'Срочный дедлайн');
     });
   });
 

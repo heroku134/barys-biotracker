@@ -7,10 +7,14 @@ import 'package:barys_biotracker/domain/intelligence/menstrual_cycle_engine.dart
 import 'package:barys_biotracker/domain/models/telemetry.dart';
 import 'package:barys_biotracker/domain/models/user_profile.dart';
 import 'package:barys_biotracker/data/storage/user_profile_repository.dart';
+import 'package:barys_biotracker/data/storage/partner_cycle_repository.dart';
+import 'package:barys_biotracker/domain/models/partner_cycle_data.dart';
 import 'package:barys_biotracker/presentation/screens/auth_screen.dart';
 import 'package:barys_biotracker/presentation/screens/main_shell.dart';
 import 'package:barys_biotracker/presentation/screens/menstrual_cycle_screen.dart';
 import 'package:barys_biotracker/presentation/widgets/circa_cycle_card.dart';
+import 'package:barys_biotracker/presentation/widgets/circa_partner_cycle_card.dart';
+import 'package:barys_biotracker/presentation/widgets/circa_partner_cycle_sheet.dart';
 
 void main() {
   setUp(() {
@@ -127,7 +131,7 @@ void main() {
   });
 
   group('UI Tests: AuthScreen Gender Selector & CircaCycleCard', () {
-    testWidgets('AuthScreen displays male and female gender options', (tester) async {
+    testWidgets('AuthScreen does NOT display gender selector upon login per user requirement', (tester) async {
       final bridge = UteBleBridge();
       await tester.pumpWidget(
         MaterialApp(
@@ -136,13 +140,9 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Verify gender options exist
-      expect(find.text('Мужской'), findsOneWidget);
-      expect(find.text('Женский'), findsOneWidget);
-
-      // Tap female option
-      await tester.tap(find.text('Женский'));
-      await tester.pump(const Duration(milliseconds: 100));
+      // User explicitly requested: "зачем выбирать пол при входе в систему не понятно убери"
+      expect(find.text('Мужской'), findsNothing);
+      expect(find.text('Женский'), findsNothing);
     });
 
     testWidgets('CircaCycleCard renders day, phase, and СААТ-1 temperature', (tester) async {
@@ -172,7 +172,7 @@ void main() {
 
       expect(find.text('14'), findsOneWidget);
       expect(find.textContaining('СААТ-1'), findsWidgets);
-      expect(find.textContaining('+0.32°C'), findsOneWidget);
+      expect(find.text('Овуляция'), findsOneWidget);
 
       await tester.tap(find.byType(CircaCycleCard));
       expect(tapped, isTrue);
@@ -220,6 +220,143 @@ void main() {
       // Male sees 'Спорт' in navbar
       expect(find.text('Спорт'), findsOneWidget);
       expect(find.text('Цикл'), findsNothing);
+    });
+
+    test('PartnerCycleData serialization and guidance logic', () {
+      final now = DateTime(2026, 9, 20);
+      final partner = PartnerCycleData(
+        isLinked: true,
+        partnerName: 'Айпери',
+        partnerCode: 'KLK-CYC-9281',
+        cycleDay: 14,
+        cycleLength: 28,
+        phase: HormonalCyclePhase.ovulatory,
+        skinTempDeviation: 0.35,
+        energyScore: 5,
+        mood: 'Драйв',
+        flow: 'none',
+        symptoms: ['Энергичность', 'Высокий тонус'],
+        note: 'Отличное самочувствие',
+        lastSyncTime: now,
+      );
+
+      final json = partner.toJson();
+      final restored = PartnerCycleData.fromJson(json);
+
+      expect(restored.isLinked, isTrue);
+      expect(restored.partnerName, 'Айпери');
+      expect(restored.cycleDay, 14);
+      expect(restored.currentCycleDay, 14);
+      expect(restored.phase, HormonalCyclePhase.ovulatory);
+      expect(restored.phaseTitle, 'Овуляция');
+      expect(restored.energyLabel, 'Высокий');
+      expect(restored.partnerAdvice, contains('Пик энергии'));
+
+      final str = partner.serialize();
+      final fromStr = PartnerCycleData.deserialize(str);
+      expect(fromStr?.partnerCode, 'KLK-CYC-9281');
+    });
+
+    test('PartnerCycleRepository link, unlink and sync flow', () async {
+      await PartnerCycleRepository.linkPartner(
+        partnerCode: 'KLK-CYC-9281',
+        partnerName: 'Айпери',
+        cycleDay: 14,
+        cycleLength: 28,
+      );
+
+      final loaded = await PartnerCycleRepository.loadPartnerCycle();
+      expect(loaded.isLinked, isTrue);
+      expect(loaded.partnerName, 'Айпери');
+      expect(loaded.cycleDay, 14);
+      expect(PartnerCycleRepository.notifier.value.isLinked, isTrue);
+
+      // Sync updated day from female profile
+      await PartnerCycleRepository.syncFromFemaleProfile(
+        const UserProfile(gender: Gender.female, name: 'Айпери', cycleLengthDays: 28),
+        currentCycleDay: 15,
+        energyScore: 4,
+        mood: 'Спокойствие',
+        flow: 'none',
+        symptoms: ['Ясность'],
+        note: 'Спокойный день',
+        skinTempDeviation: 0.40,
+      );
+
+      final synced = PartnerCycleRepository.notifier.value;
+      expect(synced.cycleDay, 15);
+      expect(synced.skinTempDeviation, 0.40);
+      expect(synced.note, 'Спокойный день');
+
+      // Unlink
+      await PartnerCycleRepository.unlinkPartner();
+      final unlinked = await PartnerCycleRepository.loadPartnerCycle();
+      expect(unlinked.isLinked, isFalse);
+    });
+
+    testWidgets('CircaPartnerCycleCard renders on dashboard and opens detail sheet', (tester) async {
+      final partnerData = PartnerCycleData(
+        isLinked: true,
+        partnerName: 'Айпери',
+        partnerCode: 'KLK-CYC-9281',
+        cycleDay: 14,
+        cycleLength: 28,
+        phase: HormonalCyclePhase.ovulatory,
+        skinTempDeviation: 0.35,
+        energyScore: 5,
+        mood: 'Драйв',
+        symptoms: ['Высокий тонус'],
+        lastSyncTime: DateTime.now(),
+      );
+
+      bool sheetOpened = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (ctx) => CircaPartnerCycleCard(
+                data: partnerData,
+                onTap: () {
+                  sheetOpened = true;
+                  CircaPartnerCycleSheet.show(ctx, partnerData);
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify card content
+      expect(find.textContaining('БИОРИТМ ПАРТНЁРА'), findsOneWidget);
+      expect(find.textContaining('АЙПЕРИ'), findsWidgets);
+      expect(find.text('Овуляция'), findsOneWidget);
+      expect(find.textContaining('+0.35°C'), findsOneWidget);
+      expect(find.textContaining('СААТ-1'), findsWidgets);
+
+      // Tap card to open CircaPartnerCycleSheet
+      await tester.tap(find.byType(CircaPartnerCycleCard));
+      await tester.pumpAndSettle();
+
+      expect(sheetOpened, isTrue);
+      expect(find.textContaining('Биоритм: Айпери'), findsOneWidget);
+      expect(find.textContaining('КАК ПОДДЕРЖАТЬ СЕГОДНЯ'), findsOneWidget);
+      expect(find.textContaining('°C к норме'), findsOneWidget);
+    });
+
+    testWidgets('MenstrualCycleScreen renders fast period button and partner sync card', (tester) async {
+      final bridge = UteBleBridge();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MenstrualCycleScreen(bleBridge: bridge),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Месячные начались сегодня'), findsOneWidget);
+      expect(find.textContaining('СИНХРОНИЗАЦИЯ С ПАРТНЁРОМ'), findsOneWidget);
+      expect(find.textContaining('ВЫДЕЛЕНИЯ / МЕНСТРУАЦИЯ'), findsOneWidget);
+      expect(find.textContaining('СИМПТОМЫ И ОЩУЩЕНИЯ ТЕЛА'), findsOneWidget);
     });
   });
 }

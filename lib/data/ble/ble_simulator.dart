@@ -134,6 +134,13 @@ class BleSimulator {
     _controller.add(_generateTelemetry());
   }
 
+  void setSimulatedMetrics({double? strain, int? steps, int? sleepMinutes}) {
+    if (strain != null) _currentDayStrain = strain;
+    if (steps != null) _steps = steps;
+    if (sleepMinutes != null) _sleepMinutes = sleepMinutes;
+    _controller.add(_generateTelemetry());
+  }
+
   BleTelemetry _generateTelemetry() {
     return BleTelemetry(
       heartRate: _heartRate,

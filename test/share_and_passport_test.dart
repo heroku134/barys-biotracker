@@ -201,7 +201,7 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('⚡ РЕЖИМ «ГРОЗА» АКТИВЕН'), findsOneWidget);
+      expect(find.text('РЕЖИМ «ГРОЗА» АКТИВЕН'), findsOneWidget);
       expect(find.textContaining('ЧСС 118 bpm · ВСР 22 мс'), findsOneWidget);
 
       // Нажимаем ВЫКЛ на баннере
@@ -209,7 +209,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(bleBridge.isCrisisDemo, isFalse);
-      expect(find.text('⚡ РЕЖИМ «ГРОЗА» АКТИВЕН'), findsNothing);
+      expect(find.text('РЕЖИМ «ГРОЗА» АКТИВЕН'), findsNothing);
     });
   });
 }

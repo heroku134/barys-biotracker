@@ -66,8 +66,8 @@ void main() {
       expect(AppStrings.tr('nav_sport', AppLanguage.russian), 'Спорт');
       expect(AppStrings.tr('nav_sport', AppLanguage.kyrgyz), 'Спорт');
 
-      expect(AppStrings.tr('nav_barys', AppLanguage.russian), '🐯 БАРЫС');
-      expect(AppStrings.tr('nav_barys', AppLanguage.kyrgyz), '🐯 БАРЫС');
+      expect(AppStrings.tr('nav_barys', AppLanguage.russian), 'БАРЫС');
+      expect(AppStrings.tr('nav_barys', AppLanguage.kyrgyz), 'БАРЫС');
 
       expect(AppStrings.tr('nav_profile', AppLanguage.russian), 'Профиль');
       expect(AppStrings.tr('nav_profile', AppLanguage.kyrgyz), 'Профиль');
@@ -137,16 +137,15 @@ void main() {
       expect(find.text('Демо-вход'), findsNothing);
       expect(find.text('ДЕМО-ВХОД'), findsNothing);
 
-      // Verify sacred quote and pulsing logo
-      expect(find.text('«Адамга өз чегин билбей өлгөн уят»'), findsOneWidget);
+      // Verify sacred quote is NOT on login screen (user request: "нахрена в логине стоит цитата")
+      expect(find.text('«Адамга өз чегин билбей өлгөн уят»'), findsNothing);
       expect(find.byType(CircaPulsingLogo), findsOneWidget);
 
-      // Verify brand title and login header in Russian
-      expect(find.textContaining('КАЛКАН СПОРТ'), findsOneWidget);
+      // Verify clean login header without redundant brand subtitle in Russian
       expect(find.text('Вход в биосистему'), findsOneWidget);
       expect(find.text('ВОЙТИ В СИСТЕМУ'), findsOneWidget);
 
-      // Verify language toggle chip in Auth header
+      // Verify AI language toggle pill in Auth header
       expect(find.text('RU'), findsOneWidget);
 
       // Tap RU chip to toggle to Kyrgyz

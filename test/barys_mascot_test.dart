@@ -111,18 +111,24 @@ void main() {
       // Никаких чипов 'Автономный' или 'В тонусе' в теле экрана нет
       expect(find.text('Автономный (ИИ)'), findsNothing);
 
-      // Проверяем карточку памяти о вчерашнем дне
-      expect(find.text('ПАМЯТЬ БАРЫСА О ВЧЕРАШНЕМ ДНЕ'), findsOneWidget);
-      expect(find.text('ВЧЕРА → СЕГОДНЯ'), findsOneWidget);
+      // Проверяем, что карточка памяти о вчерашнем дне убрана по запросу пользователя
+      expect(find.text('ПАМЯТЬ БАРЫСА О ВЧЕРАШНЕМ ДНЕ'), findsNothing);
+      expect(find.text('ВЧЕРА → СЕГОДНЯ'), findsNothing);
 
       // Проверяем карточку пути эволюции
       expect(find.textContaining('ИРБИС-КАДЕТ'), findsWidgets);
       expect(find.text('Все ступени эволюции >'), findsOneWidget);
 
-      // Проверяем характеристики и задачи
-      expect(find.text('ВЫНОСЛИВОСТЬ'), findsOneWidget);
-      expect(find.text('СИЛА'), findsOneWidget);
-      expect(find.text('ФОКУС'), findsOneWidget);
+      // Проверяем, что устаревшие числовые RPG-статы убраны
+      expect(find.text('ВЫНОСЛИВОСТЬ'), findsNothing);
+      expect(find.text('СИЛА'), findsNothing);
+      expect(find.text('ФОКУС'), findsNothing);
+
+      // Проверяем автоматические сенсорные задачи активности
+      expect(find.textContaining('ЕЖЕДНЕВНЫЕ ЗАДАЧИ АКТИВНОСТИ'), findsOneWidget);
+      expect(find.textContaining('Дневная норма активности'), findsOneWidget);
+      expect(find.textContaining('Дневная норма шагов'), findsOneWidget);
+      expect(find.textContaining('Сон и восстановление'), findsOneWidget);
     });
 
     testWidgets('Tapping Barys triggers interactive speech bubble with live quote', (tester) async {

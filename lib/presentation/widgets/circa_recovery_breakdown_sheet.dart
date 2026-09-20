@@ -118,22 +118,34 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: readiness.zone.color.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: readiness.zone.color.withValues(alpha: 0.5)),
-                    ),
-                    child: Text(
-                      readiness.zone.badgeText,
-                      style: TextStyle(
-                        color: readiness.zone.color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: readiness.zone.color.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: readiness.zone.color.withValues(alpha: 0.5)),
+                        ),
+                        child: Text(
+                          readiness.zone.badgeText,
+                          style: TextStyle(
+                            color: readiness.zone.color,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: AppColors.muted, size: 22),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -151,17 +163,27 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.tune, color: AppColors.amber, size: 18),
+                      const Icon(Icons.tune, color: AppColors.amber, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          'Калибровка: День ${readiness.calibrationDay} из 14. Строим ваш личный физиологический профиль (HRV, RHR, RR, температура).',
-                          style: const TextStyle(
-                            color: AppColors.fg,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            height: 1.35,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'КАЛИБРОВКА БАЗЫ (ДЕНЬ ${readiness.calibrationDay}/14)',
+                              style: const TextStyle(
+                                color: AppColors.amber,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Оценка приблизительная. СААТ-1 формирует индивидуальную норму биомаркеров.',
+                              style: TextStyle(color: AppColors.muted, fontSize: 10.5),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -185,7 +207,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               const SizedBox(height: 10),
 
               _buildBiomarkerRow(
-                title: 'ВСР (rMSSD) в глубоком сне',
+                title: 'Ритм сердца (вариабельность)',
                 weight: '35%',
                 currentVal: '${readiness.currentHrv.round()} мс',
                 baselineVal: 'База: ${readiness.baselineHrv.round()} мс (${readiness.hrvDiffPercent >= 0 ? "+${readiness.hrvDiffPercent}" : "${readiness.hrvDiffPercent}"}%)',
@@ -196,10 +218,10 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
 
               _buildBiomarkerRow(
-                title: 'Пульс покоя (RHR Nadir)',
+                title: 'Пульс во сне (минимум)',
                 weight: '25%',
                 currentVal: '${readiness.currentRhr} уд/мин',
-                baselineVal: 'База: ${readiness.baselineRhr} (${readiness.rhrDiffBpm > 0 ? "+${readiness.rhrDiffBpm}" : "${readiness.rhrDiffBpm}"} bpm)',
+                baselineVal: 'База: ${readiness.baselineRhr} (${readiness.rhrDiffBpm > 0 ? "+${readiness.rhrDiffBpm}" : "${readiness.rhrDiffBpm}"} уд/мин)',
                 score: readiness.rhrFactor,
                 color: readiness.rhrFactor >= 70
                     ? AppColors.sage
@@ -207,10 +229,10 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
 
               _buildBiomarkerRow(
-                title: 'Качество сна (Sleep Performance)',
+                title: 'Восстановление сном',
                 weight: '20%',
                 currentVal: '${readiness.sleepFactor}%',
-                baselineVal: 'Длительность + Эффективность + Consistency',
+                baselineVal: 'Глубокий сон, продолжительность и режим',
                 score: readiness.sleepFactor,
                 color: readiness.sleepFactor >= 70
                     ? AppColors.sage
@@ -218,7 +240,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
 
               _buildBiomarkerRow(
-                title: 'Частота дыхания (RR)',
+                title: 'Частота дыхания',
                 weight: '10%',
                 currentVal: '${readiness.currentRr.toStringAsFixed(1)} /мин',
                 baselineVal: 'База: ${readiness.baselineRr.toStringAsFixed(1)} вдохов/мин',
@@ -229,10 +251,10 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
 
               _buildBiomarkerRow(
-                title: 'Температура кожи (ΔT)',
+                title: 'Температура кожи',
                 weight: '10%',
                 currentVal: '${readiness.tempDiffCelsius >= 0 ? "+${readiness.tempDiffCelsius}" : "${readiness.tempDiffCelsius}"}°C',
-                baselineVal: 'Отклонение от ночной медианы',
+                baselineVal: 'Отклонение от персональной нормы',
                 score: readiness.tempFactor,
                 color: readiness.tempFactor >= 70
                     ? AppColors.sage
@@ -250,7 +272,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   border: Border.all(color: AppColors.line),
                 ),
                 child: const Text(
-                  'Формула: 0.35·ВСР + 0.25·RHR + 0.20·Сон + 0.10·Дыхание + 0.10·Кожа. Дневная нагрузка (Strain) исключена из формулы.',
+                  'Расчёт: Ритм сердца (35%) + Пульс во сне (25%) + Сон (20%) + Дыхание (10%) + Температура (10%). Дневная нагрузка не занижает утреннее восстановление.',
                   style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 11,
@@ -303,6 +325,30 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.raised,
+                    foregroundColor: AppColors.fg,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: AppColors.line),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    'ЗАКРЫТЬ',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

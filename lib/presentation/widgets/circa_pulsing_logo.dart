@@ -84,109 +84,33 @@ class _CircaPulsingLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final baseRadius = size.width * 0.38;
-
-    // 1. Первая волна расширяющегося пульсирующего сияния
-    final wave1Scale = 1.0 + (progress * 0.35);
-    final wave1Alpha = ((1.0 - progress) * 0.45).clamp(0.0, 1.0);
-    final wave1Paint = Paint()
-      ..color = primaryColor.withValues(alpha: wave1Alpha)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-    canvas.drawCircle(center, baseRadius * wave1Scale, wave1Paint);
-
-    // 2. Вторая фазовая волна (сдвиг на 50% фазы)
-    final phase2 = (progress + 0.5) % 1.0;
-    final wave2Scale = 1.0 + (phase2 * 0.28);
-    final wave2Alpha = ((1.0 - phase2) * 0.35).clamp(0.0, 1.0);
-    final wave2Paint = Paint()
-      ..color = secondaryColor.withValues(alpha: wave2Alpha)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    canvas.drawCircle(center, baseRadius * wave2Scale, wave2Paint);
-
-    // 3. Мягкое радиальное дыхание подложки (Aura Glow)
     final breathPulse = 0.5 + 0.5 * math.sin(progress * 2 * math.pi);
+
+    // 1. Мягкое радиальное дыхание фоновой ауры (Aura Glow)
+    final auraRadius = size.width * 0.46;
     final auraGradient = RadialGradient(
       colors: [
-        primaryColor.withValues(alpha: 0.22 + breathPulse * 0.12),
-        secondaryColor.withValues(alpha: 0.08 + breathPulse * 0.06),
+        primaryColor.withValues(alpha: 0.18 + breathPulse * 0.10),
+        secondaryColor.withValues(alpha: 0.07 + breathPulse * 0.05),
         Colors.transparent,
       ],
-      stops: const [0.0, 0.65, 1.0],
+      stops: const [0.0, 0.60, 1.0],
     );
     final auraPaint = Paint()
-      ..shader = auraGradient.createShader(Rect.fromCircle(center: center, radius: baseRadius * 1.3));
-    canvas.drawCircle(center, baseRadius * 1.3, auraPaint);
+      ..shader = auraGradient.createShader(Rect.fromCircle(center: center, radius: auraRadius));
+    canvas.drawCircle(center, auraRadius, auraPaint);
 
-    // 4. Внешний безель цвета обсидиана
-    final bezelPaint = Paint()
-      ..color = AppColors.surface
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(center, baseRadius, bezelPaint);
-
-    // Граница безеля
-    final bezelBorderPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          primaryColor.withValues(alpha: 0.8),
-          AppColors.line,
-          secondaryColor.withValues(alpha: 0.6),
-          primaryColor.withValues(alpha: 0.3),
-        ],
-      ).createShader(Rect.fromCircle(center: center, radius: baseRadius))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-    canvas.drawCircle(center, baseRadius, bezelBorderPaint);
-
-    // 5. 48 высокоточных калибровочных насечек (как на часовом безеле Patek / Leica)
-    final notchCount = 48;
-    for (int i = 0; i < notchCount; i++) {
-      final angle = (i * 2 * math.pi) / notchCount - math.pi / 2;
-      final isMajor = i % 4 == 0;
-      final isCardinal = i % 12 == 0;
-
-      final notchLen = isCardinal ? 6.5 : (isMajor ? 4.5 : 2.5);
-      final notchPaint = Paint()
-        ..color = isCardinal
-            ? primaryColor
-            : (isMajor ? AppColors.fg.withValues(alpha: 0.7) : AppColors.faint)
-        ..strokeWidth = isCardinal ? 1.8 : (isMajor ? 1.2 : 0.8)
-        ..strokeCap = StrokeCap.round;
-
-      final p1 = Offset(
-        center.dx + (baseRadius - 2.5) * math.cos(angle),
-        center.dy + (baseRadius - 2.5) * math.sin(angle),
-      );
-      final p2 = Offset(
-        center.dx + (baseRadius - 2.5 - notchLen) * math.cos(angle),
-        center.dy + (baseRadius - 2.5 - notchLen) * math.sin(angle),
-      );
-      canvas.drawLine(p1, p2, notchPaint);
-    }
-
-    // 6. Внутренний золотой контур
-    final innerRadius = baseRadius * 0.72;
-    final innerRingPaint = Paint()
-      ..color = primaryColor.withValues(alpha: 0.4 + breathPulse * 0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-    canvas.drawCircle(center, innerRadius, innerRingPaint);
-
-    // 7. Центральная эмблема: математически точный векторный символ КАЛКАН
-    _drawCenterKalkanEmblem(canvas, center, innerRadius * 0.75, breathPulse);
+    // 2. Чистая центральная эмблема KALKAN без часовых циферблатов и насечек
+    final emblemWidth = size.width * 0.82;
+    _drawCenterKalkanEmblem(canvas, center, emblemWidth, breathPulse);
   }
 
-  void _drawCenterKalkanEmblem(Canvas canvas, Offset center, double radius, double pulse) {
-    // Масштабирование исходных координат вектора KALKAN.svg
-    // Исходный центр ~ (182, 145), размах ~ 286x125
-    final scale = (radius * 1.55) / 286;
+  void _drawCenterKalkanEmblem(Canvas canvas, Offset center, double emblemWidth, double pulse) {
+    // Масштабирование координат оригинального вектора KALKAN
+    // Размах вектора ~ 286x125, центр ~ (182, 134)
+    final scale = emblemWidth / 286;
     final ox = center.dx - 182 * scale;
-    final oy = center.dy - 145 * scale;
+    final oy = center.dy - 134 * scale;
 
     // 1. Верхний парящий серп (Golden Amber & Sage)
     final topArc = Path();
@@ -203,6 +127,13 @@ class _CircaPulsingLogoPainter extends CustomPainter {
     );
     topArc.close();
 
+    // Легкое свечение верхнего серпа
+    final topGlowPaint = Paint()
+      ..color = primaryColor.withValues(alpha: 0.25 + pulse * 0.15)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawPath(topArc, topGlowPaint);
+
     final topPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
@@ -211,7 +142,7 @@ class _CircaPulsingLogoPainter extends CustomPainter {
           primaryColor,
           secondaryColor,
         ],
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ).createShader(Rect.fromCircle(center: center, radius: emblemWidth / 2))
       ..style = PaintingStyle.fill;
     canvas.drawPath(topArc, topPaint);
 
@@ -224,32 +155,23 @@ class _CircaPulsingLogoPainter extends CustomPainter {
       ox + 325 * scale, oy + 195 * scale,
     );
 
+    // Легкое свечение нижней дуги
+    final bottomGlowPaint = Paint()
+      ..color = AppColors.fg.withValues(alpha: 0.20 + pulse * 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 14 * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawPath(bottomArc, bottomGlowPaint);
+
     final bottomPaint = Paint()
       ..color = AppColors.fg.withValues(alpha: 0.95)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 13 * scale
+      ..strokeWidth = 12.5 * scale
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
     canvas.drawPath(bottomArc, bottomPaint);
-
-    // 3. Нижняя гравировка «КАЛКАН · СААТ-1»
-    final textPainter = TextPainter(
-      text: const TextSpan(
-        text: 'КАЛКАН · СААТ-1',
-        style: TextStyle(
-          color: AppColors.muted,
-          fontSize: 7.5,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 2.0,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    textPainter.paint(
-      canvas,
-      Offset(center.dx - textPainter.width / 2, center.dy + radius * 0.45),
-    );
   }
 
   @override

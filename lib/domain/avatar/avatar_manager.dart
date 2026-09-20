@@ -594,49 +594,43 @@ class AvatarManager {
             ),
           ]
         : [
-            // 1. Закрыть целевой Strain
+            // 1. Дневная норма активности (СААТ-1)
             DailyQuest(
               id: 'quest_strain',
-              title: 'Закрыть целевой Strain (${strainResult.targetStrainMin.toStringAsFixed(1)}+)',
-              subtitle: '${telemetry.currentDayStrain.toStringAsFixed(1)} / ${strainResult.targetStrainMin.toStringAsFixed(1)} Strain',
+              title: 'Дневная норма активности (${strainResult.targetStrainMin.toStringAsFixed(1)}+)',
+              subtitle: '${telemetry.currentDayStrain.toStringAsFixed(1)} / ${strainResult.targetStrainMin.toStringAsFixed(1)} балла активности',
               current: (telemetry.currentDayStrain * 10).round(),
               target: (strainResult.targetStrainMin * 10).round(),
-              unit: 'Strain',
+              unit: 'балла',
               rewardXp: 300,
               isCompleted: telemetry.currentDayStrain >= strainResult.targetStrainMin,
-              actionLabel: telemetry.currentDayStrain >= strainResult.targetStrainMin ? 'ЗАКРЫТ' : 'В ПРОЦЕССЕ',
+              actionLabel: telemetry.currentDayStrain >= strainResult.targetStrainMin ? 'ВЫПОЛНЕНО' : 'АВТОМАТИЧЕСКИ',
               icon: Icons.bolt_outlined,
             ),
-            // 2. Залогировать био-журнал
+            // 2. Цель по шагам (сенсор СААТ-1)
             DailyQuest(
-              id: 'quest_journal',
-              title: 'Залогировать вечерний био-журнал',
-              subtitle: _isJournalLoggedToday
-                  ? 'Контекст дня зафиксирован в хронологии'
-                  : 'Отметь вечерний статус или причину стресса',
-              current: _isJournalLoggedToday ? 1 : 0,
-              target: 1,
-              unit: 'запись',
+              id: 'quest_steps',
+              title: 'Дневная норма шагов (10 000)',
+              subtitle: '${telemetry.steps} / 10 000 шагов (автоматический учет)',
+              current: telemetry.steps,
+              target: 10000,
+              unit: 'шагов',
               rewardXp: 250,
-              isCompleted: _isJournalLoggedToday,
-              isInteractive: !_isJournalLoggedToday,
-              actionLabel: _isJournalLoggedToday ? 'ЗАЛОГИРОВАНО' : 'ОТМЕТИТЬ',
-              icon: Icons.edit_note_outlined,
+              isCompleted: telemetry.steps >= 10000,
+              actionLabel: telemetry.steps >= 10000 ? 'ВЫПОЛНЕНО' : 'АВТОМАТИЧЕСКИ',
+              icon: Icons.directions_walk_outlined,
             ),
-            // 3. Лечь по расписанию
+            // 3. Сон и ночное восстановление (сенсор СААТ-1)
             DailyQuest(
-              id: 'quest_bedtime',
-              title: 'Лечь по расписанию (до 22:30)',
-              subtitle: _isBedtimeLockedToday
-                  ? 'Ритуал отбоя зафиксирован на 22:15'
-                  : 'При отбое до 22:30 вероятность зеленой зоны: 84%',
-              current: _isBedtimeLockedToday ? 1 : 0,
-              target: 1,
-              unit: 'ритуал',
+              id: 'quest_sleep',
+              title: 'Сон и восстановление (7+ часов)',
+              subtitle: '${(telemetry.sleepMinutes / 60.0).toStringAsFixed(1)} ч из 7.5 ч сна (сенсор СААТ-1)',
+              current: (telemetry.sleepMinutes / 6.0).round(),
+              target: 75,
+              unit: 'ч',
               rewardXp: 250,
-              isCompleted: _isBedtimeLockedToday,
-              isInteractive: !_isBedtimeLockedToday,
-              actionLabel: _isBedtimeLockedToday ? 'ЗАФИКСИРОВАНО' : 'ЗАФИКСИРОВАТЬ',
+              isCompleted: telemetry.sleepMinutes >= 420,
+              actionLabel: telemetry.sleepMinutes >= 420 ? 'ВЫПОЛНЕНО' : 'АВТОМАТИЧЕСКИ',
               icon: Icons.bedtime_outlined,
             ),
           ];

@@ -98,28 +98,26 @@ class CircaCycleCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: pColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: pColor.withValues(alpha: 0.3), width: 0.8),
-                      ),
-                      child: Text(
-                        _phaseName(analysis.phase, language),
-                        style: TextStyle(
-                          color: pColor,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text(
+                          'Инфо',
+                          style: TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.muted),
+                      ],
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
 
-                // Основная строка: День цикла + Термометрия СААТ-1
+                // Основная строка: День цикла + Фаза биоритма
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
@@ -144,25 +142,33 @@ class CircaCycleCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    // Чип термосенсора СААТ-1
+                    // Бейдж текущей фазы вместо непонятного чипа градусов
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.raised,
+                        color: pColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.line),
+                        border: Border.all(color: pColor.withValues(alpha: 0.35), width: 1.0),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.device_thermostat, color: AppColors.amber, size: 14),
-                          const SizedBox(width: 4),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: pColor,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
                           Text(
-                            '${analysis.skinTempDeviation >= 0 ? '+' : ''}${analysis.skinTempDeviation.toStringAsFixed(2)}°C',
-                            style: const TextStyle(
-                              color: AppColors.fg,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                            _phaseName(analysis.phase, language),
+                            style: TextStyle(
+                              color: pColor,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.3,
                             ),
                           ),
                         ],
@@ -176,7 +182,7 @@ class CircaCycleCard extends StatelessWidget {
                 _buildCycleTimeline(analysis.currentDay, analysis.totalDays, pColor),
                 const SizedBox(height: 12),
 
-                // Директива СААТ-1 по нагрузке и восстановлению
+                // Лаконичная директива по нагрузке и восстановлению
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
@@ -187,28 +193,15 @@ class CircaCycleCard extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              analysis.thermalAdviceText,
-                              style: const TextStyle(
-                                color: AppColors.fg,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '${language == AppLanguage.kyrgyz ? 'СААТ-1 Strain чеги' : 'Лимит Strain от СААТ-1'}: ${analysis.targetStrainMin.toStringAsFixed(1)}–${analysis.targetStrainMax.toStringAsFixed(1)}',
-                              style: TextStyle(
-                                color: pColor,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          language == AppLanguage.kyrgyz
+                              ? 'Күч жана чыдамкайлыктын туу чокусу · Кененирээк →'
+                              : 'Пик выносливости и сил · Подробнее →',
+                          style: const TextStyle(
+                            color: AppColors.fg,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       const Icon(Icons.chevron_right, color: AppColors.amber, size: 18),

@@ -155,4 +155,57 @@ class BiometricsHistoryRepository {
     }
     return points;
   }
+
+  /// Получение тренда пульса по выбранному периоду
+  static List<HistoricalPoint> getHeartRateHistory(HistoryPeriod period) {
+    final now = DateTime.now();
+    final points = <HistoricalPoint>[];
+    final random = math.Random(77);
+
+    switch (period) {
+      case HistoryPeriod.day24h:
+        return getHourlyHeartRate24h();
+
+      case HistoryPeriod.week7d:
+        const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        for (var i = 6; i >= 0; i--) {
+          final t = now.subtract(Duration(days: i));
+          final val = (54.0 + (math.sin(i * 0.9) * 8.0) + (random.nextDouble() * 4.0)).clamp(48.0, 95.0);
+          points.add(HistoricalPoint(
+            timestamp: t,
+            value: double.parse(val.toStringAsFixed(1)),
+            label: days[(t.weekday - 1) % 7],
+          ));
+        }
+        break;
+
+      case HistoryPeriod.month30d:
+        for (var i = 29; i >= 0; i--) {
+          final t = now.subtract(Duration(days: i));
+          final val = (53.0 + (math.cos(i * 0.4) * 7.0) + (random.nextDouble() * 3.0)).clamp(47.0, 92.0);
+          points.add(HistoricalPoint(
+            timestamp: t,
+            value: double.parse(val.toStringAsFixed(1)),
+            label: '${t.day}.${t.month}',
+          ));
+        }
+        break;
+
+      case HistoryPeriod.months6:
+        for (var i = 23; i >= 0; i--) {
+          final t = now.subtract(Duration(days: i * 7));
+          // Тренд снижения пульса покоя благодаря тренировкам (с 58 до 50 уд/мин)
+          final trend = (23 - i) * -0.3;
+          final val = (58.0 + trend + (math.sin(i * 0.4) * 4.0)).clamp(48.0, 85.0);
+          points.add(HistoricalPoint(
+            timestamp: t,
+            value: double.parse(val.toStringAsFixed(1)),
+            label: '${t.day}/${t.month}',
+          ));
+        }
+        break;
+    }
+
+    return points;
+  }
 }

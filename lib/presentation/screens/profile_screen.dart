@@ -5,18 +5,21 @@ import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_theme.dart';
 import '../../data/ble/ute_ble_bridge.dart';
+import '../../data/storage/partner_cycle_repository.dart';
 import '../../data/storage/user_profile_repository.dart';
+import '../../domain/models/partner_cycle_data.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/user_profile.dart';
+import '../widgets/circa_avatar_picker_dialog.dart';
 import '../widgets/circa_morning_briefing_dialog.dart';
+import '../widgets/circa_partner_cycle_sheet.dart';
 import '../widgets/circa_text_field.dart';
 import '../widgets/glass_card.dart';
 import 'auth_screen.dart';
 import 'device_settings_screen.dart';
 import 'private_league_screen.dart';
-import 'menstrual_cycle_screen.dart';
-import 'sport_screen.dart';
 import '../../core/circa_haptics.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -30,14 +33,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   UserProfile _profile = const UserProfile();
+  PartnerCycleData? _partnerCycle;
   late TextEditingController _nameController;
   late TextEditingController _heightController;
   late TextEditingController _weightController;
   late TextEditingController _birthYearController;
   late TextEditingController _stepGoalController;
   late TextEditingController _calorieGoalController;
-  bool _is24h = true;
-  bool _isSaving = false;
   int _versionTapCount = 0;
   DateTime? _lastVersionTap;
   bool _isTiredDemo = false;
@@ -56,6 +58,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _stepGoalController = TextEditingController();
     _calorieGoalController = TextEditingController();
     _loadProfile();
+    _loadPartnerCycle();
+    UserProfileRepository.profileNotifier.addListener(_onProfileChanged);
+    PartnerCycleRepository.notifier.addListener(_onPartnerCycleChanged);
+  }
+
+  void _onProfileChanged() {
+    if (mounted) {
+      setState(() {
+        _profile = UserProfileRepository.profileNotifier.value;
+        _nameController.text = _profile.name;
+      });
+    }
+  }
+
+  void _onPartnerCycleChanged() {
+    if (mounted) {
+      setState(() {
+        _partnerCycle = PartnerCycleRepository.notifier.value;
+      });
+    }
+  }
+
+  Future<void> _loadPartnerCycle() async {
+    final data = await PartnerCycleRepository.loadPartnerCycle();
+    if (mounted) {
+      setState(() => _partnerCycle = data);
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -69,13 +98,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _birthYearController.text = p.birthYear.toString();
         _stepGoalController.text = p.stepGoal.toString();
         _calorieGoalController.text = p.calorieGoal.toString();
-        _is24h = p.is24HourFormat;
       });
     }
   }
 
   @override
   void dispose() {
+    UserProfileRepository.profileNotifier.removeListener(_onProfileChanged);
+    PartnerCycleRepository.notifier.removeListener(_onPartnerCycleChanged);
     _nameController.dispose();
     _heightController.dispose();
     _weightController.dispose();
@@ -83,42 +113,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _stepGoalController.dispose();
     _calorieGoalController.dispose();
     super.dispose();
-  }
-
-  Future<void> _saveProfile() async {
-    setState(() => _isSaving = true);
-    final updated = _profile.copyWith(
-      name: _nameController.text.trim(),
-      heightCm: double.tryParse(_heightController.text) ?? _profile.heightCm,
-      weightKg: double.tryParse(_weightController.text) ?? _profile.weightKg,
-      birthYear: int.tryParse(_birthYearController.text) ?? _profile.birthYear,
-      stepGoal: int.tryParse(_stepGoalController.text) ?? _profile.stepGoal,
-      calorieGoal: int.tryParse(_calorieGoalController.text) ?? _profile.calorieGoal,
-      is24HourFormat: _is24h,
-    );
-
-    await UserProfileRepository.saveProfile(updated);
-    if (!mounted) return;
-    setState(() {
-      _profile = updated;
-      _isSaving = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: AppColors.surface,
-        content: Row(
-          children: [
-            Icon(Icons.check, color: AppColors.sage, size: 20),
-            SizedBox(width: 10),
-            Text(
-              'Профиль и физиологические цели сохранены',
-              style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   void _logout() {
@@ -227,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
                           Text(
-                            '⚡ РЕЖИМ «ГРОЗА» АКТИВЕН',
+                            'РЕЖИМ «ГРОЗА» АКТИВЕН',
                             style: TextStyle(
                               color: AppColors.rose,
                               fontSize: 11,
@@ -277,16 +271,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 42,
-                    height: 42,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: AppColors.raised,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.watch,
                       color: telemetry.isConnected ? AppColors.sage : AppColors.muted,
-                      size: 22,
+                      size: 24,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -300,12 +294,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Заряд: ${telemetry.batteryLevel}% · BLE 5.3',
-                          style: const TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w600),
+                          telemetry.isConnected ? 'СААТ-1 активен · BLE 5.3' : 'Поиск устройства...',
+                          style: TextStyle(
+                            color: telemetry.isConnected ? AppColors.sage : AppColors.muted,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.raised,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.line),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          telemetry.batteryLevel > 20 ? Icons.battery_charging_full : Icons.battery_alert,
+                          size: 14,
+                          color: telemetry.batteryLevel > 20 ? AppColors.sage : AppColors.rose,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${telemetry.batteryLevel}%',
+                          style: const TextStyle(
+                            color: AppColors.fg,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   const Icon(Icons.settings, color: AppColors.muted, size: 20),
                 ],
               ),
@@ -447,8 +473,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 24),
 
+            // Связь с партнёром (Биоритм и менструальный цикл)
+            _buildPartnerCycleSection(language),
+            const SizedBox(height: 24),
+
             // Язык интерфейса / Интерфейс тили (RU / KG)
             _buildLanguageSelectorCard(language),
+            const SizedBox(height: 20),
+
+            // Тема оформления (Темная / Светлая)
+            _buildThemeSelectorCard(),
             const SizedBox(height: 24),
 
             // Версия прошивки с 7-кратным тапом для инженерного меню
@@ -469,12 +503,364 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+
+            // Медицинский дисклеймер KALKAN CAAT-1
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.verified_user_outlined, color: AppColors.muted, size: 16),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'KALKAN СААТ-1 не ставит медицинских диагнозов. Данные температуры кожи, SpO2 и ВСР служат индикатором трендов восстановления ЦНС и тренировочной адаптации.',
+                      style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 30),
           ],
         ),
       ),
     );
       },
+    );
+  }
+
+  void _openPartnerLinkDialog(AppLanguage language) {
+    final codeCtrl = TextEditingController(text: 'KLK-CYC-9281');
+    final nameCtrl = TextEditingController(text: 'Айпери');
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.favorite, color: AppColors.rose, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Привязка цикла партнёра',
+                  style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Введите код, которым поделилась ваша партнёрша в своём приложении, чтобы видеть её фазу цикла, рекомендации по заботе и биоритм на главном экране.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: codeCtrl,
+                  style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                  decoration: InputDecoration(
+                    labelText: 'Инвайт-код партнёра',
+                    labelStyle: const TextStyle(color: AppColors.muted, fontSize: 12),
+                    hintText: 'KLK-CYC-XXXX',
+                    hintStyle: const TextStyle(color: AppColors.faint, fontSize: 12),
+                    filled: true,
+                    fillColor: AppColors.raised,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.rose)),
+                    prefixIcon: const Icon(Icons.qr_code, color: AppColors.rose, size: 18),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nameCtrl,
+                  style: const TextStyle(color: AppColors.fg, fontSize: 13),
+                  decoration: InputDecoration(
+                    labelText: 'Имя партнёра',
+                    labelStyle: const TextStyle(color: AppColors.muted, fontSize: 12),
+                    filled: true,
+                    fillColor: AppColors.raised,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.rose)),
+                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.muted, size: 18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                final code = codeCtrl.text.trim();
+                final name = nameCtrl.text.trim().isNotEmpty ? nameCtrl.text.trim() : 'Айпери';
+                await PartnerCycleRepository.linkPartner(
+                  partnerCode: code.isNotEmpty ? code : 'KLK-CYC-9281',
+                  partnerName: name,
+                  cycleDay: 14,
+                  cycleLength: 28,
+                );
+                await _loadPartnerCycle();
+                CircaHaptics.success();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: AppColors.surface,
+                      content: Text(
+                        'Партнёр $name успешно привязана! Карточка цикла активна на Главном экране.',
+                        style: const TextStyle(color: AppColors.rose, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.rose,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('ПРИВЯЗАТЬ', style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPartnerCycleSection(AppLanguage language) {
+    final isLinked = _partnerCycle?.isLinked == true;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              language == AppLanguage.kyrgyz
+                  ? 'ӨНӨКТӨШТҮН БИОРИТМИ'
+                  : 'СИНХРОНИЗАЦИЯ БИОРИТМА (ПАРТНЁР)',
+              style: const TextStyle(
+                color: AppColors.muted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2.0,
+              ),
+            ),
+            if (isLinked)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.rose.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'АКТИВНО',
+                  style: TextStyle(color: AppColors.rose, fontSize: 9, fontWeight: FontWeight.w800),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        GlassCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.rose.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.favorite, color: AppColors.rose, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isLinked
+                              ? 'Партнёр: ${_partnerCycle!.partnerName}'
+                              : 'Синхронизация цикла партнёра',
+                          style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isLinked
+                              ? 'День ${_partnerCycle!.currentCycleDay} из ${_partnerCycle!.cycleLength} · ${_partnerCycle!.phaseTitle}'
+                              : 'Отслеживайте фазы и подсказки для заботы на главном экране',
+                          style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (isLinked) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.raised,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.line),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _partnerCycle!.phaseColor.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _partnerCycle!.phaseColor.withValues(alpha: 0.4)),
+                        ),
+                        child: Text(
+                          _partnerCycle!.phaseTitle,
+                          style: TextStyle(color: _partnerCycle!.phaseColor, fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _partnerCycle!.partnerAdvice,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppColors.fg, fontSize: 11, height: 1.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          CircaHaptics.selectionClick();
+                          CircaPartnerCycleSheet.show(context, _partnerCycle!);
+                        },
+                        icon: const Icon(Icons.visibility, size: 14),
+                        label: const Text('ПОДРОБНО', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.rose,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                      onPressed: () async {
+                        await PartnerCycleRepository.unlinkPartner();
+                        await _loadPartnerCycle();
+                        CircaHaptics.heavyAlert();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              backgroundColor: AppColors.surface,
+                              content: Text('Связь с партнёром отключена'),
+                            ),
+                          );
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.rose,
+                        side: const BorderSide(color: AppColors.rose),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('ОТКЛЮЧИТЬ', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                Text(
+                  _profile.gender == Gender.female
+                      ? 'Вкладка «Цикл» активна в вашем нижнем меню. Вы можете скопировать инвайт-код в дневнике цикла и передать партнёру.'
+                      : 'Привяжите код партнёра, чтобы карточка с её текущей фазой, уровнем энергии и рекомендациями по заботе отображалась на вашем главном экране.',
+                  style: const TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openPartnerLinkDialog(language),
+                        icon: const Icon(Icons.link, size: 14),
+                        label: const Text('ПРИВЯЗАТЬ КОД', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.rose,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () async {
+                        await PartnerCycleRepository.linkPartner(
+                          partnerCode: 'KLK-CYC-9281',
+                          partnerName: 'Айпери',
+                          cycleDay: 14,
+                          cycleLength: 28,
+                        );
+                        await _loadPartnerCycle();
+                        CircaHaptics.success();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              backgroundColor: AppColors.surface,
+                              content: Text(
+                                'Демо-партнёр Айпери привязана! Карточка цикла на Главном экране.',
+                                style: TextStyle(color: AppColors.rose, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.raised,
+                        foregroundColor: AppColors.fg,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('ДЕМО: АЙПЕРИ', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800)),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -582,6 +968,127 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildThemeSelectorCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'ТЕМА ОФОРМЛЕНИЯ / ТЕМА',
+          style: TextStyle(
+            color: AppColors.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2.0,
+          ),
+        ),
+        const SizedBox(height: 10),
+        GlassCard(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        AppThemeNotifier.isDark ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                        color: AppColors.amber,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Тема интерфейса',
+                        style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      AppThemeNotifier.isDark ? 'ТЕМНАЯ' : 'СВЕТЛАЯ',
+                      style: const TextStyle(color: AppColors.amber, fontSize: 10, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildThemeButton(
+                      title: 'Темная',
+                      icon: Icons.nightlight_round,
+                      isActive: AppThemeNotifier.isDark,
+                      onTap: () {
+                        AppThemeNotifier.setThemeMode(ThemeMode.dark);
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildThemeButton(
+                      title: 'Светлая',
+                      icon: Icons.wb_sunny_rounded,
+                      isActive: AppThemeNotifier.isLight,
+                      onTap: () {
+                        AppThemeNotifier.setThemeMode(ThemeMode.light);
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildThemeButton({
+    required String title,
+    required IconData icon,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.amber.withValues(alpha: 0.16) : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? AppColors.amber : AppColors.line,
+            width: isActive ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: isActive ? AppColors.amber : AppColors.muted),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: isActive ? AppColors.fg : AppColors.muted,
+                fontSize: 13,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _handleVersionTap() {
     final now = DateTime.now();
     if (_lastVersionTap == null || now.difference(_lastVersionTap!).inSeconds > 3) {
@@ -648,7 +1155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
                             Text(
-                              '⚡ Режим «ГРОЗА» (Кризис и тревога)',
+                              'Режим «ГРОЗА» (Кризис и тревога)',
                               style: TextStyle(color: AppColors.rose, fontSize: 13, fontWeight: FontWeight.w700),
                             ),
                             SizedBox(height: 2),
@@ -1088,9 +1595,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final currentYear = DateTime.now().year;
     final chronoAge = (currentYear - birthYear).clamp(16, 99);
     final bioAge = (chronoAge - 4).clamp(14, 95);
-    final initials = _profile.name.isNotEmpty
-        ? _profile.name.trim().split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join()
-        : 'АК';
 
     return Container(
       decoration: BoxDecoration(
@@ -1131,15 +1635,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.amber,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.shield_outlined, color: AppColors.amber, size: 14),
+                      const SizedBox(width: 6),
                       const Text(
                         'КЫРГЫЗ РЕСПУБЛИКАСЫ · БИОМЕТРИЯ РЕГИСТРИ',
                         style: TextStyle(
@@ -1166,77 +1663,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
 
-          // Основная часть: монограмма атлета + данные
+          // Основная часть: фото атлета + данные
           Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Инициалы / бейдж атлета
-                Container(
-                  width: 72,
-                  height: 86,
-                  decoration: BoxDecoration(
-                    color: AppColors.stage,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.amber.withValues(alpha: 0.4),
-                      width: 1.0,
+                // Фото атлета / гербовый аватар владельца с вызовом диалога загрузки
+                GestureDetector(
+                  onTap: () => CircaAvatarPickerDialog.show(context, _profile),
+                  child: Container(
+                    width: 76,
+                    height: 92,
+                    decoration: BoxDecoration(
+                      color: AppColors.stage,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.amber.withValues(alpha: 0.6),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.amber.withValues(alpha: 0.12),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned(
-                        top: 4,
-                        left: 4,
-                        child: Icon(
-                          Icons.crop_free,
-                          color: AppColors.amber.withValues(alpha: 0.4),
-                          size: 10,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 4,
-                        right: 4,
-                        child: Icon(
-                          Icons.crop_free,
-                          color: AppColors.amber.withValues(alpha: 0.4),
-                          size: 10,
-                        ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            initials,
-                            style: const TextStyle(
-                              color: AppColors.amber,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.5,
-                            ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.asset(
+                            _profile.avatarPath ?? 'assets/images/warrior_cutout_clean.png',
+                            width: 76,
+                            height: 92,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
                           ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            padding: const EdgeInsets.all(2.5),
+                            decoration: const BoxDecoration(
+                              color: AppColors.surface,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.camera_alt, color: AppColors.amber, size: 10),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                             decoration: BoxDecoration(
-                              color: AppColors.amber.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(3),
+                              color: Colors.black.withValues(alpha: 0.75),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppColors.amber.withValues(alpha: 0.5), width: 0.5),
                             ),
                             child: const Text(
                               'VERIFIED',
                               style: TextStyle(
                                 color: AppColors.amber,
-                                fontSize: 7,
+                                fontSize: 7.5,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: 1.0,
+                                letterSpacing: 0.8,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),

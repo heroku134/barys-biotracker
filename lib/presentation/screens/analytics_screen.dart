@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
-import '../../data/history/biometrics_history_repository.dart';
 import '../../domain/intelligence/healthspan_engine.dart';
 import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/stress_engine.dart';
 import '../../domain/models/personal_baseline.dart';
+import '../../data/history/biometrics_history_repository.dart';
 import '../widgets/circa_healthspan_card.dart';
 import '../widgets/circa_hypnogram.dart';
 import '../widgets/circa_sparkline.dart';
@@ -41,13 +42,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       weeklyZone5Minutes: 24,
       sleepConsistency: telemetry.sleepConsistency,
     );
-
-    final historyPeriod = switch (_selectedPeriod) {
-      0 => HistoryPeriod.day24h,
-      1 => HistoryPeriod.week7d,
-      2 => HistoryPeriod.month30d,
-      _ => HistoryPeriod.months6,
-    };
 
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
@@ -103,7 +97,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 1. Суточный почасовой профиль пульса
+            // 1. Профиль пульса (ЧСС) по периодам
             GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,9 +105,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'СУТОЧНЫЙ ПРОФИЛЬ ПУЛЬСА (ЧСС)',
-                        style: TextStyle(
+                      Text(
+                        _getHeartRateCardTitle(_selectedPeriod),
+                        style: const TextStyle(
                           color: AppColors.muted,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -121,7 +115,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         ),
                       ),
                       Text(
-                        'Покой: ${telemetry.restingHeartRate} bpm',
+                        'Покой: ${telemetry.restingHeartRate} уд/мин',
                         style: const TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w700),
                       ),
                     ],
@@ -130,22 +124,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   SizedBox(
                     height: 90,
                     child: CircaSparkline(
-                      points: BiometricsHistoryRepository.getHourlyHeartRate24h(),
+                      points: BiometricsHistoryRepository.getHeartRateHistory(_currentHistoryPeriod),
                       lineColor: AppColors.rose,
                       height: 90,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('00:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-                      Text('06:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-                      Text('12:00 (Пик)', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
-                      Text('18:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-                      Text('23:59', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-                    ],
-                  ),
+                  _buildAxisLabels(_selectedPeriod),
                 ],
               ),
             ),
@@ -155,132 +140,63 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             CircaHypnogram(sleepResult: sleepAnalysis),
             const SizedBox(height: 14),
 
-            // 3. Тренды ВСР против 60-дневной базы
-            GlassCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'ТРЕНД ВСР (rMSSD) И БАЗОВЫЙ КОРИДОР',
-                        style: TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.8,
-                        ),
-                      ),
-                      Text(
-                        '${telemetry.hrv.toStringAsFixed(0)} мс',
-                        style: const TextStyle(color: AppColors.sage, fontSize: 13, fontWeight: FontWeight.w800),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Личный коридор нормы: ${_baseline.hrvNormalMin.toStringAsFixed(0)}–${_baseline.hrvNormalMax.toStringAsFixed(0)} мс',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 11),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 60,
-                    child: CircaSparkline(
-                      points: BiometricsHistoryRepository.getHrvHistory(historyPeriod),
-                      lineColor: AppColors.sage,
-                      height: 60,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // 4. Дневной монитор стресса (лента дня)
+            // 3. Дневной монитор стресса (лента дня)
             CircaStressTimeline(stressSummary: stressSummary),
             const SizedBox(height: 14),
 
-            // 5. Биологический возраст CIRCA (Healthspan)
+            // 4. Биологический возраст CIRCA (Healthspan)
             CircaHealthspanCard(healthspan: healthspan),
             const SizedBox(height: 14),
 
-            // 6. Гормональный цикл и физиологическая вариативность (Whoop 5.0)
+            // 5. Гормональный цикл и адаптация нагрузки
             GlassCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              onTap: () => _showCycleDetailsModal(context),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.amber,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'ФИЗИОЛОГИЧЕСКИЙ ЦИКЛ И ВАРИАТИВНОСТЬ',
-                        style: TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Колебания ВСР и пульса покоя в лютеиновой или фолликулярной фазе — это естественный гормональный процесс, а не падение формы. Система автоматически калибрует целевой бюджет Strain.',
-                    style: TextStyle(color: AppColors.fg, fontSize: 12, height: 1.4),
-                  ),
-                  const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: AppColors.raised,
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.amber.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
                     ),
-                    child: const Row(
+                    child: const Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.info_outline, color: AppColors.amber, size: 16),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Текущая фаза: Фолликулярная (Эстроген ↑, ВСР на пике)',
-                            style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w700),
+                        Text(
+                          'ФИЗИОЛОГИЧЕСКИЙ ЦИКЛ',
+                          style: TextStyle(
+                            color: AppColors.amber,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Фолликулярная фаза · ВСР на пике',
+                          style: TextStyle(
+                            color: AppColors.fg,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Нажмите для подсказки по нагрузкам ›',
+                          style: TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 11,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // 5. Дисклеймер о медицинских данных
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.line),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.verified_user_outlined, color: AppColors.muted, size: 16),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'KALKAN СААТ-1 не ставит медицинских диагнозов. Данные температуры кожи, SpO2 и ВСР служат индикатором трендов восстановления ЦНС и тренировочной адаптации.',
-                      style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.35),
-                    ),
-                  ),
+                  const Icon(Icons.arrow_forward_ios, color: AppColors.muted, size: 12),
                 ],
               ),
             ),
@@ -293,11 +209,174 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
+  void _showCycleDetailsModal(BuildContext context) {
+    CircaHaptics.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.line,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Row(
+              children: [
+                Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'ФИЗИОЛОГИЧЕСКИЙ ЦИКЛ И ВАРИАТИВНОСТЬ',
+                  style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.raised,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: const Text(
+                'Колебания ВСР и пульса покоя в лютеиновой или фолликулярной фазе — это естественный физиологический процесс, а не падение спортивной формы.',
+                style: TextStyle(color: AppColors.fg, fontSize: 13, height: 1.4),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'СААТ-1 автоматически учитывает фазу цикла и калибрует целевой бюджет суточной нагрузки, защищая нервную систему и сердце от перетренированности.',
+              style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.amber.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle_outline, color: AppColors.amber, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Текущая фаза: Фолликулярная (Эстроген ↑, ВСР на пике, оптимум для тренировок)',
+                      style: TextStyle(color: AppColors.amber, fontSize: 11.5, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  HistoryPeriod get _currentHistoryPeriod {
+    switch (_selectedPeriod) {
+      case 0:
+        return HistoryPeriod.day24h;
+      case 1:
+        return HistoryPeriod.week7d;
+      case 2:
+        return HistoryPeriod.month30d;
+      case 3:
+        return HistoryPeriod.months6;
+      default:
+        return HistoryPeriod.week7d;
+    }
+  }
+
+  String _getHeartRateCardTitle(int period) {
+    switch (period) {
+      case 0:
+        return 'СУТОЧНЫЙ ПРОФИЛЬ ПУЛЬСА (24 ЧАСА)';
+      case 1:
+        return 'НЕДЕЛЬНЫЙ ТРЕНД ПУЛЬСА (7 ДНЕЙ)';
+      case 2:
+        return 'МЕСЯЧНЫЙ ТРЕНД ПУЛЬСА (30 ДНЕЙ)';
+      case 3:
+        return 'ПОЛУГОДОВОЙ ТРЕНД ПУЛЬСА (6 МЕСЯЦЕВ)';
+      default:
+        return 'ТРЕНД ПУЛЬСА (ЧСС)';
+    }
+  }
+
+  Widget _buildAxisLabels(int period) {
+    switch (period) {
+      case 0:
+        return const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('00:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('06:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('12:00 (Пик)', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
+            Text('18:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('23:59', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+          ],
+        );
+      case 1:
+        return const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Пн', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('Вт', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('Ср', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('Чт', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('Пт', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('Сб', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('Вс', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
+          ],
+        );
+      case 2:
+        return const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('1-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('2-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('3-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('4-я нед', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
+          ],
+        );
+      case 3:
+        return const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('6 мес назад', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('3 мес назад', style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text('Текущий месяц', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
+          ],
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   Widget _buildPeriodTab(int index, String title) {
     final isSelected = _selectedPeriod == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _selectedPeriod = index),
+        onTap: () {
+          CircaHaptics.selectionClick();
+          setState(() => _selectedPeriod = index);
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(

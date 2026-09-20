@@ -139,30 +139,42 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
     _resume();
   }
 
-  void _shareEvent(StressTimeSlot slot) {
+  Future<void> _shareEvent(StressTimeSlot slot) async {
     HapticFeedback.heavyImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.surface,
-        duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.sage, width: 1),
-        ),
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: AppColors.sage, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Событие «${slot.contextTitle}» (${slot.stressScore}%) экспортировано в сторис',
-                style: const TextStyle(color: AppColors.fg, fontSize: 12),
+    final eventSummary = '''
+KALKAN BIOTRACKER · Хроника дня
+Событие: ${slot.contextTitle} (${slot.timeRange})
+Уровень стресса: ${slot.stressScore}% · ${slot.level.label}
+Барыс: ${slot.barysReaction}
+'''.trim();
+
+    await Clipboard.setData(ClipboardData(text: eventSummary));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.surface,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.amber, width: 1),
+          ),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_outline, color: AppColors.amber, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Событие «${slot.contextTitle}» скопировано в буфер для сторис!',
+                  style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   @override
@@ -619,15 +631,15 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
     final controller = TextEditingController(text: slot.userTag ?? '');
 
     const presets = [
-      '💼 Переговоры',
-      '⏰ Дедлайн',
-      '🚗 Дорога / Пробка',
-      '☕ Кофеин',
-      '🏋️ Тренировка',
-      '🔥 Конфликт',
-      '📱 Соцсети',
-      '🧘 Медитация',
-      '🥗 Обед / Пища',
+      'Переговоры',
+      'Дедлайн',
+      'Дорога / Пробка',
+      'Кофеин',
+      'Тренировка',
+      'Конфликт',
+      'Соцсети',
+      'Медитация',
+      'Обед / Пища',
     ];
 
     return await showModalBottomSheet<String>(

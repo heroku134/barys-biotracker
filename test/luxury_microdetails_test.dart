@@ -79,48 +79,35 @@ void main() {
       AvatarManager.setBedtimeLockedForTesting(false);
     });
 
-    test('AvatarProfile contains 3 curated daily micro-quests with interactive actions', () {
+    test('AvatarProfile contains 3 automated sensor quests', () {
       final profile = AvatarManager.getProfile(baseTelemetry, baseline: baseline);
       expect(profile.quests.length, equals(3));
 
       final strainQuest = profile.quests[0];
       expect(strainQuest.id, equals('quest_strain'));
-      expect(strainQuest.title, contains('Закрыть целевой Strain'));
-      expect(strainQuest.actionLabel, equals('В ПРОЦЕССЕ'));
+      expect(strainQuest.title, contains('Дневная норма активности'));
+      expect(strainQuest.actionLabel, equals('АВТОМАТИЧЕСКИ'));
 
-      final journalQuest = profile.quests[1];
-      expect(journalQuest.id, equals('quest_journal'));
-      expect(journalQuest.title, contains('Залогировать вечерний био-журнал'));
-      expect(journalQuest.isInteractive, isTrue);
-      expect(journalQuest.actionLabel, equals('ОТМЕТИТЬ'));
+      final stepsQuest = profile.quests[1];
+      expect(stepsQuest.id, equals('quest_steps'));
+      expect(stepsQuest.title, contains('Дневная норма шагов'));
+      expect(stepsQuest.actionLabel, equals('АВТОМАТИЧЕСКИ'));
 
-      final bedtimeQuest = profile.quests[2];
-      expect(bedtimeQuest.id, equals('quest_bedtime'));
-      expect(bedtimeQuest.title, contains('Лечь по расписанию'));
-      expect(bedtimeQuest.isInteractive, isTrue);
-      expect(bedtimeQuest.actionLabel, equals('ЗАФИКСИРОВАТЬ'));
+      final sleepQuest = profile.quests[2];
+      expect(sleepQuest.id, equals('quest_sleep'));
+      expect(sleepQuest.title, contains('Сон и восстановление'));
+      expect(sleepQuest.actionLabel, equals('ВЫПОЛНЕНО'));
     });
 
-    test('completeJournalQuest marks quest done and grants XP', () async {
-      expect(AvatarManager.isJournalLoggedToday, isFalse);
-      await AvatarManager.completeJournalQuest();
-      expect(AvatarManager.isJournalLoggedToday, isTrue);
-
-      final profile = AvatarManager.getProfile(baseTelemetry, baseline: baseline);
-      final journalQuest = profile.quests.firstWhere((q) => q.id == 'quest_journal');
-      expect(journalQuest.isCompleted, isTrue);
-      expect(journalQuest.actionLabel, equals('ЗАЛОГИРОВАНО'));
-    });
-
-    test('completeBedtimeQuest marks quest done and grants XP', () async {
-      expect(AvatarManager.isBedtimeLockedToday, isFalse);
-      await AvatarManager.completeBedtimeQuest();
-      expect(AvatarManager.isBedtimeLockedToday, isTrue);
-
-      final profile = AvatarManager.getProfile(baseTelemetry, baseline: baseline);
-      final bedtimeQuest = profile.quests.firstWhere((q) => q.id == 'quest_bedtime');
-      expect(bedtimeQuest.isCompleted, isTrue);
-      expect(bedtimeQuest.actionLabel, equals('ЗАФИКСИРОВАНО'));
+    test('Quests automatically complete based on telemetry thresholds', () {
+      final completedTelemetry = baseTelemetry.copyWith(
+        currentDayStrain: 18.0,
+        steps: 12000,
+        sleepMinutes: 480,
+      );
+      final profile = AvatarManager.getProfile(completedTelemetry, baseline: baseline);
+      expect(profile.quests.every((q) => q.isCompleted), isTrue);
+      expect(profile.quests.every((q) => q.actionLabel == 'ВЫПОЛНЕНО'), isTrue);
     });
   });
 
@@ -129,11 +116,9 @@ void main() {
 
     setUp(() {
       mockBridge = UteBleBridge();
-      AvatarManager.setJournalLoggedForTesting(false);
-      AvatarManager.setBedtimeLockedForTesting(false);
     });
 
-    testWidgets('BioAvatarScreen displays checklist and tapping journal opens logging sheet', (tester) async {
+    testWidgets('BioAvatarScreen displays checklist and tapping quest shows automated sensor info', (tester) async {
       tester.view.physicalSize = const Size(800, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -150,31 +135,20 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Verify checklist header
-      final checklistFinder = find.text('ЕЖЕДНЕВНЫЕ ЗАДАЧИ НАГРУЗКИ');
+      final checklistFinder = find.text('ЕЖЕДНЕВНЫЕ ЗАДАЧИ АКТИВНОСТИ');
       expect(checklistFinder, findsOneWidget);
 
       // Verify quests rendered
-      expect(find.textContaining('Закрыть целевой Strain'), findsOneWidget);
-      expect(find.textContaining('Залогировать вечерний био-журнал'), findsOneWidget);
-      expect(find.textContaining('Лечь по расписанию'), findsOneWidget);
+      expect(find.textContaining('Дневная норма активности'), findsOneWidget);
+      expect(find.textContaining('Дневная норма шагов'), findsOneWidget);
+      expect(find.textContaining('Сон и восстановление'), findsOneWidget);
 
-      // Tap on journal quest action button to open bottom sheet
-      final journalAction = find.text('ОТМЕТИТЬ');
-      expect(journalAction, findsOneWidget);
-      await tester.tap(journalAction);
+      // Tapping a quest triggers informative feedback snackbar
+      await tester.tap(find.textContaining('Дневная норма шагов'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Verify evening journal sheet opened with context tags
-      expect(find.text('ВЕЧЕРНИЙ БИО-ЖУРНАЛ KALKAN'), findsOneWidget);
-      expect(find.text('💼 Рабочий спринт'), findsOneWidget);
-
-      // Tap a tag to complete quest
-      await tester.tap(find.text('💼 Рабочий спринт'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(AvatarManager.isJournalLoggedToday, isTrue);
+      expect(find.textContaining('Шаги учитываются акселерометром СААТ-1'), findsOneWidget);
     });
 
     testWidgets('Completing all micro-quests displays luxury celebration ritual banner', (tester) async {
@@ -185,9 +159,7 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      mockBridge.setDemoStrain(18.0);
-      AvatarManager.setJournalLoggedForTesting(true);
-      AvatarManager.setBedtimeLockedForTesting(true);
+      mockBridge.setSimulatedMetrics(strain: 18.0, steps: 11000, sleepMinutes: 480);
 
       await tester.pumpWidget(
         MaterialApp(

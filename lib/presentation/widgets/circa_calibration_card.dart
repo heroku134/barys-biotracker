@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/circa_haptics.dart';
 import 'glass_card.dart';
 
-/// Карточка первой 14-дневной калибровки физиологической базы CIRCA (Commitment Device)
-/// Мотивирует пользователя носить браслет и формирует привычку с первых дней.
+/// Карточка первой 14-дневной калибровки физиологической базы KALKAN
+/// Лаконичный внешний вид с детальной модальной шторкой.
+/// Автоматически исчезает, когда калибровка завершена (currentDay >= totalDays).
 class CircaCalibrationCard extends StatelessWidget {
   final int currentDay;
   final int totalDays;
@@ -18,160 +20,101 @@ class CircaCalibrationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progressPercent = ((currentDay / totalDays) * 100).toInt();
-    final remainingDays = totalDays - currentDay;
+    // Если калибровка уже завершена (14 из 14 дней), полностью скрываем карточку
+    if (currentDay >= totalDays) {
+      return const SizedBox.shrink();
+    }
 
     return GestureDetector(
-      onTap: onTap ?? () => _showCalibrationInfoSheet(context),
+      onTap: onTap ?? () => _showCalibrationInfoSheet(context, currentDay, totalDays),
       child: GlassCard(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         borderColor: AppColors.amber.withValues(alpha: 0.25),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Хедер: статус + индикатор
+            // Лаконичный хедер: название и день
             Row(
               children: [
-                // Пульсирующая точка статуса калибровки
                 Container(
-                  width: 7,
-                  height: 7,
+                  width: 6,
+                  height: 6,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.amber,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.amber,
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'КАЛИБРОВКА БАЗЫ · ЭТАП ОБУЧЕНИЯ',
-                    style: TextStyle(
-                      color: AppColors.amber,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.6,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.amber.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    '$progressPercent% ГОТОВО',
-                    style: const TextStyle(
-                      color: AppColors.amber,
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Крупный заголовок дня
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  'День $currentDay',
-                  style: const TextStyle(
-                    color: AppColors.fg,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                Text(
-                  ' из $totalDays',
-                  style: const TextStyle(
+                const Text(
+                  'КАЛИБРОВКА БАЗЫ',
+                  style: TextStyle(
                     color: AppColors.muted,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2.0,
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  'Осталось $remainingDays дн.',
+                  'День $currentDay из $totalDays',
                   style: const TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    color: AppColors.amber,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
-            // 14-сегментный прогресс-бар в стиле швейцарской типографики
+            // 14-сегментный прогресс-бар
             Row(
               children: List.generate(totalDays, (index) {
                 final isDone = index < currentDay;
                 final isCurrent = index == currentDay - 1;
                 return Expanded(
                   child: Container(
-                    height: 5,
+                    height: 4,
                     margin: EdgeInsets.only(right: index == totalDays - 1 ? 0 : 3),
                     decoration: BoxDecoration(
                       color: isDone
                           ? (isCurrent ? AppColors.amber : AppColors.sage)
                           : AppColors.line.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(2.5),
-                      boxShadow: isCurrent
-                          ? [
-                              BoxShadow(
-                                color: AppColors.amber.withValues(alpha: 0.6),
-                                blurRadius: 4,
-                              ),
-                            ]
-                          : null,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 );
               }),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
 
-            // Описание ценности (commitment device)
-            const Text(
-              'KALKAN изучает индивидуальный вариабельный коридор ВСР и ночного пульса. Базовая точность персональных рекомендаций зафиксируется через 11 дней.',
-              style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 11.5,
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Микро-метрики текущей точности
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.raised,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.line.withValues(alpha: 0.6)),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _CalibrationMiniTag(label: 'ВСР покоя', value: 'Записано 3 ночи', isReady: true),
-                  _CalibrationMiniTag(label: 'Сон и циклы', value: '78% точности', isReady: true),
-                  _CalibrationMiniTag(label: 'Циркадный ритм', value: 'Калибровка', isReady: false),
-                ],
-              ),
+            // Минималистичная подсказка для тапа
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text(
+                  'Формирование нормы СААТ-1',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Подробнее',
+                      style: TextStyle(
+                        color: AppColors.amber,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward_ios, size: 9, color: AppColors.amber),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
@@ -179,7 +122,8 @@ class CircaCalibrationCard extends StatelessWidget {
     );
   }
 
-  static void _showCalibrationInfoSheet(BuildContext context) {
+  static void _showCalibrationInfoSheet(BuildContext context, int currentDay, int totalDays) {
+    CircaHaptics.selectionClick();
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -189,7 +133,7 @@ class CircaCalibrationCard extends StatelessWidget {
       builder: (ctx) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +148,7 @@ class CircaCalibrationCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 const Text(
                   '14-ДНЕВНЫЙ ПРОТОКОЛ КАЛИБРОВКИ',
                   style: TextStyle(
@@ -214,26 +158,64 @@ class CircaCalibrationCard extends StatelessWidget {
                     letterSpacing: 1.8,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 const Text(
-                  'Как KALKAN формирует вашу биометрическую норму',
+                  'Формирование биометрической нормы',
                   style: TextStyle(
                     color: AppColors.fg,
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Каждый организм уникален. Универсальные таблицы пульса и ВСР не дают точной картины для профессиональных атлетов и биохакеров.\n\n'
-                  'В течение первых 14 дней алгоритмы KALKAN вычисляют вашу персональную медиану вегетативного тонуса, базовую температуру кожи и суточные колебания кортизола/мелатонина.',
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 13,
-                    height: 1.5,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.raised,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.line),
+                  ),
+                  child: const Text(
+                    'В течение первых 14 дней сенсоры KALKAN СААТ-1 изучают индивидуальный вариабельный коридор ВСР и ночного пульса. Базовая точность персональных рекомендаций фиксируется на 14-й день.',
+                    style: TextStyle(
+                      color: AppColors.fg,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
+
+                // Микро-метрики текущей точности в модальном окне
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.raised,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.line.withValues(alpha: 0.6)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _CalibrationMiniTag(
+                        label: 'ВСР покоя',
+                        value: 'Записано $currentDay ночей',
+                        isReady: currentDay >= 3,
+                      ),
+                      _CalibrationMiniTag(
+                        label: 'Сон и циклы',
+                        value: '${((currentDay / totalDays) * 100).toInt()}% точности',
+                        isReady: currentDay >= 7,
+                      ),
+                      _CalibrationMiniTag(
+                        label: 'Ритмы ЦНС',
+                        value: currentDay >= 14 ? 'Готово' : 'Обучение',
+                        isReady: currentDay >= 14,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -241,14 +223,15 @@ class CircaCalibrationCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.amber,
                       foregroundColor: AppColors.stage,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      elevation: 0,
                     ),
                     child: const Text(
-                      'Понятно, продолжать калибровку',
-                      style: TextStyle(fontWeight: FontWeight.w800),
+                      'ПОНЯТНО',
+                      style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.0, fontSize: 12),
                     ),
                   ),
                 ),

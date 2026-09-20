@@ -5,6 +5,7 @@ import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
+import '../widgets/circa_ai_language_pill.dart';
 import '../widgets/circa_film_grain.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import 'auth_screen.dart';
@@ -89,44 +90,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: SafeArea(
                 child: Stack(
                   children: [
-                    // Верхний переключатель языка [RU | KG]
-                    Positioned(
+                    // Верхний переключатель языка (AI Oval Capsule)
+                    const Positioned(
                       top: 12,
                       right: 18,
-                      child: GestureDetector(
-                        onTap: () {
-                          AppLocaleNotifier.toggleLanguage();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.line),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                language.flag,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                language.shortTitle,
-                                style: const TextStyle(
-                                  color: AppColors.amber,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.sync_alt, color: AppColors.muted, size: 12),
-                            ],
-                          ),
-                        ),
-                      ),
+                      child: CircaAiLanguagePill(),
                     ),
 
                     // Центральная композиция
@@ -138,26 +106,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // Маленький бейдж бренда
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppColors.line),
-                                ),
-                                child: const Text(
-                                  'KALKAN SPORT · СААТ-1',
-                                  style: TextStyle(
-                                    color: AppColors.muted,
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 2.4,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 28),
-
                               // Священная кыргызская пословица
                               Text(
                                 AppStrings.tr('entrance_quote', language),
@@ -184,28 +132,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                   height: 1.35,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 38),
 
-                              // Источник мудрости
-                              Text(
-                                AppStrings.tr('entrance_source', language),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppColors.faint,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.6,
-                                ),
-                              ),
-                              const SizedBox(height: 36),
-
-                              // Богатое пульсирующее лого
+                              // Богатое пульсирующее лого КАЛКАН
                               const CircaPulsingLogo(
                                 size: 165,
                                 primaryColor: AppColors.amber,
                                 secondaryColor: AppColors.sage,
                               ),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 36),
 
                               // Подсказка перехода
                               Text(

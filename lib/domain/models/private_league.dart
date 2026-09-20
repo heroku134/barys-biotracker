@@ -110,6 +110,8 @@ class PrivateLeague {
     return total / members.length;
   }
 
+  double get averageRecovery => averageRecoveryScore;
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

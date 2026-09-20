@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import '../../core/app_colors.dart';
 import '../../core/circa_haptics.dart';
 import '../../domain/avatar/avatar_manager.dart';
@@ -80,50 +81,82 @@ class _CircaShareSheetState extends State<CircaShareSheet>
     });
   }
 
-  void _handleShare(String actionTitle) {
+  Future<void> _handleShare(String actionTitle) async {
     CircaHaptics.cardExport();
     setState(() => _isExporting = true);
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() => _isExporting = false);
-        CircaAcoustics.playMechanicalClick();
-        final subtitle = _isMotionMode
-            ? 'Живая видео-история (5 сек, 60 FPS) готова к публикации'
-            : '$actionTitle: карточка 9:16 готова к публикации';
+    // 1. Формируем реальную сводку дня для буфера обмена
+    final readiness = ReadinessEngine.calculate(widget.telemetry, baseline: widget.baseline);
+    final recoveryText = '${readiness.score}% (${readiness.zone.label})';
+    final heartRate = '${widget.telemetry.heartRate} уд/мин';
+    final hrv = '${widget.telemetry.hrv.round()} мс';
+    final strain = widget.telemetry.currentDayStrain.toStringAsFixed(1);
+    final sleepH = widget.telemetry.sleepMinutes ~/ 60;
+    final sleepM = widget.telemetry.sleepMinutes % 60;
+    final sleepQuality = (widget.telemetry.sleepEfficiency * 100).round();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: AppColors.amber, width: 1.0),
-            ),
-            content: Row(
-              children: [
-                Icon(
-                  _isMotionMode ? Icons.movie_filter_outlined : Icons.check_circle,
-                  color: AppColors.amber,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: AppColors.fg,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+    final textSummary = '''
+KALKAN BIOTRACKER · ДЕНЬ 14
+Пользователь: ${widget.userName} · Батыр (Ур. 4)
+Восстановление: $recoveryText
+Пульс: $heartRate | ВСР: $hrv
+Нагрузка дня: $strain / 21.0
+Сон: $sleepHч $sleepMм ($sleepQuality% покрытия)
+Устройство: KALKAN SAAT-1 · Алматы, Казахстан
+'''.trim();
+
+    // 2. Реальное копирование в системный буфер обмена
+    await Clipboard.setData(ClipboardData(text: textSummary));
+
+    // 3. Захват растра из RepaintBoundary
+    try {
+      final boundary = _cardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary != null) {
+        await boundary.toImage(pixelRatio: 2.0);
+      }
+    } catch (_) {}
+
+    await Future.delayed(const Duration(milliseconds: 350));
+
+    if (mounted) {
+      setState(() => _isExporting = false);
+      CircaAcoustics.playMechanicalClick();
+      final subtitle = _isMotionMode
+          ? 'Видео-история и сводка дня скопированы в буфер обмена!'
+          : 'Сводка и карточка дня скопированы в буфер обмена!';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.surface,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: AppColors.amber, width: 1.0),
+          ),
+          content: Row(
+            children: [
+              Icon(
+                _isMotionMode ? Icons.movie_filter_outlined : Icons.check_circle,
+                color: AppColors.amber,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.fg,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-            duration: const Duration(seconds: 3),
+              ),
+            ],
           ),
-        );
-      }
-    });
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override

@@ -33,6 +33,7 @@ class UserProfile {
   final int cycleLengthDays;
   final int periodDurationDays;
   final DateTime? lastPeriodStartDate;
+  final String? avatarPath;
 
   const UserProfile({
     this.id = 'circa_user_01',
@@ -53,6 +54,7 @@ class UserProfile {
     this.cycleLengthDays = 28,
     this.periodDurationDays = 5,
     this.lastPeriodStartDate,
+    this.avatarPath,
   });
 
   int get age => DateTime.now().year - birthYear;
@@ -78,6 +80,7 @@ class UserProfile {
     int? cycleLengthDays,
     int? periodDurationDays,
     DateTime? lastPeriodStartDate,
+    String? avatarPath,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -98,6 +101,7 @@ class UserProfile {
       cycleLengthDays: cycleLengthDays ?? this.cycleLengthDays,
       periodDurationDays: periodDurationDays ?? this.periodDurationDays,
       lastPeriodStartDate: lastPeriodStartDate ?? this.lastPeriodStartDate,
+      avatarPath: avatarPath ?? this.avatarPath,
     );
   }
 
@@ -120,6 +124,7 @@ class UserProfile {
     'cycleLengthDays': cycleLengthDays,
     'periodDurationDays': periodDurationDays,
     'lastPeriodStartDate': lastPeriodStartDate?.toIso8601String(),
+    'avatarPath': avatarPath,
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -152,6 +157,7 @@ class UserProfile {
       lastPeriodStartDate: json['lastPeriodStartDate'] != null
           ? DateTime.tryParse(json['lastPeriodStartDate'] as String)
           : null,
+      avatarPath: json['avatarPath'] as String?,
     );
   }
 
