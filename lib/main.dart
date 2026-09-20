@@ -58,8 +58,8 @@ class BarysBioTrackerApp extends StatelessWidget {
       builder: (context, language, _) {
         return MaterialApp(
           title: language == AppLanguage.kyrgyz
-              ? 'CIRCA · Барыс-Батыр Биотрекер'
-              : 'CIRCA · Барыс-Батыр Биотрекер',
+              ? 'КАЛКАН СПОРТ · СААТ-1'
+              : 'КАЛКАН СПОРТ · СААТ-1',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             brightness: Brightness.dark,

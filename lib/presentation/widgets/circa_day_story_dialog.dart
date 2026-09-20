@@ -240,7 +240,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'CIRCA СУТОЧНАЯ ХРОНИКА',
+                              'KALKAN СУТОЧНАЯ ХРОНИКА',
                               style: TextStyle(
                                 color: AppColors.muted,
                                 fontSize: 9,

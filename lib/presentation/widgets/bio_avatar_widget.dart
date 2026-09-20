@@ -365,17 +365,21 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                           ],
                         ),
                         child: ClipOval(
-                          child: Image.asset(
-                            widget.state.assetPath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: AppColors.raised,
-                                child: const Center(
-                                  child: Icon(Icons.pets, size: 80, color: AppColors.amber),
-                                ),
-                              );
-                            },
+                          child: Transform.translate(
+                            offset: const Offset(0, 10),
+                            child: Image.asset(
+                              widget.state.assetPath,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: AppColors.raised,
+                                  child: const Center(
+                                    child: Icon(Icons.pets, size: 80, color: AppColors.amber),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),

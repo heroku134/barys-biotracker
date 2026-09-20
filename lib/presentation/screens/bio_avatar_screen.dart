@@ -673,7 +673,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 14),
 
                     // 1. Интерактивный Аватар Барыса (Тап = вздох, покач головой, реплика)
                     Center(
@@ -1413,7 +1413,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'ВЕЧЕРНИЙ БИО-ЖУРНАЛ CIRCA',
+              'ВЕЧЕРНИЙ БИО-ЖУРНАЛ KALKAN',
               style: TextStyle(
                 color: AppColors.amber,
                 fontSize: 10,

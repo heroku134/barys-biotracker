@@ -13,22 +13,22 @@ class AppStrings {
       AppLanguage.kyrgyz: '«Адам өз чегин, дараметин жана күчүн билбей өтүп кеткени уят»',
     },
     'entrance_source': {
-      AppLanguage.russian: 'Кыргызская народная мудрость · Биометрическое ателье CIRCA',
-      AppLanguage.kyrgyz: 'Кыргыз эл макалы · CIRCA биометрикалык ательеси',
+      AppLanguage.russian: 'Кыргызская народная мудрость · KALKAN SPORT',
+      AppLanguage.kyrgyz: 'Кыргыз эл макалы · КАЛКАН СПОРТ',
     },
     'entrance_tap_to_enter': {
       AppLanguage.russian: 'ТАП ДЛЯ ВХОДА В БИОСИСТЕМУ',
       AppLanguage.kyrgyz: 'БИОСИСТЕМАГА КИРҮҮ ҮЧҮН БАСЫҢЫЗ',
     },
     'entrance_initializing': {
-      AppLanguage.russian: 'Инициализация сенсоров CIRCA...',
-      AppLanguage.kyrgyz: 'CIRCA сенсорлору иштетилүүдө...',
+      AppLanguage.russian: 'Инициализация сенсоров СААТ-1...',
+      AppLanguage.kyrgyz: 'СААТ-1 сенсорлору иштетилүүдө...',
     },
 
     // Авторизация / Auth
     'auth_brand': {
-      AppLanguage.russian: 'CIRCA ONE',
-      AppLanguage.kyrgyz: 'CIRCA ONE',
+      AppLanguage.russian: 'КАЛКАН СПОРТ · СААТ-1',
+      AppLanguage.kyrgyz: 'КАЛКАН СПОРТ · СААТ-1',
     },
     'auth_login_title': {
       AppLanguage.russian: 'Вход в биосистему',
@@ -104,6 +104,10 @@ class AppStrings {
       AppLanguage.russian: 'Спорт',
       AppLanguage.kyrgyz: 'Спорт',
     },
+    'nav_cycle': {
+      AppLanguage.russian: 'Цикл',
+      AppLanguage.kyrgyz: 'Цикл',
+    },
     'nav_profile': {
       AppLanguage.russian: 'Профиль',
       AppLanguage.kyrgyz: 'Профиль',
@@ -131,8 +135,8 @@ class AppStrings {
       AppLanguage.kyrgyz: 'Ченөөнү баштоо >',
     },
     'today_pulse_measuring': {
-      AppLanguage.russian: 'Инициация замера ЧСС через оптический сенсор CIRCA...',
-      AppLanguage.kyrgyz: 'CIRCA оптикалык сенсору аркылуу жүрөк согушун ченөө башталды...',
+      AppLanguage.russian: 'Инициация замера ЧСС через оптический сенсор СААТ-1...',
+      AppLanguage.kyrgyz: 'СААТ-1 оптикалык сенсору аркылуу жүрөк согушун ченөө башталды...',
     },
     'today_5factors_title': {
       AppLanguage.russian: 'РАЗБОР 5 ФАКТОРОВ ВОССТАНОВЛЕНИЯ',
@@ -151,8 +155,8 @@ class AppStrings {
       AppLanguage.kyrgyz: 'ТЫНЧ АБАЛДАГЫ ПУЛЬС',
     },
     'today_skin_temp': {
-      AppLanguage.russian: 'ТЕМПЕРАТУРА КОЖИ',
-      AppLanguage.kyrgyz: 'ТЕРИНИН ТЕМПЕРАТУРАСЫ',
+      AppLanguage.russian: 'ТЕМП. КОЖИ',
+      AppLanguage.kyrgyz: 'ТЕРИ ТЕМП.',
     },
     'today_strain_budget': {
       AppLanguage.russian: 'НАГРУЗКА ДНЯ (STRAIN)',
@@ -333,8 +337,8 @@ class AppStrings {
       AppLanguage.kyrgyz: 'ИШЕНИМ ЧӨЙРӨСҮ · ЛИГА',
     },
     'league_appbar_title': {
-      AppLanguage.russian: 'Приватная лига CIRCA',
-      AppLanguage.kyrgyz: 'CIRCA жеке лигасы',
+      AppLanguage.russian: 'Приватная лига КАЛКАН',
+      AppLanguage.kyrgyz: 'КАЛКАН жеке лигасы',
     },
     'league_default_title': {
       AppLanguage.russian: 'КРУГ БАТЫРОВ · ALMATY ATELIER',
@@ -415,6 +419,106 @@ class AppStrings {
     'friend_detail_rhr': {
       AppLanguage.russian: 'ЧСС ПОКОЯ',
       AppLanguage.kyrgyz: 'ТЫНЧ АБАЛДАГЫ ПУЛЬС',
+    },
+
+    // Выбор пола (Gender Selection)
+    'gender_label': {
+      AppLanguage.russian: 'Ваш пол',
+      AppLanguage.kyrgyz: 'Жынысыңыз',
+    },
+    'gender_male': {
+      AppLanguage.russian: 'Мужской',
+      AppLanguage.kyrgyz: 'Эркек',
+    },
+    'gender_female': {
+      AppLanguage.russian: 'Женский',
+      AppLanguage.kyrgyz: 'Аял',
+    },
+
+    // Мониторинг цикла (Menstrual Cycle & СААТ-1)
+    'cycle_card_header': {
+      AppLanguage.russian: 'ЖЕНСКИЙ БИОРИТМ · СААТ-1',
+      AppLanguage.kyrgyz: 'АЯЛДАР БИОРИТМИ · СААТ-1',
+    },
+    'cycle_phase_menstrual': {
+      AppLanguage.russian: 'Менструальная фаза',
+      AppLanguage.kyrgyz: 'Этек кир фазасы',
+    },
+    'cycle_phase_follicular': {
+      AppLanguage.russian: 'Фолликулярная фаза',
+      AppLanguage.kyrgyz: 'Фолликулярдык фаза',
+    },
+    'cycle_phase_ovulatory': {
+      AppLanguage.russian: 'Овуляция (Пик сил)',
+      AppLanguage.kyrgyz: 'Овуляция (Күч чокусу)',
+    },
+    'cycle_phase_luteal': {
+      AppLanguage.russian: 'Лютеиновая фаза',
+      AppLanguage.kyrgyz: 'Лютеиндик фаза',
+    },
+    'cycle_day_counter': {
+      AppLanguage.russian: 'День {day} из {total}',
+      AppLanguage.kyrgyz: '{total} күндөн {day}-күн',
+    },
+    'cycle_screen_title': {
+      AppLanguage.russian: 'Мониторинг цикла СААТ-1',
+      AppLanguage.kyrgyz: 'СААТ-1 цикл мониторинги',
+    },
+    'cycle_screen_subtitle': {
+      AppLanguage.russian: 'Ночная термометрия кожи и фазовый тренинг',
+      AppLanguage.kyrgyz: 'Түнкү теринин термометриясы жана фазалык машыгуу',
+    },
+    'cycle_thermal_card': {
+      AppLanguage.russian: 'ТЕРМОСЕНСОР КОЖИ СААТ-1',
+      AppLanguage.kyrgyz: 'СААТ-1 ТЕРИ ТЕРМОСЕНСОРУ',
+    },
+    'cycle_thermal_desc': {
+      AppLanguage.russian: 'Двухфазный ночной график температуры тела. Скачок подтверждает овуляцию.',
+      AppLanguage.kyrgyz: 'Түнкү дене табынын эки фазалуу графиги. Секирик овуляцияны тастыктайт.',
+    },
+    'cycle_symptoms_title': {
+      AppLanguage.russian: 'ЖУРНАЛ САМОЧУВСТВИЯ',
+      AppLanguage.kyrgyz: 'ӨЗҮН СЕЗҮҮ КҮНДӨЛҮГҮ',
+    },
+    'cycle_symptom_energy': {
+      AppLanguage.russian: 'Энергия',
+      AppLanguage.kyrgyz: 'Кубаттуулук',
+    },
+    'cycle_symptom_cramps': {
+      AppLanguage.russian: 'Спазмы',
+      AppLanguage.kyrgyz: 'Сыздап ооруу',
+    },
+    'cycle_symptom_mood': {
+      AppLanguage.russian: 'Настроение',
+      AppLanguage.kyrgyz: 'Маанай',
+    },
+    'cycle_symptom_headache': {
+      AppLanguage.russian: 'Головная боль',
+      AppLanguage.kyrgyz: 'Баш оору',
+    },
+    'cycle_edit_settings': {
+      AppLanguage.russian: 'Настройки цикла',
+      AppLanguage.kyrgyz: 'Цикл жөндөөлөрү',
+    },
+    'cycle_settings_saved': {
+      AppLanguage.russian: 'Параметры цикла сохранены в профиле',
+      AppLanguage.kyrgyz: 'Цикл параметрлери профилде сакталды',
+    },
+    'cycle_directive_training': {
+      AppLanguage.russian: 'Тренировки & Нагрузка',
+      AppLanguage.kyrgyz: 'Машыгуу жана Оорчулук',
+    },
+    'cycle_directive_nutrition': {
+      AppLanguage.russian: 'Питание & Гидратация',
+      AppLanguage.kyrgyz: 'Тамактануу жана Гидратация',
+    },
+    'cycle_directive_sleep': {
+      AppLanguage.russian: 'Сон & Терморегуляция',
+      AppLanguage.kyrgyz: 'Уйку жана Терморегуляция',
+    },
+    'cycle_directive_barys': {
+      AppLanguage.russian: 'Мудрость Барыса',
+      AppLanguage.kyrgyz: 'Барыстын даанышмандыгы',
     },
   };
 

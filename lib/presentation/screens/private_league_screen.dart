@@ -145,7 +145,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
               const SizedBox(height: 14),
 
               const Text(
-                'Быстрый выбор из контактов CIRCA:',
+                'Быстрый выбор из контактов KALKAN:',
                 style: TextStyle(color: AppColors.muted, fontSize: 11, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -259,7 +259,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   title: const Text('Философия узкого круга', style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700)),
                   content: const Text(
-                    'Вместо токсичных глобальных таблиц лидеров CIRCA использует закрытые круги на 3–5 человек. Вы соревнуетесь только с собой, получая искреннюю поддержку близких.',
+                    'Вместо токсичных глобальных таблиц лидеров КАЛКАН использует закрытые круги на 3–5 человек. Вы соревнуетесь только с собой, получая искреннюю поддержку близких.',
                     style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.4),
                   ),
                   actions: [
@@ -288,21 +288,27 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.shield_outlined, color: AppColors.amber, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            league.title,
-                            style: const TextStyle(
-                              color: AppColors.fg,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Icon(Icons.shield_outlined, color: AppColors.amber, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                league.title,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: AppColors.fg,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -585,7 +591,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Приватные круги CIRCA защищены правилом Данбара: малый круг близких людей исключает токсичное социальное сравнение и сохраняет психологический комфорт.',
+                      'Приватные круги КАЛКАН защищены правилом Данбара: малый круг близких людей исключает токсичное социальное сравнение и сохраняет психологический комфорт.',
                       style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.4),
                     ),
                   ),

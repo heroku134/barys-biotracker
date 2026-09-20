@@ -64,7 +64,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'CIRCA MORNING BRIEFING',
+                      'KALKAN MORNING BRIEFING',
                       style: TextStyle(
                         color: AppColors.muted,
                         fontSize: 10,

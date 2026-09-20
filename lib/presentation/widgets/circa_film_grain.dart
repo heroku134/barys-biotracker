@@ -15,7 +15,7 @@ class CircaFilmGrainBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 1. Базовый глубокий обсидиан #050506
+        // 1. Базовый благородный титаново-графитовый оттенок
         const ColoredBox(color: AppColors.stage),
 
         // 2. Аналоговый шум (запеченный в GPU-слой с нулевым оверхедом)
@@ -25,18 +25,19 @@ class CircaFilmGrainBackground extends StatelessWidget {
           ),
         ),
 
-        // 3. Мягкая оптическая виньетка по краям (глубина объектива Leica)
+        // 3. Мягкая атмосферная глубина (теплый янтарно-графитовый градиент)
         IgnorePointer(
           child: Container(
             decoration: const BoxDecoration(
               gradient: RadialGradient(
-                center: Alignment(0.0, -0.2),
-                radius: 1.15,
+                center: Alignment(0.0, -0.6),
+                radius: 1.35,
                 colors: [
+                  Color.fromRGBO(196, 165, 116, 0.04), // Едва заметный теплый янтарный отсвет KALKAN
                   Colors.transparent,
-                  Color.fromRGBO(0, 0, 0, 0.38),
+                  Color.fromRGBO(12, 14, 19, 0.28),    // Мягкое затемнение по краям
                 ],
-                stops: [0.45, 1.0],
+                stops: [0.0, 0.55, 1.0],
               ),
             ),
           ),

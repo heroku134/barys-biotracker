@@ -113,7 +113,7 @@ void main() {
 
       // Проверяем отображение полноэкранной сторис
       expect(find.byType(CircaDayStoryDialog), findsOneWidget);
-      expect(find.text('CIRCA СУТОЧНАЯ ХРОНИКА'), findsOneWidget);
+      expect(find.text('KALKAN СУТОЧНАЯ ХРОНИКА'), findsOneWidget);
       expect(find.text('Событие 1 из 5'), findsOneWidget);
       expect(find.text('БАРЫС-БАТЫР'), findsOneWidget);
       expect(find.text('В сторис'), findsOneWidget);

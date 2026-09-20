@@ -147,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                   border: Border.all(color: AppColors.line),
                                 ),
                                 child: const Text(
-                                  'CIRCA · BIO-METRIC ATELIER',
+                                  'KALKAN SPORT · СААТ-1',
                                   style: TextStyle(
                                     color: AppColors.muted,
                                     fontSize: 9.5,

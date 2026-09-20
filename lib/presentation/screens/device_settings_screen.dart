@@ -33,7 +33,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Сигнал отправлен: вибрация на браслете CIRCA One',
+                'Сигнал отправлен: вибрация на часах СААТ-1',
                 style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
               ),
             ),
@@ -151,7 +151,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               ),
             ),
             Text(
-              'Браслет CIRCA One',
+              'Часы KALKAN СААТ-1',
               style: TextStyle(
                 color: AppColors.fg,
                 fontSize: 16,

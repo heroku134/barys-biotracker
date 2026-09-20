@@ -225,7 +225,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Header and league details
-      expect(find.text('Приватная лига CIRCA'), findsOneWidget);
+      expect(find.text('Приватная лига КАЛКАН'), findsOneWidget);
       expect(find.text('КРУГ БАТЫРОВ · ALMATY ATELIER'), findsOneWidget);
       expect(find.text('4 / 5 МЕСТ'), findsOneWidget);
       expect(find.text('СРЕДНЕЕ ВОССТАНОВЛЕНИЕ КРУГА'), findsOneWidget);

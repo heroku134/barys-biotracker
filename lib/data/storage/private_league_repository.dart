@@ -91,7 +91,7 @@ class PrivateLeagueRepository {
       hrv: telemetry.hrv,
       restingHeartRate: telemetry.restingHeartRate,
       lastSyncText: 'Live',
-      statusQuote: '«В синхроне с датчиком CIRCA»',
+      statusQuote: '«В синхроне с датчиком СААТ-1»',
       isCurrentUser: true,
     );
   }
@@ -143,8 +143,8 @@ class PrivateLeagueRepository {
 
         return PrivateLeague(
           id: savedLeague.id,
-          title: savedLeague.title,
-          inviteCode: savedLeague.inviteCode,
+          title: savedLeague.title.replaceAll('CIRCA', 'KALKAN'),
+          inviteCode: savedLeague.inviteCode.replaceAll('CIRCA', 'KALKAN'),
           maxMembers: savedLeague.maxMembers,
           members: updatedMembers,
         );
@@ -156,7 +156,7 @@ class PrivateLeagueRepository {
     final league = PrivateLeague(
       id: 'league_atelier_01',
       title: 'КРУГ БАТЫРОВ · ALMATY ATELIER',
-      inviteCode: 'CIRCA-BATYR-04',
+      inviteCode: 'KALKAN-BATYR-04',
       maxMembers: 5,
       members: initialMembers,
     );

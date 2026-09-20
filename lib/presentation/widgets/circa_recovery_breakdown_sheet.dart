@@ -551,15 +551,19 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'ПРОГНОЗ ВОЗВРАТА В ЗЕЛЕНУЮ ЗОНУ',
-                style: TextStyle(
-                  color: AppColors.sage,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.6,
+              const Expanded(
+                child: Text(
+                  'ПРОГНОЗ ВОЗВРАТА В ЗЕЛЕНУЮ ЗОНУ',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: AppColors.sage,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.6,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
@@ -615,7 +619,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Отбой до 22:30 (Рекомендация CIRCA)',
+                        'Отбой до 22:30 (Рекомендация KALKAN)',
                         style: TextStyle(
                           color: AppColors.fg,
                           fontSize: 11.5,

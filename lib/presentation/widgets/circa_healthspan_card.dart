@@ -35,7 +35,7 @@ class CircaHealthspanCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    'HEALTHSPAN · ВОЗРАСТ CIRCA',
+                    'HEALTHSPAN · БИО-ВОЗРАСТ KALKAN',
                     style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 10,

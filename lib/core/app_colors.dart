@@ -6,20 +6,20 @@ import 'package:flutter/material.dart';
 /// 2. amber #C4A574 — Нагрузка (Strain), внимание, фокус, Барыс
 /// 3. rose #C45C5C — Пульс, предупреждение, стоп
 class AppColors {
-  // Базовые фоны и поверхности (90% площади экрана)
-  static const Color stage = Color(0xFF050506);    // Глубокий монохромный стейдж
-  static const Color bg = Color(0xFF08090B);       // Фоновый оттенок
-  static const Color surface = Color(0xFF111217);  // Карточки и поверхности
-  static const Color raised = Color(0xFF181A21);   // Внутренние плашки, треки
+  // Базовые фоны и поверхности (мягкий глубокий титан/графит вместо тяжелого черного)
+  static const Color stage = Color(0xFF12141A);    // Мягкий глубокий титановый графит
+  static const Color bg = Color(0xFF171A23);       // Фоновый оттенок
+  static const Color surface = Color(0xFF1E222D);  // Карточки и поверхности
+  static const Color raised = Color(0xFF272C39);   // Внутренние плашки, треки
 
   // Текстовая иерархия
-  static const Color fg = Color(0xFFE2E6EC);       // Основной читаемый текст
-  static const Color muted = Color(0xFF7E8494);    // Вторичные подписи, единицы
-  static const Color faint = Color(0xFF555865);    // Разделители, неактивные элементы
+  static const Color fg = Color(0xFFEFF2F7);       // Основной читаемый текст (мягкий ясный контраст)
+  static const Color muted = Color(0xFF9299AA);    // Вторичные подписи, единицы
+  static const Color faint = Color(0xFF62697A);    // Разделители, неактивные элементы
 
-  // Строгие 1px hairline границы (без теней и псевдо-блюра)
-  static const Color line = Color(0x1DF2F3F5);      // 12% белого
-  static const Color lineStrong = Color(0x38F2F3F5);// 22% белого
+  // Строгие 1px границы с мягкой прозрачностью
+  static const Color line = Color(0x24FFFFFF);      // 14% белого
+  static const Color lineStrong = Color(0x3AFFFFFF);// 23% белого
 
   // 3 фирменных хроматических акцента
   static const Color sage = Color(0xFF7D9A92);  // Благородный матовый шалфей

@@ -17,7 +17,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
   bool _isScanning = false;
   bool _deviceFound = true; // Для демонстрации браслет найден
   bool _isConnecting = false;
-  final String _selectedDevice = 'CIRCA One (CR-A1-084B21)';
+  final String _selectedDevice = 'KALKAN СААТ-1 (KS-S1-084B21)';
 
   @override
   void initState() {
@@ -45,7 +45,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
 
   Future<void> _connect(bool isDemo) async {
     setState(() => _isConnecting = true);
-    await widget.bleBridge.connect('CR-A1-084B21');
+    await widget.bleBridge.connect('KS-S1-084B21');
     await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
@@ -59,7 +59,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
             const Icon(Icons.check_circle, color: AppColors.sage, size: 20),
             const SizedBox(width: 10),
             Text(
-              isDemo ? 'Демо-браслет подключен' : 'Браслет CIRCA One на связи (BLE 5.3)',
+              isDemo ? 'Демо-часы подключены' : 'Часы KALKAN СААТ-1 на связи (BLE 5.3)',
               style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
             ),
           ],
@@ -132,7 +132,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'CIRCA One — ультраминималистичный браслет без дисплея. Поднесите датчики к смартфону.',
+                'KALKAN СААТ-1 — премиальные спортивные часы. Поднесите устройство к смартфону.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.muted,

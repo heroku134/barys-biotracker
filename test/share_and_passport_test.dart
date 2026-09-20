@@ -82,7 +82,7 @@ void main() {
 
       expect(find.text('RECOVERY №048 / 2026'), findsOneWidget);
       expect(find.text('${readiness.score}'), findsOneWidget);
-      expect(find.text('CIRCA ONE · ALMATY · 2026'), findsOneWidget);
+      expect(find.text('KALKAN СААТ-1 · ALMATY · 2026'), findsOneWidget);
       expect(find.text('AUTONOMIC RECOVERY INDEX'), findsOneWidget);
       expect(find.text('GOLD EMBOSS'), findsNothing);
     });
@@ -167,8 +167,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('РЕСПУБЛИКА КАЗАХСТАН · РЕГИСТР БИОМЕТРИИ'), findsOneWidget);
-      expect(find.text('CIRCA ID-KZ · № 784-092/26'), findsOneWidget);
+      expect(find.text('КЫРГЫЗ РЕСПУБЛИКАСЫ · БИОМЕТРИЯ РЕГИСТРИ'), findsOneWidget);
+      expect(find.text('KALKAN ID-KG · № 784-092/26'), findsOneWidget);
       expect(find.text('VERIFIED'), findsOneWidget);
       expect(find.text('АТЛЕТ ВЫСШЕЙ КАТЕГОРИИ · УРОВЕНЬ BATYR'), findsOneWidget);
       expect(find.textContaining('7840926M2604128KAZ'), findsOneWidget);

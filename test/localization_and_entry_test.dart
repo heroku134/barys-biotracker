@@ -142,7 +142,7 @@ void main() {
       expect(find.byType(CircaPulsingLogo), findsOneWidget);
 
       // Verify brand title and login header in Russian
-      expect(find.text('CIRCA ONE'), findsOneWidget);
+      expect(find.textContaining('КАЛКАН СПОРТ'), findsOneWidget);
       expect(find.text('Вход в биосистему'), findsOneWidget);
       expect(find.text('ВОЙТИ В СИСТЕМУ'), findsOneWidget);
 

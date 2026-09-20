@@ -157,7 +157,7 @@ class BleSimulator {
       zoneMinutes: _zoneMinutes,
       currentStressScore: _currentStressScore,
       isConnected: true,
-      deviceName: 'UTE Barys Watch Pro',
+      deviceName: 'KALKAN СААТ-1',
       timestamp: DateTime.now(),
     );
   }

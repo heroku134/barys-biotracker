@@ -30,6 +30,9 @@ class UserProfile {
   final bool isAuthenticated;
   final HormonalCyclePhase? cyclePhase;
   final int? cycleDay;
+  final int cycleLengthDays;
+  final int periodDurationDays;
+  final DateTime? lastPeriodStartDate;
 
   const UserProfile({
     this.id = 'circa_user_01',
@@ -47,6 +50,9 @@ class UserProfile {
     this.isAuthenticated = true,
     this.cyclePhase,
     this.cycleDay,
+    this.cycleLengthDays = 28,
+    this.periodDurationDays = 5,
+    this.lastPeriodStartDate,
   });
 
   int get age => DateTime.now().year - birthYear;
@@ -69,6 +75,9 @@ class UserProfile {
     bool? isAuthenticated,
     HormonalCyclePhase? cyclePhase,
     int? cycleDay,
+    int? cycleLengthDays,
+    int? periodDurationDays,
+    DateTime? lastPeriodStartDate,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -86,6 +95,9 @@ class UserProfile {
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       cyclePhase: cyclePhase ?? this.cyclePhase,
       cycleDay: cycleDay ?? this.cycleDay,
+      cycleLengthDays: cycleLengthDays ?? this.cycleLengthDays,
+      periodDurationDays: periodDurationDays ?? this.periodDurationDays,
+      lastPeriodStartDate: lastPeriodStartDate ?? this.lastPeriodStartDate,
     );
   }
 
@@ -105,6 +117,9 @@ class UserProfile {
     'isAuthenticated': isAuthenticated,
     'cyclePhase': cyclePhase?.name,
     'cycleDay': cycleDay,
+    'cycleLengthDays': cycleLengthDays,
+    'periodDurationDays': periodDurationDays,
+    'lastPeriodStartDate': lastPeriodStartDate?.toIso8601String(),
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -132,6 +147,11 @@ class UserProfile {
             )
           : null,
       cycleDay: json['cycleDay'] as int?,
+      cycleLengthDays: json['cycleLengthDays'] as int? ?? 28,
+      periodDurationDays: json['periodDurationDays'] as int? ?? 5,
+      lastPeriodStartDate: json['lastPeriodStartDate'] != null
+          ? DateTime.tryParse(json['lastPeriodStartDate'] as String)
+          : null,
     );
   }
 

@@ -22,6 +22,9 @@ import '../widgets/circa_strain_milestone_badge.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/live_pulse_wave.dart';
 import 'private_league_screen.dart';
+import '../../domain/models/user_profile.dart';
+import '../widgets/circa_cycle_card.dart';
+import 'menstrual_cycle_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -43,12 +46,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late BleTelemetry _telemetry;
   final PersonalBaseline _baseline = const PersonalBaseline();
   String _userName = 'Искандер';
+  UserProfile _userProfile = const UserProfile();
 
   @override
   void initState() {
     super.initState();
     _telemetry = widget.bleBridge.currentTelemetry;
-    _loadProfileName();
+    _loadProfile();
+    UserProfileRepository.profileNotifier.addListener(_onProfileChanged);
 
     widget.bleBridge.telemetryStream.listen((data) {
       if (mounted) {
@@ -59,11 +64,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  Future<void> _loadProfileName() async {
+  void _onProfileChanged() {
+    if (mounted) {
+      setState(() {
+        _userProfile = UserProfileRepository.profileNotifier.value;
+        if (_userProfile.name.isNotEmpty) _userName = _userProfile.name;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    UserProfileRepository.profileNotifier.removeListener(_onProfileChanged);
+    super.dispose();
+  }
+
+  Future<void> _loadProfile() async {
     try {
       final p = await UserProfileRepository.loadProfile();
-      if (mounted && p.name.isNotEmpty) {
-        setState(() => _userName = p.name);
+      if (mounted) {
+        setState(() {
+          _userProfile = p;
+          if (p.name.isNotEmpty) _userName = p.name;
+        });
       }
     } catch (_) {}
   }
@@ -165,6 +188,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: Image.asset(
                                 avatarProfile.state.assetPath,
                                 fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
                               ),
                             ),
                           ),
@@ -176,7 +200,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'CIRCA ONE',
+                                'КАЛКАН СПОРТ',
                                 style: TextStyle(
                                   color: AppColors.muted,
                                   fontSize: 9,
@@ -316,19 +340,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
 
                             // 3 ключевые метрики входа
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildMetricChip(AppStrings.tr('today_hrv', language), '${_telemetry.hrv.round()} мс'),
-                                const SizedBox(width: 8),
-                                Container(width: 3, height: 3, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.faint)),
-                                const SizedBox(width: 8),
-                                _buildMetricChip(AppStrings.tr('today_rhr', language), '${_telemetry.restingHeartRate} bpm'),
-                                const SizedBox(width: 8),
-                                Container(width: 3, height: 3, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.faint)),
-                                const SizedBox(width: 8),
-                                _buildMetricChip(AppStrings.tr('today_skin_temp', language), '${_telemetry.skinTempDeviation >= 0 ? '+' : ''}${_telemetry.skinTempDeviation.toStringAsFixed(1)} °C'),
-                              ],
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildMetricChip(AppStrings.tr('today_hrv', language), '${_telemetry.hrv.round()} мс'),
+                                  const SizedBox(width: 8),
+                                  Container(width: 3, height: 3, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.faint)),
+                                  const SizedBox(width: 8),
+                                  _buildMetricChip(AppStrings.tr('today_rhr', language), '${_telemetry.restingHeartRate} bpm'),
+                                  const SizedBox(width: 8),
+                                  Container(width: 3, height: 3, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.faint)),
+                                  const SizedBox(width: 8),
+                                  _buildMetricChip(AppStrings.tr('today_skin_temp', language), '${_telemetry.skinTempDeviation >= 0 ? '+' : ''}${_telemetry.skinTempDeviation.toStringAsFixed(1)} °C'),
+                                ],
+                              ),
                             ),
                         const SizedBox(height: 16),
 
@@ -422,6 +449,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+
+            // 3.1 Карточка мониторинга женского цикла (СААТ-1 термосенсор) - только для девушек
+            if (_userProfile.gender == Gender.female)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  child: CircaCycleCard(
+                    telemetry: _telemetry,
+                    profile: _userProfile,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => MenstrualCycleScreen(bleBridge: widget.bleBridge),
+                        ),
+                      ).then((_) => _loadProfile());
+                    },
+                  ),
+                ),
+              ),
 
             // 4. Главный показатель 2: НАГРУЗКА (Daily Strain Card)
             SliverToBoxAdapter(
@@ -674,21 +720,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.shield_outlined, color: AppColors.amber, size: 16),
-                                const SizedBox(width: 8),
-                                Text(
-                                  AppStrings.tr('today_league_card_title', language),
-                                  style: const TextStyle(
-                                    color: AppColors.muted,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 2.0,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.shield_outlined, color: AppColors.amber, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      AppStrings.tr('today_league_card_title', language),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 2.0,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(

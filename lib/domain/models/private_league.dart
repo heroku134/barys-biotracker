@@ -63,9 +63,9 @@ class FriendMember {
   factory FriendMember.fromMap(Map<String, dynamic> map) {
     return FriendMember(
       id: map['id'] as String? ?? '',
-      name: map['name'] as String? ?? 'Атлет CIRCA',
-      city: map['city'] as String? ?? 'Алматы',
-      avatarInitials: map['avatarInitials'] as String? ?? 'CR',
+      name: map['name'] as String? ?? 'Атлет KALKAN',
+      city: map['city'] as String? ?? 'Бишкек',
+      avatarInitials: map['avatarInitials'] as String? ?? 'KS',
       rankTitle: map['rankTitle'] as String? ?? 'БАТЫР',
       level: map['level'] as int? ?? 1,
       recoveryScore: map['recoveryScore'] as int? ?? 75,
@@ -85,7 +85,7 @@ class FriendMember {
   }
 }
 
-/// Модель приватной лиги CIRCA на 3–5 друзей (Dunbar Close Circle)
+/// Модель приватной лиги KALKAN на 3–5 друзей (Dunbar Close Circle)
 class PrivateLeague {
   final String id;
   final String title;
@@ -125,7 +125,7 @@ class PrivateLeague {
     return PrivateLeague(
       id: map['id'] as String? ?? 'league_inner_circle',
       title: map['title'] as String? ?? 'КРУГ БАТЫРОВ · ALMATY ATELIER',
-      inviteCode: map['inviteCode'] as String? ?? 'CIRCA-BATYR-04',
+      inviteCode: map['inviteCode'] as String? ?? 'KALKAN-BATYR-04',
       maxMembers: map['maxMembers'] as int? ?? 5,
       members: list.map((item) => FriendMember.fromMap(item as Map<String, dynamic>)).toList(),
     );

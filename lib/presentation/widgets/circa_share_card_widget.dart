@@ -105,7 +105,7 @@ class CircaShareCardWidget extends StatelessWidget {
                       child: Row(
                         children: [
                           const Text(
-                            'CIRCA ONE',
+                            'KALKAN SPORT',
                             style: TextStyle(
                               color: AppColors.fg,
                               fontSize: 12,
@@ -236,7 +236,7 @@ class CircaShareCardWidget extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'CIRCA ONE · $cityName · 2026',
+                'KALKAN СААТ-1 · $cityName · 2026',
                 style: TextStyle(
                   color: isRareGold ? AppColors.amber : AppColors.muted,
                   fontSize: 8,

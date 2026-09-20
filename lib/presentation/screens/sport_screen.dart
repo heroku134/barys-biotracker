@@ -221,7 +221,7 @@ class _SportScreenState extends State<SportScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'CIRCA SPORT',
+                  'KALKAN SPORT',
                   style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 9,

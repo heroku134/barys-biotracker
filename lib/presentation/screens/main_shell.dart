@@ -13,6 +13,7 @@ import 'analytics_screen.dart';
 import 'bio_avatar_screen.dart';
 import 'dashboard_screen.dart';
 import 'device_settings_screen.dart';
+import 'menstrual_cycle_screen.dart';
 import 'profile_screen.dart';
 import 'sport_screen.dart';
 
@@ -175,6 +176,7 @@ class _MainShellState extends State<MainShell> {
                 child: Image.asset(
                   assetPath,
                   fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
                   errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.pets,
                     color: AppColors.amber,

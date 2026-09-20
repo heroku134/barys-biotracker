@@ -13,26 +13,32 @@ permissions:
 jobs:
   build-ipa:
     name: Build Unsigned IPA on macOS (Xcode 16)
-    runs-on: macos-15
+    runs-on: macos-14
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16 (Swift 6)
+      - name: Select Xcode 16
         run: |
-          if [ -d "/Applications/Xcode_16.2.app" ]; then
+          if [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app/Contents/Developer
+            echo "DEVELOPER_DIR=/Applications/Xcode_16.0.app/Contents/Developer" >> $GITHUB_ENV
+          elif [ -d "/Applications/Xcode_16.1.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.1.app/Contents/Developer
+            echo "DEVELOPER_DIR=/Applications/Xcode_16.1.app/Contents/Developer" >> $GITHUB_ENV
+          elif [ -d "/Applications/Xcode_16.2.app" ]; then
             sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
             echo "DEVELOPER_DIR=/Applications/Xcode_16.2.app/Contents/Developer" >> $GITHUB_ENV
-          elif [ -d "/Applications/Xcode_16.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
-            echo "DEVELOPER_DIR=/Applications/Xcode_16.app/Contents/Developer" >> $GITHUB_ENV
+            sudo xcodebuild -downloadPlatform iOS || true
+          elif [ -d "/Applications/Xcode_15.4.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+            echo "DEVELOPER_DIR=/Applications/Xcode_15.4.app/Contents/Developer" >> $GITHUB_ENV
           else
             sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
             echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> $GITHUB_ENV
           fi
           xcodebuild -runFirstLaunch || true
           xcodebuild -version
-          xcodebuild -downloadPlatform iOS || true
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -71,13 +77,16 @@ jobs:
           mkdir -p Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
           zip -r barys_biotracker.ipa Payload
-          ls -lh barys_biotracker.ipa
+          cp barys_biotracker.ipa KALKAN_SPORT.ipa
+          ls -lh barys_biotracker.ipa KALKAN_SPORT.ipa
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: barys_biotracker_ipa
-          path: barys_biotracker.ipa
+          path: |
+            barys_biotracker.ipa
+            KALKAN_SPORT.ipa
           retention-days: 14
 
       - name: Publish Release with IPA
@@ -86,11 +95,15 @@ jobs:
         continue-on-error: true
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: "CIRCA BioTracker v1.0.${{ github.run_number }} (iOS IPA)"
+          name: "KALKAN SPORT v1.0.${{ github.run_number }} (СААТ-1 iOS IPA)"
           body: |
-            ### CIRCA ONE · Барыс-Батыр Биотрекер
+            ### KALKAN SPORT · ЧАСЫ СААТ-1
             Готовый файл `.ipa` для установки через **AltStore** или **Sideloadly** на iPhone.
-            - Перетащите `barys_biotracker.ipa` в Sideloadly или откройте в AltStore на телефоне.
-          files: barys_biotracker.ipa
+            - Новая палитра: Обсидиан, Янтарь, Шалфей.
+            - Часы «СААТ-1» и отслеживание цикла для девушек.
+            - Перетащите `KALKAN_SPORT.ipa` в Sideloadly или откройте в AltStore на телефоне.
+          files: |
+            barys_biotracker.ipa
+            KALKAN_SPORT.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

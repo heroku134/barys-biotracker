@@ -61,7 +61,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'CIRCA BIOMETRICS',
+                  'KALKAN BIOMETRICS',
                   style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 9,
@@ -277,7 +277,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'CIRCA One не ставит медицинских диагнозов. Данные температуры кожи, SpO2 и ВСР служат индикатором трендов восстановления ЦНС и тренировочной адаптации.',
+                      'KALKAN СААТ-1 не ставит медицинских диагнозов. Данные температуры кожи, SpO2 и ВСР служат индикатором трендов восстановления ЦНС и тренировочной адаптации.',
                       style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.35),
                     ),
                   ),

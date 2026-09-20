@@ -166,7 +166,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Verify evening journal sheet opened with context tags
-      expect(find.text('ВЕЧЕРНИЙ БИО-ЖУРНАЛ CIRCA'), findsOneWidget);
+      expect(find.text('ВЕЧЕРНИЙ БИО-ЖУРНАЛ KALKAN'), findsOneWidget);
       expect(find.text('💼 Рабочий спринт'), findsOneWidget);
 
       // Tap a tag to complete quest

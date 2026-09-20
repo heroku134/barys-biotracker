@@ -69,7 +69,7 @@ class BleTelemetry {
     this.calories = 420,
     this.batteryLevel = 84,
     this.isConnected = true,
-    this.deviceName = 'UTE Barys Watch Pro',
+    this.deviceName = 'KALKAN СААТ-1',
     required this.timestamp,
 
     // Ночные маркеры

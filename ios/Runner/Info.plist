@@ -5,13 +5,13 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Приложение использует Bluetooth для синхронизации с умным браслетом и мониторинга здоровья.</string>
+	<string>Приложение использует Bluetooth для синхронизации с часами СААТ-1 и мониторинга биометрии.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>Приложение подключается к браслету по BLE для получения пульса и шагов.</string>
+	<string>Приложение подключается к часам СААТ-1 по BLE для получения пульса, температуры кожи и шагов.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Barys Biotracker</string>
+	<string>KALKAN SPORT</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -19,7 +19,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>barys_biotracker</string>
+	<string>KALKAN SPORT</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

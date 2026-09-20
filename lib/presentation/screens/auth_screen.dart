@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
+import '../../domain/models/user_profile.dart';
 import '../widgets/circa_film_grain.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
@@ -25,9 +27,22 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController(text: 'barys@circa.health');
   final _passwordController = TextEditingController(text: 'circabiotracker2026');
   final _nameController = TextEditingController(text: 'Алихан');
+  Gender _selectedGender = Gender.male;
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    UserProfileRepository.loadProfile().then((p) {
+      if (mounted) {
+        setState(() {
+          _selectedGender = p.gender;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -112,6 +127,11 @@ class _AuthScreenState extends State<AuthScreen> {
     final updatedProfile = currentProfile.copyWith(
       email: email,
       name: firebaseDisplayName ?? (_isSignUp ? name : currentProfile.name),
+      gender: _selectedGender,
+      cycleDay: _selectedGender == Gender.female ? (currentProfile.cycleDay ?? 14) : null,
+      lastPeriodStartDate: _selectedGender == Gender.female
+          ? (currentProfile.lastPeriodStartDate ?? DateTime.now().subtract(const Duration(days: 14)))
+          : null,
       isAuthenticated: true,
     );
     await UserProfileRepository.saveProfile(updatedProfile);
@@ -251,6 +271,10 @@ class _AuthScreenState extends State<AuthScreen> {
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
+                          const SizedBox(height: 16),
+
+                          // Селектор пола атлета (Мужской / Женский)
+                          _buildGenderSelector(language),
 
                           // Ошибка
                           if (_errorMessage != null) ...[
@@ -377,6 +401,90 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildGenderSelector(AppLanguage language) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppStrings.tr('gender_label', language).toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildGenderOption(
+                gender: Gender.male,
+                title: AppStrings.tr('gender_male', language),
+                icon: Icons.male,
+                isSelected: _selectedGender == Gender.male,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildGenderOption(
+                gender: Gender.female,
+                title: AppStrings.tr('gender_female', language),
+                icon: Icons.female,
+                isSelected: _selectedGender == Gender.female,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderOption({
+    required Gender gender,
+    required String title,
+    required IconData icon,
+    required bool isSelected,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        CircaHaptics.selectionClick();
+        setState(() => _selectedGender = gender);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.raised : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.amber : AppColors.line,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? AppColors.amber : AppColors.muted,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? AppColors.fg : AppColors.muted,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

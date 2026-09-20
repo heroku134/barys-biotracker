@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2150 780" width="215mm" height="78mm">
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap');
+      .font-sans { font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+      .font-mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090B10" />
+      <stop offset="50%" stop-color="#10141E" />
+      <stop offset="100%" stop-color="#07090D" />
+    </linearGradient>
+
+    <linearGradient id="neon-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00FFA3" />
+      <stop offset="100%" stop-color="#00E676" />
+    </linearGradient>
+
+    <linearGradient id="card-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#161B26" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#0D1118" stop-opacity="0.98" />
+    </linearGradient>
+
+    <linearGradient id="metal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="35%" stop-color="#F1F5F9" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+
+    <!-- 100% PURE MATHEMATICAL VECTOR LOGO (ZERO RASTER BITMAPS, INFINITELY SHARP) -->
+    <g id="tengri-logo-symbol">
+      <path d="M 39,165 C 77,72 209,90 295,143 C 189,104 118,120 39,165 Z" fill="#00FFA3" />
+      <path d="M 52,195 C 130,103 247,103 325,195" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <g id="tengri-logo">
+      <g transform="translate(-486, -148)">
+        <!-- Pure Vector Emblem Arcs -->
+        <use href="#tengri-logo-symbol" />
+        <!-- Pure Vector Text ТЕНГРИ (Ultra bold, crisp geometry) -->
+        <text x="385" y="142" class="font-sans" font-weight="900" font-size="94" fill="#FFFFFF" letter-spacing="10">КАЛКАН</text>
+        <!-- Pure Vector Text СПОРТ (Refined geometric letter spacing matching original brand identity) -->
+        <text y="218" class="font-sans" font-weight="700" font-size="38" fill="#8E9AA8">
+          <tspan x="403">С</tspan>
+          <tspan x="481">П</tspan>
+          <tspan x="558">О</tspan>
+          <tspan x="641">Р</tspan>
+          <tspan x="716">Т</tspan>
+        </text>
+      </g>
+    </g>
+  </defs>
+
+  <!-- Base Background -->
+  <rect width="2150" height="780" fill="url(#bg-grad)" />
+  <rect width="2150" height="780" fill="url(#tech-dots)" />
+
+  <!-- 5mm Edge Seal Indicators around bottom -->
+
+  <!-- Center Brand Logo -->
+  <g transform="translate(1075, 330) scale(0.85)">
+    <use href="#tengri-logo" />
+  </g>
+</svg>

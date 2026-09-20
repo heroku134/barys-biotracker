@@ -147,7 +147,7 @@ class CircaCalibrationCard extends StatelessWidget {
 
             // Описание ценности (commitment device)
             const Text(
-              'CIRCA изучает индивидуальный вариабельный коридор ВСР и ночного пульса. Базовая точность персональных рекомендаций зафиксируется через 11 дней.',
+              'KALKAN изучает индивидуальный вариабельный коридор ВСР и ночного пульса. Базовая точность персональных рекомендаций зафиксируется через 11 дней.',
               style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 11.5,
@@ -216,7 +216,7 @@ class CircaCalibrationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Как CIRCA формирует вашу биометрическую норму',
+                  'Как KALKAN формирует вашу биометрическую норму',
                   style: TextStyle(
                     color: AppColors.fg,
                     fontSize: 18,
@@ -226,7 +226,7 @@ class CircaCalibrationCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Text(
                   'Каждый организм уникален. Универсальные таблицы пульса и ВСР не дают точной картины для профессиональных атлетов и биохакеров.\n\n'
-                  'В течение первых 14 дней алгоритмы CIRCA вычисляют вашу персональную медиану вегетативного тонуса, базовую температуру кожи и суточные колебания кортизола/мелатонина.',
+                  'В течение первых 14 дней алгоритмы KALKAN вычисляют вашу персональную медиану вегетативного тонуса, базовую температуру кожи и суточные колебания кортизола/мелатонина.',
                   style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 13,

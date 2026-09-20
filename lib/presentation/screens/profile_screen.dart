@@ -15,6 +15,8 @@ import '../widgets/glass_card.dart';
 import 'auth_screen.dart';
 import 'device_settings_screen.dart';
 import 'private_league_screen.dart';
+import 'menstrual_cycle_screen.dart';
+import 'sport_screen.dart';
 import '../../core/circa_haptics.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -321,6 +323,138 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 10),
 
+            // Селектор пола (Мужской / Женский)
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      CircaHaptics.selectionClick();
+                      final updated = _profile.copyWith(gender: Gender.male);
+                      setState(() => _profile = updated);
+                      UserProfileRepository.saveProfile(updated);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _profile.gender == Gender.male ? AppColors.raised : AppColors.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _profile.gender == Gender.male ? AppColors.amber : AppColors.line,
+                          width: _profile.gender == Gender.male ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.male, size: 16, color: _profile.gender == Gender.male ? AppColors.amber : AppColors.muted),
+                          const SizedBox(width: 6),
+                          Text(
+                            AppStrings.tr('gender_male', AppLocaleNotifier.current),
+                            style: TextStyle(
+                              color: _profile.gender == Gender.male ? AppColors.fg : AppColors.muted,
+                              fontSize: 12,
+                              fontWeight: _profile.gender == Gender.male ? FontWeight.w700 : FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      CircaHaptics.selectionClick();
+                      final updated = _profile.copyWith(
+                        gender: Gender.female,
+                        cycleDay: _profile.cycleDay ?? 14,
+                        lastPeriodStartDate: _profile.lastPeriodStartDate ?? DateTime.now().subtract(const Duration(days: 14)),
+                      );
+                      setState(() => _profile = updated);
+                      UserProfileRepository.saveProfile(updated);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _profile.gender == Gender.female ? AppColors.raised : AppColors.surface,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _profile.gender == Gender.female ? AppColors.amber : AppColors.line,
+                          width: _profile.gender == Gender.female ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.female, size: 16, color: _profile.gender == Gender.female ? AppColors.amber : AppColors.muted),
+                          const SizedBox(width: 6),
+                          Text(
+                            AppStrings.tr('gender_female', AppLocaleNotifier.current),
+                            style: TextStyle(
+                              color: _profile.gender == Gender.female ? AppColors.fg : AppColors.muted,
+                              fontSize: 12,
+                              fontWeight: _profile.gender == Gender.female ? FontWeight.w700 : FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Если женский пол - карточка быстрого доступа к циклу и термометрии
+            if (_profile.gender == Gender.female) ...[
+              GlassCard(
+                padding: const EdgeInsets.all(14),
+                child: InkWell(
+                  onTap: () {
+                    CircaHaptics.ringZoneTick();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => MenstrualCycleScreen(bleBridge: widget.bleBridge),
+                      ),
+                    ).then((_) => _loadProfile());
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.amber.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.device_thermostat, color: AppColors.amber, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.tr('cycle_card_header', AppLocaleNotifier.current),
+                              style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'День ${_profile.cycleDay ?? 14} из ${_profile.cycleLengthDays} · СААТ-1 термосенсор',
+                              style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, color: AppColors.amber, size: 14),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
             // Поля биометрии
             CircaTextField(
               label: 'Имя профиля',
@@ -539,7 +673,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                   child: Text(
-                    'CIRCA One v1.4.2 · Сборка 2026.09',
+                    'KALKAN SPORT · СААТ-1 v1.4.2 · Сборка 2026.09',
                     style: TextStyle(
                       color: AppColors.faint,
                       fontSize: 11,
@@ -707,7 +841,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'ИНЖЕНЕРНОЕ МЕНЮ (CIRCA DEV)',
+                  'ИНЖЕНЕРНОЕ МЕНЮ (KALKAN DEV)',
                   style: TextStyle(
                     color: AppColors.amber,
                     fontSize: 10,
@@ -851,13 +985,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return GestureDetector(
       onTap: () {
-        HapticFeedback.selectionClick();
+        CircaHaptics.selectionClick();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: AppColors.stage,
+            backgroundColor: AppColors.surface,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               side: const BorderSide(color: AppColors.amber, width: 1),
             ),
             content: Row(
@@ -866,7 +1000,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Паспорт № 784-092/26 верифицирован · CIRCA Almaty',
+                    'Паспорт № 784-092/26 верифицирован · KALKAN',
                     style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -908,41 +1042,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.amber,
-                          shape: BoxShape.circle,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.amber,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'РЕСПУБЛИКА КАЗАХСТАН · РЕГИСТР БИОМЕТРИИ',
-                        style: TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
+                        const SizedBox(width: 8),
+                        const Text(
+                          'КЫРГЫЗ РЕСПУБЛИКАСЫ · БИОМЕТРИЯ РЕГИСТРИ',
+                          style: TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const Text(
-                    'CIRCA ID-KZ · № 784-092/26',
-                    style: TextStyle(
-                      color: AppColors.amber,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.0,
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    const Text(
+                      'KALKAN ID-KG · № 784-092/26',
+                      style: TextStyle(
+                        color: AppColors.amber,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 

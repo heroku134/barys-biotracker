@@ -177,92 +177,70 @@ class _CircaPulsingLogoPainter extends CustomPainter {
       ..strokeWidth = 1.0;
     canvas.drawCircle(center, innerRadius, innerRingPaint);
 
-    // 7. Центральная эмблема: стилизованный герб Барыс / Монограмма CIRCA
-    _drawCenterBarysEmblem(canvas, center, innerRadius * 0.75, breathPulse);
+    // 7. Центральная эмблема: математически точный векторный символ КАЛКАН
+    _drawCenterKalkanEmblem(canvas, center, innerRadius * 0.75, breathPulse);
   }
 
-  void _drawCenterBarysEmblem(Canvas canvas, Offset center, double radius, double pulse) {
-    // Центральный золотой треугольный щит с сакскими линиями
-    final path = Path();
+  void _drawCenterKalkanEmblem(Canvas canvas, Offset center, double radius, double pulse) {
+    // Масштабирование исходных координат вектора KALKAN.svg
+    // Исходный центр ~ (182, 145), размах ~ 286x125
+    final scale = (radius * 1.55) / 286;
+    final ox = center.dx - 182 * scale;
+    final oy = center.dy - 145 * scale;
 
-    // Верхняя корона ушей снежного барса
-    final topY = center.dy - radius * 0.75;
-    final bottomY = center.dy + radius * 0.75;
-    final leftX = center.dx - radius * 0.75;
-    final rightX = center.dx + radius * 0.75;
+    // 1. Верхний парящий серп (Golden Amber & Sage)
+    final topArc = Path();
+    topArc.moveTo(ox + 39 * scale, oy + 165 * scale);
+    topArc.cubicTo(
+      ox + 77 * scale, oy + 72 * scale,
+      ox + 209 * scale, oy + 90 * scale,
+      ox + 295 * scale, oy + 143 * scale,
+    );
+    topArc.cubicTo(
+      ox + 189 * scale, oy + 104 * scale,
+      ox + 118 * scale, oy + 120 * scale,
+      ox + 39 * scale, oy + 165 * scale,
+    );
+    topArc.close();
 
-    // Контур морды барса (сакский стиль / скифское золото)
-    path.moveTo(center.dx, topY - radius * 0.1);
-    path.lineTo(rightX, topY + radius * 0.4);
-    path.lineTo(center.dx + radius * 0.35, bottomY);
-    path.lineTo(center.dx, bottomY - radius * 0.15);
-    path.lineTo(center.dx - radius * 0.35, bottomY);
-    path.lineTo(leftX, topY + radius * 0.4);
-    path.close();
-
-    final emblemFill = Paint()
+    final topPaint = Paint()
       ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
         colors: [
-          primaryColor.withValues(alpha: 0.25),
-          AppColors.stage,
+          primaryColor,
+          secondaryColor,
         ],
       ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.fill;
-    canvas.drawPath(path, emblemFill);
+    canvas.drawPath(topArc, topPaint);
 
-    final emblemBorder = Paint()
-      ..color = primaryColor.withValues(alpha: 0.85 + pulse * 0.15)
+    // 2. Нижняя парящая дуга (Titanium / Crisp White)
+    final bottomArc = Path();
+    bottomArc.moveTo(ox + 52 * scale, oy + 195 * scale);
+    bottomArc.cubicTo(
+      ox + 130 * scale, oy + 103 * scale,
+      ox + 247 * scale, oy + 103 * scale,
+      ox + 325 * scale, oy + 195 * scale,
+    );
+
+    final bottomPaint = Paint()
+      ..color = AppColors.fg.withValues(alpha: 0.95)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
+      ..strokeWidth = 13 * scale
+      ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-    canvas.drawPath(path, emblemBorder);
+    canvas.drawPath(bottomArc, bottomPaint);
 
-    // Внутренние сакские геометрические насечки (усы и взгляд барса)
-    final eyePaint = Paint()
-      ..color = secondaryColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-
-    // Глаза барса
-    final eyeY = center.dy - radius * 0.1;
-    canvas.drawLine(
-      Offset(center.dx - radius * 0.4, eyeY - radius * 0.08),
-      Offset(center.dx - radius * 0.15, eyeY),
-      eyePaint,
-    );
-    canvas.drawLine(
-      Offset(center.dx + radius * 0.4, eyeY - radius * 0.08),
-      Offset(center.dx + radius * 0.15, eyeY),
-      eyePaint,
-    );
-
-    // Центральная точка силы (алмазный кристалл в центре лба)
-    final diamondPath = Path();
-    final dCenter = Offset(center.dx, center.dy - radius * 0.35);
-    final dSize = radius * 0.15;
-    diamondPath.moveTo(dCenter.dx, dCenter.dy - dSize);
-    diamondPath.lineTo(dCenter.dx + dSize * 0.8, dCenter.dy);
-    diamondPath.lineTo(dCenter.dx, dCenter.dy + dSize);
-    diamondPath.lineTo(dCenter.dx - dSize * 0.8, dCenter.dy);
-    diamondPath.close();
-
-    final diamondPaint = Paint()
-      ..color = primaryColor
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(diamondPath, diamondPaint);
-
-    // Нижняя надпись монограммы CIRCA
+    // 3. Нижняя гравировка «КАЛКАН · СААТ-1»
     final textPainter = TextPainter(
       text: const TextSpan(
-        text: 'CIRCA',
+        text: 'КАЛКАН · СААТ-1',
         style: TextStyle(
-          color: AppColors.fg,
-          fontSize: 8.5,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 2.8,
+          color: AppColors.muted,
+          fontSize: 7.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 2.0,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -270,7 +248,7 @@ class _CircaPulsingLogoPainter extends CustomPainter {
 
     textPainter.paint(
       canvas,
-      Offset(center.dx - textPainter.width / 2, center.dy + radius * 0.32),
+      Offset(center.dx - textPainter.width / 2, center.dy + radius * 0.45),
     );
   }
 
