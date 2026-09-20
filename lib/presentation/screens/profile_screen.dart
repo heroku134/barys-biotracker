@@ -262,7 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
             // Биометрический паспорт CIRCA
-            _buildBiometricPassportArtifact(),
+            _buildBiometricPassportCard(),
             const SizedBox(height: 20),
 
             // Карточка подключенного браслета с переходом в DeviceSettings
@@ -312,295 +312,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 20),
 
-            const Text(
-              'ФИЗИОЛОГИЧЕСКИЕ ПАРАМЕТРЫ',
-              style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.0,
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Селектор пола (Мужской / Женский)
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      CircaHaptics.selectionClick();
-                      final updated = _profile.copyWith(gender: Gender.male);
-                      setState(() => _profile = updated);
-                      UserProfileRepository.saveProfile(updated);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _profile.gender == Gender.male ? AppColors.raised : AppColors.surface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: _profile.gender == Gender.male ? AppColors.amber : AppColors.line,
-                          width: _profile.gender == Gender.male ? 1.5 : 1.0,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.male, size: 16, color: _profile.gender == Gender.male ? AppColors.amber : AppColors.muted),
-                          const SizedBox(width: 6),
-                          Text(
-                            AppStrings.tr('gender_male', AppLocaleNotifier.current),
-                            style: TextStyle(
-                              color: _profile.gender == Gender.male ? AppColors.fg : AppColors.muted,
-                              fontSize: 12,
-                              fontWeight: _profile.gender == Gender.male ? FontWeight.w700 : FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      CircaHaptics.selectionClick();
-                      final updated = _profile.copyWith(
-                        gender: Gender.female,
-                        cycleDay: _profile.cycleDay ?? 14,
-                        lastPeriodStartDate: _profile.lastPeriodStartDate ?? DateTime.now().subtract(const Duration(days: 14)),
-                      );
-                      setState(() => _profile = updated);
-                      UserProfileRepository.saveProfile(updated);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _profile.gender == Gender.female ? AppColors.raised : AppColors.surface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: _profile.gender == Gender.female ? AppColors.amber : AppColors.line,
-                          width: _profile.gender == Gender.female ? 1.5 : 1.0,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.female, size: 16, color: _profile.gender == Gender.female ? AppColors.amber : AppColors.muted),
-                          const SizedBox(width: 6),
-                          Text(
-                            AppStrings.tr('gender_female', AppLocaleNotifier.current),
-                            style: TextStyle(
-                              color: _profile.gender == Gender.female ? AppColors.fg : AppColors.muted,
-                              fontSize: 12,
-                              fontWeight: _profile.gender == Gender.female ? FontWeight.w700 : FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Если женский пол - карточка быстрого доступа к циклу и термометрии
-            if (_profile.gender == Gender.female) ...[
-              GlassCard(
-                padding: const EdgeInsets.all(14),
-                child: InkWell(
-                  onTap: () {
-                    CircaHaptics.ringZoneTick();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => MenstrualCycleScreen(bleBridge: widget.bleBridge),
-                      ),
-                    ).then((_) => _loadProfile());
-                  },
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppColors.amber.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.device_thermostat, color: AppColors.amber, size: 18),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppStrings.tr('cycle_card_header', AppLocaleNotifier.current),
-                              style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'День ${_profile.cycleDay ?? 14} из ${_profile.cycleLengthDays} · СААТ-1 термосенсор',
-                              style: const TextStyle(color: AppColors.muted, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios, color: AppColors.amber, size: 14),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Поля биометрии
-            CircaTextField(
-              label: 'Имя профиля',
-              controller: _nameController,
-            ),
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                Expanded(
-                  child: CircaTextField(
-                    label: 'Рост (см)',
-                    controller: _heightController,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CircaTextField(
-                    label: 'Вес (кг)',
-                    controller: _weightController,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CircaTextField(
-                    label: 'Год рожд.',
-                    controller: _birthYearController,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // ИМТ (BMI) плашка
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.raised,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.line),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Индекс массы тела (BMI)',
-                    style: TextStyle(color: AppColors.muted, fontSize: 12),
-                  ),
-                  Text(
-                    '${_profile.bmi.toStringAsFixed(1)} (Норма)',
-                    style: const TextStyle(color: AppColors.sage, fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            const Text(
-              'СУТОЧНЫЕ ЦЕЛИ',
-              style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.0,
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                Expanded(
-                  child: CircaTextField(
-                    label: 'Цель шагов',
-                    controller: _stepGoalController,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: CircaTextField(
-                    label: 'Цель ккал',
-                    controller: _calorieGoalController,
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 16),
 
-            // Переключатель 24-часового формата времени
+            // Интерактивная плашка «Биометрия и суточные цели»
             GlassCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '24-часовой формат времени',
-                        style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: AppColors.amber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.tune, color: AppColors.amber, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'БИОМЕТРИЯ И ЦЕЛИ',
+                            style: TextStyle(
+                              color: AppColors.fg,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Синхронизируется с прошивкой браслета',
-                        style: TextStyle(color: AppColors.muted, fontSize: 11),
+                      TextButton.icon(
+                        onPressed: _showBiodataModal,
+                        icon: const Icon(Icons.edit_outlined, color: AppColors.amber, size: 14),
+                        label: const Text(
+                          'ИЗМЕНИТЬ',
+                          style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                       ),
                     ],
                   ),
-                  Switch(
-                    value: _is24h,
-                    activeThumbColor: AppColors.amber,
-                    onChanged: (val) => setState(() => _is24h = val),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      _buildMetricSummary('РОСТ', '${_profile.heightCm.toInt()} см'),
+                      const SizedBox(width: 8),
+                      _buildMetricSummary('ВЕС', '${_profile.weightKg.toStringAsFixed(1)} кг'),
+                      const SizedBox(width: 8),
+                      _buildMetricSummary('ИМТ', '${_profile.bmi.toStringAsFixed(1)} (Норма)', color: AppColors.sage),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _buildMetricSummary('ЦЕЛЬ ШАГОВ', '${_profile.stepGoal}'),
+                      const SizedBox(width: 8),
+                      _buildMetricSummary('ЦЕЛЬ ККАЛ', '${_profile.calorieGoal} ккал'),
+                      const SizedBox(width: 8),
+                      _buildMetricSummary(
+                        'ПОЛ',
+                        _profile.gender == Gender.female ? 'Женский' : 'Мужской',
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-
-            // Кнопка сохранения
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.amber,
-                  foregroundColor: AppColors.stage,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.stage),
-                      )
-                    : const Text(
-                        'СОХРАНИТЬ ПРОФИЛЬ',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 24),
 
             // Сообщество и Приватные лиги
             const Text(
@@ -969,7 +755,335 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildBiometricPassportArtifact() {
+  Widget _buildMetricSummary(String title, String value, {Color? color}) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.raised,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.muted,
+                fontSize: 8.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              value,
+              style: TextStyle(
+                color: color ?? AppColors.fg,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditNameDialog() {
+    final controller = TextEditingController(text: _profile.name);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Имя атлета',
+          style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        content: CircaTextField(
+          label: 'Ваше имя',
+          controller: controller,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                final updated = _profile.copyWith(name: newName);
+                setState(() => _profile = updated);
+                await UserProfileRepository.saveProfile(updated);
+                CircaHaptics.success();
+              }
+              if (ctx.mounted) Navigator.of(ctx).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.amber,
+              foregroundColor: AppColors.stage,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('СОХРАНИТЬ', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBiodataModal() {
+    CircaHaptics.selectionClick();
+    final hCtrl = TextEditingController(text: _profile.heightCm.toInt().toString());
+    final wCtrl = TextEditingController(text: _profile.weightKg.toString());
+    final bCtrl = TextEditingController(text: _profile.birthYear.toString());
+    final sCtrl = TextEditingController(text: _profile.stepGoal.toString());
+    final cCtrl = TextEditingController(text: _profile.calorieGoal.toString());
+    Gender tempGender = _profile.gender;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.line,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'БИОМЕТРИЯ И ЦЕЛИ',
+                        style: TextStyle(
+                          color: AppColors.fg,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        icon: const Icon(Icons.close, color: AppColors.muted, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Выбор пола
+                  const Text(
+                    'ПОЛ АТЛЕТА',
+                    style: TextStyle(color: AppColors.muted, fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            CircaHaptics.selectionClick();
+                            setModalState(() => tempGender = Gender.male);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: tempGender == Gender.male ? AppColors.raised : AppColors.stage,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: tempGender == Gender.male ? AppColors.amber : AppColors.line,
+                                width: tempGender == Gender.male ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.male, size: 16, color: tempGender == Gender.male ? AppColors.amber : AppColors.muted),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Мужской',
+                                  style: TextStyle(
+                                    color: tempGender == Gender.male ? AppColors.fg : AppColors.muted,
+                                    fontSize: 12,
+                                    fontWeight: tempGender == Gender.male ? FontWeight.w700 : FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            CircaHaptics.selectionClick();
+                            setModalState(() => tempGender = Gender.female);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: tempGender == Gender.female ? AppColors.raised : AppColors.stage,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: tempGender == Gender.female ? AppColors.amber : AppColors.line,
+                                width: tempGender == Gender.female ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.female, size: 16, color: tempGender == Gender.female ? AppColors.amber : AppColors.muted),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Женский',
+                                  style: TextStyle(
+                                    color: tempGender == Gender.female ? AppColors.fg : AppColors.muted,
+                                    fontSize: 12,
+                                    fontWeight: tempGender == Gender.female ? FontWeight.w700 : FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CircaTextField(
+                          label: 'Рост (см)',
+                          controller: hCtrl,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: CircaTextField(
+                          label: 'Вес (кг)',
+                          controller: wCtrl,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: CircaTextField(
+                          label: 'Год рожд.',
+                          controller: bCtrl,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CircaTextField(
+                          label: 'Цель шагов',
+                          controller: sCtrl,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: CircaTextField(
+                          label: 'Цель ккал',
+                          controller: cCtrl,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final h = double.tryParse(hCtrl.text) ?? _profile.heightCm;
+                        final w = double.tryParse(wCtrl.text) ?? _profile.weightKg;
+                        final b = int.tryParse(bCtrl.text) ?? _profile.birthYear;
+                        final s = int.tryParse(sCtrl.text) ?? _profile.stepGoal;
+                        final c = int.tryParse(cCtrl.text) ?? _profile.calorieGoal;
+
+                        final updated = _profile.copyWith(
+                          gender: tempGender,
+                          heightCm: h,
+                          weightKg: w,
+                          birthYear: b,
+                          stepGoal: s,
+                          calorieGoal: c,
+                          cycleDay: tempGender == Gender.female ? (_profile.cycleDay ?? 14) : null,
+                          lastPeriodStartDate: tempGender == Gender.female
+                              ? (_profile.lastPeriodStartDate ?? DateTime.now().subtract(const Duration(days: 14)))
+                              : null,
+                        );
+
+                        setState(() => _profile = updated);
+                        await UserProfileRepository.saveProfile(updated);
+                        CircaHaptics.success();
+                        if (ctx.mounted) Navigator.of(ctx).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.amber,
+                        foregroundColor: AppColors.stage,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'СОХРАНИТЬ БИОДАННЫЕ',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Карточка атлета в строгом спортивно-технологичном стиле KALKAN
+  Widget _buildBiometricPassportCard() {
     final birthYear = _profile.birthYear;
     final currentYear = DateTime.now().year;
     final chronoAge = (currentYear - birthYear).clamp(16, 99);
@@ -978,347 +1092,301 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? _profile.name.trim().split(' ').map((e) => e.isNotEmpty ? e[0].toUpperCase() : '').take(2).join()
         : 'АК';
 
-    final rawName = _profile.name.toUpperCase().replaceAll(RegExp(r'[^A-ZА-Я0-9]'), '<');
-    final mrzName = (rawName.isNotEmpty ? rawName : 'ATELIER<ALEXANDER').padRight(28, '<').substring(0, 28);
-    final mrzLine1 = 'P<KAZ<<$mrzName';
-    const mrzLine2 = '7840926M2604128KAZ<<<<<<<<<<<<<<04';
-
-    return GestureDetector(
-      onTap: () {
-        CircaHaptics.selectionClick();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.surface,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: AppColors.amber, width: 1),
-            ),
-            content: Row(
-              children: const [
-                Icon(Icons.verified_outlined, color: AppColors.amber, size: 18),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Паспорт № 784-092/26 верифицирован · KALKAN',
-                    style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.amber.withValues(alpha: 0.35),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.amber.withValues(alpha: 0.05),
-              blurRadius: 18,
-              offset: const Offset(0, 4),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.amber.withValues(alpha: 0.35),
+          width: 1.2,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Верхняя шапка паспорта
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.raised.withValues(alpha: 0.5),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                border: Border(
-                  bottom: BorderSide(
-                    color: AppColors.amber.withValues(alpha: 0.2),
-                    width: 0.8,
-                  ),
-                ),
-              ),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppColors.amber,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'КЫРГЫЗ РЕСПУБЛИКАСЫ · БИОМЕТРИЯ РЕГИСТРИ',
-                          style: TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 8.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'KALKAN ID-KG · № 784-092/26',
-                      style: TextStyle(
-                        color: AppColors.amber,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.amber.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Верхняя шапка удостоверения
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.raised.withValues(alpha: 0.5),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.amber.withValues(alpha: 0.2),
+                  width: 0.8,
                 ),
               ),
             ),
-
-            // Основная часть: фото-голограмма + данные атлета
-            Padding(
-              padding: const EdgeInsets.all(14),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Фото-голограмма
-                  Container(
-                    width: 72,
-                    height: 86,
-                    decoration: BoxDecoration(
-                      color: AppColors.stage,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.amber.withValues(alpha: 0.4),
-                        width: 1.0,
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: AppColors.amber,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Positioned(
-                          top: 4,
-                          left: 4,
-                          child: Icon(
-                            Icons.crop_free,
-                            color: AppColors.amber.withValues(alpha: 0.4),
-                            size: 10,
-                          ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'КЫРГЫЗ РЕСПУБЛИКАСЫ · БИОМЕТРИЯ РЕГИСТРИ',
+                        style: TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.2,
                         ),
-                        Positioned(
-                          bottom: 4,
-                          right: 4,
-                          child: Icon(
-                            Icons.crop_free,
-                            color: AppColors.amber.withValues(alpha: 0.4),
-                            size: 10,
-                          ),
-                        ),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              initials,
-                              style: const TextStyle(
-                                color: AppColors.amber,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.amber.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(3),
-                              ),
-                              child: const Text(
-                                'VERIFIED',
-                                style: TextStyle(
-                                  color: AppColors.amber,
-                                  fontSize: 7,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'KALKAN ID-KG · № 784-092/26',
+                    style: TextStyle(
+                      color: AppColors.amber,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                ],
+              ),
+            ),
+          ),
 
-                  // Метаданные паспорта
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Имя владельца
-                        Text(
-                          _profile.name.isNotEmpty ? _profile.name.toUpperCase() : 'АЛЕКСАНДР К.',
-                          style: const TextStyle(
-                            color: AppColors.fg,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+          // Основная часть: монограмма атлета + данные
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Инициалы / бейдж атлета
+                Container(
+                  width: 72,
+                  height: 86,
+                  decoration: BoxDecoration(
+                    color: AppColors.stage,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.amber.withValues(alpha: 0.4),
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Positioned(
+                        top: 4,
+                        left: 4,
+                        child: Icon(
+                          Icons.crop_free,
+                          color: AppColors.amber.withValues(alpha: 0.4),
+                          size: 10,
                         ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'АТЛЕТ ВЫСШЕЙ КАТЕГОРИИ · УРОВЕНЬ BATYR',
-                          style: TextStyle(
-                            color: AppColors.sage,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.0,
-                          ),
+                      ),
+                      Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: Icon(
+                          Icons.crop_free,
+                          color: AppColors.amber.withValues(alpha: 0.4),
+                          size: 10,
                         ),
-                        const SizedBox(height: 8),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            initials,
+                            style: const TextStyle(
+                              color: AppColors.amber,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.amber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                            child: const Text(
+                              'VERIFIED',
+                              style: TextStyle(
+                                color: AppColors.amber,
+                                fontSize: 7,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
 
-                        // Таблица характеристик
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'ХРОНО / БИО-ВОЗРАСТ',
-                                    style: TextStyle(color: AppColors.faint, fontSize: 8, fontWeight: FontWeight.w700),
-                                  ),
-                                  const SizedBox(height: 1),
-                                  RichText(
-                                    text: TextSpan(
-                                      text: '$chronoAge ',
-                                      style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
-                                      children: [
-                                        TextSpan(
-                                          text: '/ $bioAge лет',
-                                          style: const TextStyle(color: AppColors.sage, fontWeight: FontWeight.w800),
-                                        ),
-                                      ],
+                // Метаданные атлета
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Имя владельца + кнопка быстрого редактирования имени
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _profile.name.isNotEmpty ? _profile.name.toUpperCase() : 'АЛИХАН',
+                              style: const TextStyle(
+                                color: AppColors.fg,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: _showEditNameDialog,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.edit_outlined, color: AppColors.amber, size: 14),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'ИЗМЕНИТЬ',
+                                    style: TextStyle(
+                                      color: AppColors.amber,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text(
-                                    'АТЕЛЬЕ ВЫПУСКА',
-                                    style: TextStyle(color: AppColors.faint, fontSize: 8, fontWeight: FontWeight.w700),
-                                  ),
-                                  SizedBox(height: 1),
-                                  Text(
-                                    'ALMATY #048',
-                                    style: TextStyle(color: AppColors.fg, fontSize: 11, fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'АТЛЕТ ВЫСШЕЙ КАТЕГОРИИ · УРОВЕНЬ BATYR',
+                        style: TextStyle(
+                          color: AppColors.sage,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text(
-                                    'СТАТУС ДОКУМЕНТА',
-                                    style: TextStyle(color: AppColors.faint, fontSize: 8, fontWeight: FontWeight.w700),
-                                  ),
-                                  SizedBox(height: 1),
-                                  Text(
-                                    'ПОЖИЗНЕННЫЙ',
-                                    style: TextStyle(color: AppColors.fg, fontSize: 11, fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text(
-                                    'ДАТА ВЫДАЧИ',
-                                    style: TextStyle(color: AppColors.faint, fontSize: 8, fontWeight: FontWeight.w700),
-                                  ),
-                                  SizedBox(height: 1),
-                                  Text(
-                                    '12.04.2026',
-                                    style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                      ),
+                      const SizedBox(height: 10),
 
-            // Машиночитаемая зона (MRZ Zone)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.4),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
-                border: Border(
-                  top: BorderSide(
-                    color: AppColors.line.withValues(alpha: 0.6),
-                    width: 0.8,
+                      // Таблица характеристик
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'ХРОНО / БИО-ВОЗРАСТ',
+                                  style: TextStyle(color: AppColors.faint, fontSize: 8, fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 2),
+                                RichText(
+                                  text: TextSpan(
+                                    text: '$chronoAge ',
+                                    style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
+                                    children: [
+                                      TextSpan(
+                                        text: '/ $bioAge лет',
+                                        style: const TextStyle(color: AppColors.sage, fontWeight: FontWeight.w800),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'СТАТУС АТЛЕТА',
+                                  style: TextStyle(color: AppColors.faint, fontSize: 8, fontWeight: FontWeight.w700),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'ВЕРИФИЦИРОВАН (СААТ-1)',
+                                  style: TextStyle(color: AppColors.amber, fontSize: 10.5, fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    mrzLine1,
-                    style: TextStyle(
-                      color: AppColors.muted.withValues(alpha: 0.8),
-                      fontFamily: 'Courier',
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    mrzLine2,
-                    style: TextStyle(
-                      color: AppColors.muted.withValues(alpha: 0.8),
-                      fontFamily: 'Courier',
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ],
+              ],
+            ),
+          ),
+
+          // Нижняя статусная строка карточки
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.line.withValues(alpha: 0.6),
+                  width: 0.8,
+                ),
               ),
             ),
-          ],
-        ),
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: AppColors.sage,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'СИНХРОНИЗАЦИЯ БИОМЕТРИИ АКТИВНА · СААТ-1 СЕНСОР',
+                  style: TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

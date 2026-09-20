@@ -87,9 +87,9 @@ void main() {
       expect(find.text('Тап для разметки'), findsOneWidget);
 
       // 30-дневная предиктивная карточка
-      expect(find.text('ПЕРСОНАЛЬНЫЙ ПАТТЕРН СТРЕССА · 13:30'), findsOneWidget);
-      expect(find.text('30-ДНЕВНЫЙ ИИ'), findsOneWidget);
-      expect(find.text('Подготовиться: дыхательная пауза 4-6'), findsOneWidget);
+      expect(find.text('ПОВЫШЕННЫЙ КОРТИЗОЛ · 13:30'), findsOneWidget);
+      expect(find.text('84% СТРЕСС'), findsOneWidget);
+      expect(find.textContaining('протокола и советов'), findsOneWidget);
     });
 
     testWidgets('Tapping story button launches CircaDayStoryDialog', (tester) async {

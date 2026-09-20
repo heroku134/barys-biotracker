@@ -171,7 +171,7 @@ void main() {
       expect(find.text('KALKAN ID-KG · № 784-092/26'), findsOneWidget);
       expect(find.text('VERIFIED'), findsOneWidget);
       expect(find.text('АТЛЕТ ВЫСШЕЙ КАТЕГОРИИ · УРОВЕНЬ BATYR'), findsOneWidget);
-      expect(find.textContaining('7840926M2604128KAZ'), findsOneWidget);
+      expect(find.textContaining('СИНХРОНИЗАЦИЯ БИОМЕТРИИ АКТИВНА'), findsOneWidget);
     });
 
     test('Crisis Mode toggles critical physiological metrics in simulator and bridge', () {

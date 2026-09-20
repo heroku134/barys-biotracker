@@ -6,7 +6,9 @@ import 'package:barys_biotracker/data/ble/ute_ble_bridge.dart';
 import 'package:barys_biotracker/domain/intelligence/menstrual_cycle_engine.dart';
 import 'package:barys_biotracker/domain/models/telemetry.dart';
 import 'package:barys_biotracker/domain/models/user_profile.dart';
+import 'package:barys_biotracker/data/storage/user_profile_repository.dart';
 import 'package:barys_biotracker/presentation/screens/auth_screen.dart';
+import 'package:barys_biotracker/presentation/screens/main_shell.dart';
 import 'package:barys_biotracker/presentation/screens/menstrual_cycle_screen.dart';
 import 'package:barys_biotracker/presentation/widgets/circa_cycle_card.dart';
 
@@ -188,6 +190,36 @@ void main() {
       expect(find.textContaining('СААТ-1'), findsWidgets);
       expect(find.textContaining('ТЕРМОСЕНСОР'), findsWidgets);
       expect(find.textContaining('ЖУРНАЛ САМОЧУВСТВИЯ'), findsOneWidget);
+    });
+
+    testWidgets('MainShell adapts 4th tab based on user gender', (tester) async {
+      final bridge = UteBleBridge();
+
+      // Set profile as female
+      await UserProfileRepository.saveProfile(
+        const UserProfile(gender: Gender.female, name: 'Айпери'),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MainShell(bleBridge: bridge),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Female sees 'Цикл' in navbar
+      expect(find.text('Цикл'), findsOneWidget);
+      expect(find.text('Спорт'), findsNothing);
+
+      // Change profile to male
+      await UserProfileRepository.saveProfile(
+        const UserProfile(gender: Gender.male, name: 'Алихан'),
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Male sees 'Спорт' in navbar
+      expect(find.text('Спорт'), findsOneWidget);
+      expect(find.text('Цикл'), findsNothing);
     });
   });
 }

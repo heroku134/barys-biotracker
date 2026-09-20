@@ -15,6 +15,11 @@ class CircaHaptics {
     } catch (_) {}
   }
 
+  /// Успешное сохранение или подтверждение действия
+  static Future<void> success() async {
+    await ringClosure();
+  }
+
   /// Прохождение промежуточной зоны кольца (33% Rose, 66% Amber)
   static Future<void> ringZoneTick() async {
     try {

@@ -11,6 +11,7 @@ import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/workout_session.dart';
 import '../widgets/circa_edge_fade.dart';
+import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/glass_card.dart';
 
 class SportScreen extends StatefulWidget {
@@ -217,6 +218,24 @@ class _SportScreenState extends State<SportScreen> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
+            leadingWidth: 52,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Center(
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: AppColors.raised,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.amber.withValues(alpha: 0.35), width: 1.0),
+                  ),
+                  child: const CircaPulsingLogo(size: 26, animate: false),
+                ),
+              ),
+            ),
+            titleSpacing: 6,
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

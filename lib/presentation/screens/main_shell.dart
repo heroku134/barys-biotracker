@@ -17,6 +17,9 @@ import 'menstrual_cycle_screen.dart';
 import 'profile_screen.dart';
 import 'sport_screen.dart';
 
+import '../../data/storage/user_profile_repository.dart';
+import '../../domain/models/user_profile.dart';
+
 class MainShell extends StatefulWidget {
   final UteBleBridge bleBridge;
 
@@ -34,6 +37,7 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+    UserProfileRepository.loadProfile();
     _telemetry = widget.bleBridge.currentTelemetry;
     widget.bleBridge.telemetryStream.listen((data) {
       if (mounted) {
@@ -60,52 +64,65 @@ class _MainShellState extends State<MainShell> {
     final readiness = ReadinessEngine.calculate(_telemetry, baseline: _baseline);
     final avatarProfile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
 
-    return ValueListenableBuilder<AppLanguage>(
-      valueListenable: AppLocaleNotifier.instance,
-      builder: (context, language, _) {
-        return Scaffold(
-          backgroundColor: AppColors.stage,
-          body: CircaFilmGrainBackground(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: [
-                DashboardScreen(
-                  bleBridge: widget.bleBridge,
-                  onOpenAvatar: _openAvatarScreen,
-                  onOpenDeviceSettings: _openDeviceSettings,
-                ),
-                AnalyticsScreen(bleBridge: widget.bleBridge),
-                BioAvatarScreen(bleBridge: widget.bleBridge),
-                SportScreen(bleBridge: widget.bleBridge),
-                ProfileScreen(bleBridge: widget.bleBridge),
-              ],
-            ),
-          ),
+    return ValueListenableBuilder<UserProfile>(
+      valueListenable: UserProfileRepository.profileNotifier,
+      builder: (context, userProfile, _) {
+        final isFemale = userProfile.gender == Gender.female;
 
-          // Премиальная 5-сегментная навигационная панель с ЦЕНТРАЛЬНОЙ КНОПКОЙ-МАСКОТОМ
-          bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(
-                top: BorderSide(color: AppColors.line, width: 1.0),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                height: 62,
-                child: Row(
+        return ValueListenableBuilder<AppLanguage>(
+          valueListenable: AppLocaleNotifier.instance,
+          builder: (context, language, _) {
+            return Scaffold(
+              backgroundColor: AppColors.stage,
+              body: CircaFilmGrainBackground(
+                child: IndexedStack(
+                  index: _currentIndex,
                   children: [
-                    _buildNavItem(0, Icons.radio_button_checked, AppStrings.tr('nav_today', language)),
-                    _buildNavItem(1, Icons.insights_outlined, AppStrings.tr('nav_analysis', language)),
-                    _buildCentralBarysButton(readiness.zone.color, avatarProfile.state.assetPath),
-                    _buildNavItem(3, Icons.directions_run_outlined, AppStrings.tr('nav_sport', language)),
-                    _buildNavItem(4, Icons.person_outline, AppStrings.tr('nav_profile', language)),
+                    DashboardScreen(
+                      bleBridge: widget.bleBridge,
+                      onOpenAvatar: _openAvatarScreen,
+                      onOpenDeviceSettings: _openDeviceSettings,
+                    ),
+                    AnalyticsScreen(bleBridge: widget.bleBridge),
+                    BioAvatarScreen(bleBridge: widget.bleBridge),
+                    isFemale
+                        ? MenstrualCycleScreen(bleBridge: widget.bleBridge)
+                        : SportScreen(bleBridge: widget.bleBridge),
+                    ProfileScreen(bleBridge: widget.bleBridge),
                   ],
                 ),
               ),
-            ),
-          ),
+
+              // Премиальная 5-сегментная навигационная панель с ЦЕНТРАЛЬНОЙ КНОПКОЙ-МАСКОТОМ
+              bottomNavigationBar: Container(
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(
+                    top: BorderSide(color: AppColors.line, width: 1.0),
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: SizedBox(
+                    height: 62,
+                    child: Row(
+                      children: [
+                        _buildNavItem(0, Icons.radio_button_checked, AppStrings.tr('nav_today', language)),
+                        _buildNavItem(1, Icons.insights_outlined, AppStrings.tr('nav_analysis', language)),
+                        _buildCentralBarysButton(readiness.zone.color, avatarProfile.state.assetPath),
+                        _buildNavItem(
+                          3,
+                          isFemale ? Icons.water_drop_outlined : Icons.directions_run_outlined,
+                          AppStrings.tr(isFemale ? 'nav_cycle' : 'nav_sport', language),
+                        ),
+                        _buildNavItem(4, Icons.person_outline, AppStrings.tr('nav_profile', language)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         );
       },
     );

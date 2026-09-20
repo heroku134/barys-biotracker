@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../core/circa_haptics.dart';
 import '../../domain/intelligence/stress_engine.dart';
 import 'circa_day_story_dialog.dart';
 import 'glass_card.dart';
@@ -655,105 +656,190 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
           const SizedBox(height: 8),
 
           // 5. Предсказательный анализатор (AI Stress Prediction)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.rose.withValues(alpha: 0.35),
-                width: 1,
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _showStressDetailModal(context, peakSlot),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.rose.withValues(alpha: 0.35),
+                  width: 1,
+                ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.rose.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.bolt,
+                      color: AppColors.rose,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.auto_graph_outlined,
-                          color: AppColors.rose,
-                          size: 14,
+                        Row(
+                          children: [
+                            const Text(
+                              'ПОВЫШЕННЫЙ КОРТИЗОЛ · 13:30',
+                              style: TextStyle(
+                                color: AppColors.rose,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.rose.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                '84% СТРЕСС',
+                                style: TextStyle(
+                                  color: AppColors.rose,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(height: 3),
                         const Text(
-                          'ПЕРСОНАЛЬНЫЙ ПАТТЕРН СТРЕССА · 13:30',
+                          'Пик нагрузки (Дедлайн) · Нажмите для протокола и советов',
                           style: TextStyle(
-                            color: AppColors.rose,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
+                            color: AppColors.muted,
+                            fontSize: 11,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.rose.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        '30-ДНЕВНЫЙ ИИ',
-                        style: TextStyle(
-                          color: AppColors.rose,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'На основе твоей разметки за 30 дней: в 13:30 у тебя регулярно возникает пик кортизола (${peakSlot.userTag ?? 'Переговоры / Дедлайн'}). Прогноз на завтра: вероятность стресса >75% равна 84%.',
-                  style: const TextStyle(
-                    color: AppColors.fg,
-                    fontSize: 11,
-                    height: 1.35,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Рекомендация Барыса: за 10 минут до встречи переключись на дыхательный цикл 4-6 для включения блуждающего нерва.',
-                  style: const TextStyle(
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.arrow_forward_ios,
                     color: AppColors.muted,
-                    fontSize: 10,
-                    fontStyle: FontStyle.italic,
-                    height: 1.3,
+                    size: 12,
                   ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStressDetailModal(BuildContext context, StressTimeSlot slot) {
+    CircaHaptics.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.line,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _triggerBreathingPause,
-                    icon: const Icon(Icons.air, size: 14, color: AppColors.sage),
-                    label: const Text(
-                      'Подготовиться: дыхательная пауза 4-6',
-                      style: TextStyle(
-                        color: AppColors.fg,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.rose.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.bolt, color: AppColors.rose, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'ПЕРСОНАЛЬНЫЙ ПАТТЕРН СТРЕССА',
+                        style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2),
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColors.raised,
-                      side: const BorderSide(color: AppColors.line),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Пик кортизола в 13:30 (${slot.userTag ?? 'Переговоры / Дедлайн'})',
+                        style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.raised,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.line),
+              ),
+              child: const Text(
+                'На основе разметки за 30 дней в 13:30 регулярно фиксируется острый пик кортизола. Прогноз на завтра: вероятность стресса >75% равна 84%.',
+                style: TextStyle(color: AppColors.fg, fontSize: 12, height: 1.4),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Рекомендация СААТ-1: за 10 минут до пиковой встречи переключитесь на дыхательный цикл 4-6 для активации парасимпатической нервной системы (блуждающего нерва).',
+              style: TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35, fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  _triggerBreathingPause();
+                },
+                icon: const Icon(Icons.air, size: 16, color: AppColors.stage),
+                label: const Text(
+                  'НАЧАТЬ ДЫХАТЕЛЬНУЮ ПАУЗУ 4-6',
+                  style: TextStyle(color: AppColors.stage, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.amber,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
