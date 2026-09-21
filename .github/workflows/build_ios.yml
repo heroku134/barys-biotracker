@@ -1,0 +1,111 @@
+name: Build iOS IPA for AltStore / Sideloadly
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-ipa:
+    name: Build Unsigned IPA on macOS (Xcode 16)
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 16
+        run: |
+          if [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app/Contents/Developer
+            echo "DEVELOPER_DIR=/Applications/Xcode_16.0.app/Contents/Developer" >> $GITHUB_ENV
+          elif [ -d "/Applications/Xcode_16.1.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.1.app/Contents/Developer
+            echo "DEVELOPER_DIR=/Applications/Xcode_16.1.app/Contents/Developer" >> $GITHUB_ENV
+          elif [ -d "/Applications/Xcode_16.2.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
+            echo "DEVELOPER_DIR=/Applications/Xcode_16.2.app/Contents/Developer" >> $GITHUB_ENV
+            sudo xcodebuild -downloadPlatform iOS || true
+          elif [ -d "/Applications/Xcode_15.4.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+            echo "DEVELOPER_DIR=/Applications/Xcode_15.4.app/Contents/Developer" >> $GITHUB_ENV
+          else
+            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+            echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> $GITHUB_ENV
+          fi
+          xcodebuild -runFirstLaunch || true
+          xcodebuild -version
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Check Flutter version
+        run: flutter --version
+
+      - name: Configure Flutter (Disable SPM, use CocoaPods)
+        run: flutter config --no-enable-swift-package-manager
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS application without code signing
+        run: |
+          flutter build ios --config-only --no-codesign
+          xcodebuild build \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS=NO \
+            ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS=NO \
+            ENABLE_ON_DEMAND_RESOURCES=NO \
+            CONFIGURATION_BUILD_DIR="$(pwd)/build/ios/iphoneos"
+
+      - name: Package Payload into IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r KALKAN_SPORT.ipa Payload
+          cp KALKAN_SPORT.ipa barys_biotracker.ipa
+          ls -lh KALKAN_SPORT.ipa
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KALKAN_SPORT_iOS_IPA
+          path: |
+            KALKAN_SPORT.ipa
+            barys_biotracker.ipa
+          retention-days: 14
+
+      - name: Publish Release with IPA
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v2
+        continue-on-error: true
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "KALKAN SPORT v1.0.${{ github.run_number }} (СААТ-1 iOS IPA для AltStore)"
+          body: |
+            ### KALKAN SPORT · ЧАСЫ СААТ-1
+            Готовый файл `.ipa` для установки через **AltStore** или **Sideloadly** на iPhone.
+            - Новый дизайн: Whoop 5.0 & Oura Precision (Обсидиан, Янтарь, Шалфей).
+            - Чистый атлетический профиль без паспорта.
+            - Новая эмблема приложения без круга часов.
+            - Часы «СААТ-1» и мониторинг биометрии.
+            - **Установка**: Откройте `KALKAN_SPORT.ipa` в приложении AltStore на iPhone или перетащите в Sideloadly на ПК.
+          files: |
+            KALKAN_SPORT.ipa
+            barys_biotracker.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
