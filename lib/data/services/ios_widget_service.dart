@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 import '../../domain/models/readiness.dart';
@@ -54,10 +55,12 @@ class IosWidgetService {
       await HomeWidget.saveWidgetData<int>('sleep_minutes', sleepRemainingMins);
       await HomeWidget.saveWidgetData<int>('sleep_score', sleepScore);
 
-      // 2. Отправка триггера перезагрузки таймлайна WidgetKit
-      await HomeWidget.updateWidget(
-        iOSName: iOSWidgetName,
-      );
+      // 2. Отправка триггера перезагрузки таймлайна WidgetKit на iOS
+      if (Platform.isIOS) {
+        await HomeWidget.updateWidget(
+          iOSName: iOSWidgetName,
+        );
+      }
     } catch (e) {
       debugPrint('IosWidgetService.updateWidgets note: $e');
     }
