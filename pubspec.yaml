@@ -18,6 +18,7 @@ dependencies:
   image_picker: ^1.2.3
   home_widget: ^0.10.0
   path_provider: ^2.1.5
+  share_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:

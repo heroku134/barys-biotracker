@@ -21,6 +21,7 @@ import '../widgets/precision_pulse_wave.dart';
 import '../widgets/precision_recovery_ring.dart';
 import '../widgets/precision_sleep_card.dart';
 import '../widgets/precision_strain_bar.dart';
+import '../widgets/circa_calibration_card.dart';
 import 'private_league_screen.dart';
 
 /// Precision Biometric Recovery Tracker Home Screen (Whoop 5.0 / Oura Athletic)
@@ -298,6 +299,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+
+            // =================================================================
+            // 2.1 14-DAY CALIBRATION CARD (Adaptive Individual Baseline)
+            // =================================================================
+            if (_baseline.isCalibrating)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  child: CircaCalibrationCard(
+                    currentDay: _baseline.calibrationDaysDone,
+                    totalDays: 14,
+                  ),
+                ),
+              ),
 
             // =================================================================
             // 3. DAILY STRAIN BAR with Numeric Target Range

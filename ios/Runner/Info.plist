@@ -24,6 +24,14 @@
 	<string>Приложению требуется доступ к галерее для выбора фото профиля и публикации фото дня.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Приложению требуется камера для создания снимков тренировок и фото дня.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

@@ -4,6 +4,7 @@ import '../../core/app_colors.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../widgets/glass_card.dart';
 import 'device_pair_screen.dart';
+import 'firmware_update_screen.dart';
 
 class DeviceSettingsScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -255,12 +256,42 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   const SizedBox(height: 16),
                   const Divider(color: AppColors.line, height: 1),
                   const SizedBox(height: 12),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Прошивка: v1.4.2-nordic', style: TextStyle(color: AppColors.muted, fontSize: 11)),
-                      Text('SN: CR-A1-084B21-KZ', style: TextStyle(color: AppColors.muted, fontSize: 11)),
-                    ],
+                  InkWell(
+                    onTap: () => FirmwareUpdateScreen.open(context, watchBattery: telemetry.batteryLevel),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('Прошивка: v1.2.4', style: TextStyle(color: AppColors.muted, fontSize: 11)),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.amber.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
+                                ),
+                                child: const Text(
+                                  'v1.3.0 OTA',
+                                  style: TextStyle(color: AppColors.amber, fontSize: 9, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: const [
+                              Text('Обновить', style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w600)),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_ios, size: 9, color: AppColors.amber),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

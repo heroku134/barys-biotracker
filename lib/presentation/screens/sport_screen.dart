@@ -13,6 +13,7 @@ import '../../domain/models/workout_session.dart';
 import '../widgets/circa_edge_fade.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/glass_card.dart';
+import '../../data/services/live_activity_service.dart';
 
 class SportScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -56,14 +57,25 @@ class _SportScreenState extends State<SportScreen> {
 
   void _startWorkout() {
     CircaHaptics.workoutStart();
+    final initialHr = widget.bleBridge.currentTelemetry.heartRate > 0 ? widget.bleBridge.currentTelemetry.heartRate : 72;
     setState(() {
       _isWorkoutActive = true;
       _isWorkoutPaused = false;
       _elapsedSeconds = 0;
-      _peakHr = widget.bleBridge.currentTelemetry.heartRate;
+      _peakHr = initialHr;
       _distanceKm = 0.0;
       _caloriesBurned = 0;
     });
+
+    // Запуск iOS Live Activities & Dynamic Island
+    LiveActivityService.startWorkoutActivity(
+      workoutName: _selectedSport.title,
+      workoutType: _selectedSport.id,
+      initialHeartRate: initialHr,
+      heartRateZone: 2,
+      currentStrain: 0.0,
+      activeCalories: 0,
+    );
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isWorkoutPaused) {
@@ -79,6 +91,23 @@ class _SportScreenState extends State<SportScreen> {
           if (_selectedSport.hasDistance && _elapsedSeconds % 6 == 0) {
             _distanceKm += 0.02;
           }
+
+          // Обновление Dynamic Island каждые 2 секунды
+          if (_elapsedSeconds % 2 == 0) {
+            final double liveStrain = StrainEngine.calculateWorkoutStrain(
+              durationMinutes: _elapsedSeconds / 60.0,
+              avgHeartRate: currentBpm > 0 ? currentBpm : 120,
+              sportType: _selectedSport.id,
+            );
+            final zone = (currentBpm < 100) ? 1 : (currentBpm < 125) ? 2 : (currentBpm < 150) ? 3 : (currentBpm < 170) ? 4 : 5;
+            LiveActivityService.updateWorkoutActivity(
+              heartRate: currentBpm > 0 ? currentBpm : 120,
+              heartRateZone: zone,
+              currentStrain: liveStrain,
+              activeCalories: _caloriesBurned,
+              workoutType: _selectedSport.title,
+            );
+          }
         });
       }
     });
@@ -92,6 +121,9 @@ class _SportScreenState extends State<SportScreen> {
   Future<void> _stopWorkout() async {
     _timer?.cancel();
     CircaHaptics.workoutFinish();
+
+    // Завершение iOS Live Activities
+    await LiveActivityService.endWorkoutActivity();
 
     final duration = _elapsedSeconds;
     final avgHr = widget.bleBridge.currentTelemetry.heartRate;

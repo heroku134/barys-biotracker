@@ -8,6 +8,7 @@ import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
 import '../../domain/models/readiness.dart';
 import '../../domain/models/telemetry.dart';
+import 'stories_preview_dialog.dart';
 
 /// Диалог выгрузки и создания «Фото Дня» с биометрическим оверлеем (Whoop / Strava athletic style)
 class CircaPhotoOfDayDialog extends StatefulWidget {
@@ -301,6 +302,40 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
           ),
 
           const SizedBox(height: 12),
+
+          // Кнопка экспорта в Stories (9:16)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                StoriesPreviewDialog.show(
+                  context,
+                  telemetry: widget.telemetry,
+                  readiness: widget.readiness,
+                  currentStrain: widget.currentStrain,
+                  photoPath: _photoPath,
+                );
+              },
+              icon: const Icon(Icons.auto_awesome_motion_outlined, color: AppColors.amber, size: 18),
+              label: Text(
+                'ПОДЕЛИТЬСЯ В STORIES (9:16)',
+                style: AppTypography.monoLabel.copyWith(
+                  color: AppColors.amber,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.4,
+                  fontSize: 11,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: AppColors.surface,
+                side: const BorderSide(color: AppColors.amber, width: 1.2),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
 
           // Кнопка сохранения / закрытия
           SizedBox(
