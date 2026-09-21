@@ -141,7 +141,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
 
                     // Текст утреннего пика
                     Expanded(
@@ -158,7 +158,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
                                   color: AppColors.sage,
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               const Text(
                                 'УТРЕННИЙ ПИК ВОССТАНОВЛЕНИЯ · 07:15',
                                 style: TextStyle(
@@ -170,7 +170,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
                               ),
                             ],
                           ),
-                          const SizedBox(height: 3),
+                          SizedBox(height: 3),
                           const Text(
                             'ЦНС готова к максимальной адаптации и нагрузкам дня',
                             style: TextStyle(
@@ -186,7 +186,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
 
                     // Кнопка подробнее
                     IconButton(
-                      icon: const Icon(Icons.close, size: 16, color: AppColors.muted),
+                      icon: Icon(Icons.close, size: 16, color: AppColors.muted),
                       visualDensity: VisualDensity.compact,
                       tooltip: 'Скрыть',
                       onPressed: _dismiss,

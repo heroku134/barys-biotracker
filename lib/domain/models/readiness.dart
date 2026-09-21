@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 
 enum RecoveryZone {
-  optimal('Оптимально', AppColors.sage, 'ОПТИМАЛЬНО'),
-  moderate('Умеренно', AppColors.amber, 'УМЕРЕННО'),
-  recovery('Восстановление', AppColors.rose, 'ДЕНЬ ОТДЫХА');
+  optimal('Оптимально', AppColors.sage, 'Готово'),
+  moderate('Умеренно', AppColors.amber, 'Норма'),
+  recovery('Восстановление', AppColors.rose, 'Отдых');
 
   final String label;
   final Color color;

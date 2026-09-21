@@ -126,7 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Выйти из системы?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
+        title: Text('Выйти из системы?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
         content: const Text(
           'Синхронизация биометрии будет приостановлена до повторного входа.',
           style: TextStyle(color: AppColors.muted, fontSize: 13),
@@ -134,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+            child: Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
           ),
           TextButton(
             onPressed: () async {
@@ -177,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Text(
                   AppStrings.tr('profile_title', language),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
@@ -186,7 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 Text(
                   language == AppLanguage.kyrgyz ? 'Биометрия жана Орнотуулар' : 'Биометрия и Настройки',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.fg,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -219,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Row(
                   children: [
                     const Icon(Icons.warning_amber_rounded, color: AppColors.rose, size: 22),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Карточка атлета KALKAN Precision
             _buildAthleteProfileCard(telemetry),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Карточка подключенного браслета с переходом в DeviceSettings
             GlassCard(
@@ -287,16 +287,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       size: 24,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           telemetry.deviceName,
-                          style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           telemetry.isConnected ? 'СААТ-1 активен · BLE 5.3' : 'Поиск устройства...',
                           style: TextStyle(
@@ -323,10 +323,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           size: 14,
                           color: telemetry.batteryLevel > 20 ? AppColors.sage : AppColors.rose,
                         ),
-                        const SizedBox(width: 4),
+                        SizedBox(width: 4),
                         Text(
                           '${telemetry.batteryLevel}%',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -335,14 +335,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.settings, color: AppColors.muted, size: 20),
+                  SizedBox(width: 8),
+                  Icon(Icons.settings, color: AppColors.muted, size: 20),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Интерактивная плашка «Биометрия и суточные цели»
             GlassCard(
@@ -363,7 +363,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             child: const Icon(Icons.tune, color: AppColors.amber, size: 16),
                           ),
-                          const SizedBox(width: 10),
+                          SizedBox(width: 10),
                           const Text(
                             'БИОМЕТРИЯ И ЦЕЛИ',
                             style: TextStyle(
@@ -390,23 +390,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
                   Row(
                     children: [
                       _buildMetricSummary('РОСТ', '${_profile.heightCm.toInt()} см'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildMetricSummary('ВЕС', '${_profile.weightKg.toStringAsFixed(1)} кг'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildMetricSummary('ИМТ', '${_profile.bmi.toStringAsFixed(1)} (Норма)', color: AppColors.sage),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Row(
                     children: [
                       _buildMetricSummary('ЦЕЛЬ ШАГОВ', '${_profile.stepGoal}'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildMetricSummary('ЦЕЛЬ ККАЛ', '${_profile.calorieGoal} ккал'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildMetricSummary(
                         'ПОЛ',
                         _profile.gender == Gender.female ? 'Женский' : 'Мужской',
@@ -416,7 +416,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Сообщество и Приватные лиги
             const Text(
@@ -428,7 +428,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 letterSpacing: 2.0,
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             GlassCard(
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
@@ -452,7 +452,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: const Icon(Icons.shield_outlined, color: AppColors.amber, size: 20),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -469,32 +469,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.faint),
+                      Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.faint),
                     ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Связь с партнёром (Биоритм и менструальный цикл)
             _buildPartnerCycleSection(language),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Язык интерфейса / Интерфейс тили (RU / KG)
             _buildLanguageSelectorCard(language),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Тема оформления (Темная / Светлая)
             _buildThemeSelectorCard(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Версия прошивки с 7-кратным тапом для инженерного меню
             Center(
               child: GestureDetector(
                 onTap: _handleVersionTap,
                 behavior: HitTestBehavior.opaque,
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                   child: Text(
                     'KALKAN SPORT · СААТ-1 v1.4.2 · Сборка 2026.09',
@@ -507,7 +507,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // Медицинский дисклеймер KALKAN CAAT-1
             Container(
@@ -517,7 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.line),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.verified_user_outlined, color: AppColors.muted, size: 16),
@@ -531,7 +531,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
           ],
         ),
       ),
@@ -550,7 +550,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return AlertDialog(
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
               Icon(Icons.favorite, color: AppColors.rose, size: 20),
               SizedBox(width: 8),
@@ -571,36 +571,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   'Введите код, которым поделилась ваша партнёрша в своём приложении, чтобы видеть её фазу цикла, рекомендации по заботе и биоритм на главном экране.',
                   style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: codeCtrl,
-                  style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
                   decoration: InputDecoration(
                     labelText: 'Инвайт-код партнёра',
-                    labelStyle: const TextStyle(color: AppColors.muted, fontSize: 12),
+                    labelStyle: TextStyle(color: AppColors.muted, fontSize: 12),
                     hintText: 'KLK-CYC-XXXX',
-                    hintStyle: const TextStyle(color: AppColors.faint, fontSize: 12),
+                    hintStyle: TextStyle(color: AppColors.faint, fontSize: 12),
                     filled: true,
                     fillColor: AppColors.raised,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.rose)),
                     prefixIcon: const Icon(Icons.qr_code, color: AppColors.rose, size: 18),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextField(
                   controller: nameCtrl,
-                  style: const TextStyle(color: AppColors.fg, fontSize: 13),
+                  style: TextStyle(color: AppColors.fg, fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'Имя партнёра',
-                    labelStyle: const TextStyle(color: AppColors.muted, fontSize: 12),
+                    labelStyle: TextStyle(color: AppColors.muted, fontSize: 12),
                     filled: true,
                     fillColor: AppColors.raised,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
                     focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.rose)),
-                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.muted, size: 18),
+                    prefixIcon: Icon(Icons.person_outline, color: AppColors.muted, size: 18),
                   ),
                 ),
               ],
@@ -609,7 +609,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+              child: Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -662,7 +662,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               language == AppLanguage.kyrgyz
                   ? 'ӨНӨКТӨШТҮН БИОРИТМИ'
                   : 'СИНХРОНИЗАЦИЯ БИОРИТМА (ПАРТНЁР)',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -683,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
           ],
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         GlassCard(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -699,7 +699,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: const Icon(Icons.favorite, color: AppColors.rose, size: 20),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -708,21 +708,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           isLinked
                               ? 'Партнёр: ${_partnerCycle!.partnerName}'
                               : 'Синхронизация цикла партнёра',
-                          style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           isLinked
                               ? 'День ${_partnerCycle!.currentCycleDay} из ${_partnerCycle!.cycleLength} · ${_partnerCycle!.phaseTitle}'
                               : 'Отслеживайте фазы и подсказки для заботы на главном экране',
-                          style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                          style: TextStyle(color: AppColors.muted, fontSize: 11),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
               if (isLinked) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -745,19 +745,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: TextStyle(color: _partnerCycle!.phaseColor, fontSize: 11, fontWeight: FontWeight.w800),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _partnerCycle!.partnerAdvice,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.fg, fontSize: 11, height: 1.3),
+                          style: TextStyle(color: AppColors.fg, fontSize: 11, height: 1.3),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -777,7 +777,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     OutlinedButton(
                       onPressed: () async {
                         await PartnerCycleRepository.unlinkPartner();
@@ -807,9 +807,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _profile.gender == Gender.female
                       ? 'Вкладка «Цикл» активна в вашем нижнем меню. Вы можете скопировать инвайт-код в дневнике цикла и передать партнёру.'
                       : 'Привяжите код партнёра, чтобы карточка с её текущей фазой, уровнем энергии и рекомендациями по заботе отображалась на вашем главном экране.',
-                  style: const TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35),
+                  style: TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -826,7 +826,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () async {
                         await PartnerCycleRepository.linkPartner(
@@ -874,14 +874,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           AppStrings.tr('profile_language_section', currentLanguage),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.muted,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 2.0,
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         GlassCard(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -890,7 +890,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.language, color: AppColors.amber, size: 18),
                       SizedBox(width: 8),
@@ -913,7 +913,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -922,7 +922,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       isActive: currentLanguage == AppLanguage.russian,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _buildLangButton(
                       language: AppLanguage.kyrgyz,
@@ -957,7 +957,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(language.flag, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               '${language.title} (${language.shortTitle})',
               style: TextStyle(
@@ -985,7 +985,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             letterSpacing: 2.0,
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         GlassCard(
           padding: const EdgeInsets.all(14),
           child: Column(
@@ -1001,7 +1001,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppColors.amber,
                         size: 18,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       const Text(
                         'Тема интерфейса',
                         style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
@@ -1021,7 +1021,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
@@ -1035,7 +1035,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _buildThemeButton(
                       title: 'Светлая',
@@ -1078,7 +1078,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 16, color: isActive ? AppColors.amber : AppColors.muted),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               title,
               style: TextStyle(
@@ -1136,7 +1136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 const Text(
                   'ИНЖЕНЕРНОЕ МЕНЮ (KALKAN DEV)',
                   style: TextStyle(
@@ -1146,7 +1146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     letterSpacing: 2.0,
                   ),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
 
                 // Режим «ГРОЗА» (Кризис ЦНС и стресс)
                 GlassCard(
@@ -1185,7 +1185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
 
                 // Демо усталости
                 GlassCard(
@@ -1210,7 +1210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
 
                 // Демо калибровки
                 GlassCard(
@@ -1232,14 +1232,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
 
                 // Кнопка утреннего отчета
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.line),
+                      side: BorderSide(color: AppColors.line),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -1280,7 +1280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 8.5,
                 fontWeight: FontWeight.w700,
@@ -1289,7 +1289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 3),
+            SizedBox(height: 3),
             Text(
               value,
               style: TextStyle(
@@ -1324,7 +1324,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+            child: Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -1389,7 +1389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -1404,20 +1404,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        icon: const Icon(Icons.close, color: AppColors.muted, size: 20),
+                        icon: Icon(Icons.close, color: AppColors.muted, size: 20),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // Выбор пола
                   const Text(
                     'ПОЛ АТЛЕТА',
                     style: TextStyle(color: AppColors.muted, fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.2),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
@@ -1440,7 +1440,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.male, size: 16, color: tempGender == Gender.male ? AppColors.amber : AppColors.muted),
-                                const SizedBox(width: 6),
+                                SizedBox(width: 6),
                                 Text(
                                   'Мужской',
                                   style: TextStyle(
@@ -1454,7 +1454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
@@ -1475,7 +1475,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.female, size: 16, color: tempGender == Gender.female ? AppColors.amber : AppColors.muted),
-                                const SizedBox(width: 6),
+                                SizedBox(width: 6),
                                 Text(
                                   'Женский',
                                   style: TextStyle(
@@ -1491,7 +1491,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   Row(
                     children: [
@@ -1502,7 +1502,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           keyboardType: TextInputType.number,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: CircaTextField(
                           label: 'Вес (кг)',
@@ -1510,7 +1510,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           keyboardType: TextInputType.number,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: CircaTextField(
                           label: 'Год рожд.',
@@ -1520,7 +1520,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
 
                   Row(
                     children: [
@@ -1531,7 +1531,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           keyboardType: TextInputType.number,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: CircaTextField(
                           label: 'Цель ккал',
@@ -1541,7 +1541,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
 
                   SizedBox(
                     width: double.infinity,
@@ -1627,7 +1627,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   const Text(
                     'ATHLETE PROFILE',
                     style: TextStyle(
@@ -1660,7 +1660,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 2. Основной блок: Аватар + Имя атлета + Ранг
           Row(
@@ -1710,7 +1710,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
 
               // Имя атлета + Ранг + Редактирование
               Expanded(
@@ -1722,7 +1722,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Expanded(
                           child: Text(
                             _profile.name.isNotEmpty ? _profile.name.toUpperCase() : 'АЛИХАН',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.fg,
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -1736,14 +1736,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         InkWell(
                           onTap: _showEditNameDialog,
                           borderRadius: BorderRadius.circular(6),
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.all(4),
                             child: Icon(Icons.edit_outlined, color: AppColors.secondary, size: 16),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     const Text(
                       'BATYR ELITE · TIER I',
                       style: TextStyle(
@@ -1754,7 +1754,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         letterSpacing: 1.0,
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    SizedBox(height: 3),
                     const Text(
                       'CALIBRATED · OPTIMAL STATUS',
                       style: TextStyle(
@@ -1770,7 +1770,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 3. Таблица ключевых прецизионных метрик (Bio-Age, Chrono, Base HR)
           Row(
@@ -1796,7 +1796,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           letterSpacing: 1.0,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         '$bioAge',
                         style: const TextStyle(
@@ -1819,7 +1819,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -1841,10 +1841,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           letterSpacing: 1.0,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         '$chronoAge',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.fg,
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -1864,7 +1864,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -1886,7 +1886,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           letterSpacing: 1.0,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       const Text(
                         '52',
                         style: TextStyle(
@@ -1911,7 +1911,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // 4. Панель быстрых действий: Фото дня / Аватар
           Row(
@@ -1957,7 +1957,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: InkWell(
                   onTap: () {

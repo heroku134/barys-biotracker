@@ -89,7 +89,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: AppColors.textNearWhite),
+          icon: Icon(Icons.arrow_back_ios_new, size: 18, color: AppColors.textNearWhite),
           onPressed: _isUpdating ? null : () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -130,24 +130,24 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: AppColors.hairline, width: 1.0),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(Icons.watch_outlined, color: AppColors.amber, size: 28),
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'KALKAN СААТ-1',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textNearWhite,
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           Text(
                             'Текущая версия: v1.2.4 · Доступна: v1.3.0',
                             style: AppTypography.monoLabel.copyWith(
@@ -162,7 +162,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // 2. ПРОВЕРКА БАТАРЕИ
               Container(
@@ -182,7 +182,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                       color: canUpdate ? AppColors.sage : AppColors.rose,
                       size: 20,
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +211,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
 
               // 3. СПИСОК ИЗМЕНЕНИЙ (CHANGELOG)
               Text(
@@ -223,18 +223,18 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
 
               _buildChangelogItem(
                 'Прецизионный фильтр шума PPG',
                 'Точность детекции rMSSD при низком ночном пульсе повышена на 18%.',
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildChangelogItem(
                 'Фоновая пачка телеметрии',
                 'Часы сохраняют до 72 часов оффлайн-замеров и выгружают их пачками по 15 минут.',
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildChangelogItem(
                 'Оптимизация Bluetooth 5.3',
                 'Снижение энергопотребления чипсета на 14% при постоянном подключении.',
@@ -268,7 +268,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                           ),
                           Text(
                             '${(_progress * 100).toInt()}%',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.textNearWhite,
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
@@ -277,7 +277,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       LinearProgressIndicator(
                         value: _progress,
                         backgroundColor: AppColors.raised,
@@ -285,7 +285,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                         minHeight: 6,
                         borderRadius: BorderRadius.circular(3),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -308,7 +308,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
               ] else if (_isUpdated) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -320,7 +320,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.check_circle, color: AppColors.sage, size: 24),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +346,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
               ],
 
               SizedBox(
@@ -401,10 +401,10 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.textNearWhite,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -412,10 +412,10 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             desc,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               height: 1.3,

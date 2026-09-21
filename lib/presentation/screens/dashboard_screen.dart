@@ -1,5 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
+import '../../core/date_format.dart';
 import '../../core/app_typography.dart';
 import '../../core/avatar_image_provider.dart';
 import '../../core/circa_haptics.dart';
@@ -13,23 +17,11 @@ import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_avatar_picker_dialog.dart';
-import '../widgets/circa_photo_of_day_dialog.dart';
-import '../widgets/circa_recovery_breakdown_sheet.dart';
-import '../widgets/precision_card.dart';
-import '../widgets/precision_coach_card.dart';
-import '../widgets/precision_pulse_wave.dart';
-import '../widgets/precision_recovery_ring.dart';
-import '../widgets/precision_sleep_card.dart';
-import '../widgets/precision_strain_bar.dart';
 import '../widgets/circa_calibration_card.dart';
+import '../widgets/circa_recovery_breakdown_sheet.dart';
+import '../widgets/metric_dial.dart';
 import 'private_league_screen.dart';
 
-/// Precision Biometric Recovery Tracker Home Screen (Whoop 5.0 / Oura Athletic)
-/// - Dark obsidian background (#08090C, strictly in #050506–#12141A range)
-/// - Flat surface cards with 1px hairline border (#1C2029)
-/// - STRICTLY NO shadows, NO blur, NO glassmorphism, NO glow effects, NO radial gradients
-/// - Three distinct type roles, only regular (w400) and semibold (w600) weights
-/// - Exactly three accents: sage (#52B788), amber (#DE8A36), rose (#D14949)
 class DashboardScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
   final VoidCallback onOpenAvatar;
@@ -50,6 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late BleTelemetry _telemetry;
   final PersonalBaseline _baseline = const PersonalBaseline();
   UserProfile _userProfile = const UserProfile();
+  StreamSubscription<BleTelemetry>? _sub;
 
   @override
   void initState() {
@@ -57,24 +50,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _telemetry = widget.bleBridge.currentTelemetry;
     _loadProfile();
     _syncIosWidgets();
-
     UserProfileRepository.profileNotifier.addListener(_onProfileNotifier);
-
-    widget.bleBridge.telemetryStream.listen((data) {
-      if (mounted) {
-        setState(() {
-          _telemetry = data;
-        });
-        _syncIosWidgets();
-      }
+    _sub = widget.bleBridge.telemetryStream.listen((data) {
+      if (!mounted) return;
+      setState(() => _telemetry = data);
+      _syncIosWidgets();
     });
   }
 
   void _onProfileNotifier() {
     if (mounted) {
-      setState(() {
-        _userProfile = UserProfileRepository.profileNotifier.value;
-      });
+      setState(() => _userProfile = UserProfileRepository.profileNotifier.value);
     }
   }
 
@@ -89,6 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _sub?.cancel();
     UserProfileRepository.profileNotifier.removeListener(_onProfileNotifier);
     super.dispose();
   }
@@ -96,140 +83,89 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadProfile() async {
     try {
       final p = await UserProfileRepository.loadProfile();
-      if (mounted) {
-        setState(() {
-          _userProfile = p;
-        });
-      }
+      if (mounted) setState(() => _userProfile = p);
     } catch (_) {}
   }
 
-  String _formatCurrentDate() {
-    final now = DateTime.now();
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    const weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-    final weekday = weekdays[now.weekday - 1];
-    final month = months[now.month - 1];
-    return '$weekday, ${now.day} $month';
+  String _coach(int score, double strainMax, AppLanguage lang) {
+    final ru = lang != AppLanguage.kyrgyz;
+    if (score >= 67) {
+      return ru
+          ? 'Тело готово к нагрузке. Можно тяжёлую сессию, потолок strain ${strainMax.toStringAsFixed(1)}.'
+          : 'Денең жүктөмгө даяр. Оор машыгуу мүмкүн, strain чеги ${strainMax.toStringAsFixed(1)}.';
+    }
+    if (score >= 34) {
+      return ru
+          ? 'Обычный день. Держи среднюю нагрузку, не заходи за ${strainMax.toStringAsFixed(1)}.'
+          : 'Кадимки күн. Орто жүктөмдү кармоо, ${strainMax.toStringAsFixed(1)}дан ашпа.';
+    }
+    return ru
+        ? 'Восстановление слабое. Сегодня зона 1–2, сон раньше обычного.'
+        : 'Калыбына келүү начар. Бүгүн 1–2 зона, уйкуну эртерээк.';
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Calculate biometric intelligence
-    final readiness = ReadinessEngine.calculate(
-      _telemetry,
-      baseline: _baseline,
-    );
+    final palette = KalkanColors.of(context);
+    final language = AppLocaleNotifier.current;
+    final readiness = ReadinessEngine.calculate(_telemetry, baseline: _baseline);
 
     final rawStrain = _telemetry.currentDayStrain > 0
         ? _telemetry.currentDayStrain
         : StrainEngine.calculateStrainFromZones(_telemetry.zoneMinutes);
-
     final currentStrain = rawStrain > 0 ? rawStrain : 12.4;
-
     final strainResult = StrainEngine.evaluate(
       currentStrain: currentStrain,
       recoveryZone: readiness.zone,
       zoneMinutes: _telemetry.zoneMinutes,
     );
-
-    final sleepResult = SleepEngine.calculate(
-      telemetry: _telemetry,
-      baseline: _baseline,
-    );
-
-    final athleteName = _userProfile.name.isNotEmpty
-        ? _userProfile.name.toUpperCase()
-        : 'ATHLETE';
-
+    final sleepResult = SleepEngine.calculate(telemetry: _telemetry, baseline: _baseline);
+    final sleepScore = sleepResult.sleepPerformanceScore > 0 ? sleepResult.sleepPerformanceScore : 88;
+    final name = _userProfile.name.isNotEmpty ? _userProfile.name : AppStrings.tr('home_guest', language);
     final isConnected = _telemetry.isConnected;
-
-    // Sleep stages calculation
-    final totalSleepMins = _telemetry.sleepMinutes > 0 ? _telemetry.sleepMinutes : 468;
-    final deepMins = _telemetry.deepSleepMinutes > 0 ? _telemetry.deepSleepMinutes : 102;
-    final remMins = _telemetry.remSleepMinutes > 0 ? _telemetry.remSleepMinutes : 116;
-    final lightMins = (totalSleepMins - deepMins - remMins).clamp(60, 360);
-    final awakeMins = (_telemetry.timeInBedMinutes - totalSleepMins).clamp(10, 90);
+    final ru = language != AppLanguage.kyrgyz;
 
     return Scaffold(
-      backgroundColor: AppColors.obsidian, // Flat dark obsidian #08090C
+      backgroundColor: palette.bg,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // =================================================================
-            // 1. TOP HEADER: Athlete ID, Date & BLE Status (Monospace & Swiss Grid)
-            // =================================================================
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Athlete Avatar + Name & Date
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            CircaHaptics.selectionClick();
-                            CircaAvatarPickerDialog.show(context, _userProfile);
-                          },
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.hairline, width: 1.0),
-                                ),
-                                child: ClipOval(
-                                  child: AvatarImageProvider.buildAvatarWidget(path: _userProfile.avatarPath),
-                                ),
-                              ),
-                              Positioned(
-                                right: -2,
-                                bottom: -2,
-                                child: Container(
-                                  padding: const EdgeInsets.all(2.5),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surface,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.hairline, width: 1.0),
-                                  ),
-                                  child: const Icon(Icons.camera_alt, size: 8.5, color: AppColors.amber),
-                                ),
-                              ),
-                            ],
-                          ),
+                    GestureDetector(
+                      onTap: () {
+                        CircaHaptics.selectionClick();
+                        CircaAvatarPickerDialog.show(context, _userProfile);
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: palette.hairline),
                         ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              athleteName,
-                              style: AppTypography.monoLabel.copyWith(
-                                fontSize: 13,
-                                letterSpacing: 1.8,
-                                color: AppColors.textNearWhite,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _formatCurrentDate(),
-                              style: AppTypography.monoUnit.copyWith(
-                                fontSize: 10,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
+                        child: ClipOval(
+                          child: AvatarImageProvider.buildAvatarWidget(path: _userProfile.avatarPath),
                         ),
-                      ],
+                      ),
                     ),
-
-                    // BLE Sync Status Pill
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: AppTypography.bodySemibold(palette.fg)),
+                          Text(
+                            AppDates.formatLong(DateTime.now(), language),
+                            style: AppTypography.caption(palette.secondary),
+                          ),
+                        ],
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () {
                         CircaHaptics.selectionClick();
@@ -238,12 +174,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppColors.hairline, width: 1.0),
+                          color: palette.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: palette.hairline),
                         ),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
                               width: 6,
@@ -255,10 +190,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              isConnected ? 'SYNCED' : 'OFFLINE',
-                              style: AppTypography.monoBadge.copyWith(
-                                color: isConnected ? AppColors.sage : AppColors.rose,
-                                fontSize: 9.5,
+                              isConnected
+                                  ? AppStrings.tr('home_synced', language)
+                                  : AppStrings.tr('home_offline', language),
+                              style: AppTypography.caption(
+                                isConnected ? AppColors.sage : AppColors.rose,
                               ),
                             ),
                           ],
@@ -269,276 +205,137 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-
-            // =================================================================
-            // 2. HERO: Circular Recovery Ring (Score out of 100, 0 glow, 3 metrics)
-            // =================================================================
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                child: PrecisionCard(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 18),
-                  child: PrecisionRecoveryRing(
-                    score: readiness.score,
-                    zone: readiness.zone,
-                    hrv: _telemetry.hrv,
-                    restingHeartRate: _telemetry.restingHeartRate,
-                    skinTempDeviation: _telemetry.skinTempDeviation,
-                    size: 200,
-                    onTap: () {
-                      CircaHaptics.selectionClick();
-                      CircaRecoveryBreakdownSheet.show(
-                        context,
-                        readiness,
-                        telemetry: _telemetry,
-                        baseline: _baseline,
-                        userName: athleteName,
-                      );
-                    },
+                padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    MetricDial(
+                      label: AppStrings.tr('home_sleep', language),
+                      value: '$sleepScore%',
+                      progress: sleepScore / 100,
+                      color: AppColors.sleepBlue,
+                      onTap: () {
+                        CircaHaptics.selectionClick();
+                        CircaRecoveryBreakdownSheet.show(
+                          context,
+                          readiness,
+                          telemetry: _telemetry,
+                          baseline: _baseline,
+                          userName: name,
+                        );
+                      },
+                    ),
+                    MetricDial(
+                      label: AppStrings.tr('home_recovery', language),
+                      value: '${readiness.score}%',
+                      progress: readiness.score / 100,
+                      color: readiness.zone.color,
+                      onTap: () {
+                        CircaHaptics.selectionClick();
+                        CircaRecoveryBreakdownSheet.show(
+                          context,
+                          readiness,
+                          telemetry: _telemetry,
+                          baseline: _baseline,
+                          userName: name,
+                        );
+                      },
+                    ),
+                    MetricDial(
+                      label: AppStrings.tr('home_strain', language),
+                      value: currentStrain.toStringAsFixed(1),
+                      progress: (currentStrain / 21).clamp(0.0, 1.0),
+                      color: AppColors.strainBlue,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                  decoration: BoxDecoration(
+                    color: palette.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: palette.hairline),
+                  ),
+                  child: Text(
+                    _coach(readiness.score, strainResult.targetStrainMax, language),
+                    style: AppTypography.body(palette.fg).copyWith(height: 1.4),
                   ),
                 ),
               ),
             ),
-
-            // =================================================================
-            // 2.1 14-DAY CALIBRATION CARD (Adaptive Individual Baseline)
-            // =================================================================
             if (_baseline.isCalibrating)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                   child: CircaCalibrationCard(
                     currentDay: _baseline.calibrationDaysDone,
                     totalDays: 14,
                   ),
                 ),
               ),
-
-            // =================================================================
-            // 3. DAILY STRAIN BAR with Numeric Target Range
-            // =================================================================
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                child: PrecisionStrainBar(
-                  currentStrain: currentStrain,
-                  targetMin: strainResult.targetStrainMin,
-                  targetMax: strainResult.targetStrainMax,
-                  activeCalories: _telemetry.calories,
-                  activeMinutes: 52,
-                ),
-              ),
-            ),
-
-            // =================================================================
-            // 4. LIVE HEART RATE CARD with Simple Line Waveform (No glow)
-            // =================================================================
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                child: PrecisionPulseWave(
-                  bpm: _telemetry.heartRate > 0 ? _telemetry.heartRate : 72,
-                  restingBpm: _telemetry.restingHeartRate > 0 ? _telemetry.restingHeartRate : 52,
-                  peakBpm: 154,
-                ),
-              ),
-            ),
-
-            // =================================================================
-            // 5. SLEEP SUMMARY CARD (4-Stage Breakdown Grid)
-            // =================================================================
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                child: PrecisionSleepCard(
-                  totalMinutes: totalSleepMins,
-                  deepMinutes: deepMins,
-                  remMinutes: remMins,
-                  lightMinutes: lightMins,
-                  awakeMinutes: awakeMins,
-                  sleepPerformanceScore: sleepResult.sleepPerformanceScore > 0
-                      ? sleepResult.sleepPerformanceScore
-                      : 88,
-                ),
-              ),
-            ),
-
-            // =================================================================
-            // 6. ATHLETIC COACHING INSIGHT (Swiss Precision Plain Grotesk)
-            // =================================================================
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: PrecisionCoachCard(
-                  title: 'PHYSIOLOGICAL READOUT',
-                  actionLabel: readiness.score >= 66
-                      ? 'PRIMED FOR LOAD'
-                      : (readiness.score >= 33 ? 'MAINTENANCE LOAD' : 'ACTIVE RECOVERY'),
-                  accentColor: readiness.score >= 66
-                      ? AppColors.sage
-                      : (readiness.score >= 33 ? AppColors.amber : AppColors.rose),
-                  insight: readiness.score >= 66
-                      ? 'Autonomic recovery is optimal. Parasympathetic dominance detected (+14% HRV vs baseline). Cardiovascular and neuromuscular systems are primed to absorb maximum strain today.'
-                      : (readiness.score >= 33
-                          ? 'Baseline recovery verified. Physiological markers are stable. Recommended strain ceiling capped at ${strainResult.targetStrainMax.toStringAsFixed(1)} to prevent autonomic fatigue.'
-                          : 'Cardiac output indicates elevated autonomic stress. Suppress high-glycolytic sessions. Prioritize parasympathetic breathing and restorative zone 1 mobility.'),
-                ),
-              ),
-            ),
-
-            // =================================================================
-            // 7. PRECISION DUAL ACTION BAR (1px Hairline Buttons)
-            // =================================================================
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-                child: Column(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                child: Row(
                   children: [
-                    // Ряд 1: Фото Дня + Круг Друзей
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              CircaHaptics.selectionClick();
-                              CircaPhotoOfDayDialog.show(
-                                context,
-                                telemetry: _telemetry,
-                                readiness: readiness,
-                                currentStrain: currentStrain,
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textNearWhite,
-                              backgroundColor: AppColors.surface,
-                              side: const BorderSide(color: AppColors.hairline, width: 1.0),
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.camera_alt_outlined, size: 14, color: AppColors.amber),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'ФОТО ДНЯ',
-                                  style: AppTypography.monoLabel.copyWith(
-                                    fontSize: 10,
-                                    color: AppColors.textNearWhite,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              CircaHaptics.selectionClick();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge),
-                                ),
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textNearWhite,
-                              backgroundColor: AppColors.surface,
-                              side: const BorderSide(color: AppColors.hairline, width: 1.0),
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.people_outline, size: 14, color: AppColors.sage),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'КРУГ ДРУЗЕЙ',
-                                  style: AppTypography.monoLabel.copyWith(
-                                    fontSize: 10,
-                                    color: AppColors.textNearWhite,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    Expanded(
+                      child: _stat(palette, ru ? 'ЧСС' : 'ЖС',
+                          '${_telemetry.heartRate > 0 ? _telemetry.heartRate : 72}', 'bpm'),
                     ),
-                    const SizedBox(height: 10),
-
-                    // Ряд 2: Био-Аватар + Настройки
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              CircaHaptics.selectionClick();
-                              widget.onOpenAvatar();
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textNearWhite,
-                              backgroundColor: AppColors.surface,
-                              side: const BorderSide(color: AppColors.hairline, width: 1.0),
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.sage,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'БИО-АВАТАР',
-                                  style: AppTypography.monoLabel.copyWith(
-                                    fontSize: 10,
-                                    color: AppColors.textNearWhite,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _stat(palette, 'HRV',
+                          _telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64', 'мс'),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _stat(palette, ru ? 'Покой' : 'Тынч',
+                          '${_telemetry.restingHeartRate > 0 ? _telemetry.restingHeartRate : 52}', 'bpm'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _link(
+                        palette,
+                        ru ? 'Друзья' : 'Достор',
+                        Icons.people_outline,
+                        () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge)),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              CircaHaptics.selectionClick();
-                              widget.onOpenDeviceSettings?.call();
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textNearWhite,
-                              backgroundColor: AppColors.surface,
-                              side: const BorderSide(color: AppColors.hairline, width: 1.0),
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.watch_outlined, size: 14, color: AppColors.textSecondary),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'НАСТРОЙКИ',
-                                  style: AppTypography.monoLabel.copyWith(
-                                    fontSize: 10,
-                                    color: AppColors.textNearWhite,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _link(
+                        palette,
+                        ru ? 'Персонаж' : 'Каарман',
+                        Icons.pets_outlined,
+                        widget.onOpenAvatar,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _link(
+                        palette,
+                        ru ? 'Часы' : 'Саат',
+                        Icons.watch_outlined,
+                        () => widget.onOpenDeviceSettings?.call(),
+                      ),
                     ),
                   ],
                 ),
@@ -546,6 +343,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _stat(KalkanColors palette, String label, String value, String unit) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: palette.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: palette.hairline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTypography.caption(palette.secondary)),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(value, style: AppTypography.metricValue(palette.fg)),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 1),
+                child: Text(unit, style: AppTypography.caption(palette.muted)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _link(KalkanColors palette, String label, IconData icon, VoidCallback onTap) {
+    return OutlinedButton(
+      onPressed: () {
+        CircaHaptics.selectionClick();
+        onTap();
+      },
+      style: OutlinedButton.styleFrom(
+        foregroundColor: palette.fg,
+        backgroundColor: palette.surface,
+        side: BorderSide(color: palette.hairline),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 16, color: palette.secondary),
+          const SizedBox(height: 4),
+          Text(label, style: AppTypography.caption(palette.fg)),
+        ],
       ),
     );
   }

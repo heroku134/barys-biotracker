@@ -78,7 +78,7 @@ class _CircaBreathingRetinaState extends State<CircaBreathingRetina>
             );
           },
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         // Микро-подпись о живом био-ритме
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -97,7 +97,7 @@ class _CircaBreathingRetinaState extends State<CircaBreathingRetina>
                 ],
               ),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               'ДЫХАТЕЛЬНЫЙ РИТМ 4.8s · БИОСИСТЕМА ЖИВАЯ',
               style: TextStyle(

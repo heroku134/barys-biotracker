@@ -32,14 +32,14 @@ class CircaTextField extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.muted,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.8,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
@@ -50,7 +50,7 @@ class CircaTextField extends StatelessWidget {
             controller: controller,
             obscureText: obscureText,
             keyboardType: keyboardType,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.fg,
               fontSize: 14,
               fontWeight: FontWeight.w600,

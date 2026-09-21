@@ -127,7 +127,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -143,7 +143,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                       letterSpacing: 1.8,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   const Text(
                     'Сделайте снимок или выберите готовый аватар',
                     style: TextStyle(
@@ -155,12 +155,12 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: AppColors.muted, size: 20),
+                icon: Icon(Icons.close, color: AppColors.muted, size: 20),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 1. Быстрые кнопки камеры и галереи
           Row(
@@ -175,13 +175,13 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                   ),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
-                    side: const BorderSide(color: AppColors.hairline),
+                    side: BorderSide(color: AppColors.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _pickImage(context, ImageSource.gallery),
@@ -192,7 +192,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                   ),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
-                    side: const BorderSide(color: AppColors.hairline),
+                    side: BorderSide(color: AppColors.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -201,13 +201,13 @@ class CircaAvatarPickerDialog extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
 
           Text(
             'ИЛИ ВЫБЕРИТЕ КОЛЛЕКЦИОННЫЙ ОБРАЗ:',
             style: AppTypography.monoLabel.copyWith(fontSize: 9.5, color: AppColors.textMuted),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           // 2. Сетка пресетов
           GridView.builder(
@@ -243,7 +243,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                         ),
                         content: Text(
                           'Фото владельца «${item['title']}» сохранено',
-                          style: const TextStyle(color: AppColors.textNearWhite, fontSize: 12),
+                          style: TextStyle(color: AppColors.textNearWhite, fontSize: 12),
                         ),
                         duration: const Duration(seconds: 2),
                       ),
@@ -279,7 +279,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                           child: AvatarImageProvider.buildAvatarWidget(path: path),
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         item['title']!,
                         style: TextStyle(
@@ -295,7 +295,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // Кнопка закрытия
           SizedBox(

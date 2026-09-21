@@ -60,7 +60,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -100,7 +100,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
 
             // Три ключевые цифры дня: Recovery, Бюджет Strain, Bedtime
             Row(
@@ -111,14 +111,14 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                   sub: readiness.zone.label,
                   color: readiness.zone.color,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildMetricBlock(
                   label: 'БЮДЖЕТ STRAIN',
                   value: '${strainResult.targetStrainMin.toStringAsFixed(1)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
                   sub: 'Целевая шкала',
                   color: AppColors.amber,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 _buildMetricBlock(
                   label: 'ОТБОЙ СЕГОДНЯ',
                   value: sleepResult.optimalBedtime,
@@ -127,7 +127,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Напутствие Барыс-Батыра
             Container(
@@ -154,7 +154,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,10 +168,10 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                             letterSpacing: 1.6,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           quote,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -185,7 +185,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Кнопка подтверждения
             SizedBox(
@@ -242,7 +242,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
@@ -251,10 +251,10 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               sub,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 9,
               ),

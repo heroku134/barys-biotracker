@@ -110,7 +110,7 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'ЭКСПОРТ В STORIES (9:16)',
                     style: AppTypography.monoLabel.copyWith(
@@ -123,12 +123,12 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: AppColors.muted, size: 20),
+                icon: Icon(Icons.close, color: AppColors.muted, size: 20),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           // Карточка 9:16 (масштабируется по доступной высоте экрана)
           Flexible(
@@ -144,7 +144,7 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Кнопки действий
           Row(
@@ -154,12 +154,12 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
                 child: ElevatedButton.icon(
                   onPressed: _isExporting ? null : _shareStory,
                   icon: _isExporting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.stage),
                         )
-                      : const Icon(Icons.share_outlined, size: 18, color: AppColors.stage),
+                      : Icon(Icons.share_outlined, size: 18, color: AppColors.stage),
                   label: Text(
                     _isExporting ? 'РЕНДЕРИНГ...' : 'ПОДЕЛИТЬСЯ (9:16)',
                     style: AppTypography.monoLabel.copyWith(
@@ -178,14 +178,14 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 flex: 1,
                 child: OutlinedButton(
                   onPressed: _isExporting ? null : _saveToDevice,
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
-                    side: const BorderSide(color: AppColors.hairline),
+                    side: BorderSide(color: AppColors.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class AvatarImageProvider {
   static ImageProvider getImageProvider(String? path) {
     if (path == null || path.isEmpty) {
-      return const AssetImage('assets/images/warrior_cutout_clean.png');
+      return const AssetImage('assets/images/mascot_normal.jpg');
     }
     if (path.startsWith('assets/')) {
       return AssetImage(path);
@@ -16,7 +16,7 @@ class AvatarImageProvider {
         return FileImage(file);
       }
     } catch (_) {}
-    return const AssetImage('assets/images/warrior_cutout_clean.png');
+    return const AssetImage('assets/images/mascot_normal.jpg');
   }
 
   static Widget buildAvatarWidget({
@@ -37,7 +37,7 @@ class AvatarImageProvider {
             fit: fit,
             alignment: alignment,
             errorBuilder: (context, error, stackTrace) => Image.asset(
-              'assets/images/warrior_cutout_clean.png',
+              'assets/images/mascot_normal.jpg',
               width: width,
               height: height,
               fit: fit,
@@ -49,7 +49,7 @@ class AvatarImageProvider {
     }
 
     return Image.asset(
-      (path != null && path.isNotEmpty) ? path : 'assets/images/warrior_cutout_clean.png',
+      (path != null && path.isNotEmpty) ? path : 'assets/images/mascot_normal.jpg',
       width: width,
       height: height,
       fit: fit,

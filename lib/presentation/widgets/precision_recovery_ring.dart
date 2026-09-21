@@ -137,7 +137,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           '$animatedScore',
                           style: AppTypography.heroNumber.copyWith(
@@ -145,7 +145,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
                             fontSize: widget.size * 0.28,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -172,7 +172,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
           ),
         ),
 
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         // 2. Strict 3-Column Metric Grid with 1px hairline dividers
         Container(
@@ -230,7 +230,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
             color: AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -243,7 +243,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
                 fontSize: 16,
               ),
             ),
-            const SizedBox(width: 3),
+            SizedBox(width: 3),
             Text(
               unit,
               style: AppTypography.monoUnit.copyWith(

@@ -68,7 +68,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // Хедер
               Row(
@@ -90,14 +90,14 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                             letterSpacing: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
                               '${readiness.score}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.fg,
                                 fontSize: 38,
                                 fontWeight: FontWeight.w700,
@@ -117,7 +117,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -138,9 +138,9 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       IconButton(
-                        icon: const Icon(Icons.close, color: AppColors.muted, size: 22),
+                        icon: Icon(Icons.close, color: AppColors.muted, size: 22),
                         onPressed: () => Navigator.of(context).pop(),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -149,7 +149,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // Баннер калибровки (если активен)
               if (readiness.isCalibrating)
@@ -164,7 +164,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   child: Row(
                     children: [
                       const Icon(Icons.tune, color: AppColors.amber, size: 20),
-                      const SizedBox(width: 10),
+                      SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +178,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                                 letterSpacing: 0.8,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             const Text(
                               'Оценка приблизительная. СААТ-1 формирует индивидуальную норму биомаркеров.',
                               style: TextStyle(color: AppColors.muted, fontSize: 10.5),
@@ -192,7 +192,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
 
               // «Один фактор в фокусе дня» (Каузальный анализ: причина -> следствие)
               _buildCausalHeroFocusCard(),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
 
               // Список 5 ночных биомаркеров
               const Text(
@@ -204,7 +204,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   letterSpacing: 2.0,
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
 
               _buildBiomarkerRow(
                 title: 'Ритм сердца (вариабельность)',
@@ -261,7 +261,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     : (readiness.tempFactor >= 45 ? AppColors.amber : AppColors.rose),
               ),
 
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               // Пояснение формулы
               Container(
@@ -285,7 +285,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               _buildReturnForecastCard(context),
 
               if (telemetry != null && baseline != null) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -307,7 +307,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                         userName: userName,
                       );
                     },
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.ios_share, size: 18),
@@ -325,7 +325,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -334,7 +334,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     foregroundColor: AppColors.fg,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: AppColors.line),
+                      side: BorderSide(color: AppColors.line),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -382,13 +382,13 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.fg,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                     decoration: BoxDecoration(
@@ -397,7 +397,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     ),
                     child: Text(
                       weight,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.muted,
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
@@ -416,13 +416,13 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 baselineVal,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 11,
                 ),
@@ -437,7 +437,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
@@ -517,7 +517,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'ОДИН ФАКТОР В ФОКУСЕ ДНЯ',
                 style: TextStyle(
@@ -545,10 +545,10 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             headline,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.fg,
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -556,10 +556,10 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               height: 1.3,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             causeStory,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.muted,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -597,7 +597,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'ПРОГНОЗ ВОЗВРАТА В ЗЕЛЕНУЮ ЗОНУ',
                   overflow: TextOverflow.ellipsis,
@@ -609,7 +609,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
@@ -628,7 +628,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           const Text(
             'Какое вечернее решение вернет вас на пик адаптации завтра:',
             style: TextStyle(
@@ -637,7 +637,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           // Сценарий 1: Отбой до 22:30 (Оптимум)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -655,11 +655,11 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: AppColors.sage.withValues(alpha: 0.18),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(Icons.bedtime_outlined, size: 16, color: AppColors.sage),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,7 +672,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         'Вероятность зеленой зоны завтра: $greenProbabilityEarly%',
                         style: const TextStyle(
@@ -692,7 +692,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                   child: Text(
                     '$greenProbabilityEarly%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.stage,
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
@@ -702,7 +702,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           // Сценарий 2: Поздний отбой
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -713,12 +713,12 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.muted),
-                const SizedBox(width: 8),
+                Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.muted),
+                SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'При отбое после 23:45 шанс падает до $greenProbabilityLate% (желтая зона)',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w500,
@@ -728,7 +728,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           // Кнопка фиксации напоминания
           SizedBox(
             width: double.infinity,
@@ -758,7 +758,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       side: const BorderSide(color: AppColors.sage),
                     ),
-                    content: const Row(
+                    content: Row(
                       children: [
                         Icon(Icons.check_circle_outline, color: AppColors.sage, size: 18),
                         SizedBox(width: 10),

@@ -5,20 +5,20 @@ class AppStrings {
   static const Map<String, Map<AppLanguage, String>> _strings = {
     // Входная цитата и сплэш
     'entrance_quote': {
-      AppLanguage.russian: '«Адамга өз чегин билбей өлгөн уят»',
-      AppLanguage.kyrgyz: '«Адамга өз чегин билбей өлгөн уят»',
+      AppLanguage.russian: 'Сон. Восстановление. Нагрузка.',
+      AppLanguage.kyrgyz: 'Уйку. Калыбына келүү. Жүктөм.',
     },
     'entrance_quote_sub': {
-      AppLanguage.russian: '«Стыдно человеку умереть, не познав предела своих сил»',
-      AppLanguage.kyrgyz: '«Адам өз чегин, дараметин жана күчүн билбей өтүп кеткени уят»',
+      AppLanguage.russian: 'Три числа. Одно решение на день.',
+      AppLanguage.kyrgyz: 'Үч сан. Күнгө бир чечим.',
     },
     'entrance_source': {
-      AppLanguage.russian: 'Кыргызская народная мудрость · KALKAN SPORT',
-      AppLanguage.kyrgyz: 'Кыргыз эл макалы · КАЛКАН СПОРТ',
+      AppLanguage.russian: 'КАЛКАН СПОРТ',
+      AppLanguage.kyrgyz: 'КАЛКАН СПОРТ',
     },
     'entrance_tap_to_enter': {
-      AppLanguage.russian: 'ТАП ДЛЯ ВХОДА В БИОСИСТЕМУ',
-      AppLanguage.kyrgyz: 'БИОСИСТЕМАГА КИРҮҮ ҮЧҮН БАСЫҢЫЗ',
+      AppLanguage.russian: 'Нажмите, чтобы открыть',
+      AppLanguage.kyrgyz: 'Ачуу үчүн басыңыз',
     },
     'entrance_initializing': {
       AppLanguage.russian: 'Инициализация сенсоров СААТ-1...',
@@ -31,16 +31,16 @@ class AppStrings {
       AppLanguage.kyrgyz: 'КАЛКАН СПОРТ · СААТ-1',
     },
     'auth_login_title': {
-      AppLanguage.russian: 'Вход в биосистему',
-      AppLanguage.kyrgyz: 'Биосистемага кирүү',
+      AppLanguage.russian: 'Вход',
+      AppLanguage.kyrgyz: 'Кирүү',
     },
     'auth_signup_title': {
       AppLanguage.russian: 'Создание аккаунта',
       AppLanguage.kyrgyz: 'Аккаунт түзүү',
     },
     'auth_subtitle': {
-      AppLanguage.russian: 'Синхронизация биометрии браслета с Барыс-Батыром',
-      AppLanguage.kyrgyz: 'Билерик биометриясын Барыс-Батыр менен шайкештөө',
+      AppLanguage.russian: 'Подключите браслет и войдите в аккаунт',
+      AppLanguage.kyrgyz: 'Билерикти туташтырып, аккаунтка кириңиз',
     },
     'auth_name_label': {
       AppLanguage.russian: 'Ваше имя',
@@ -251,40 +251,65 @@ class AppStrings {
       AppLanguage.kyrgyz: 'Чоюлуу',
     },
     'sport_record_button': {
-      AppLanguage.russian: 'НАЧАТЬ ТРЕНИРОВКУ',
-      AppLanguage.kyrgyz: 'МАШЫГУУНУ БАШТОО',
+      AppLanguage.russian: 'Начать тренировку',
+      AppLanguage.kyrgyz: 'Машыгууну баштоо',
     },
 
+
+    'home_sleep': {
+      AppLanguage.russian: 'Сон',
+      AppLanguage.kyrgyz: 'Уйку',
+    },
+    'home_recovery': {
+      AppLanguage.russian: 'Восстановление',
+      AppLanguage.kyrgyz: 'Калыбына келүү',
+    },
+    'home_strain': {
+      AppLanguage.russian: 'Нагрузка',
+      AppLanguage.kyrgyz: 'Жүктөм',
+    },
+    'home_synced': {
+      AppLanguage.russian: 'Связь',
+      AppLanguage.kyrgyz: 'Байланыш',
+    },
+    'home_offline': {
+      AppLanguage.russian: 'Офлайн',
+      AppLanguage.kyrgyz: 'Офлайн',
+    },
+    'home_guest': {
+      AppLanguage.russian: 'Гость',
+      AppLanguage.kyrgyz: 'Конок',
+    },
     // Анализ и стресс
     'analytics_title': {
-      AppLanguage.russian: 'АНАЛИТИКА БИОСИСТЕМЫ',
-      AppLanguage.kyrgyz: 'БИОСИСТЕМАНЫН АНАЛИТИКАСЫ',
+      AppLanguage.russian: 'Анализ',
+      AppLanguage.kyrgyz: 'Анализ',
     },
     'analytics_stress_timeline': {
-      AppLanguage.russian: 'ХРОНОЛОГИЯ СТРЕССА',
-      AppLanguage.kyrgyz: 'СТРЕССТИН ХРОНОЛОГИЯСЫ',
+      AppLanguage.russian: 'Стресс за день',
+      AppLanguage.kyrgyz: 'Күндүк стресс',
     },
     'analytics_day_story': {
-      AppLanguage.russian: 'ДЕНЬ В 5 СОБЫТИЯХ',
-      AppLanguage.kyrgyz: 'КҮН 5 ОКУЯДА',
+      AppLanguage.russian: 'День в событиях',
+      AppLanguage.kyrgyz: 'Күндүн окуялары',
     },
     'analytics_healthspan': {
-      AppLanguage.russian: 'БИОЛОГИЧЕСКИЙ ВОЗРАСТ И HEALTHSPAN',
-      AppLanguage.kyrgyz: 'БИОЛОГИЯЛЫК КУРАК ЖАНА HEALTHSPAN',
+      AppLanguage.russian: 'Биологический возраст',
+      AppLanguage.kyrgyz: 'Биологиялык курак',
     },
 
     // Профиль и настройки
     'profile_title': {
-      AppLanguage.russian: 'ПРОФИЛЬ АТЛЕТА',
-      AppLanguage.kyrgyz: 'АТЛЕТТИН ПРОФИЛИ',
+      AppLanguage.russian: 'Профиль',
+      AppLanguage.kyrgyz: 'Профиль',
     },
     'profile_passport': {
-      AppLanguage.russian: 'ПРЕЦИЗИОННЫЙ ПРОФИЛЬ АТЛЕТА',
-      AppLanguage.kyrgyz: 'АТЛЕТТИН БИОМЕТРИКАЛЫК ПРОФИЛИ',
+      AppLanguage.russian: 'Данные профиля',
+      AppLanguage.kyrgyz: 'Профиль маалыматы',
     },
     'profile_language_section': {
-      AppLanguage.russian: 'ЯЗЫК ИНТЕРФЕЙСА',
-      AppLanguage.kyrgyz: 'ИНТЕРФЕЙС ТИЛИ',
+      AppLanguage.russian: 'Язык',
+      AppLanguage.kyrgyz: 'Тил',
     },
     'profile_language_sub': {
       AppLanguage.russian: 'Тилди тандоо · Выбор языка',

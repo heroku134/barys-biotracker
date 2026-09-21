@@ -73,7 +73,7 @@ class PrecisionStrainBar extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // 2. Hero Metric Row
           Row(
@@ -87,7 +87,7 @@ class PrecisionStrainBar extends StatelessWidget {
                   fontSize: 36,
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Text(
                 '/ ${maxStrain.toStringAsFixed(1)}',
                 style: AppTypography.monoUnit.copyWith(
@@ -114,7 +114,7 @@ class PrecisionStrainBar extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // 3. Flat Precision Progress Track with Target Bracket
           SizedBox(
@@ -176,7 +176,7 @@ class PrecisionStrainBar extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // 4. Monospace Data Row
           Row(
@@ -208,7 +208,7 @@ class PrecisionStrainBar extends StatelessWidget {
             color: AppColors.textNearWhite,
           ),
         ),
-        const SizedBox(width: 2),
+        SizedBox(width: 2),
         Text(
           unit,
           style: AppTypography.monoUnit.copyWith(

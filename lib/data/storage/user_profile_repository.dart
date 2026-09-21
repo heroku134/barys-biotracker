@@ -18,7 +18,7 @@ class UserProfileRepository {
         profile = UserProfile.deserialize(jsonStr);
       } catch (_) {}
     } else {
-      final isAuth = prefs.getBool(_keyAuth) ?? true;
+      final isAuth = prefs.getBool(_keyAuth) ?? false;
       profile = UserProfile(isAuthenticated: isAuth);
     }
     profileNotifier.value = profile;

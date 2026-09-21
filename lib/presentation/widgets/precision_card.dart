@@ -31,10 +31,10 @@ class PrecisionCard extends StatelessWidget {
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surface,
+        color: backgroundColor ?? KalkanColors.of(context).surface,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: borderColor ?? AppColors.hairline,
+          color: borderColor ?? KalkanColors.of(context).hairline,
           width: 1.0,
         ),
       ),

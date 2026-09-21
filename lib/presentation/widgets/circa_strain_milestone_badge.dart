@@ -98,7 +98,7 @@ class _CircaStrainMilestoneBadgeState extends State<CircaStrainMilestoneBadge>
                 color: badgeColor,
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 message,

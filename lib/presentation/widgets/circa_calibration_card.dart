@@ -44,7 +44,7 @@ class CircaCalibrationCard extends StatelessWidget {
                     color: AppColors.amber,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 const Text(
                   'КАЛИБРОВКА БАЗЫ',
                   style: TextStyle(
@@ -65,7 +65,7 @@ class CircaCalibrationCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // 14-сегментный прогресс-бар
             Row(
@@ -86,7 +86,7 @@ class CircaCalibrationCard extends StatelessWidget {
                 );
               }),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Минималистичная подсказка для тапа
             Row(
@@ -148,7 +148,7 @@ class CircaCalibrationCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 const Text(
                   '14-ДНЕВНЫЙ ПРОТОКОЛ КАЛИБРОВКИ',
                   style: TextStyle(
@@ -158,7 +158,7 @@ class CircaCalibrationCard extends StatelessWidget {
                     letterSpacing: 1.8,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 const Text(
                   'Формирование биометрической нормы',
                   style: TextStyle(
@@ -167,7 +167,7 @@ class CircaCalibrationCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -184,7 +184,7 @@ class CircaCalibrationCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
 
                 // Микро-метрики текущей точности в модальном окне
                 Container(
@@ -215,7 +215,7 @@ class CircaCalibrationCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -262,13 +262,13 @@ class _CalibrationMiniTag extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.muted,
             fontSize: 9,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 2),
+        SizedBox(height: 2),
         Row(
           children: [
             Icon(
@@ -276,7 +276,7 @@ class _CalibrationMiniTag extends StatelessWidget {
               size: 11,
               color: isReady ? AppColors.sage : AppColors.amber,
             ),
-            const SizedBox(width: 3),
+            SizedBox(width: 3),
             Text(
               value,
               style: TextStyle(

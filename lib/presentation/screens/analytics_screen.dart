@@ -14,6 +14,8 @@ import '../widgets/circa_hypnogram.dart';
 import '../widgets/circa_sparkline.dart';
 import '../widgets/circa_stress_timeline.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/metric_dial.dart';
+import '../../domain/intelligence/readiness_engine.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -51,33 +53,46 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'KALKAN BIOMETRICS',
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2.2,
-                  ),
-                ),
-                Text(
-                  AppStrings.tr('analytics_title', language),
-                  style: const TextStyle(
-                    color: AppColors.fg,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            title: Text(
+              AppStrings.tr('analytics_title', language),
+              style: TextStyle(
+                color: AppColors.fg,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                MetricDial(
+                  label: AppStrings.tr('home_sleep', language),
+                  value: '${sleepAnalysis.sleepPerformanceScore > 0 ? sleepAnalysis.sleepPerformanceScore : 88}%',
+                  progress: (sleepAnalysis.sleepPerformanceScore > 0 ? sleepAnalysis.sleepPerformanceScore : 88) / 100,
+                  color: AppColors.sleepBlue,
+                  size: 88,
+                ),
+                MetricDial(
+                  label: AppStrings.tr('home_recovery', language),
+                  value: '${ReadinessEngine.calculate(telemetry, baseline: _baseline).score}%',
+                  progress: ReadinessEngine.calculate(telemetry, baseline: _baseline).score / 100,
+                  color: ReadinessEngine.calculate(telemetry, baseline: _baseline).zone.color,
+                  size: 88,
+                ),
+                MetricDial(
+                  label: AppStrings.tr('home_strain', language),
+                  value: (telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 12.4).toStringAsFixed(1),
+                  progress: ((telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 12.4) / 21).clamp(0.0, 1.0),
+                  color: AppColors.strainBlue,
+                  size: 88,
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
             // Переключатель временных интервалов
             Container(
               padding: const EdgeInsets.all(4),
@@ -95,7 +110,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // 1. Профиль пульса (ЧСС) по периодам
             GlassCard(
@@ -107,7 +122,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     children: [
                       Text(
                         _getHeartRateCardTitle(_selectedPeriod),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -120,7 +135,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   SizedBox(
                     height: 90,
                     child: CircaSparkline(
@@ -129,24 +144,24 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       height: 90,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   _buildAxisLabels(_selectedPeriod),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // 2. Архитектура сна и гипнограмма
             CircaHypnogram(sleepResult: sleepAnalysis),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // 3. Дневной монитор стресса (лента дня)
             CircaStressTimeline(stressSummary: stressSummary),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // 4. Биологический возраст CIRCA (Healthspan)
             CircaHealthspanCard(healthspan: healthspan),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // 5. Гормональный цикл и адаптация нагрузки
             GlassCard(
@@ -162,13 +177,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ),
                     child: const Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                  SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ФИЗИОЛОГИЧЕСКИЙ ЦИКЛ',
+                          'Цикл',
                           style: TextStyle(
                             color: AppColors.amber,
                             fontSize: 10,
@@ -196,11 +211,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios, color: AppColors.muted, size: 12),
+                  Icon(Icons.arrow_forward_ios, color: AppColors.muted, size: 12),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
           ],
         ),
       ),
@@ -233,8 +248,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            const Row(
+            SizedBox(height: 16),
+            Row(
               children: [
                 Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
                 SizedBox(width: 8),
@@ -244,7 +259,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -252,17 +267,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.line),
               ),
-              child: const Text(
+              child: Text(
                 'Колебания ВСР и пульса покоя в лютеиновой или фолликулярной фазе — это естественный физиологический процесс, а не падение спортивной формы.',
                 style: TextStyle(color: AppColors.fg, fontSize: 13, height: 1.4),
               ),
             ),
-            const SizedBox(height: 12),
-            const Text(
+            SizedBox(height: 12),
+            Text(
               'СААТ-1 автоматически учитывает фазу цикла и калибрует целевой бюджет суточной нагрузки, защищая нервную систему и сердце от перетренированности.',
               style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -270,7 +285,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(Icons.check_circle_outline, color: AppColors.amber, size: 16),
                   SizedBox(width: 8),
@@ -322,7 +337,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   Widget _buildAxisLabels(int period) {
     switch (period) {
       case 0:
-        return const Row(
+        return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('00:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
@@ -333,7 +348,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ],
         );
       case 1:
-        return const Row(
+        return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Пн', style: TextStyle(color: AppColors.faint, fontSize: 10)),
@@ -346,7 +361,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ],
         );
       case 2:
-        return const Row(
+        return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('1-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
@@ -356,7 +371,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ],
         );
       case 3:
-        return const Row(
+        return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('6 мес назад', style: TextStyle(color: AppColors.faint, fontSize: 10)),

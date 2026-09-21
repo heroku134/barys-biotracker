@@ -16,7 +16,7 @@ class CircaFilmGrainBackground extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         // 1. Базовый благородный титаново-графитовый оттенок
-        const ColoredBox(color: AppColors.stage),
+        ColoredBox(color: AppColors.stage),
 
         // 2. Аналоговый шум (запеченный в GPU-слой с нулевым оверхедом)
         const RepaintBoundary(

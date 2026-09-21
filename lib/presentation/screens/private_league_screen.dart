@@ -56,7 +56,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
           ),
           content: Text(
             'Инвайт-код ${_league!.inviteCode} скопирован в буфер',
-            style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
+            style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -97,7 +97,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               const Text(
                 'ПРИГЛАШЕНИЕ В КРУГ ДОВЕРИЯ',
                 style: TextStyle(
@@ -107,48 +107,48 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   letterSpacing: 1.8,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               const Text(
                 'Добавление друга (до 5 участников)',
                 style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               TextField(
                 controller: nameController,
-                style: const TextStyle(color: AppColors.fg, fontSize: 14),
+                style: TextStyle(color: AppColors.fg, fontSize: 14),
                 decoration: InputDecoration(
                   labelText: 'Имя друга или позывной',
-                  labelStyle: const TextStyle(color: AppColors.muted, fontSize: 13),
+                  labelStyle: TextStyle(color: AppColors.muted, fontSize: 13),
                   filled: true,
                   fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.amber)),
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
 
               TextField(
                 controller: codeController,
-                style: const TextStyle(color: AppColors.fg, fontSize: 14),
+                style: TextStyle(color: AppColors.fg, fontSize: 14),
                 decoration: InputDecoration(
                   labelText: 'Инвайт-код (опционально, напр. BATYR-05)',
-                  labelStyle: const TextStyle(color: AppColors.muted, fontSize: 13),
+                  labelStyle: TextStyle(color: AppColors.muted, fontSize: 13),
                   filled: true,
                   fillColor: AppColors.surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.amber)),
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               const Text(
                 'Быстрый выбор из контактов KALKAN:',
                 style: TextStyle(color: AppColors.muted, fontSize: 11, fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 children: [
@@ -157,12 +157,12 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   'Марат Б.',
                 ].map((suggested) => ActionChip(
                   backgroundColor: AppColors.surface,
-                  side: const BorderSide(color: AppColors.line),
-                  label: Text(suggested, style: const TextStyle(color: AppColors.fg, fontSize: 11)),
+                  side: BorderSide(color: AppColors.line),
+                  label: Text(suggested, style: TextStyle(color: AppColors.fg, fontSize: 11)),
                   onPressed: () => nameController.text = suggested,
                 )).toList(),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
 
               SizedBox(
                 width: double.infinity,
@@ -222,24 +222,24 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
+              icon: Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Column(
               children: [
                 Text(
                   AppStrings.tr('league_appbar_sub', language),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 2.2,
                   ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(
                   AppStrings.tr('league_appbar_title', language),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.fg,
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -250,14 +250,14 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline, color: AppColors.muted, size: 20),
+            icon: Icon(Icons.info_outline, color: AppColors.muted, size: 20),
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: AppColors.surface,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Философия узкого круга', style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700)),
+                  title: Text('Философия узкого круга', style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700)),
                   content: const Text(
                     'Вместо токсичных глобальных таблиц лидеров КАЛКАН использует закрытые круги на 3–5 человек. Вы соревнуетесь только с собой, получая искреннюю поддержку близких.',
                     style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.4),
@@ -292,12 +292,12 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                         child: Row(
                           children: [
                             const Icon(Icons.shield_outlined, color: AppColors.amber, size: 18),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 league.title,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.fg,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
@@ -308,7 +308,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -326,7 +326,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -337,14 +337,14 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                             'СРЕДНЕЕ ВОССТАНОВЛЕНИЕ КРУГА',
                             style: TextStyle(color: AppColors.muted, fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.2),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4),
                           Row(
                             children: [
                               Text(
                                 '$avgScore%',
                                 style: const TextStyle(color: AppColors.sage, fontSize: 24, fontWeight: FontWeight.w800),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               const Text('· Зеленый коридор', style: TextStyle(color: AppColors.sage, fontSize: 12, fontWeight: FontWeight.w600)),
                             ],
                           ),
@@ -367,15 +367,15 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
                   Container(height: 1, color: AppColors.line),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
                         children: [
-                          const Text('ИНВАЙТ-КОД: ', style: TextStyle(color: AppColors.muted, fontSize: 10.5, fontWeight: FontWeight.w700)),
+                          Text('ИНВАЙТ-КОД: ', style: TextStyle(color: AppColors.muted, fontSize: 10.5, fontWeight: FontWeight.w700)),
                           Text(league.inviteCode, style: const TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0)),
                         ],
                       ),
@@ -394,7 +394,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
 
             // Members Header
             Row(
@@ -411,11 +411,11 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                 ),
                 Text(
                   '${league.availableSlots} свободных слота',
-                  style: const TextStyle(color: AppColors.faint, fontSize: 11, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: AppColors.faint, fontSize: 11, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Members List
             ...league.members.map((member) {
@@ -453,7 +453,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
 
                         // Center Info
                         Expanded(
@@ -473,7 +473,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  SizedBox(width: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                                     decoration: BoxDecoration(
@@ -487,17 +487,17 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 3),
+                              SizedBox(height: 3),
                               Text(
                                 member.statusQuote,
-                                style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                                style: TextStyle(color: AppColors.muted, fontSize: 11),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
 
                         // Right Metrics
                         Column(
@@ -510,22 +510,22 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                                   height: 6,
                                   decoration: BoxDecoration(shape: BoxShape.circle, color: zoneColor),
                                 ),
-                                const SizedBox(width: 4),
+                                SizedBox(width: 4),
                                 Text(
                                   '${member.recoveryScore}%',
                                   style: TextStyle(color: zoneColor, fontSize: 16, fontWeight: FontWeight.w800),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             Text(
                               '${member.currentDayStrain.toStringAsFixed(1)} Str',
                               style: const TextStyle(color: AppColors.amber, fontSize: 10.5, fontWeight: FontWeight.w700),
                             ),
                           ],
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.faint),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.faint),
                       ],
                     ),
                   ),
@@ -534,7 +534,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
             }),
 
             // Add Friend / Full Circle status
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             if (!league.isFull)
               SizedBox(
                 width: double.infinity,
@@ -561,7 +561,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.lock_outline, size: 14, color: AppColors.amber),
@@ -574,7 +574,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                 ),
               ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Quiet Luxury Note
             Container(
@@ -598,7 +598,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
           ],
         ),
       ),

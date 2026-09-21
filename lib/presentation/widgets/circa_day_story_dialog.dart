@@ -163,11 +163,11 @@ KALKAN BIOTRACKER · Хроника дня
           content: Row(
             children: [
               const Icon(Icons.check_circle_outline, color: AppColors.amber, size: 20),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Событие «${slot.contextTitle}» скопировано в буфер для сторис!',
-                  style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -230,7 +230,7 @@ KALKAN BIOTRACKER · Хроника дня
                         );
                       }),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
 
                     // Верхняя панель: инфо о событии и закрытие
                     Row(
@@ -247,7 +247,7 @@ KALKAN BIOTRACKER · Хроника дня
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -262,7 +262,7 @@ KALKAN BIOTRACKER · Хроника дня
                             ),
                             Text(
                               'Событие ${_currentIndex + 1} из ${_slots.length}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.fg,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -272,12 +272,12 @@ KALKAN BIOTRACKER · Хроника дня
                         ),
                         const Spacer(),
                         IconButton(
-                          icon: const Icon(Icons.close, color: AppColors.muted, size: 22),
+                          icon: Icon(Icons.close, color: AppColors.muted, size: 22),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
 
                     // Основная карточка события
                     Expanded(
@@ -344,11 +344,11 @@ KALKAN BIOTRACKER · Хроника дня
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.schedule, color: AppColors.muted, size: 12),
-                                          const SizedBox(width: 6),
+                                          Icon(Icons.schedule, color: AppColors.muted, size: 12),
+                                          SizedBox(width: 6),
                                           Text(
                                             slot.timeRange,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               color: AppColors.fg,
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600,
@@ -385,7 +385,7 @@ KALKAN BIOTRACKER · Хроника дня
                                               color: slot.level.color,
                                             ),
                                           ),
-                                          const SizedBox(width: 6),
+                                          SizedBox(width: 6),
                                           Text(
                                             '${slot.stressScore}% СТРЕСС',
                                             style: TextStyle(
@@ -420,7 +420,7 @@ KALKAN BIOTRACKER · Хроника дня
                                             Expanded(
                                               child: Text(
                                                 slot.contextTitle,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color: AppColors.fg,
                                                   fontSize: 17,
                                                   fontWeight: FontWeight.w700,
@@ -451,10 +451,10 @@ KALKAN BIOTRACKER · Хроника дня
                                               ),
                                           ],
                                         ),
-                                        const SizedBox(height: 6),
+                                        SizedBox(height: 6),
                                         Text(
                                           slot.physiologicalNote,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.muted,
                                             fontSize: 12,
                                             height: 1.35,
@@ -487,7 +487,7 @@ KALKAN BIOTRACKER · Хроника дня
                                               size: 14,
                                             ),
                                           ),
-                                          const SizedBox(width: 10),
+                                          SizedBox(width: 10),
                                           Expanded(
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,10 +501,10 @@ KALKAN BIOTRACKER · Хроника дня
                                                     letterSpacing: 1.2,
                                                   ),
                                                 ),
-                                                const SizedBox(height: 2),
+                                                SizedBox(height: 2),
                                                 Text(
                                                   slot.barysReaction,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     color: AppColors.fg,
                                                     fontSize: 12,
                                                     fontStyle: FontStyle.italic,
@@ -531,7 +531,7 @@ KALKAN BIOTRACKER · Хроника дня
                                             ),
                                             label: Text(
                                               slot.userTag != null ? 'Изменить' : 'Разметить',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 color: AppColors.fg,
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w600,
@@ -539,7 +539,7 @@ KALKAN BIOTRACKER · Хроника дня
                                             ),
                                             style: OutlinedButton.styleFrom(
                                               backgroundColor: AppColors.raised,
-                                              side: const BorderSide(color: AppColors.line),
+                                              side: BorderSide(color: AppColors.line),
                                               padding: const EdgeInsets.symmetric(vertical: 10),
                                               shape: RoundedRectangleBorder(
                                                 borderRadius: BorderRadius.circular(10),
@@ -547,7 +547,7 @@ KALKAN BIOTRACKER · Хроника дня
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(width: 10),
+                                        SizedBox(width: 10),
                                         Expanded(
                                           child: ElevatedButton.icon(
                                             onPressed: () => _shareEvent(slot),
@@ -583,7 +583,7 @@ KALKAN BIOTRACKER · Хроника дня
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
 
                     // Подсказка навигации
                     const Text(
@@ -673,13 +673,13 @@ KALKAN BIOTRACKER · Хроника дня
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'РАЗМЕТКА СОБЫТИЯ (${slot.timeRange})',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -696,12 +696,12 @@ KALKAN BIOTRACKER · Хроника дня
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               const Text(
                 'Отметь причину пика или спада — через 30 дней ИИ Барыса начнет предсказывать триггеры стресса:',
                 style: TextStyle(color: AppColors.fg, fontSize: 13, height: 1.3),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               // Быстрые теги
               Wrap(
@@ -723,13 +723,13 @@ KALKAN BIOTRACKER · Хроника дня
                       ),
                       child: Text(
                         tag,
-                        style: const TextStyle(color: AppColors.fg, fontSize: 12),
+                        style: TextStyle(color: AppColors.fg, fontSize: 12),
                       ),
                     ),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               // Ручной ввод
               Row(
@@ -737,20 +737,20 @@ KALKAN BIOTRACKER · Хроника дня
                   Expanded(
                     child: TextField(
                       controller: controller,
-                      style: const TextStyle(color: AppColors.fg, fontSize: 13),
+                      style: TextStyle(color: AppColors.fg, fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Или введи свою причину...',
-                        hintStyle: const TextStyle(color: AppColors.muted, fontSize: 12),
+                        hintStyle: TextStyle(color: AppColors.muted, fontSize: 12),
                         filled: true,
                         fillColor: AppColors.raised,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.line),
+                          borderSide: BorderSide(color: AppColors.line),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.line),
+                          borderSide: BorderSide(color: AppColors.line),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -759,7 +759,7 @@ KALKAN BIOTRACKER · Хроника дня
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
                       HapticFeedback.selectionClick();

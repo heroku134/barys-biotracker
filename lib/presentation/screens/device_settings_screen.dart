@@ -81,11 +81,11 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         content: Row(
           children: [
             const Icon(Icons.sync, color: AppColors.sage, size: 20),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Время и часовой пояс синхронизированы (${DateTime.now().hour.toString().padLeft(2, '0')}:${DateTime.now().minute.toString().padLeft(2, '0')})',
-                style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+                style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -100,7 +100,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Сброс до заводских настроек?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
+        title: Text('Сброс до заводских настроек?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
         content: const Text(
           'Все несохраненные кэшированные данные на браслете будут очищены, а связь разорвана.',
           style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.4),
@@ -108,7 +108,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+            child: Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
           ),
           TextButton(
             onPressed: () {
@@ -138,10 +138,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.fg),
+          icon: Icon(Icons.arrow_back, color: AppColors.fg),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -204,20 +204,20 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                           size: 26,
                         ),
                       ),
-                      const SizedBox(width: 14),
+                      SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               telemetry.deviceName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.fg,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             Text(
                               telemetry.isConnected ? 'На связи (BLE 5.3 Nordic)' : 'Отключено',
                               style: TextStyle(
@@ -239,7 +239,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                         child: Row(
                           children: [
                             const Icon(Icons.battery_charging_full, color: AppColors.sage, size: 14),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               '${telemetry.batteryLevel}%',
                               style: const TextStyle(
@@ -253,9 +253,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   const Divider(color: AppColors.line, height: 1),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   InkWell(
                     onTap: () => FirmwareUpdateScreen.open(context, watchBattery: telemetry.batteryLevel),
                     borderRadius: BorderRadius.circular(6),
@@ -266,8 +266,8 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                         children: [
                           Row(
                             children: [
-                              const Text('Прошивка: v1.2.4', style: TextStyle(color: AppColors.muted, fontSize: 11)),
-                              const SizedBox(width: 8),
+                              Text('Прошивка: v1.2.4', style: TextStyle(color: AppColors.muted, fontSize: 11)),
+                              SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
@@ -296,7 +296,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Кнопка поиска часов (Вибрация)
             SizedBox(
@@ -317,7 +317,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             const Text(
               'ФУНКЦИИ И АВТОМАТИЗАЦИЯ',
@@ -328,14 +328,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 letterSpacing: 2.0,
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Fake Watch Mode
             GlassCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -367,7 +367,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                           backgroundColor: AppColors.surface,
                           content: Text(
                             val ? 'Fake Watch Mode активирован' : 'Режим переключен на физический BLE чип',
-                            style: const TextStyle(color: AppColors.fg),
+                            style: TextStyle(color: AppColors.fg),
                           ),
                         ),
                       );
@@ -376,14 +376,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Антипотеря (Anti-loss)
             GlassCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -407,14 +407,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Оповещение об отключении BLE
             GlassCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -438,14 +438,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Умный будильник
             GlassCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -469,14 +469,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Напоминание о воде
             GlassCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -500,7 +500,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Ручные действия: Замер пульса и Синхронизация времени
             Row(
@@ -509,7 +509,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _isMeasuringHr ? null : _triggerHrMeasurement,
                     icon: _isMeasuringHr
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 14,
                             height: 14,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.rose),
@@ -517,16 +517,16 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                         : const Icon(Icons.favorite, color: AppColors.rose, size: 16),
                     label: Text(
                       _isMeasuringHr ? 'ИЗМЕРЕНИЕ...' : 'ЗАМЕР ПУЛЬСА',
-                      style: const TextStyle(color: AppColors.fg, fontSize: 11, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: AppColors.fg, fontSize: 11, fontWeight: FontWeight.w700),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.line),
+                      side: BorderSide(color: AppColors.line),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _syncTime,
@@ -536,7 +536,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       style: TextStyle(color: AppColors.fg, fontSize: 11, fontWeight: FontWeight.w700),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.line),
+                      side: BorderSide(color: AppColors.line),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -544,7 +544,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Сброс до заводских настроек
             Center(

@@ -76,7 +76,7 @@ class PrecisionSleepCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // 2. Hero Duration Row
           Row(
@@ -90,7 +90,7 @@ class PrecisionSleepCard extends StatelessWidget {
                   fontSize: 32,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'TOTAL ASLEEP',
                 style: AppTypography.monoUnit.copyWith(
@@ -109,7 +109,7 @@ class PrecisionSleepCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // 3. Segmented Flat Sleep Bar (Zero glow, exact color coding)
           ClipRRect(
@@ -142,7 +142,7 @@ class PrecisionSleepCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // 4. Strict 4-Column Stages Breakdown Grid
           Container(
@@ -184,7 +184,7 @@ class PrecisionSleepCard extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             Text(
               name,
               style: AppTypography.monoLabel.copyWith(
@@ -195,7 +195,7 @@ class PrecisionSleepCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 3),
+        SizedBox(height: 3),
         Text(
           _formatHoursMins(mins),
           style: AppTypography.metricValue.copyWith(

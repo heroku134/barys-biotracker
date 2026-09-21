@@ -288,11 +288,11 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                                     color: tier.auraColor,
                                     size: 14,
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
                                       _displayedSpeech!,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppColors.fg,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -374,7 +374,7 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: AppColors.raised,
-                                  child: const Center(
+                                  child: Center(
                                     child: Icon(Icons.pets, size: 80, color: AppColors.amber),
                                   ),
                                 );
@@ -430,7 +430,7 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                             color: tier.auraColor,
                           ),
                         ),
-                        const SizedBox(width: 5),
+                        SizedBox(width: 5),
                         Text(
                           tier.shortName.toUpperCase(),
                           style: TextStyle(
@@ -475,7 +475,7 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                             color: widget.state.badgeColor,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6),
                         Text(
                           widget.state.badgeText,
                           style: TextStyle(
@@ -485,10 +485,10 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                             letterSpacing: 1.2,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           '${widget.bpm} BPM',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,

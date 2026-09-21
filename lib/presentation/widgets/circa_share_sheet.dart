@@ -140,11 +140,11 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                 color: AppColors.amber,
                 size: 20,
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.fg,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -191,13 +191,13 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Заголовок шторки
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -221,13 +221,13 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.muted, size: 20),
+                  icon: Icon(Icons.close, color: AppColors.muted, size: 20),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
 
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Переключатель формата: СТАТИЧНЫЙ PNG vs ЖИВАЯ СТОРИС 5 СЕК
             Container(
@@ -257,7 +257,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                                 size: 14,
                                 color: !_isMotionMode ? AppColors.fg : AppColors.muted,
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               Text(
                                 'СТАТИЧНЫЙ PNG',
                                 style: TextStyle(
@@ -294,7 +294,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                                 size: 14,
                                 color: _isMotionMode ? AppColors.amber : AppColors.muted,
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               Text(
                                 'ЖИВАЯ СТОРИС (5 СЕК)',
                                 style: TextStyle(
@@ -314,7 +314,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
               ),
             ),
 
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // Переключатель тем карточки
             Container(
@@ -359,7 +359,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
               ),
             ),
 
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Превью карточки 9:16 с масштабированием
             ConstrainedBox(
@@ -391,7 +391,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
               ),
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Кнопки действий
             Row(
@@ -415,7 +415,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (_isExporting)
-                          const SizedBox(
+                          SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
@@ -425,7 +425,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                           )
                         else ...[
                           Icon(_isMotionMode ? Icons.movie_filter : Icons.ios_share, size: 18),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             _isMotionMode ? 'ЭКСПОРТ СТОРИС 5s' : 'ПОДЕЛИТЬСЯ',
                             style: const TextStyle(
@@ -439,13 +439,13 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   flex: 1,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.fg,
-                      side: const BorderSide(color: AppColors.line, width: 1.2),
+                      side: BorderSide(color: AppColors.line, width: 1.2),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -457,8 +457,8 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.download, size: 16, color: AppColors.muted),
-                        const SizedBox(width: 4),
+                        Icon(Icons.download, size: 16, color: AppColors.muted),
+                        SizedBox(width: 4),
                         Text(
                           _isMotionMode ? 'MP4' : 'PNG',
                           style: const TextStyle(

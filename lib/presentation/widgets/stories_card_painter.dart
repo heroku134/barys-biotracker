@@ -95,7 +95,7 @@ class StoriesCardWidget extends StatelessWidget {
                   Column(
                     children: [
                       _buildMetricsGrid(),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       _buildFooter(),
                     ],
                   ),
@@ -129,7 +129,7 @@ class StoriesCardWidget extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'KALKAN SPORT · SAAT-1',
                 style: AppTypography.monoLabel.copyWith(
@@ -169,7 +169,7 @@ class StoriesCardWidget extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Гигантское круговое кольцо готовности
           Stack(
@@ -195,7 +195,7 @@ class StoriesCardWidget extends StatelessWidget {
                     children: [
                       Text(
                         '${readiness.score}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textNearWhite,
                           fontSize: 54,
                           fontWeight: FontWeight.w700,
@@ -216,7 +216,7 @@ class StoriesCardWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     'RECOVERY',
                     style: AppTypography.monoLabel.copyWith(
@@ -230,7 +230,7 @@ class StoriesCardWidget extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // Статус зоны
           Container(
@@ -269,7 +269,7 @@ class StoriesCardWidget extends StatelessWidget {
                 subtext: 'OPTIMAL LOAD',
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: _buildMetricTile(
                 title: 'RESTING HR',
@@ -281,7 +281,7 @@ class StoriesCardWidget extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         Row(
           children: [
             Expanded(
@@ -293,7 +293,7 @@ class StoriesCardWidget extends StatelessWidget {
                 subtext: 'BIO 24 · CHRONO 28',
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: _buildMetricTile(
                 title: 'HRV rMSSD',
@@ -334,7 +334,7 @@ class StoriesCardWidget extends StatelessWidget {
               letterSpacing: 1.2,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -348,7 +348,7 @@ class StoriesCardWidget extends StatelessWidget {
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 unit,
                 style: AppTypography.monoLabel.copyWith(
@@ -359,7 +359,7 @@ class StoriesCardWidget extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(
             subtext,
             style: AppTypography.monoLabel.copyWith(
@@ -391,13 +391,13 @@ class StoriesCardWidget extends StatelessWidget {
                 width: 22,
                 height: 22,
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     athleteName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textNearWhite,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

@@ -61,22 +61,22 @@ class CircaAiLanguagePill extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Text(
                   language.flag,
                   style: const TextStyle(fontSize: 12),
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Text(
                   language.shortTitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.fg,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(width: 5),
+                SizedBox(width: 5),
                 const Icon(
                   Icons.sync_alt,
                   color: AppColors.muted,

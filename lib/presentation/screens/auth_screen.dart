@@ -8,7 +8,6 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_ai_language_pill.dart';
-import '../widgets/circa_film_grain.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
 import 'main_shell.dart';
@@ -153,8 +152,7 @@ class _AuthScreenState extends State<AuthScreen> {
       builder: (context, language, _) {
         return Scaffold(
           backgroundColor: AppColors.stage,
-          body: CircaFilmGrainBackground(
-            child: SafeArea(
+          body: SafeArea(
               child: Stack(
                 children: [
                   Center(
@@ -164,17 +162,17 @@ class _AuthScreenState extends State<AuthScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
 
                           // Богатое пульсирующее лого КАЛКАН
-                          const Center(
+                          Center(
                             child: CircaPulsingLogo(
                               size: 110,
                               primaryColor: AppColors.amber,
                               secondaryColor: AppColors.sage,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20),
 
                           // Заголовок экрана входа
                           Text(
@@ -182,14 +180,14 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ? AppStrings.tr('auth_signup_title', language)
                                 : AppStrings.tr('auth_login_title', language),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.fg,
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: 24),
 
                           // Форма ввода
                           if (_isSignUp) ...[
@@ -197,9 +195,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               label: AppStrings.tr('auth_name_label', language),
                               hint: AppStrings.tr('auth_name_hint', language),
                               controller: _nameController,
-                              prefixIcon: const Icon(Icons.person_outline, color: AppColors.muted, size: 20),
+                              prefixIcon: Icon(Icons.person_outline, color: AppColors.muted, size: 20),
                             ),
-                            const SizedBox(height: 14),
+                            SizedBox(height: 14),
                           ],
 
                           CircaTextField(
@@ -207,16 +205,16 @@ class _AuthScreenState extends State<AuthScreen> {
                             hint: 'barys@circa.health',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            prefixIcon: const Icon(Icons.alternate_email, color: AppColors.muted, size: 20),
+                            prefixIcon: Icon(Icons.alternate_email, color: AppColors.muted, size: 20),
                           ),
-                          const SizedBox(height: 14),
+                          SizedBox(height: 14),
 
                           CircaTextField(
                             label: AppStrings.tr('auth_password_label', language),
                             hint: '••••••••',
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            prefixIcon: const Icon(Icons.lock_outline, color: AppColors.muted, size: 20),
+                            prefixIcon: Icon(Icons.lock_outline, color: AppColors.muted, size: 20),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -229,7 +227,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
                           // Ошибка
                           if (_errorMessage != null) ...[
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
@@ -240,7 +238,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               child: Row(
                                 children: [
                                   const Icon(Icons.error_outline, color: AppColors.rose, size: 18),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
@@ -252,7 +250,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ],
 
-                          const SizedBox(height: 22),
+                          SizedBox(height: 22),
 
                           // Кнопка входа
                           ElevatedButton(
@@ -265,7 +263,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               elevation: 0,
                             ),
                             child: _isLoading
-                                ? const SizedBox(
+                                ? SizedBox(
                                     height: 20,
                                     width: 20,
                                     child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.stage),
@@ -282,7 +280,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                           ),
 
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
 
                           // Переключение Вход / Регистрация
                           TextButton(
@@ -296,7 +294,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               _isSignUp
                                   ? AppStrings.tr('auth_to_login', language)
                                   : AppStrings.tr('auth_to_signup', language),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.muted,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -304,7 +302,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
 
                           // Кнопка быстрого автономного входа (для тестов и автономного режима)
                           OutlinedButton.icon(
@@ -320,7 +318,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppColors.line),
+                              side: BorderSide(color: AppColors.line),
                               backgroundColor: AppColors.surface,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -332,7 +330,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   ),
 
                   // Переключатель языка (AI Oval Capsule)
-                  const Positioned(
+                  Positioned(
                     top: 10,
                     right: 18,
                     child: CircaAiLanguagePill(),
@@ -340,7 +338,6 @@ class _AuthScreenState extends State<AuthScreen> {
                 ],
               ),
             ),
-          ),
         );
       },
     );

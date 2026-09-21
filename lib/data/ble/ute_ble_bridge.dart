@@ -90,9 +90,7 @@ class UteBleBridge {
               restorativeSleepRatio: (event['restorativeSleepRatio'] as num?)?.toDouble() ?? prev.restorativeSleepRatio,
               currentDayStrain: (event['currentDayStrain'] as num?)?.toDouble() ?? prev.currentDayStrain,
               yesterdayStrain: (event['yesterdayStrain'] as num?)?.toDouble() ?? prev.yesterdayStrain,
-              zoneMinutes: event['zoneMinutes'] is List<int>
-                  ? (event['zoneMinutes'] as List<int>)
-                  : prev.zoneMinutes,
+              zoneMinutes: _parseZoneMinutes(event['zoneMinutes']) ?? prev.zoneMinutes,
               currentStressScore: event['currentStressScore'] as int? ?? prev.currentStressScore,
             );
 
@@ -268,6 +266,13 @@ class UteBleBridge {
 
   void activateSimulatorMode() {
     _useSimulator = true;
+  }
+
+  static List<int>? _parseZoneMinutes(dynamic raw) {
+    if (raw is! List) return null;
+    final out = raw.map((e) => (e as num).round()).toList();
+    if (out.length < 5) return null;
+    return out.take(5).toList();
   }
 
   void dispose() {

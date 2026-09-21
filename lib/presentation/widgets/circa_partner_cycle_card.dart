@@ -41,24 +41,24 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     size: 15,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'БИОРИТМ ПАРТНЁРА · ${data.partnerName.toUpperCase()}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 9.5,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         'День ${data.cycleDay} из ${data.cycleLength} · СААТ-1',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.fg,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -85,7 +85,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // 2. Индикатор прогресса цикла (28-дневная дорожка с отметкой текущего дня)
             ClipRRect(
@@ -99,19 +99,19 @@ class CircaPartnerCycleCard extends StatelessWidget {
                       flex: 5,
                       child: Container(color: AppColors.rose.withValues(alpha: data.cycleDay <= 5 ? 0.9 : 0.25)),
                     ),
-                    const SizedBox(width: 2),
+                    SizedBox(width: 2),
                     // Фолликулярная (6-13 дни: 28%)
                     Expanded(
                       flex: 8,
                       child: Container(color: AppColors.sage.withValues(alpha: (data.cycleDay > 5 && data.cycleDay <= 13) ? 0.9 : 0.25)),
                     ),
-                    const SizedBox(width: 2),
+                    SizedBox(width: 2),
                     // Овуляция (14-16 дни: 11%)
                     Expanded(
                       flex: 3,
                       child: Container(color: AppColors.amber.withValues(alpha: (data.cycleDay > 13 && data.cycleDay <= 16) ? 0.9 : 0.25)),
                     ),
-                    const SizedBox(width: 2),
+                    SizedBox(width: 2),
                     // Лютеиновая (17-28 дни: 43%)
                     Expanded(
                       flex: 12,
@@ -121,7 +121,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
 
             // 3. Блок метрик (Температура, Энергия, Настроение)
             Row(
@@ -141,7 +141,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                           'ТЕРМОСЕНСОР',
                           style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(height: 1),
+                        SizedBox(height: 1),
                         Text(
                           '${data.skinTempDeviation >= 0 ? '+' : ''}${data.skinTempDeviation.toStringAsFixed(2)}°C',
                           style: const TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w800),
@@ -150,7 +150,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -166,7 +166,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                           'ЭНЕРГИЯ',
                           style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(height: 1),
+                        SizedBox(height: 1),
                         Text(
                           '${data.energyEmoji} ${data.energyScore}/5',
                           style: TextStyle(color: pColor, fontSize: 12, fontWeight: FontWeight.w800),
@@ -175,7 +175,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -191,7 +191,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                           'НАСТРОЕНИЕ',
                           style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(height: 1),
+                        SizedBox(height: 1),
                         Text(
                           data.mood.split(' ').first,
                           style: const TextStyle(fontSize: 12),
@@ -202,7 +202,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
 
             // 4. Совет для партнера
             Container(
@@ -216,11 +216,11 @@ class CircaPartnerCycleCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Icon(Icons.lightbulb_outline, color: AppColors.amber, size: 14),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       data.partnerGuidance,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.fg,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
@@ -233,10 +233,10 @@ class CircaPartnerCycleCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
 
             // 5. Футер
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(

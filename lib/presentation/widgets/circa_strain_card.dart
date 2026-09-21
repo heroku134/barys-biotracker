@@ -47,7 +47,7 @@ class CircaStrainCard extends StatelessWidget {
                       color: strainColor,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   const Text(
                     'НАГРУЗКА (STRAIN)',
                     style: TextStyle(
@@ -68,7 +68,7 @@ class CircaStrainCard extends StatelessWidget {
                 ),
                 child: Text(
                   'Цель: ${targetMin.toStringAsFixed(1)}–${targetMax.toStringAsFixed(1)}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.fg,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -77,7 +77,7 @@ class CircaStrainCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Цифра Strain и статус бюджета
           Row(
@@ -102,7 +102,7 @@ class CircaStrainCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -118,7 +118,7 @@ class CircaStrainCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     const Text(
                       'Шкала TRIMP (Whoop)',
                       style: TextStyle(
@@ -131,7 +131,7 @@ class CircaStrainCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           // Шкала 0–21 с целевым окном
           Stack(
@@ -177,7 +177,7 @@ class CircaStrainCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 5 зон пульса (TRIMP)
           const Text(
@@ -189,15 +189,15 @@ class CircaStrainCard extends StatelessWidget {
               letterSpacing: 1.8,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
 
           _buildZonesDistribution(strainResult.zoneMinutes),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Автодетектированная тренировка
           if (strainResult.dailyActivities.isNotEmpty) ...[
             const Divider(color: AppColors.line, height: 1),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             for (final act in strainResult.dailyActivities)
               Row(
                 children: [
@@ -209,7 +209,7 @@ class CircaStrainCard extends StatelessWidget {
                     ),
                     child: const Icon(Icons.directions_run, size: 16, color: AppColors.amber),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,14 +218,14 @@ class CircaStrainCard extends StatelessWidget {
                           children: [
                             Text(
                               act.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.fg,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             if (act.isAutoDetected) ...[
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                                 decoration: BoxDecoration(
@@ -244,10 +244,10 @@ class CircaStrainCard extends StatelessWidget {
                             ],
                           ],
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           '${act.durationMinutes} мин · Ср. пульс ${act.avgHeartRate} bpm · +${act.caloriesBurned} ккал',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 10,
                           ),
@@ -306,10 +306,10 @@ class CircaStrainCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     '${safeZones[i]}м',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.fg,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,

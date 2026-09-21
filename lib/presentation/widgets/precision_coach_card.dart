@@ -55,7 +55,7 @@ class PrecisionCoachCard extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 5),
+                    SizedBox(width: 5),
                     Text(
                       actionLabel,
                       style: AppTypography.monoBadge.copyWith(
@@ -68,7 +68,7 @@ class PrecisionCoachCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             insight,
             style: AppTypography.body.copyWith(

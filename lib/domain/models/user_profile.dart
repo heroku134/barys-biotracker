@@ -48,7 +48,7 @@ class UserProfile {
     this.sleepGoalHours = 8.0,
     this.is24HourFormat = true,
     this.isMetric = true,
-    this.isAuthenticated = true,
+    this.isAuthenticated = false,
     this.cyclePhase,
     this.cycleDay,
     this.cycleLengthDays = 28,

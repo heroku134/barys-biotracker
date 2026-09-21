@@ -16,7 +16,7 @@ enum AvatarVisualState {
     AppColors.sage,
     'Высокий Recovery (≥75%), богатырская форма. Кольцо Sage (+50% к опыту).',
     1.5,
-    'assets/images/hero_barys_charged.jpg',
+    'assets/images/mascot_charged.jpg',
   ),
   normal(
     'Батыр в тонусе',
@@ -24,7 +24,7 @@ enum AvatarVisualState {
     AppColors.amber,
     'Оптимальная готовность (50–74%), рабочий ритм. Сбалансированная нагрузка.',
     1.0,
-    'assets/images/hero_barys_normal.jpg',
+    'assets/images/mascot_normal.jpg',
   ),
   tired(
     'Батыр уставший (отдых)',
@@ -32,7 +32,7 @@ enum AvatarVisualState {
     AppColors.rose,
     'Низкий Recovery (<34%) или вчерашний Strain >16. Режим глубокой регенерации сил.',
     0.8,
-    'assets/images/hero_barys_tired.jpg',
+    'assets/images/mascot_tired.jpg',
   ),
   sleep(
     'Батыр отдыхает (ночь)',
@@ -40,7 +40,7 @@ enum AvatarVisualState {
     AppColors.sage,
     'Позднее время (после 22:00) или накопленный долг сна. Отдых перед новым днем.',
     1.2,
-    'assets/images/hero_barys_sleep.jpg',
+    'assets/images/mascot_sleep.jpg',
   ),
   postWorkout(
     'Батыр после тренировки',
@@ -48,7 +48,7 @@ enum AvatarVisualState {
     AppColors.amber,
     'Спортивная сессия или дневной бюджет Strain закрыты. Восстановите водный баланс.',
     1.3,
-    'assets/images/hero_barys_workout.jpg',
+    'assets/images/mascot_workout.jpg',
   ),
   meditation(
     'Батыр в дзене (баланс)',
@@ -56,7 +56,7 @@ enum AvatarVisualState {
     AppColors.sage,
     'Дневной стресс >65. Дыхательные практики и релаксация для восстановления вариабельности.',
     1.1,
-    'assets/images/hero_barys_meditation.jpg',
+    'assets/images/mascot_meditation.jpg',
   );
 
   final String title;

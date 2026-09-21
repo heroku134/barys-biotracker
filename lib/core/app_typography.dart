@@ -1,169 +1,232 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// Precision Biometric Typography (Whoop 5.0 / Oura Athletic / Swiss Poster)
-/// Strict rules:
-/// 1) Geometric grotesk with true tabular figures for big hero numbers
-/// 2) Monospace for small uppercase data labels and metric units
-/// 3) Plain grotesk for body copy and coaching text
-/// ONLY TWO weights total across the entire app:
-/// - FontWeight.w400 (regular)
-/// - FontWeight.w600 (semibold)
-/// Zero walls of w800/w900 bold.
+enum AppTypographyColor {
+  nearWhite,
+  secondary,
+  muted,
+  none,
+}
+
+class AppTextStyle extends TextStyle {
+  final AppTypographyColor colorKind;
+
+  const AppTextStyle({
+    super.inherit,
+    super.color,
+    super.backgroundColor,
+    super.fontFamily,
+    super.fontFamilyFallback,
+    super.package,
+    super.fontSize,
+    super.fontWeight,
+    super.fontStyle,
+    super.letterSpacing,
+    super.wordSpacing,
+    super.textBaseline,
+    super.height,
+    super.leadingDistribution,
+    super.locale,
+    super.foreground,
+    super.background,
+    super.shadows,
+    super.fontFeatures,
+    super.fontVariations,
+    super.decoration,
+    super.decorationColor,
+    super.decorationStyle,
+    super.decorationThickness,
+    super.debugLabel,
+    super.overflow,
+    this.colorKind = AppTypographyColor.nearWhite,
+  });
+
+  @override
+  Color? get color {
+    final explicit = super.color;
+    if (explicit != null) return explicit;
+    switch (colorKind) {
+      case AppTypographyColor.nearWhite:
+        return AppColors.textNearWhite;
+      case AppTypographyColor.secondary:
+        return AppColors.textSecondary;
+      case AppTypographyColor.muted:
+        return AppColors.textMuted;
+      case AppTypographyColor.none:
+        return null;
+    }
+  }
+
+  TextStyle call([Color? color]) => color != null ? copyWith(color: color) : this;
+
+  @override
+  AppTextStyle copyWith({
+    bool? inherit,
+    Color? color,
+    Color? backgroundColor,
+    String? fontFamily,
+    List<String>? fontFamilyFallback,
+    String? package,
+    double? fontSize,
+    FontWeight? fontWeight,
+    FontStyle? fontStyle,
+    double? letterSpacing,
+    double? wordSpacing,
+    TextBaseline? textBaseline,
+    double? height,
+    TextLeadingDistribution? leadingDistribution,
+    Locale? locale,
+    Paint? foreground,
+    Paint? background,
+    List<Shadow>? shadows,
+    List<FontFeature>? fontFeatures,
+    List<FontVariation>? fontVariations,
+    TextDecoration? decoration,
+    Color? decorationColor,
+    TextDecorationStyle? decorationStyle,
+    double? decorationThickness,
+    String? debugLabel,
+    TextOverflow? overflow,
+  }) {
+    return AppTextStyle(
+      inherit: inherit ?? this.inherit,
+      color: color ?? super.color,
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      fontFamily: fontFamily ?? this.fontFamily,
+      fontFamilyFallback: fontFamilyFallback ?? this.fontFamilyFallback,
+      package: package,
+      fontSize: fontSize ?? this.fontSize,
+      fontWeight: fontWeight ?? this.fontWeight,
+      fontStyle: fontStyle ?? this.fontStyle,
+      letterSpacing: letterSpacing ?? this.letterSpacing,
+      wordSpacing: wordSpacing ?? this.wordSpacing,
+      textBaseline: textBaseline ?? this.textBaseline,
+      height: height ?? this.height,
+      leadingDistribution: leadingDistribution ?? this.leadingDistribution,
+      locale: locale ?? this.locale,
+      foreground: foreground ?? this.foreground,
+      background: background ?? this.background,
+      shadows: shadows ?? this.shadows,
+      fontFeatures: fontFeatures ?? this.fontFeatures,
+      fontVariations: fontVariations ?? this.fontVariations,
+      decoration: decoration ?? this.decoration,
+      decorationColor: decorationColor ?? this.decorationColor,
+      decorationStyle: decorationStyle ?? this.decorationStyle,
+      decorationThickness: decorationThickness ?? this.decorationThickness,
+      debugLabel: debugLabel ?? this.debugLabel,
+      overflow: overflow ?? this.overflow,
+      colorKind: colorKind,
+    );
+  }
+}
+
 class AppTypography {
-  // --- Font Family Fallbacks ---
-  static const List<String> _geometricFallbacks = [
-    'SF Pro Display',
-    'Inter',
-    '-apple-system',
-    'Roboto',
-    'sans-serif',
-  ];
+  static const String sans = 'Manrope';
+  static const String mono = 'IBM Plex Mono';
 
-  static const List<String> _monoFallbacks = [
-    'SF Mono',
-    'JetBrains Mono',
-    'Roboto Mono',
-    'Menlo',
-    'Courier New',
-    'monospace',
-  ];
-
-  static const List<String> _plainFallbacks = [
-    'SF Pro Text',
-    'Inter',
-    '-apple-system',
-    'Roboto',
-    'sans-serif',
-  ];
-
-  /// True tabular figures for jump-free biometric numbers
   static const List<FontFeature> tabularFigures = [
     FontFeature.tabularFigures(),
   ];
 
-  // ===========================================================================
-  // ROLE 1: Geometric Grotesk with true tabular figures (Hero numbers, metrics)
-  // ===========================================================================
+  static const AppTextStyle heroNumber = AppTextStyle(
+    fontFamily: sans,
+    fontSize: 54,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -1.6,
+    height: 1.0,
+    colorKind: AppTypographyColor.nearWhite,
+    fontFeatures: [FontFeature.tabularFigures()],
+  );
 
-  /// Big hero score (e.g. Recovery 94, Strain 12.4)
-  static TextStyle get heroNumber => const TextStyle(
-        fontFamilyFallback: _geometricFallbacks,
-        fontSize: 54,
-        fontWeight: FontWeight.w600, // strictly w600
-        letterSpacing: -1.5,
-        height: 1.0,
-        color: AppColors.textNearWhite,
-        fontFeatures: tabularFigures,
-      );
+  static const AppTextStyle heroNumberMedium = AppTextStyle(
+    fontFamily: sans,
+    fontSize: 32,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.8,
+    height: 1.05,
+    colorKind: AppTypographyColor.nearWhite,
+    fontFeatures: [FontFeature.tabularFigures()],
+  );
 
-  /// Medium hero number (e.g. Heart Rate 72, Sleep 7h 48m)
-  static TextStyle get heroNumberMedium => const TextStyle(
-        fontFamilyFallback: _geometricFallbacks,
-        fontSize: 32,
-        fontWeight: FontWeight.w600, // strictly w600
-        letterSpacing: -0.8,
-        height: 1.05,
-        color: AppColors.textNearWhite,
-        fontFeatures: tabularFigures,
-      );
+  static const AppTextStyle metricValue = AppTextStyle(
+    fontFamily: sans,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.3,
+    colorKind: AppTypographyColor.nearWhite,
+    fontFeatures: [FontFeature.tabularFigures()],
+  );
 
-  /// Compact metric value (e.g. 64 ms, 52 bpm, +0.2°C)
-  static TextStyle get metricValue => const TextStyle(
-        fontFamilyFallback: _geometricFallbacks,
-        fontSize: 16,
-        fontWeight: FontWeight.w600, // strictly w600
-        letterSpacing: -0.3,
-        color: AppColors.textNearWhite,
-        fontFeatures: tabularFigures,
-      );
+  static const AppTextStyle monoLabel = AppTextStyle(
+    fontFamily: mono,
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 1.4,
+    colorKind: AppTypographyColor.secondary,
+  );
 
-  // ===========================================================================
-  // ROLE 2: Monospace for small uppercase data labels and metric units
-  // ===========================================================================
+  static const AppTextStyle monoUnit = AppTextStyle(
+    fontFamily: mono,
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 1.1,
+    colorKind: AppTypographyColor.secondary,
+  );
 
-  /// Uppercase section and card header label (e.g. RECOVERY, DAY STRAIN)
-  static TextStyle get monoLabel => const TextStyle(
-        fontFamilyFallback: _monoFallbacks,
-        fontSize: 11,
-        fontWeight: FontWeight.w600, // strictly w600
-        letterSpacing: 1.5,
-        color: AppColors.textSecondary,
-      );
+  static const AppTextStyle monoBadge = AppTextStyle(
+    fontFamily: mono,
+    fontSize: 9.5,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 1.3,
+    colorKind: AppTypographyColor.none,
+  );
 
-  /// Small uppercase metric unit (e.g. BPM, MS, CAL, / 21.0)
-  static TextStyle get monoUnit => const TextStyle(
-        fontFamilyFallback: _monoFallbacks,
-        fontSize: 10,
-        fontWeight: FontWeight.w400, // strictly w400
-        letterSpacing: 1.2,
-        color: AppColors.textSecondary,
-      );
+  static const AppTextStyle body = AppTextStyle(
+    fontFamily: sans,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    height: 1.45,
+    letterSpacing: -0.1,
+    colorKind: AppTypographyColor.nearWhite,
+  );
 
-  /// Tiny badge / indicator label (e.g. OPTIMAL, TARGET 10.5 — 13.8)
-  static TextStyle get monoBadge => const TextStyle(
-        fontFamilyFallback: _monoFallbacks,
-        fontSize: 9.5,
-        fontWeight: FontWeight.w600, // strictly w600
-        letterSpacing: 1.4,
-      );
+  static const AppTextStyle bodySemibold = AppTextStyle(
+    fontFamily: sans,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    height: 1.45,
+    letterSpacing: -0.1,
+    colorKind: AppTypographyColor.nearWhite,
+  );
 
-  // ===========================================================================
-  // ROLE 3: Plain Grotesk for body copy and coaching text
-  // ===========================================================================
+  static const AppTextStyle bodyMuted = AppTextStyle(
+    fontFamily: sans,
+    fontSize: 12.5,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    colorKind: AppTypographyColor.secondary,
+  );
 
-  /// Coaching insight body text (athletic, crisp, Swiss clarity)
-  static TextStyle get body => const TextStyle(
-        fontFamilyFallback: _plainFallbacks,
-        fontSize: 13.5,
-        fontWeight: FontWeight.w400, // strictly w400
-        height: 1.45,
-        letterSpacing: -0.1,
-        color: AppColors.textNearWhite,
-      );
+  static const AppTextStyle caption = AppTextStyle(
+    fontFamily: sans,
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    colorKind: AppTypographyColor.muted,
+  );
 
-  /// Coaching bold emphasis / lead-in
-  static TextStyle get bodySemibold => const TextStyle(
-        fontFamilyFallback: _plainFallbacks,
-        fontSize: 13.5,
-        fontWeight: FontWeight.w600, // strictly w600
-        height: 1.45,
-        letterSpacing: -0.1,
-        color: AppColors.textNearWhite,
-      );
+  static const AppTextStyle screenTitle = AppTextStyle(
+    fontFamily: sans,
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.3,
+    colorKind: AppTypographyColor.nearWhite,
+  );
 
-  /// Secondary descriptive text
-  static TextStyle get bodyMuted => const TextStyle(
-        fontFamilyFallback: _plainFallbacks,
-        fontSize: 12,
-        fontWeight: FontWeight.w400, // strictly w400
-        height: 1.4,
-        color: AppColors.textSecondary,
-      );
-
-  /// Plain caption / metadata
-  static TextStyle get caption => const TextStyle(
-        fontFamilyFallback: _plainFallbacks,
-        fontSize: 10.5,
-        fontWeight: FontWeight.w400, // strictly w400
-        color: AppColors.textMuted,
-      );
-
-  // ===========================================================================
-  // Backward-compatibility getters (Mapped strictly to w400 / w600)
-  // ===========================================================================
-  static TextStyle get displayHero => heroNumber;
-  static TextStyle get metricLarge => heroNumberMedium;
-  static TextStyle get metricMedium => metricValue;
-  static TextStyle get screenTitle => const TextStyle(
-        fontFamilyFallback: _geometricFallbacks,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        letterSpacing: -0.3,
-        color: AppColors.textNearWhite,
-      );
-  static TextStyle get cardTitle => monoLabel;
-  static TextStyle get overline => monoLabel;
-  static TextStyle get badge => monoBadge;
-  static TextStyle get buttonLabel => monoLabel;
+  static AppTextStyle get displayHero => heroNumber;
+  static AppTextStyle get metricLarge => heroNumberMedium;
+  static AppTextStyle get metricMedium => metricValue;
+  static AppTextStyle get cardTitle => monoLabel;
+  static AppTextStyle get overline => monoLabel;
+  static AppTextStyle get badge => monoBadge;
+  static AppTextStyle get buttonLabel => monoLabel;
 }

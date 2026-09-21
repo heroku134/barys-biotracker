@@ -1,14 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_typography.dart';
 import '../../data/ble/ute_ble_bridge.dart';
-import '../../domain/avatar/avatar_manager.dart';
-import '../../domain/intelligence/readiness_engine.dart';
-import '../../domain/models/personal_baseline.dart';
+import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/telemetry.dart';
-import '../widgets/circa_film_grain.dart';
+import '../../domain/models/user_profile.dart';
 import 'analytics_screen.dart';
 import 'bio_avatar_screen.dart';
 import 'dashboard_screen.dart';
@@ -16,9 +16,6 @@ import 'device_settings_screen.dart';
 import 'menstrual_cycle_screen.dart';
 import 'profile_screen.dart';
 import 'sport_screen.dart';
-
-import '../../data/storage/user_profile_repository.dart';
-import '../../domain/models/user_profile.dart';
 
 class MainShell extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -31,24 +28,21 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
-  late BleTelemetry _telemetry;
-  final PersonalBaseline _baseline = const PersonalBaseline();
+  StreamSubscription<BleTelemetry>? _sub;
 
   @override
   void initState() {
     super.initState();
     UserProfileRepository.loadProfile();
-    _telemetry = widget.bleBridge.currentTelemetry;
-    widget.bleBridge.telemetryStream.listen((data) {
-      if (mounted) {
-        setState(() => _telemetry = data);
-      }
+    _sub = widget.bleBridge.telemetryStream.listen((_) {
+      if (mounted) setState(() {});
     });
   }
 
-  void _openAvatarScreen() {
-    HapticFeedback.mediumImpact();
-    setState(() => _currentIndex = 2);
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
   }
 
   void _openDeviceSettings() {
@@ -61,45 +55,40 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final readiness = ReadinessEngine.calculate(_telemetry, baseline: _baseline);
-    final avatarProfile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
-
+    final palette = KalkanColors.of(context);
     return ValueListenableBuilder<UserProfile>(
       valueListenable: UserProfileRepository.profileNotifier,
       builder: (context, userProfile, _) {
         final isFemale = userProfile.gender == Gender.female;
-
         return ValueListenableBuilder<AppLanguage>(
           valueListenable: AppLocaleNotifier.instance,
           builder: (context, language, _) {
-            return Scaffold(
-              backgroundColor: AppColors.stage,
-              body: CircaFilmGrainBackground(
-                child: IndexedStack(
-                  index: _currentIndex,
-                  children: [
-                    DashboardScreen(
-                      bleBridge: widget.bleBridge,
-                      onOpenAvatar: _openAvatarScreen,
-                      onOpenDeviceSettings: _openDeviceSettings,
+            final pages = <Widget>[
+              DashboardScreen(
+                bleBridge: widget.bleBridge,
+                onOpenAvatar: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => BioAvatarScreen(bleBridge: widget.bleBridge),
                     ),
-                    AnalyticsScreen(bleBridge: widget.bleBridge),
-                    BioAvatarScreen(bleBridge: widget.bleBridge),
-                    isFemale
-                        ? MenstrualCycleScreen(bleBridge: widget.bleBridge)
-                        : SportScreen(bleBridge: widget.bleBridge),
-                    ProfileScreen(bleBridge: widget.bleBridge),
-                  ],
-                ),
+                  );
+                },
+                onOpenDeviceSettings: _openDeviceSettings,
               ),
+              AnalyticsScreen(bleBridge: widget.bleBridge),
+              SportScreen(bleBridge: widget.bleBridge),
+              if (isFemale) MenstrualCycleScreen(bleBridge: widget.bleBridge),
+              ProfileScreen(bleBridge: widget.bleBridge),
+            ];
+            final safeIndex = _currentIndex.clamp(0, pages.length - 1);
 
-              // Премиальная 5-сегментная навигационная панель с ЦЕНТРАЛЬНОЙ КНОПКОЙ-МАСКОТОМ
+            return Scaffold(
+              backgroundColor: palette.bg,
+              body: IndexedStack(index: safeIndex, children: pages),
               bottomNavigationBar: Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border(
-                    top: BorderSide(color: AppColors.line, width: 1.0),
-                  ),
+                decoration: BoxDecoration(
+                  color: palette.surface,
+                  border: Border(top: BorderSide(color: palette.hairline)),
                 ),
                 child: SafeArea(
                   top: false,
@@ -107,15 +96,17 @@ class _MainShellState extends State<MainShell> {
                     height: 62,
                     child: Row(
                       children: [
-                        _buildNavItem(0, Icons.radio_button_checked, AppStrings.tr('nav_today', language)),
-                        _buildNavItem(1, Icons.insights_outlined, AppStrings.tr('nav_analysis', language)),
-                        _buildCentralBarysButton(readiness.zone.color, avatarProfile.state.assetPath),
-                        _buildNavItem(
-                          3,
-                          isFemale ? Icons.water_drop_outlined : Icons.directions_run_outlined,
-                          AppStrings.tr(isFemale ? 'nav_cycle' : 'nav_sport', language),
+                        _nav(palette, 0, Icons.circle_outlined, AppStrings.tr('nav_today', language)),
+                        _nav(palette, 1, Icons.insights_outlined, AppStrings.tr('nav_analysis', language)),
+                        _nav(palette, 2, Icons.directions_run, AppStrings.tr('nav_sport', language)),
+                        if (isFemale)
+                          _nav(palette, 3, Icons.water_drop_outlined, AppStrings.tr('nav_cycle', language)),
+                        _nav(
+                          palette,
+                          isFemale ? 4 : 3,
+                          Icons.person_outline,
+                          AppStrings.tr('nav_profile', language),
                         ),
-                        _buildNavItem(4, Icons.person_outline, AppStrings.tr('nav_profile', language)),
                       ],
                     ),
                   ),
@@ -128,10 +119,9 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = _currentIndex == index;
-    final color = isSelected ? AppColors.amber : AppColors.muted;
-
+  Widget _nav(KalkanColors palette, int index, IconData icon, String label) {
+    final selected = _currentIndex == index;
+    final color = selected ? AppColors.sage : palette.secondary;
     return Expanded(
       child: InkWell(
         onTap: () {
@@ -145,71 +135,8 @@ class _MainShellState extends State<MainShell> {
             const SizedBox(height: 3),
             Text(
               label,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Акцентная центральная кнопка персонажа Барыс-Батыра
-  Widget _buildCentralBarysButton(Color statusColor, String assetPath) {
-    final isSelected = _currentIndex == 2;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.heavyImpact();
-          setState(() => _currentIndex = 2);
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              width: isSelected ? 44 : 40,
-              height: isSelected ? 44 : 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.amber : statusColor,
-                  width: isSelected ? 2.5 : 1.8,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isSelected ? AppColors.amber : statusColor).withValues(alpha: isSelected ? 0.5 : 0.25),
-                    blurRadius: isSelected ? 12 : 6,
-                    spreadRadius: isSelected ? 1.5 : 0,
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  assetPath,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.topCenter,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.pets,
-                    color: AppColors.amber,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'БАРЫС',
-              style: TextStyle(
-                color: isSelected ? AppColors.amber : AppColors.fg,
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
+              style: AppTypography.caption(color).copyWith(
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],

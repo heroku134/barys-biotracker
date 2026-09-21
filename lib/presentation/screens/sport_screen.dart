@@ -172,10 +172,10 @@ class _SportScreenState extends State<SportScreen> {
         title: Row(
           children: [
             const Icon(Icons.stars, color: AppColors.amber, size: 22),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Text(
               'Тренировка завершена!',
-              style: const TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
+              style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -185,38 +185,38 @@ class _SportScreenState extends State<SportScreen> {
           children: [
             Text(
               'Дисциплина: ${_selectedSport.title}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 13),
+              style: TextStyle(color: AppColors.muted, fontSize: 13),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('STRAIN НАГРУЗКА', style: TextStyle(color: AppColors.muted, fontSize: 10, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
+                    Text('STRAIN НАГРУЗКА', style: TextStyle(color: AppColors.muted, fontSize: 10, fontWeight: FontWeight.w700)),
+                    SizedBox(height: 2),
                     Text('+$calculatedStrain', style: const TextStyle(color: AppColors.cyan, fontSize: 18, fontWeight: FontWeight.w800)),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text('ОПЫТ БАРЫСА', style: TextStyle(color: AppColors.muted, fontSize: 10, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
+                    Text('ОПЫТ БАРЫСА', style: TextStyle(color: AppColors.muted, fontSize: 10, fontWeight: FontWeight.w700)),
+                    SizedBox(height: 2),
                     Text('+$xp XP', style: const TextStyle(color: AppColors.amber, fontSize: 18, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             const Divider(color: AppColors.line, height: 1),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Время: ${completed.durationFormatted}', style: const TextStyle(color: AppColors.fg, fontSize: 12)),
-                Text('Калории: $cals ккал', style: const TextStyle(color: AppColors.fg, fontSize: 12)),
+                Text('Время: ${completed.durationFormatted}', style: TextStyle(color: AppColors.fg, fontSize: 12)),
+                Text('Калории: $cals ккал', style: TextStyle(color: AppColors.fg, fontSize: 12)),
               ],
             ),
           ],
@@ -282,7 +282,7 @@ class _SportScreenState extends State<SportScreen> {
                 ),
                 Text(
                   AppStrings.tr('sport_title', language),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.fg,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -302,10 +302,10 @@ class _SportScreenState extends State<SportScreen> {
             child: Row(
               children: [
                 const Icon(Icons.bolt, color: AppColors.amber, size: 14),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Text(
                   '${telemetry.currentDayStrain.toStringAsFixed(1)} / 21',
-                  style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -359,7 +359,7 @@ class _SportScreenState extends State<SportScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Карточка активной сессии (Live Workout Banner)
             GlassCard(
@@ -381,12 +381,12 @@ class _SportScreenState extends State<SportScreen> {
                                   : AppColors.muted,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             _isWorkoutActive
                                 ? (_isWorkoutPaused ? 'СЕССИЯ НА ПАУЗЕ' : 'АКТИВНАЯ ТРЕНИРОВКА')
                                 : 'ГОТОВ К СТАРТУ',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.muted,
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -406,7 +406,7 @@ class _SportScreenState extends State<SportScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
 
                   if (_isWorkoutActive) ...[
                     // Крупный таймер
@@ -416,7 +416,7 @@ class _SportScreenState extends State<SportScreen> {
                       children: [
                         Text(
                           _formatTimer(_elapsedSeconds),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 44,
                             fontWeight: FontWeight.w800,
@@ -433,7 +433,7 @@ class _SportScreenState extends State<SportScreen> {
                           child: Row(
                             children: [
                               const Icon(Icons.favorite, color: AppColors.rose, size: 16),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6),
                               Text(
                                 '$currentBpm bpm',
                                 style: const TextStyle(color: AppColors.rose, fontSize: 13, fontWeight: FontWeight.w800),
@@ -443,7 +443,7 @@ class _SportScreenState extends State<SportScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
 
                     // Метрики в реальном времени
                     Row(
@@ -458,14 +458,14 @@ class _SportScreenState extends State<SportScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('КАЛОРИИ', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 2),
-                                Text('$_caloriesBurned ккал', style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
+                                Text('КАЛОРИИ', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
+                                SizedBox(height: 2),
+                                Text('$_caloriesBurned ккал', style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         if (_selectedSport.hasDistance) ...[
                           Expanded(
                             child: Container(
@@ -477,14 +477,14 @@ class _SportScreenState extends State<SportScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('ДИСТАНЦИЯ', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
-                                  const SizedBox(height: 2),
-                                  Text('${_distanceKm.toStringAsFixed(2)} км', style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
+                                  Text('ДИСТАНЦИЯ', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
+                                  SizedBox(height: 2),
+                                  Text('${_distanceKm.toStringAsFixed(2)} км', style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
                                 ],
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                         ],
                         Expanded(
                           child: Container(
@@ -496,16 +496,16 @@ class _SportScreenState extends State<SportScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('ПИК ПУЛЬСА', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 2),
-                                Text('$_peakHr bpm', style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
+                                Text('ПИК ПУЛЬСА', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
+                                SizedBox(height: 2),
+                                Text('$_peakHr bpm', style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
                               ],
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
 
                     // Кнопки управления тренировкой
                     Row(
@@ -517,13 +517,13 @@ class _SportScreenState extends State<SportScreen> {
                             label: Text(_isWorkoutPaused ? 'ПРОДОЛЖИТЬ' : 'ПАУЗА'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.fg,
-                              side: const BorderSide(color: AppColors.line),
+                              side: BorderSide(color: AppColors.line),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: _stopWorkout,
@@ -543,14 +543,14 @@ class _SportScreenState extends State<SportScreen> {
                     // Состояние готовности к старту
                     Text(
                       'Нажмите для синхронизации записи пульса с чипом браслета. Нагрузка будет зачислена в шкалу TRIMP и опыт Барыса.',
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12, height: 1.4),
+                      style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.4),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: _startWorkout,
-                        icon: const Icon(Icons.play_arrow, color: AppColors.stage),
+                        icon: Icon(Icons.play_arrow, color: AppColors.stage),
                         label: Text(
                           'НАЧАТЬ ТРЕНИРОВКУ (${_selectedSport.title.toUpperCase()})',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4),
@@ -568,14 +568,14 @@ class _SportScreenState extends State<SportScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Тумблер IMU v4.2 автодетекта
             GlassCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -607,7 +607,7 @@ class _SportScreenState extends State<SportScreen> {
                           backgroundColor: AppColors.surface,
                           content: Text(
                             val ? 'IMU автодетект активен' : 'IMU автодетект выключен',
-                            style: const TextStyle(color: AppColors.fg),
+                            style: TextStyle(color: AppColors.fg),
                           ),
                         ),
                       );
@@ -616,7 +616,7 @@ class _SportScreenState extends State<SportScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Кардио-прогресс недели (Митохондриальное здоровье: Зона 2 и Зона 5)
             GlassCard(
@@ -641,7 +641,7 @@ class _SportScreenState extends State<SportScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(3),
                     child: const LinearProgressIndicator(
@@ -651,7 +651,7 @@ class _SportScreenState extends State<SportScreen> {
                       minHeight: 6,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   const Text(
                     '128 мин в Аэробной Зоне 2 + 24 мин интервалов в Зоне 5 обеспечивают омоложение миокарда.',
                     style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
@@ -659,7 +659,7 @@ class _SportScreenState extends State<SportScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // История тренировок
             const Text(
@@ -671,10 +671,10 @@ class _SportScreenState extends State<SportScreen> {
                 letterSpacing: 2.0,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
 
             if (_history.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Center(
                   child: Text(
@@ -699,19 +699,19 @@ class _SportScreenState extends State<SportScreen> {
                           ),
                           child: Icon(item.sport.icon, color: AppColors.amber, size: 20),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 item.sport.title,
-                                style: const TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w700),
+                                style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w700),
                               ),
-                              const SizedBox(height: 2),
+                              SizedBox(height: 2),
                               Text(
                                 '${item.durationFormatted} · ${item.calories} ккал · Ср: ${item.avgHr} bpm',
-                                style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                                style: TextStyle(color: AppColors.muted, fontSize: 11),
                               ),
                             ],
                           ),
@@ -723,7 +723,7 @@ class _SportScreenState extends State<SportScreen> {
                               '+${item.strain} Strain',
                               style: const TextStyle(color: AppColors.cyan, fontSize: 12, fontWeight: FontWeight.w800),
                             ),
-                            const SizedBox(height: 2),
+                            SizedBox(height: 2),
                             Text(
                               '+${item.xpEarned} XP',
                               style: const TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w700),

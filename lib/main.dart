@@ -1,7 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'core/app_colors.dart';
 import 'core/app_language.dart';
 import 'core/app_theme.dart';
 import 'data/ble/ute_ble_bridge.dart';
@@ -12,16 +10,6 @@ import 'presentation/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Настройка прозрачного системного статус-бара в скандинавском стиле CIRCA
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppColors.stage,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
 
   // Инициализация Firebase с безопасным fallback
   try {
@@ -36,6 +24,7 @@ void main() async {
   // Инициализация языка, темы, сохранений и моста
   await AppLocaleNotifier.init();
   await AppThemeNotifier.init();
+  AppThemeNotifier.applySystemUi(AppThemeNotifier.current);
   await AvatarManager.init();
   final bleBridge = UteBleBridge();
   await bleBridge.init();

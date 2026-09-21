@@ -114,7 +114,7 @@ class CircaShareCardWidget extends StatelessWidget {
                             ),
                           ),
                           if (isRareGold) ...[
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
@@ -136,17 +136,17 @@ class CircaShareCardWidget extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    SizedBox(height: 3),
                     Text(
                       'BIO-METRIC ATELIER · $cityName',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.muted,
                         fontSize: 8,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.8,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       serialNumber,
                       style: TextStyle(
@@ -159,7 +159,7 @@ class CircaShareCardWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -187,18 +187,18 @@ class CircaShareCardWidget extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Container(height: 1, color: isRareGold ? AppColors.amber.withValues(alpha: 0.3) : AppColors.line),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 2. Основное тело карточки в зависимости от темы
           Expanded(
             child: _buildThemeBody(progress),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Container(height: 1, color: isRareGold ? AppColors.amber.withValues(alpha: 0.3) : AppColors.line),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // 3. Швейцарский подвал (Quiet Luxury Footer)
           Row(
@@ -212,14 +212,14 @@ class CircaShareCardWidget extends StatelessWidget {
                       'ATHLETE: $userName'.toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.fg,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       isRareGold ? 'GOLD PROOF OF FORM · CERTIFIED' : 'AUTONOMIC RECOVERY INDEX',
                       maxLines: 1,
@@ -234,7 +234,7 @@ class CircaShareCardWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'KALKAN СААТ-1 · $cityName · 2026',
                 style: TextStyle(
@@ -304,7 +304,7 @@ class CircaShareCardWidget extends StatelessWidget {
                 ),
               ),
               if (isRareGold) ...[
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 const Text(
                   '✦ RARE GOLD RECORD ✦',
                   style: TextStyle(
@@ -318,7 +318,7 @@ class CircaShareCardWidget extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
 
         // Гигантское число в швейцарском стиле
         Row(
@@ -335,7 +335,7 @@ class CircaShareCardWidget extends StatelessWidget {
                 height: 0.95,
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4),
             Text(
               '%',
               style: TextStyle(
@@ -347,7 +347,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           zoneLabel,
           style: TextStyle(
@@ -358,7 +358,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         Text(
           isRareGold
               ? 'Идеальная физиологическая форма. ЦНС на абсолютном пике восстановления, парасимпатический тонус на максимуме.'
@@ -367,7 +367,7 @@ class CircaShareCardWidget extends StatelessWidget {
                   : (readiness.zone == RecoveryZone.moderate
                       ? 'Ровный физиологический фон. Рекомендуется аэробный объем во 2-й пульсовой зоне.'
                       : 'ЦНС перегружена. Высокий симпатический стресс требует постельного покоя и сна до 22:40.')),
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.fg,
             fontSize: 12,
             height: 1.45,
@@ -406,7 +406,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
 
         // Векторная кардио-волна
         SizedBox(
@@ -436,7 +436,7 @@ class CircaShareCardWidget extends StatelessWidget {
             letterSpacing: 2.0,
           ),
         ),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
 
         Row(
           crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -452,7 +452,7 @@ class CircaShareCardWidget extends StatelessWidget {
                 height: 0.95,
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             const Text(
               '/ 21.0',
               style: TextStyle(
@@ -464,7 +464,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           'WHOOP TRIMP SCALE · ЦЕЛЬ ${strainResult.targetStrainMin.toStringAsFixed(1)}+',
           style: const TextStyle(
@@ -475,12 +475,12 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         Text(
           telemetry.currentDayStrain >= strainResult.targetStrainMin
               ? 'Оптимальный диапазон нагрузки достигнут. Сердечно-сосудистая система получила качественный анаболический стимул.'
               : 'Для закрытия дневного бюджета требуется еще ${(strainResult.targetStrainMin - telemetry.currentDayStrain).toStringAsFixed(1)} Strain в аэробной Зоне 2.',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.fg,
             fontSize: 12,
             height: 1.45,
@@ -515,7 +515,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
 
         // Полоса прогресса
         ClipRRect(
@@ -547,7 +547,7 @@ class CircaShareCardWidget extends StatelessWidget {
             letterSpacing: 2.0,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
 
         // Портрет Барыса в круглом медальоне
         Center(
@@ -573,7 +573,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         Center(
           child: Text(
             avatarProfile.state.title.toUpperCase(),
@@ -585,11 +585,11 @@ class CircaShareCardWidget extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4),
         Center(
           child: Text(
             '${avatarProfile.rankTitle} · Уровень ${avatarProfile.level}',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.muted,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -618,7 +618,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
 
         // Реплика Барыса
         Container(
@@ -631,11 +631,11 @@ class CircaShareCardWidget extends StatelessWidget {
           child: Row(
             children: [
               const Icon(Icons.format_quote, color: AppColors.amber, size: 16),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   AvatarManager.getRitualQuote(avatarProfile.state),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.fg,
                     fontSize: 11,
                     fontStyle: FontStyle.italic,
@@ -655,14 +655,14 @@ class CircaShareCardWidget extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.muted,
             fontSize: 8,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.0,
           ),
         ),
-        const SizedBox(height: 2),
+        SizedBox(height: 2),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Row(
@@ -672,13 +672,13 @@ class CircaShareCardWidget extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.fg,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(width: 2),
+              SizedBox(width: 2),
               Text(
                 unit,
                 style: const TextStyle(

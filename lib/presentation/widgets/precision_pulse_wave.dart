@@ -87,7 +87,7 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: 5),
                   Text(
                     'STREAMING',
                     style: AppTypography.monoBadge.copyWith(
@@ -100,7 +100,7 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
             ],
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // 2. Hero Metric & Extremes
           Row(
@@ -114,7 +114,7 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
                   fontSize: 36,
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Text(
                 'BPM',
                 style: AppTypography.monoUnit.copyWith(
@@ -141,7 +141,7 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Row(
                     children: [
                       Text(
@@ -162,7 +162,7 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
             ],
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 3. Simple Vector Line Waveform (No glow, no gradients, pure 1.5px stroke)
           SizedBox(

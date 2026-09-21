@@ -86,10 +86,10 @@ class CircaCycleCard extends StatelessWidget {
                           ),
                           child: Icon(Icons.female, color: pColor, size: 14),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           AppStrings.tr('cycle_card_header', language),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
@@ -115,7 +115,7 @@ class CircaCycleCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
 
                 // Основная строка: День цикла + Фаза биоритма
                 Row(
@@ -132,10 +132,10 @@ class CircaCycleCard extends StatelessWidget {
                         height: 1.1,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       '/ ${analysis.totalDays} ${language == AppLanguage.kyrgyz ? 'күн' : 'день'}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.muted,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -161,7 +161,7 @@ class CircaCycleCard extends StatelessWidget {
                               color: pColor,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                           Text(
                             _phaseName(analysis.phase, language),
                             style: TextStyle(
@@ -176,11 +176,11 @@ class CircaCycleCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
 
                 // 28-дневная линейка биоритма
                 _buildCycleTimeline(analysis.currentDay, analysis.totalDays, pColor),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
 
                 // Лаконичная директива по нагрузке и восстановлению
                 Container(
@@ -197,7 +197,7 @@ class CircaCycleCard extends StatelessWidget {
                           language == AppLanguage.kyrgyz
                               ? 'Күч жана чыдамкайлыктын туу чокусу · Кененирээк →'
                               : 'Пик выносливости и сил · Подробнее →',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

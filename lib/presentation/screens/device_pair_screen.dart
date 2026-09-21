@@ -119,13 +119,13 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
         content: Row(
           children: [
             const Icon(Icons.check_circle, color: AppColors.sage, size: 20),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 isDemo
                     ? 'Демо-часы успешно подключены (Симулятор)'
                     : 'Часы ${device?.name ?? "СААТ-1"} подключены по BLE 5.3!',
-                style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+                style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -164,10 +164,10 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.fg),
+          icon: Icon(Icons.arrow_back, color: AppColors.fg),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -204,7 +204,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.rose.withValues(alpha: 0.4)),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(Icons.bluetooth_disabled, color: AppColors.rose, size: 22),
                       SizedBox(width: 10),
@@ -218,7 +218,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                   ),
                 ),
 
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               // Анимированный радар поиска
               Center(
                 child: CircaBandRadar(
@@ -227,20 +227,20 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                   isConnected: widget.bleBridge.currentTelemetry.isConnected,
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               Text(
                 _isScanning
                     ? 'СКАНИРОВАНИЕ РАДИОЭФИРА...'
                     : (hasDevices ? 'НАЙДЕНЫ УСТРОЙСТВА (${_devices.length})' : 'УСТРОЙСТВА НЕ НАЙДЕНЫ'),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2.0,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               const Text(
                 'Включите часы и поднесите их близко к смартфону.',
                 textAlign: TextAlign.center,
@@ -250,14 +250,14 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
 
               // Список найденных устройств
               Expanded(
                 child: hasDevices
                     ? ListView.separated(
                         itemCount: _devices.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 10),
+                        separatorBuilder: (context, index) => SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final dev = _devices[index];
                           final isItemConnecting = _isConnecting && _connectingAddress == dev.address;
@@ -280,29 +280,29 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                                     size: 22,
                                   ),
                                 ),
-                                const SizedBox(width: 14),
+                                SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         dev.name.isNotEmpty ? dev.name : 'UTE Smart Watch',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppColors.fg,
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      SizedBox(height: 4),
                                       Row(
                                         children: [
                                           Text(
                                             dev.address,
-                                            style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                                            style: TextStyle(color: AppColors.muted, fontSize: 11),
                                           ),
-                                          const SizedBox(width: 8),
-                                          const Text('•', style: TextStyle(color: AppColors.faint, fontSize: 11)),
-                                          const SizedBox(width: 8),
+                                          SizedBox(width: 8),
+                                          Text('•', style: TextStyle(color: AppColors.faint, fontSize: 11)),
+                                          SizedBox(width: 8),
                                           Text(
                                             '${dev.rssi} dBm',
                                             style: TextStyle(
@@ -317,12 +317,12 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                                   ),
                                 ),
                                 isItemConnecting
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 20,
                                         height: 20,
                                         child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
                                       )
-                                    : const Icon(Icons.chevron_right, color: AppColors.muted),
+                                    : Icon(Icons.chevron_right, color: AppColors.muted),
                               ],
                             ),
                           );
@@ -334,7 +334,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                               ? 'Идет поиск UTE / KALKAN устройств по Bluetooth...'
                               : 'В радиусе действия устройства не обнаружены.\nНажмите «Искать снова».',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: AppColors.muted, fontSize: 12, height: 1.5),
+                          style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.5),
                         ),
                       ),
               ),
@@ -354,18 +354,18 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.surface,
                         foregroundColor: AppColors.fg,
-                        side: const BorderSide(color: AppColors.line),
+                        side: BorderSide(color: AppColors.line),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: _isConnecting ? null : () => _connect(null, true),
-                      icon: const Icon(Icons.bolt, color: AppColors.stage, size: 18),
+                      icon: Icon(Icons.bolt, color: AppColors.stage, size: 18),
                       label: const Text(
                         'ПОДКЛЮЧИТЬ ДЕМО-РЕЖИМ (СИМУЛЯТОР)',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),

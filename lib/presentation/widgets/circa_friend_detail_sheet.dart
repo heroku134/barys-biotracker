@@ -64,7 +64,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
 
           // Header
           Row(
@@ -89,7 +89,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +99,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                         Flexible(
                           child: Text(
                             member.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.fg,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -107,7 +107,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
@@ -126,17 +126,17 @@ class CircaFriendDetailSheet extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       '${member.city} · Синхронизация: ${member.lastSyncText}',
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12),
+                      style: TextStyle(color: AppColors.muted, fontSize: 12),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Status Quote
           Container(
@@ -149,7 +149,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
             ),
             child: Text(
               member.statusQuote,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.fg,
                 fontSize: 13,
                 fontStyle: FontStyle.italic,
@@ -157,7 +157,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Recovery Card Hero
           GlassCard(
@@ -171,14 +171,14 @@ class CircaFriendDetailSheet extends StatelessWidget {
                   children: [
                     Text(
                       AppStrings.tr('friend_detail_recovery', language),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.muted,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
@@ -192,7 +192,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                             letterSpacing: -1.0,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           member.recoveryZone == RecoveryZone.optimal
                               ? (language == AppLanguage.kyrgyz ? 'Жашыл коридор' : 'Зеленый коридор')
@@ -223,7 +223,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // 4 Grid metrics
           Row(
@@ -237,7 +237,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                   color: AppColors.amber,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: _buildMetricTile(
                   label: AppStrings.tr('friend_detail_sleep', language),
@@ -249,7 +249,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -261,7 +261,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                   color: AppColors.sage,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: _buildMetricTile(
                   label: AppStrings.tr('friend_detail_rhr', language),
@@ -273,7 +273,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Action Button: Send Impulse
           if (!member.isCurrentUser)
@@ -302,11 +302,11 @@ class CircaFriendDetailSheet extends StatelessWidget {
                       content: Row(
                         children: [
                           const Icon(Icons.auto_awesome, color: AppColors.amber, size: 18),
-                          const SizedBox(width: 10),
+                          SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               'Импульс силы Барыса успешно отправлен ${member.name}!',
-                              style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
+                              style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -319,7 +319,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.auto_awesome, size: 16),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       AppStrings.tr('league_send_impulse', language),
                       style: const TextStyle(
@@ -333,7 +333,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
               ),
             ),
             if (!member.isCurrentUser) ...[
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: TextButton.icon(
@@ -391,7 +391,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -401,19 +401,19 @@ class CircaFriendDetailSheet extends StatelessWidget {
               Icon(icon, size: 14, color: color),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.fg,
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(
             sub,
-            style: const TextStyle(color: AppColors.faint, fontSize: 10),
+            style: TextStyle(color: AppColors.faint, fontSize: 10),
           ),
         ],
       ),

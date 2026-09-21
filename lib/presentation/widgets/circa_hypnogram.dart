@@ -54,7 +54,7 @@ class CircaHypnogram extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 // Заголовок модального окна с кнопкой закрытия
                 Row(
@@ -72,10 +72,10 @@ class CircaHypnogram extends StatelessWidget {
                             letterSpacing: 1.8,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        SizedBox(height: 2),
                         Text(
                           'Фактический сон: $actualHoursч $actualMinutesм из $needHoursч $needMinutesм',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -84,12 +84,12 @@ class CircaHypnogram extends StatelessWidget {
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.muted, size: 22),
+                      icon: Icon(Icons.close, color: AppColors.muted, size: 22),
                       onPressed: () => Navigator.of(ctx).pop(),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 // Декомпозиция Sleep Need: База + Долг + За Strain = Итого
                 const Text(
@@ -101,7 +101,7 @@ class CircaHypnogram extends StatelessWidget {
                     letterSpacing: 1.4,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
@@ -113,16 +113,16 @@ class CircaHypnogram extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildNeedItem('База', '${sleepResult.baselineNeedMinutes ~/ 60}ч'),
-                      const Text('+', style: TextStyle(color: AppColors.faint, fontSize: 13)),
+                      Text('+', style: TextStyle(color: AppColors.faint, fontSize: 13)),
                       _buildNeedItem('Долг 14д', '+${sleepResult.sleepDebtPortionMinutes}м'),
-                      const Text('+', style: TextStyle(color: AppColors.faint, fontSize: 13)),
+                      Text('+', style: TextStyle(color: AppColors.faint, fontSize: 13)),
                       _buildNeedItem('За нагрузку', '+${sleepResult.strainSurchargeMinutes}м'),
-                      const Text('=', style: TextStyle(color: AppColors.faint, fontSize: 13)),
+                      Text('=', style: TextStyle(color: AppColors.faint, fontSize: 13)),
                       _buildNeedItem('Итого нужно', '$needHoursч $needMinutesм', isHighlight: true),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 // 4 вклада Sleep Performance
                 const Text(
@@ -134,19 +134,19 @@ class CircaHypnogram extends StatelessWidget {
                     letterSpacing: 1.4,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   children: [
                     _buildFactorPill('Длительность', '${sleepResult.durationFactor}%'),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _buildFactorPill('Эффективность', '${sleepResult.efficiencyFactor}%'),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _buildFactorPill('Режим дня', '${sleepResult.consistencyFactor}%'),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     _buildFactorPill('Релаксация', '${sleepResult.restorativeFactor}%'),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Векторная гипнограмма фаз сна
                 Row(
@@ -171,7 +171,7 @@ class CircaHypnogram extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
 
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -189,7 +189,7 @@ class CircaHypnogram extends StatelessWidget {
                           painter: _HypnogramPainter(epochs: sleepResult.hypnogram),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -202,7 +202,7 @@ class CircaHypnogram extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Кнопка закрытия
                 SizedBox(
@@ -213,7 +213,7 @@ class CircaHypnogram extends StatelessWidget {
                       foregroundColor: AppColors.fg,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: AppColors.line),
+                        side: BorderSide(color: AppColors.line),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
@@ -263,7 +263,7 @@ class CircaHypnogram extends StatelessWidget {
                       color: AppColors.sage,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   const Text(
                     'ПОТРЕБНОСТЬ ВО СНЕ',
                     style: TextStyle(
@@ -285,10 +285,10 @@ class CircaHypnogram extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.bedtime_outlined, size: 12, color: AppColors.amber),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     Text(
                       'Отбой: ${sleepResult.optimalBedtime}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.fg,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -299,7 +299,7 @@ class CircaHypnogram extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Фактический сон vs Потребность
           Row(
@@ -308,7 +308,7 @@ class CircaHypnogram extends StatelessWidget {
             children: [
               Text(
                 '$actualHoursч $actualMinutesм',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.fg,
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
@@ -318,7 +318,7 @@ class CircaHypnogram extends StatelessWidget {
               ),
               Text(
                 ' / $needHoursч $needMinutesм',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -350,7 +350,7 @@ class CircaHypnogram extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           // Прогресс-бар покрытия
           ClipRRect(
@@ -364,7 +364,7 @@ class CircaHypnogram extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           // Сводка основных фаз
           Row(
@@ -375,7 +375,7 @@ class CircaHypnogram extends StatelessWidget {
               _buildPhaseSummary('Легкий', '${(sleepResult.actualSleepMinutes * 0.54 / 60).toStringAsFixed(1)}ч', AppColors.muted),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           // Подсказка нажать для подробного разбора
           Container(
@@ -384,7 +384,7 @@ class CircaHypnogram extends StatelessWidget {
               color: AppColors.raised.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
@@ -422,14 +422,14 @@ class CircaHypnogram extends StatelessWidget {
             color: dotColor,
           ),
         ),
-        const SizedBox(width: 4),
+        SizedBox(width: 4),
         Text(
           '$label: ',
-          style: const TextStyle(color: AppColors.muted, fontSize: 10),
+          style: TextStyle(color: AppColors.muted, fontSize: 10),
         ),
         Text(
           value,
-          style: const TextStyle(color: AppColors.fg, fontSize: 10, fontWeight: FontWeight.w700),
+          style: TextStyle(color: AppColors.fg, fontSize: 10, fontWeight: FontWeight.w700),
         ),
       ],
     );
@@ -439,8 +439,8 @@ class CircaHypnogram extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.faint, fontSize: 9)),
-        const SizedBox(height: 2),
+        Text(label, style: TextStyle(color: AppColors.faint, fontSize: 9)),
+        SizedBox(height: 2),
         Text(
           val,
           style: TextStyle(
@@ -464,13 +464,13 @@ class CircaHypnogram extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(val, style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 2),
+            Text(val, style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700)),
+            SizedBox(height: 2),
             Text(
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.muted, fontSize: 8.5),
+              style: TextStyle(color: AppColors.muted, fontSize: 8.5),
             ),
           ],
         ),
@@ -486,8 +486,8 @@ class CircaHypnogram extends StatelessWidget {
           height: 7,
           decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 9)),
+        SizedBox(width: 4),
+        Text(label, style: TextStyle(color: AppColors.muted, fontSize: 9)),
       ],
     );
   }

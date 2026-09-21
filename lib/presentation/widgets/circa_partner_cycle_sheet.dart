@@ -53,7 +53,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Заголовок и кнопка закрытия
             Row(
@@ -66,14 +66,14 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                   ),
                   child: const Icon(Icons.favorite, color: AppColors.rose, size: 18),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Биоритм: ${data.partnerName}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.fg,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -82,7 +82,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                       ),
                       Text(
                         'День ${data.cycleDay} из ${data.cycleLength} · СААТ-1 Синхронизация',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
@@ -92,12 +92,12 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.muted, size: 20),
+                  icon: Icon(Icons.close, color: AppColors.muted, size: 20),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Главная карточка фазы и статуса
             GlassCard(
@@ -136,7 +136,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
 
                   // Показатели: Энергия, Настроение, Выделения
                   Row(
@@ -147,7 +147,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                           value: '${data.energyEmoji} ${data.energyScore}/5',
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Expanded(
                         child: _buildMetricTile(
                           label: 'НАСТРОЕНИЕ',
@@ -159,7 +159,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Совет для партнёра на сегодня
             GlassCard(
@@ -168,7 +168,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.lightbulb_outline, color: AppColors.amber, size: 16),
                       SizedBox(width: 6),
@@ -183,10 +183,10 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Text(
                     data.partnerGuidance,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.fg,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -196,7 +196,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
 
             // Отмеченные симптомы (если есть)
             if (data.symptoms.isNotEmpty) ...[
@@ -215,7 +215,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                         letterSpacing: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 6,
@@ -229,7 +229,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                           ),
                           child: Text(
                             s,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.fg,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -241,7 +241,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
             ],
 
             // Кнопки управления
@@ -261,19 +261,19 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.copy, size: 14, color: AppColors.fg),
+                    icon: Icon(Icons.copy, size: 14, color: AppColors.fg),
                     label: const Text(
                       'Скопировать',
                       style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.line),
+                      side: BorderSide(color: AppColors.line),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: TextButton.icon(
                     onPressed: () async {
@@ -281,7 +281,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                         context: context,
                         builder: (ctx) => AlertDialog(
                           backgroundColor: AppColors.surface,
-                          title: const Text('Отвязать партнёра?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
+                          title: Text('Отвязать партнёра?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
                           content: const Text(
                             'Карточка партнёра будет скрыта с главного экрана.',
                             style: TextStyle(color: AppColors.muted, fontSize: 13),
@@ -289,7 +289,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(ctx).pop(false),
-                              child: const Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+                              child: Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
                             ),
                             ElevatedButton(
                               onPressed: () => Navigator.of(ctx).pop(true),
@@ -338,12 +338,12 @@ class CircaPartnerCycleSheet extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(color: AppColors.faint, fontSize: 9, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.faint, fontSize: 9, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 3),
+          SizedBox(height: 3),
           Text(
             value,
-            style: const TextStyle(color: AppColors.fg, fontSize: 12.5, fontWeight: FontWeight.w800),
+            style: TextStyle(color: AppColors.fg, fontSize: 12.5, fontWeight: FontWeight.w800),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

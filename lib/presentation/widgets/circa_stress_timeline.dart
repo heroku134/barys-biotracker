@@ -122,13 +122,13 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'РАЗМЕТКА СОБЫТИЯ (${slot.timeRange})',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -153,12 +153,12 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               const Text(
                 'Укажи причину — через 30 дней ИИ Барыса начнет предсказывать пики стресса:',
                 style: TextStyle(color: AppColors.fg, fontSize: 13, height: 1.3),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               // Быстрый выбор
               Wrap(
@@ -180,13 +180,13 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       ),
                       child: Text(
                         tag,
-                        style: const TextStyle(color: AppColors.fg, fontSize: 12),
+                        style: TextStyle(color: AppColors.fg, fontSize: 12),
                       ),
                     ),
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
 
               // Поле ручного ввода
               Row(
@@ -194,20 +194,20 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   Expanded(
                     child: TextField(
                       controller: controller,
-                      style: const TextStyle(color: AppColors.fg, fontSize: 13),
+                      style: TextStyle(color: AppColors.fg, fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Или своя причина (например, «Звонок инвестору»)...',
-                        hintStyle: const TextStyle(color: AppColors.muted, fontSize: 11),
+                        hintStyle: TextStyle(color: AppColors.muted, fontSize: 11),
                         filled: true,
                         fillColor: AppColors.raised,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.line),
+                          borderSide: BorderSide(color: AppColors.line),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.line),
+                          borderSide: BorderSide(color: AppColors.line),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -216,7 +216,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
                       HapticFeedback.selectionClick();
@@ -258,8 +258,8 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
         content: Row(
           children: [
             const Icon(Icons.air, color: AppColors.sage, size: 22),
-            const SizedBox(width: 12),
-            const Expanded(
+            SizedBox(width: 12),
+            Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +315,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       color: summary.currentLevel.color,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   const Text(
                     'МОНИТОР СТРЕССА (ВСР + ЧСС)',
                     style: TextStyle(
@@ -344,7 +344,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // 2. Сводка: Восстановление vs Стресс (строгая палитра Sage / Rose)
           Row(
@@ -367,7 +367,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         '${summary.minutesInRestoration ~/ 60}ч ${summary.minutesInRestoration % 60}м',
                         style: const TextStyle(
@@ -380,7 +380,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(10),
@@ -399,7 +399,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         '${summary.minutesInHighStress} мин',
                         style: const TextStyle(
@@ -414,7 +414,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // 3. Каталог дня: Интерактивный Story-формат «День в 5 событиях»
           InkWell(
@@ -464,8 +464,8 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                  SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -504,7 +504,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 4. Хронологическая лента дня с разметкой
           Row(
@@ -529,7 +529,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           for (final slot in _slots)
             Padding(
@@ -557,7 +557,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           slot.timeRange.split(' — ')[0],
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -596,7 +596,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                                       Flexible(
                                         child: Text(
                                           slot.contextTitle,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppColors.fg,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
@@ -605,13 +605,13 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                                         ),
                                       ),
                                       if (slot.userTag != null) ...[
-                                        const SizedBox(width: 6),
-                                        const Icon(Icons.edit, color: AppColors.muted, size: 10),
+                                        SizedBox(width: 6),
+                                        Icon(Icons.edit, color: AppColors.muted, size: 10),
                                       ],
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8),
                                 Text(
                                   '${slot.stressScore}%',
                                   style: TextStyle(
@@ -622,7 +622,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 3),
+                            SizedBox(height: 3),
 
                             // Микро-шкала прогресса стресса (строго Sage/Amber/Rose)
                             ClipRRect(
@@ -634,11 +634,11 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                                 valueColor: AlwaysStoppedAnimation<Color>(slot.level.color),
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
 
                             Text(
                               slot.physiologicalNote,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.muted,
                                 fontSize: 10,
                                 height: 1.25,
@@ -653,7 +653,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
               ),
             ),
 
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
 
           // 5. Предсказательный анализатор (AI Stress Prediction)
           InkWell(
@@ -683,7 +683,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       size: 16,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -717,7 +717,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 3),
+                        SizedBox(height: 3),
                         const Text(
                           'Пик нагрузки (Дедлайн) · Нажмите для протокола и советов',
                           style: TextStyle(
@@ -730,7 +730,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   const Icon(
                     Icons.arrow_forward_ios,
                     color: AppColors.muted,
@@ -769,7 +769,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               children: [
                 Container(
@@ -780,7 +780,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   ),
                   child: const Icon(Icons.bolt, color: AppColors.rose, size: 20),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -789,17 +789,17 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                         'ПЕРСОНАЛЬНЫЙ ПАТТЕРН СТРЕССА',
                         style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         'Пик кортизола в 13:30 (${slot.userTag ?? 'Переговоры / Дедлайн'})',
-                        style: const TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -812,12 +812,12 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                 style: TextStyle(color: AppColors.fg, fontSize: 12, height: 1.4),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             const Text(
               'Рекомендация СААТ-1: за 10 минут до пиковой встречи переключитесь на дыхательный цикл 4-6 для активации парасимпатической нервной системы (блуждающего нерва).',
               style: TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35, fontStyle: FontStyle.italic),
             ),
-            const SizedBox(height: 18),
+            SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -825,7 +825,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   Navigator.of(ctx).pop();
                   _triggerBreathingPause();
                 },
-                icon: const Icon(Icons.air, size: 16, color: AppColors.stage),
+                icon: Icon(Icons.air, size: 16, color: AppColors.stage),
                 label: const Text(
                   'НАЧАТЬ ДЫХАТЕЛЬНУЮ ПАУЗУ 4-6',
                   style: TextStyle(color: AppColors.stage, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2),

@@ -3,15 +3,12 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
-import '../widgets/circa_ai_language_pill.dart';
-import '../widgets/circa_film_grain.dart';
-import '../widgets/circa_pulsing_logo.dart';
 import 'auth_screen.dart';
 import 'main_shell.dart';
 
-/// Входной кинематографичный экран CIRCA со священной цитатой и богатым пульсирующим логотипом
 class SplashScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
   final bool isAuthenticated;
@@ -21,14 +18,15 @@ class SplashScreen extends StatefulWidget {
     super.key,
     required this.bleBridge,
     required this.isAuthenticated,
-    this.displayDuration = const Duration(milliseconds: 2600),
+    this.displayDuration = const Duration(milliseconds: 2200),
   });
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   Timer? _timer;
   bool _hasNavigated = false;
   late AnimationController _fadeController;
@@ -39,11 +37,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 700),
     );
-    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeIn);
+    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
     _fadeController.forward();
-
     _timer = Timer(widget.displayDuration, _proceedToNextScreen);
   }
 
@@ -51,7 +48,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (_hasNavigated || !mounted) return;
     _hasNavigated = true;
     _timer?.cancel();
-
     CircaHaptics.selectionClick();
 
     final nextScreen = widget.isAuthenticated
@@ -60,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 650),
+        transitionDuration: const Duration(milliseconds: 400),
         pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
@@ -78,86 +74,78 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final palette = KalkanColors.of(context);
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
         return Scaffold(
-          backgroundColor: AppColors.stage,
-          body: CircaFilmGrainBackground(
-            child: GestureDetector(
-              onTap: _proceedToNextScreen,
-              behavior: HitTestBehavior.opaque,
-              child: SafeArea(
-                child: Stack(
-                  children: [
-                    // Верхний переключатель языка (AI Oval Capsule)
-                    const Positioned(
-                      top: 12,
-                      right: 18,
-                      child: CircaAiLanguagePill(),
-                    ),
-
-                    // Центральная композиция
-                    Center(
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 26),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Священная кыргызская пословица
-                              Text(
-                                AppStrings.tr('entrance_quote', language),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppColors.fg,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.2,
-                                  height: 1.35,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-
-                              // Философский перевод / объяснение
-                              Text(
-                                AppStrings.tr('entrance_quote_sub', language),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppColors.amber,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  fontStyle: FontStyle.italic,
-                                  height: 1.35,
-                                ),
-                              ),
-                              const SizedBox(height: 38),
-
-                              // Богатое пульсирующее лого КАЛКАН
-                              const CircaPulsingLogo(
-                                size: 165,
-                                primaryColor: AppColors.amber,
-                                secondaryColor: AppColors.sage,
-                              ),
-                              const SizedBox(height: 36),
-
-                              // Подсказка перехода
-                              Text(
-                                AppStrings.tr('entrance_tap_to_enter', language),
-                                style: const TextStyle(
-                                  color: AppColors.muted,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.8,
-                                ),
-                              ),
-                            ],
+          backgroundColor: palette.bg,
+          body: GestureDetector(
+            onTap: _proceedToNextScreen,
+            behavior: HitTestBehavior.opaque,
+            child: SafeArea(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 16, 28, 28),
+                  child: Column(
+                    children: [
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: TextButton(
+                          onPressed: () => AppLocaleNotifier.toggleLanguage(),
+                          child: Text(
+                            language.shortTitle,
+                            style: AppTypography.monoLabel(palette.secondary),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      const Spacer(),
+                      ClipOval(
+                        child: Image.asset(
+                          'assets/images/mascot_normal.jpg',
+                          width: 128,
+                          height: 128,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      Text(
+                        'КАЛКАН',
+                        style: AppTypography.monoLabel(palette.secondary).copyWith(
+                          letterSpacing: 4,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        AppStrings.tr('entrance_quote', language),
+                        textAlign: TextAlign.center,
+                        style: AppTypography.screenTitle(palette.fg).copyWith(
+                          fontSize: 22,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        AppStrings.tr('entrance_quote_sub', language),
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodyMuted(palette.secondary),
+                      ),
+                      const Spacer(),
+                      Text(
+                        AppStrings.tr('entrance_source', language),
+                        textAlign: TextAlign.center,
+                        style: AppTypography.caption(palette.muted),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        AppStrings.tr('entrance_tap_to_enter', language),
+                        style: AppTypography.monoLabel(palette.secondary),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

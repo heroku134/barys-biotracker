@@ -107,7 +107,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
             borderRadius: BorderRadius.circular(12),
             side: const BorderSide(color: AppColors.sage, width: 1.2),
           ),
-          content: const Row(
+          content: Row(
             children: [
               Icon(Icons.wb_sunny_outlined, color: AppColors.sage, size: 20),
               SizedBox(width: 10),
@@ -161,8 +161,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              const Row(
+              SizedBox(height: 16),
+              Row(
                 children: [
                   Icon(Icons.tune, color: AppColors.amber, size: 16),
                   SizedBox(width: 8),
@@ -177,12 +177,12 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               const Text(
                 'В основном интерфейсе Барыс живёт автономно на основе данных пульса и ВСР. Для демонстрации переключите сценарий вручную:',
                 style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               CircaEdgeFade(
                 child: SingleChildScrollView(
@@ -191,17 +191,17 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                   child: Row(
                     children: [
                       _buildScenarioChip(null, 'Автономный (ИИ)'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildScenarioChip(AvatarVisualState.charged, 'Бодрый (≥75%)'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildScenarioChip(AvatarVisualState.normal, 'В тонусе (50–74%)'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildScenarioChip(AvatarVisualState.tired, 'Уставший (<34%)'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildScenarioChip(AvatarVisualState.sleep, 'Сон / Отбой'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildScenarioChip(AvatarVisualState.postWorkout, 'После спорта'),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       _buildScenarioChip(AvatarVisualState.meditation, 'Баланс / Дзен'),
                     ],
                   ),
@@ -243,8 +243,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Row(
+                SizedBox(height: 16),
+                Row(
                   children: [
                     Icon(Icons.shield_outlined, color: AppColors.amber, size: 18),
                     SizedBox(width: 8),
@@ -259,12 +259,12 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 const Text(
                   'Каждая тренировка, каждый закрытый Strain и каждая ночь сна обогащают костюм и статус степного ирбиса:',
                   style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 for (final tier in BarysEvolutionTier.values)
                   _buildEvolutionTierCard(tier, isCurrent: tier == _profile.evolutionTier),
@@ -312,7 +312,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                       color: tier.auraColor,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     tier.title.toUpperCase(),
                     style: TextStyle(
@@ -347,16 +347,16 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             tier.description,
-            style: const TextStyle(color: AppColors.fg, fontSize: 11, height: 1.3),
+            style: TextStyle(color: AppColors.fg, fontSize: 11, height: 1.3),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Row(
             children: [
               const Icon(Icons.auto_awesome, color: AppColors.amber, size: 12),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Expanded(
                 child: Text(
                   tier.unlockBenefit,
@@ -391,12 +391,12 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
+              icon: Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
               AppStrings.tr('mascot_title', language),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.fg,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -406,7 +406,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.tune, color: AppColors.muted, size: 20),
+            icon: Icon(Icons.tune, color: AppColors.muted, size: 20),
             tooltip: 'Режим отладки маскота',
             onPressed: _showDevScenariosSheet,
           ),
@@ -421,7 +421,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   children: [
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
 
                     // 1. Интерактивный Аватар Барыса (Тап = вздох, покач головой, реплика)
                     Center(
@@ -433,7 +433,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
 
                     // 2. Утреннее совместное пробуждение (если утро)
                     if (isMorningTime && !_isMorningWoken)
@@ -458,7 +458,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Row(
+                            Row(
                               children: [
                                 Icon(Icons.wb_sunny_outlined, color: AppColors.amber, size: 16),
                                 SizedBox(width: 8),
@@ -473,7 +473,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             const Text(
                               '«Доброе утро, батыр. Я спал с тобой 7ч 42м. Твой ночной пульс опускался до 52 bpm — мы восстановились. Готов встретить новый день?»',
                               style: TextStyle(
@@ -483,12 +483,12 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            SizedBox(height: 10),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 onPressed: _wakeUpTogether,
-                                icon: const Icon(Icons.check, size: 16, color: AppColors.stage),
+                                icon: Icon(Icons.check, size: 16, color: AppColors.stage),
                                 label: const Text(
                                   'ПРОСНУТЬСЯ ВМЕСТЕ (+50 XP)',
                                   style: TextStyle(
@@ -533,7 +533,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                                           letterSpacing: 1.2,
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
+                                      SizedBox(width: 6),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
@@ -551,10 +551,10 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: 2),
                                   Text(
                                     'Уровень ${_profile.level} · ${_profile.evolutionTier.ornamentName}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AppColors.muted,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 11,
@@ -564,7 +564,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                               ),
                               Text(
                                 '${_profile.currentXp} / ${_profile.maxXp} XP',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.fg,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
@@ -572,16 +572,16 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Text(
                             _profile.evolutionTier.description,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.muted,
                               fontSize: 11,
                               height: 1.3,
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(3),
                             child: LinearProgressIndicator(
@@ -591,7 +591,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                               minHeight: 5,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -622,7 +622,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
 
                     // 5. Статус ЦНС (бодрый или отдых)
                     GlassCard(
@@ -636,7 +636,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                               color: _profile.state.badgeColor,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,10 +649,10 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                                     fontSize: 13,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                                SizedBox(height: 2),
                                 Text(
                                   _profile.state.description,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.muted,
                                     fontSize: 12,
                                     height: 1.35,
@@ -665,12 +665,12 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
 
                     // 6. Полноценный чек-лист задач
                     _buildDailyQuestsChecklist(),
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -711,7 +711,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                   color: color,
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
             ],
             Text(
               label,
@@ -741,7 +741,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
           children: [
             Text(
               _profile.isPauseMode ? 'РЕЖИМ ВОССТАНОВЛЕНИЯ (ЦНС)' : 'ЕЖЕДНЕВНЫЕ ЗАДАЧИ АКТИВНОСТИ',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -759,7 +759,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                     letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 // 3 сегментных микро-индикатора
                 Row(
                   children: List.generate(totalCount, (index) {
@@ -779,7 +779,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
 
         // Полноэкранный чек-лист микро-квестов
         ..._profile.quests.map((quest) {
@@ -814,7 +814,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
 
                     // Текст квеста и статус
                     Expanded(
@@ -829,7 +829,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                               fontSize: 12.5,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: 2),
                           Text(
                             quest.subtitle.isNotEmpty
                                 ? quest.subtitle
@@ -843,7 +843,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
 
                     // Индикатор XP / статуса выполнения сенсором
                     Container(
@@ -934,7 +934,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: AppColors.line),
+          side: BorderSide(color: AppColors.line),
         ),
         content: Row(
           children: [
@@ -943,11 +943,11 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
               color: quest.isCompleted ? AppColors.sage : AppColors.amber,
               size: 18,
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
+                style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
           ],

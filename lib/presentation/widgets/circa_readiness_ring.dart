@@ -190,7 +190,7 @@ class _CircaRingPainter extends CustomPainter {
     final scorePainter = TextPainter(
       text: TextSpan(
         text: '$score',
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.fg,
           fontSize: 54,
           fontWeight: FontWeight.w700,

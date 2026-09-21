@@ -132,7 +132,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -148,7 +148,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                       letterSpacing: 1.8,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   const Text(
                     'Зафиксируйте форму с наложением показателей',
                     style: TextStyle(
@@ -160,12 +160,12 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: AppColors.muted, size: 20),
+                icon: Icon(Icons.close, color: AppColors.muted, size: 20),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // Карточка превью фото с биометрическим оверлеем
           Container(
@@ -221,7 +221,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         'KALKAN SPORT · СААТ-1',
                         style: AppTypography.monoLabel.copyWith(
@@ -266,7 +266,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
             ),
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Кнопки съемки
           Row(
@@ -278,13 +278,13 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                   label: Text('СДЕЛАТЬ СНИМОК', style: AppTypography.monoBadge.copyWith(color: AppColors.textNearWhite)),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
-                    side: const BorderSide(color: AppColors.hairline),
+                    side: BorderSide(color: AppColors.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _isLoading ? null : () => _pickPhoto(ImageSource.gallery),
@@ -292,7 +292,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                   label: Text('ИЗ ГАЛЕРЕИ', style: AppTypography.monoBadge.copyWith(color: AppColors.textNearWhite)),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
-                    side: const BorderSide(color: AppColors.hairline),
+                    side: BorderSide(color: AppColors.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
@@ -301,7 +301,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
 
           // Кнопка экспорта в Stories (9:16)
           SizedBox(
@@ -335,7 +335,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
             ),
           ),
 
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
 
           // Кнопка сохранения / закрытия
           SizedBox(
@@ -386,7 +386,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
             color: AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 2),
+        SizedBox(height: 2),
         Text(
           value,
           style: AppTypography.metricValue.copyWith(

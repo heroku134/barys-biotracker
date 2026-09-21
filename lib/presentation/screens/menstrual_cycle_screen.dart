@@ -11,7 +11,6 @@ import '../../data/storage/user_profile_repository.dart';
 import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
-import '../widgets/circa_film_grain.dart';
 import '../widgets/glass_card.dart';
 
 class MenstrualCycleScreen extends StatefulWidget {
@@ -152,7 +151,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           backgroundColor: AppColors.surface,
           content: Text(
             'Отметки за день $day сохранены${_partnerLinked ? ' и переданы партнёру ($_partnerName)' : ''}',
-            style: const TextStyle(color: AppColors.fg),
+            style: TextStyle(color: AppColors.fg),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -225,7 +224,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                         decoration: BoxDecoration(color: AppColors.lineStrong, borderRadius: BorderRadius.circular(2)),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     Row(
                       children: [
                         Container(
@@ -236,25 +235,25 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                           ),
                           child: const Icon(Icons.favorite, color: AppColors.rose, size: 18),
                         ),
-                        const SizedBox(width: 10),
-                        const Expanded(
+                        SizedBox(width: 10),
+                        Expanded(
                           child: Text(
                             'Синхронизация с партнёром',
                             style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w800),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: AppColors.muted, size: 20),
+                          icon: Icon(Icons.close, color: AppColors.muted, size: 20),
                           onPressed: () => Navigator.of(ctx).pop(),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     const Text(
                       'Партнёр сможет видеть на своём главном экране карточку вашего биоритма, текущую фазу и подсказки, как проявить заботу и поддержку.',
                       style: TextStyle(color: AppColors.muted, fontSize: 12.5, height: 1.35),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -269,7 +268,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                             'ВАШ ИНВАЙТ-КОД ДЛЯ ПАРТНЁРА',
                             style: TextStyle(color: AppColors.muted, fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 1.2),
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: 6),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -307,25 +306,25 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     TextField(
                       controller: nameCtrl,
-                      style: const TextStyle(color: AppColors.fg, fontSize: 13),
+                      style: TextStyle(color: AppColors.fg, fontSize: 13),
                       decoration: InputDecoration(
                         labelText: 'Имя партнёра',
-                        labelStyle: const TextStyle(color: AppColors.muted, fontSize: 12),
+                        labelStyle: TextStyle(color: AppColors.muted, fontSize: 12),
                         filled: true,
                         fillColor: AppColors.surface,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.amber)),
-                        prefixIcon: const Icon(Icons.person_outline, color: AppColors.muted, size: 18),
+                        prefixIcon: Icon(Icons.person_outline, color: AppColors.muted, size: 18),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     SwitchListTile(
-                      title: const Text('Разрешить партнёру видеть цикл', style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w700)),
-                      subtitle: const Text('Отображать карточку биоритма на его главном экране', style: TextStyle(color: AppColors.muted, fontSize: 11)),
+                      title: Text('Разрешить партнёру видеть цикл', style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w700)),
+                      subtitle: Text('Отображать карточку биоритма на его главном экране', style: TextStyle(color: AppColors.muted, fontSize: 11)),
                       value: linked,
                       activeThumbColor: AppColors.rose,
                       contentPadding: EdgeInsets.zero,
@@ -333,7 +332,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                         setSheetState(() => linked = val);
                       },
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
                         Navigator.of(ctx).pop();
@@ -435,10 +434,10 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               title: Row(
                 children: [
                   const Icon(Icons.settings, color: AppColors.amber, size: 20),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     AppStrings.tr('cycle_edit_settings', language),
-                    style: const TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -448,7 +447,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                 children: [
                   Text(
                     '${language == AppLanguage.kyrgyz ? 'Циклдин узактыгы' : 'Длина цикла'}: $length дней',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                    style: TextStyle(color: AppColors.muted, fontSize: 13),
                   ),
                   Slider(
                     value: length.toDouble(),
@@ -459,10 +458,10 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                     inactiveColor: AppColors.raised,
                     onChanged: (v) => setDialogState(() => length = v.round()),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Text(
                     '${language == AppLanguage.kyrgyz ? 'Этек кирдин узактыгы' : 'Длительность менструации'}: $periodLen дней',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 13),
+                    style: TextStyle(color: AppColors.muted, fontSize: 13),
                   ),
                   Slider(
                     value: periodLen.toDouble(),
@@ -473,7 +472,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                     inactiveColor: AppColors.raised,
                     onChanged: (v) => setDialogState(() => periodLen = v.round()),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   InkWell(
                     onTap: () async {
                       final picked = await showDatePicker(
@@ -509,7 +508,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                         children: [
                           Text(
                             language == AppLanguage.kyrgyz ? 'Акыркы башталышы' : 'Начало последних месячных',
-                            style: const TextStyle(color: AppColors.fg, fontSize: 12),
+                            style: TextStyle(color: AppColors.fg, fontSize: 12),
                           ),
                           Text(
                             startDate != null ? '${startDate!.day}.${startDate!.month}.${startDate!.year}' : 'Выбрать',
@@ -524,7 +523,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(dialogCtx).pop(),
-                  child: const Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+                  child: Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -545,7 +544,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                           backgroundColor: AppColors.surface,
                           content: Text(
                             AppStrings.tr('cycle_settings_saved', language),
-                            style: const TextStyle(color: AppColors.fg),
+                            style: TextStyle(color: AppColors.fg),
                           ),
                         ),
                       );
@@ -591,7 +590,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
             elevation: 0,
             leading: Navigator.of(context).canPop()
                 ? IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: AppColors.fg, size: 18),
+                    icon: Icon(Icons.arrow_back_ios, color: AppColors.fg, size: 18),
                     onPressed: () => Navigator.of(context).pop(),
                   )
                 : null,
@@ -600,11 +599,11 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               children: [
                 Text(
                   AppStrings.tr('cycle_screen_title', language),
-                  style: const TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 Text(
                   AppStrings.tr('cycle_screen_subtitle', language),
-                  style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                  style: TextStyle(color: AppColors.muted, fontSize: 11),
                 ),
               ],
             ),
@@ -625,43 +624,41 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               ),
             ],
           ),
-          body: CircaFilmGrainBackground(
-            child: SingleChildScrollView(
+          body: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // 1. Интерактивный 28-дневный диск / селектор дней
                   _buildDayOrbitSelector(analysis.currentDay, pColor, language),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
 
                   // Кнопка быстрого начала нового цикла
                   _buildFastPeriodStartButton(language),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
 
                   // Карточка связи и синхронизации с партнёром
                   _buildPartnerSyncCard(language),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // 2. Карточка текущей фазы и статуса сенсоров СААТ-1
                   _buildPhaseOverviewCard(selectedPhase, pColor, analysis, language),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // 3. Ночная кривая термометрии кожи СААТ-1
                   _buildThermalGraphCard(analysis, pColor, language),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // 4. Персональные директивы (4 столпа биоритма)
                   _buildPillarsDirectivesCard(analysis, pColor, language),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // 5. Дневник самочувствия и симптомов
                   _buildSymptomsLogger(language),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                 ],
               ),
             ),
-          ),
         );
       },
     );
@@ -691,7 +688,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   ),
                   child: const Icon(Icons.water_drop, color: AppColors.rose, size: 18),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -706,12 +703,12 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         language == AppLanguage.kyrgyz
                             ? '1-күндү белгилөө жана циклди башынан эсептөө'
                             : 'Начать новый цикл (День 1) и откалибровать прогноз',
-                        style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                        style: TextStyle(color: AppColors.muted, fontSize: 11),
                       ),
                     ],
                   ),
@@ -746,11 +743,11 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   size: 15,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
                   language == AppLanguage.kyrgyz ? 'ӨНӨКТӨШ МЕНЕН СИНХРОН' : 'СИНХРОНИЗАЦИЯ С ПАРТНЁРОМ',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w800,
@@ -777,14 +774,14 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(
             _partnerLinked
                 ? 'Партнёр ($_partnerName) видит фазу вашего цикла на своём главном экране и получает подсказки, как вас поддержать.'
                 : 'Поделитесь кодом с партнёром, чтобы он видел текущую фазу и заботился о вас в соответствии с вашим биоритмом.',
-            style: const TextStyle(color: AppColors.fg, fontSize: 12, height: 1.35),
+            style: TextStyle(color: AppColors.fg, fontSize: 12, height: 1.35),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -819,13 +816,13 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                             ),
                           );
                         },
-                        child: const Icon(Icons.copy, size: 14, color: AppColors.muted),
+                        child: Icon(Icons.copy, size: 14, color: AppColors.muted),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               ElevatedButton(
                 onPressed: () => _openPartnerSyncDialog(language),
                 style: ElevatedButton.styleFrom(
@@ -856,7 +853,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
             children: [
               Text(
                 '${language == AppLanguage.kyrgyz ? 'БИОРИТМДИН КҮНДӨРҮ' : 'ДНИ БИОРИТМА'} ($_selectedDay / ${_profile.cycleLengthDays})',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -877,13 +874,13 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           SizedBox(
             height: 48,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _profile.cycleLengthDays,
-              separatorBuilder: (ctx, idx) => const SizedBox(width: 8),
+              separatorBuilder: (ctx, idx) => SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final day = index + 1;
                 final isSelected = day == _selectedDay;
@@ -924,7 +921,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        SizedBox(height: 3),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -937,7 +934,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                               ),
                             ),
                             if (hasMarks) ...[
-                              const SizedBox(width: 2),
+                              SizedBox(width: 2),
                               Container(
                                 width: 3,
                                 height: 3,
@@ -988,20 +985,20 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                 ),
               ),
               const Spacer(),
-              const Icon(Icons.watch_outlined, color: AppColors.muted, size: 16),
-              const SizedBox(width: 4),
+              Icon(Icons.watch_outlined, color: AppColors.muted, size: 16),
+              SizedBox(width: 4),
               const Text(
                 'СААТ-1 СИНХРОН',
                 style: TextStyle(color: AppColors.muted, fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 1.0),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             analysis.thermalAdviceText,
-            style: const TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600, height: 1.35),
+            style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600, height: 1.35),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -1011,8 +1008,8 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('STRAIN БЮДЖЕТ', style: TextStyle(color: AppColors.faint, fontSize: 9, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
+                      Text('STRAIN БЮДЖЕТ', style: TextStyle(color: AppColors.faint, fontSize: 9, fontWeight: FontWeight.w700)),
+                      SizedBox(height: 2),
                       Text(
                         '${analysis.targetStrainMin.toStringAsFixed(1)}–${analysis.targetStrainMax.toStringAsFixed(1)}',
                         style: TextStyle(color: pColor, fontSize: 14, fontWeight: FontWeight.w800),
@@ -1021,7 +1018,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: 10),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(10),
@@ -1029,8 +1026,8 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('ТЕРМОСЕНСОР', style: TextStyle(color: AppColors.faint, fontSize: 9, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
+                      Text('ТЕРМОСЕНСОР', style: TextStyle(color: AppColors.faint, fontSize: 9, fontWeight: FontWeight.w700)),
+                      SizedBox(height: 2),
                       Text(
                         '${analysis.skinTempDeviation >= 0 ? '+' : ''}${analysis.skinTempDeviation.toStringAsFixed(2)}°C',
                         style: const TextStyle(color: AppColors.amber, fontSize: 14, fontWeight: FontWeight.w800),
@@ -1058,7 +1055,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
             children: [
               Text(
                 AppStrings.tr('cycle_thermal_card', language),
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -1071,7 +1068,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   color: AppColors.sage.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.check_circle, color: AppColors.sage, size: 12),
                     SizedBox(width: 4),
@@ -1084,12 +1081,12 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             AppStrings.tr('cycle_thermal_desc', language),
-            style: const TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.3),
+            style: TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.3),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // Визуализация двухфазной температурной кривой (Custom Canvas)
           SizedBox(
@@ -1103,7 +1100,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1137,7 +1134,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
             '4 СТОЛПА БИОРИТМА (СААТ-1 ДИРЕКТИВЫ)',
             style: TextStyle(color: AppColors.muted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // 1. Тренировки
           _buildDirectiveRow(
@@ -1196,19 +1193,19 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           ),
           child: Icon(icon, color: color, size: 16),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
+                style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 3),
+              SizedBox(height: 3),
               Text(
                 text,
-                style: const TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35),
+                style: TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35),
               ),
             ],
           ),
@@ -1236,7 +1233,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           children: [
             if (flowKey != 'none') ...[
               Icon(Icons.water_drop, size: 12, color: isSel ? color : AppColors.muted),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
             ],
             Text(
               label,
@@ -1264,7 +1261,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
             children: [
               Text(
                 '${AppStrings.tr('cycle_symptoms_title', language)} (ДЕНЬ $_selectedDay)',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -1278,7 +1275,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                     color: AppColors.amber.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.check, size: 10, color: AppColors.amber),
@@ -1292,31 +1289,31 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // 1. Выделения / менструация
           const Text(
             'ВЫДЕЛЕНИЯ / МЕНСТРУАЦИЯ',
             style: TextStyle(color: AppColors.faint, fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 0.8),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _buildFlowChip('none', 'Нет', AppColors.muted),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 _buildFlowChip('spotting', 'Мажущие', const Color(0xFFD67B80)),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 _buildFlowChip('light', 'Скудные', AppColors.rose),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 _buildFlowChip('medium', 'Умеренные', AppColors.rose),
-                const SizedBox(width: 6),
+                SizedBox(width: 6),
                 _buildFlowChip('heavy', 'Обильные', const Color(0xFFE02E49)),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 2. Энергия
           Row(
@@ -1327,12 +1324,12 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                 children: [
                   Text(
                     AppStrings.tr('cycle_symptom_energy', language),
-                    style: const TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     _energyScore >= 4 ? 'Высокий тонус' : (_energyScore == 3 ? 'Базовый уровень' : 'Сниженная энергия'),
-                    style: const TextStyle(color: AppColors.muted, fontSize: 10.5),
+                    style: TextStyle(color: AppColors.muted, fontSize: 10.5),
                   ),
                 ],
               ),
@@ -1358,7 +1355,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 3. Спазмы
           Row(
@@ -1366,7 +1363,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
             children: [
               Text(
                 AppStrings.tr('cycle_symptom_cramps', language),
-                style: const TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
+                style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
               ),
               Row(
                 children: ['Нет', 'Слабые', 'Умерен.', 'Сильные'].asMap().entries.map((e) {
@@ -1400,14 +1397,14 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 4. Настроение
           Text(
             AppStrings.tr('cycle_symptom_mood', language),
-            style: const TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
+            style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -1444,14 +1441,14 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 5. Симптомы и ощущения
           const Text(
             'СИМПТОМЫ И ОЩУЩЕНИЯ ТЕЛА',
             style: TextStyle(color: AppColors.faint, fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 0.8),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -1492,25 +1489,25 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 6. Личная заметка
           TextField(
             controller: _noteController,
             maxLines: 2,
-            style: const TextStyle(color: AppColors.fg, fontSize: 12.5),
+            style: TextStyle(color: AppColors.fg, fontSize: 12.5),
             decoration: InputDecoration(
               hintText: 'Личная заметка о самочувствии...',
-              hintStyle: const TextStyle(color: AppColors.faint, fontSize: 12),
+              hintStyle: TextStyle(color: AppColors.faint, fontSize: 12),
               filled: true,
               fillColor: AppColors.raised,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.line)),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.amber)),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
 
           // 7. Кнопка сохранения отметок
           ElevatedButton.icon(
