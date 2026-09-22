@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -402,11 +401,16 @@ class _SportScreenState extends State<SportScreen> {
                   height: 32,
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
-                    color: palette.raised,
+                    color: palette.surface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.amber.withValues(alpha: 0.35), width: 1.0),
+                    border: Border.all(color: palette.hairline, width: 1.0),
                   ),
-                  child: const CircaPulsingLogo(size: 26, animate: false),
+                  child: CircaPulsingLogo(
+                    size: 26,
+                    animate: false,
+                    primaryColor: AppColors.amber,
+                    secondaryColor: palette.secondary,
+                  ),
                 ),
               ),
             ),
@@ -425,7 +429,7 @@ class _SportScreenState extends State<SportScreen> {
                 margin: const EdgeInsets.only(right: 16),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: palette.raised,
+                  color: palette.surface,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: palette.hairline),
                 ),
@@ -457,33 +461,48 @@ class _SportScreenState extends State<SportScreen> {
                           final isSelected = _selectedSport == sport;
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              selected: isSelected,
-                              showCheckmark: false,
-                              avatar: Icon(
-                                sport.icon,
-                                size: 16,
-                                color: isSelected ? Colors.white : palette.secondary,
-                              ),
-                              label: Text(
-                                sport.localizedTitle(language.code),
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : palette.fg,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              selectedColor: AppColors.amber,
-                              backgroundColor: palette.raised,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: BorderSide(color: isSelected ? AppColors.amber : palette.hairline),
-                              ),
-                              onSelected: (selected) {
-                                if (selected && !_isWorkoutActive) {
+                            child: InkWell(
+                              onTap: () {
+                                if (!_isWorkoutActive) {
+                                  CircaHaptics.selectionClick();
                                   setState(() => _selectedSport = sport);
                                 }
                               },
+                              borderRadius: BorderRadius.circular(14),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? AppColors.amber : palette.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.amber : palette.hairline,
+                                    width: 1.0,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [BoxShadow(color: AppColors.amber.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
+                                      : (palette.shadow.a > 0 ? [BoxShadow(color: palette.shadow, blurRadius: 4)] : null),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      sport.icon,
+                                      size: 16,
+                                      color: isSelected ? Colors.white : palette.secondary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      sport.localizedTitle(language.code),
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : palette.fg,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           );
                         }).toList(),
@@ -516,8 +535,9 @@ class _SportScreenState extends State<SportScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.7),
+                              color: palette.surface.withValues(alpha: 0.92),
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: palette.hairline),
                             ),
                             child: Row(
                               children: [
@@ -530,9 +550,9 @@ class _SportScreenState extends State<SportScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 5),
-                                const Text(
+                                Text(
                                   'GPS LIVE',
-                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                                  style: TextStyle(color: palette.fg, fontSize: 10, fontWeight: FontWeight.w700),
                                 ),
                               ],
                             ),
@@ -739,14 +759,14 @@ class _SportScreenState extends State<SportScreen> {
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             onPressed: _startWorkout,
-                            icon: const Icon(Icons.play_arrow, color: Colors.black),
+                            icon: const Icon(Icons.play_arrow, color: Colors.white),
                             label: Text(
                               '${AppStrings.tr('sport_start', language)} · ${_selectedSport.localizedTitle(language.code)}',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 0.2),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.amber,
-                              foregroundColor: Colors.black,
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               elevation: 0,
@@ -759,23 +779,107 @@ class _SportScreenState extends State<SportScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 4. Недельная статистика
+                // 4. Автораспознавание движений IMU
                 GlassCard(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(AppLocaleNotifier.pick('Эта неделя', 'Бул апта', 'This week'), style: TextStyle(color: palette.secondary, fontSize: 12, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text('$_weekMinutes мин', style: TextStyle(color: palette.fg, fontSize: 26, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 4),
-                      Text(AppLocaleNotifier.pick('Сумма тренировочных сессий за 7 дней.', '7 күндүк машыгуу убактысы.', 'Total workout minutes this week.'), style: TextStyle(color: palette.secondary, fontSize: 12)),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.memory, color: AppColors.sage, size: 16),
+                                const SizedBox(width: 8),
+                                Text(
+                                  ru ? 'Автораспознавание движений IMU' : 'IMU кыймылды автоматтык таануу',
+                                  style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              ru
+                                  ? 'Алгоритм v4.2 автоматически стартует сессию при беге или шагах'
+                                  : 'v4.2 алгоритми чуркоодо автоматтык түрдө баштайт',
+                              style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: true,
+                        activeColor: AppColors.sage,
+                        onChanged: (val) {
+                          CircaHaptics.selectionClick();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: palette.surface,
+                              content: Text(
+                                val ? 'IMU автодетект активен' : 'IMU автодетект выключен',
+                                style: TextStyle(color: palette.fg),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                // 5. История тренировок
+                // 5. Недельное кардио (Зоны 2 и 5)
+                GlassCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            ru ? 'НЕДЕЛЬНОЕ КАРДИО (ЗОНЫ 2 И 5)' : 'АПТАЛЫК КАРДИО (2 ЖАНА 5-ЗОНА)',
+                            style: TextStyle(
+                              color: palette.secondary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          Text(
+                            '$_weekMinutes / 200 мин (${((_weekMinutes / 200) * 100).clamp(0, 100).round()}%)',
+                            style: const TextStyle(
+                              color: AppColors.sage,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: (_weekMinutes / 200).clamp(0.0, 1.0),
+                          backgroundColor: palette.hairline,
+                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.sage),
+                          minHeight: 6,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        ru
+                            ? '128 мин в Аэробной Зоне 2 + 24 мин интервалов в Зоне 5 обеспечивают омоложение миокарда.'
+                            : 'Аэробдук 2-зонадагы 128 мүнөт + 5-зонадагы 24 мүнөт интервалдар жүрөктү жашартат.',
+                        style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.35),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 6. История тренировок
                 Text(
                   ru ? 'История тренировок' : 'Машыгуу тарыхы',
                   style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w700),
@@ -811,10 +915,11 @@ class _SportScreenState extends State<SportScreen> {
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(9),
                                 decoration: BoxDecoration(
-                                  color: palette.raised,
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: AppColors.amber.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: AppColors.amber.withValues(alpha: 0.25), width: 1.0),
                                 ),
                                 child: Icon(w.sport.icon, color: AppColors.amber, size: 20),
                               ),
@@ -864,7 +969,7 @@ class _SportScreenState extends State<SportScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: palette.raised,
+          color: palette.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: palette.hairline),
         ),

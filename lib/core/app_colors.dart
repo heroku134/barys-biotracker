@@ -106,6 +106,32 @@ class DynamicColor extends Color {
   int toARGB32() => _resolver().toARGB32();
 
   @override
+  int get alpha => _resolver().alpha;
+
+  @override
+  double get a => _resolver().a;
+
+  @override
+  double get r => _resolver().r;
+
+  @override
+  double get g => _resolver().g;
+
+  @override
+  double get b => _resolver().b;
+
+  @override
+  Color withValues({double? alpha, double? red, double? green, double? blue, dynamic colorSpace}) {
+    return _resolver().withValues(alpha: alpha, red: red, green: green, blue: blue, colorSpace: colorSpace);
+  }
+
+  @override
+  Color withAlpha(int a) => _resolver().withAlpha(a);
+
+  @override
+  Color withOpacity(double opacity) => _resolver().withOpacity(opacity);
+
+  @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     if (other is Color) {

@@ -1,6 +1,6 @@
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/app_colors.dart';
 import 'core/app_language.dart';
 import 'core/app_theme.dart';
@@ -82,7 +82,7 @@ class BarysBioTrackerApp extends StatelessWidget {
               theme: AppThemeNotifier.lightTheme,
               darkTheme: AppThemeNotifier.darkTheme,
               builder: (context, child) {
-                AppColors.light = Theme.of(context).brightness == Brightness.light;
+                AppColors.light = themeMode == ThemeMode.light;
                 return child ?? const SizedBox.shrink();
               },
               home: SplashScreen(
