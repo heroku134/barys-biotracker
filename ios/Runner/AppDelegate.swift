@@ -118,7 +118,7 @@ class KalkanBleManager: NSObject, UTEBluetoothDelegate, FlutterStreamHandler {
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
       return
     }
-    device.clickMeasurementType(UTEMeasurementType.HRM) { _ in }
+    device.click(UTEMeasurementType.HRM) { _ in }
     result(true)
   }
 
@@ -200,13 +200,13 @@ class KalkanBleManager: NSObject, UTEBluetoothDelegate, FlutterStreamHandler {
       self.pushTelemetry()
     }
 
-    device.clickMeasurementType(UTEMeasurementType.HRV) { _ in }
+    device.click(UTEMeasurementType.HRV) { _ in }
   }
 
   private func pullNightAndDay() {
     let now = Int(Date().timeIntervalSince1970)
     let start = now - 36 * 3600
-    device.getSciSleepModelWithStartTime(start, endTime: now) { [weak self] _, _, ok, code, _, dict in
+    device.getSciSleepModel(withStartTime: start, endTime: now) { [weak self] _, _, ok, code, _, dict in
       guard let self = self, self.sdkOk(Int(code)) || ok else { return }
       if let minutes = self.sleepMinutes(from: dict), minutes > 0 {
         self.currentSleepMinutes = minutes
