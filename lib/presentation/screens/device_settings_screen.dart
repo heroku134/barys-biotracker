@@ -136,13 +136,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   Widget build(BuildContext context) {
     final telemetry = widget.bleBridge.currentTelemetry;
 
+    final palette = KalkanColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.stage,
+      backgroundColor: palette.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.fg),
+          icon: Icon(Icons.arrow_back, color: palette.fg),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Column(
@@ -151,7 +152,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             Text(
               tr('Часы', 'Саат'),
               style: TextStyle(
-                color: AppColors.muted,
+                color: palette.secondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2,
@@ -160,7 +161,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             Text(
               tr('Часы КАЛКАН СААТ-1', 'КАЛКАН СААТ-1 сааты'),
               style: TextStyle(
-                color: AppColors.fg,
+                color: palette.fg,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),

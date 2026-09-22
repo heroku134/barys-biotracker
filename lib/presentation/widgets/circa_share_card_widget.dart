@@ -466,7 +466,7 @@ class CircaShareCardWidget extends StatelessWidget {
 
         SizedBox(height: 8),
         Text(
-          'WHOOP TRIMP SCALE · ЦЕЛЬ ${strainResult.targetStrainMin.toStringAsFixed(1)}+',
+          'KALKAN · ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(0)}',
           style: TextStyle(
             color: AppColors.amber,
             fontSize: 12,

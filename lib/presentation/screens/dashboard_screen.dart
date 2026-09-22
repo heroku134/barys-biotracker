@@ -85,22 +85,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void _onProfileNotifier() {
-    if (mounted) {
-      setState(() => _userProfile = UserProfileRepository.profileNotifier.value);
-    }
-  }
-
   void _onPartnerNotifier() {
     if (mounted) {
       setState(() => _partner = PartnerCycleRepository.notifier.value);
     }
   }
 
+  void _onProfileNotifier() {
+    if (mounted) {
+      setState(() => _userProfile = UserProfileRepository.profileNotifier.value);
+    }
+  }
+
   void _syncIosWidgets() {
     final readiness = ReadinessEngine.calculate(_telemetry, baseline: _baseline);
     final strain = StrainEngine.evaluate(currentStrain: _telemetry.currentDayStrain, recoveryZone: readiness.zone);
-    final sleep = SleepEngine.calculate(telemetry: _telemetry, baseline: _baseline);
+    final sleep = SleepEngine.analyze(_telemetry);
     final hasNight = _telemetry.sleepMinutes > 0 || _telemetry.hrv > 0;
     final line = DayCopy.morning(
       sleepScore: sleep.sleepPerformanceScore,
@@ -229,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       climateFactor: ClimateModeStore.strainFactor(_climate),
     );
     final sleepResult = SleepEngine.calculate(telemetry: _telemetry, baseline: _baseline);
-    final sleepScore = sleepResult.sleepPerformanceScore > 0 ? sleepResult.sleepPerformanceScore : 88;
+    final sleepScore = sleepResult.sleepPerformanceScore;
     final name = _userProfile.name.isNotEmpty ? _userProfile.name : AppStrings.tr('home_guest', language);
     final isConnected = _telemetry.isConnected;
     final ru = language != AppLanguage.kyrgyz;
@@ -488,7 +488,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           onPressed: () => Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const DayJournalScreen()),
                           ),
-                          child: Text(ru ? 'Записать день' : 'Күндү жазуу'),
+                          child: Text(AppLocaleNotifier.pick('Записать день', 'Күндү жазуу', 'Log the day')),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            await widget.bleBridge.triggerHeartRateMeasurement();
+                          },
+                          icon: const Icon(Icons.favorite_outline, size: 16),
+                          label: Text(AppLocaleNotifier.pick('Замерить пульс', 'Пульсту өлчөө', 'Measure heart rate')),
                         ),
                       ),
                     ],

@@ -50,6 +50,10 @@ class SleepAnalysisResult {
 }
 
 class SleepEngine {
+  /// Анализ сна по телеметрии
+  static SleepAnalysisResult analyze(BleTelemetry telemetry, {PersonalBaseline baseline = const PersonalBaseline()}) =>
+      calculate(telemetry: telemetry, baseline: baseline);
+
   /// Расчет динамической потребности во сне (Whoop Sleep Planner)
   static SleepAnalysisResult calculate({
     required BleTelemetry telemetry,

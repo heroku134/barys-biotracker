@@ -273,7 +273,7 @@ class StoriesCardWidget extends StatelessWidget {
             Expanded(
               child: _buildMetricTile(
                 title: 'Пульс покоя',
-                value: '${telemetry.restingHeartRate > 0 ? telemetry.restingHeartRate : 52}',
+                value: telemetry.restingHeartRate > 0 ? '${telemetry.restingHeartRate}' : '—',
                 unit: 'BPM',
                 accent: AppColors.rose,
                 subtext: 'Минимум во сне',
@@ -286,11 +286,11 @@ class StoriesCardWidget extends StatelessWidget {
           children: [
             Expanded(
               child: _buildMetricTile(
-                title: 'BIO-AGE ADVANTAGE',
-                value: '-4',
-                unit: 'YRS',
+                title: 'HRV',
+                value: telemetry.hrv > 0 ? telemetry.hrv.toStringAsFixed(0) : '—',
+                unit: 'ms',
                 accent: AppColors.sage,
-                subtext: 'BIO 24 · CHRONO 28',
+                subtext: '',
               ),
             ),
             SizedBox(width: 10),
@@ -300,7 +300,7 @@ class StoriesCardWidget extends StatelessWidget {
                 value: '${telemetry.hrv.round()}',
                 unit: 'MS',
                 accent: AppColors.textNearWhite,
-                subtext: 'BASELINE: 64 MS',
+                subtext: telemetry.hrv > 0 ? 'HRV' : '—',
               ),
             ),
           ],

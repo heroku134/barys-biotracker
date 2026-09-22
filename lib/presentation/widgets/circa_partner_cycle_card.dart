@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
 import '../../domain/models/partner_cycle_data.dart';
 import 'glass_card.dart';
 
@@ -16,6 +17,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = KalkanColors.of(context);
     final pColor = data.phaseColor;
 
     return GestureDetector(
@@ -47,9 +49,9 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Цикл · ${data.partnerName}',
+                        AppLocaleNotifier.pick('Цикл · ${data.partnerName}', 'Цикл · ${data.partnerName}', 'Cycle · ${data.partnerName}'),
                         style: TextStyle(
-                          color: AppColors.muted,
+                          color: c.secondary,
                           fontSize: 9.5,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.4,
@@ -57,9 +59,9 @@ class CircaPartnerCycleCard extends StatelessWidget {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'День ${data.cycleDay} из ${data.cycleLength} · СААТ-1',
+                        AppLocaleNotifier.pick('День ${data.cycleDay} из ${data.cycleLength}', '${data.cycleDay}-күн / ${data.cycleLength}', 'Day ${data.cycleDay} of ${data.cycleLength}'),
                         style: TextStyle(
-                          color: AppColors.fg,
+                          color: c.fg,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -130,16 +132,16 @@ class CircaPartnerCycleCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
-                      color: AppColors.raised,
+                      color: c.raised,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.line),
+                      border: Border.all(color: c.hairline),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ТЕРМОСЕНСОР',
-                          style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
+                          AppLocaleNotifier.pick('Кожа', 'Тери', 'Skin'),
+                          style: TextStyle(color: c.muted, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
                         SizedBox(height: 1),
                         Text(
@@ -155,16 +157,16 @@ class CircaPartnerCycleCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
-                      color: AppColors.raised,
+                      color: c.raised,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.line),
+                      border: Border.all(color: c.hairline),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ЭНЕРГИЯ',
-                          style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
+                          AppLocaleNotifier.pick('Энергия', 'Энергия', 'Energy'),
+                          style: TextStyle(color: c.muted, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
                         SizedBox(height: 1),
                         Text(
@@ -180,16 +182,16 @@ class CircaPartnerCycleCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
-                      color: AppColors.raised,
+                      color: c.raised,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.line),
+                      border: Border.all(color: c.hairline),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'НАСТРОЕНИЕ',
-                          style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
+                          AppLocaleNotifier.pick('Настроение', 'Маанай', 'Mood'),
+                          style: TextStyle(color: c.muted, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
                         SizedBox(height: 1),
                         Text(
@@ -208,9 +210,9 @@ class CircaPartnerCycleCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.raised.withValues(alpha: 0.6),
+                color: c.raised.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.line),
+                border: Border.all(color: c.hairline),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +223,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     child: Text(
                       data.partnerGuidance,
                       style: TextStyle(
-                        color: AppColors.fg,
+                        color: c.fg,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
                         height: 1.35,
@@ -235,15 +237,15 @@ class CircaPartnerCycleCard extends StatelessWidget {
             ),
             if (data.symptoms.isNotEmpty) ...[
               SizedBox(height: 8),
-              Text(data.symptoms.join(' · '), style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.3)),
+              Text(data.symptoms.join(' · '), style: TextStyle(color: c.secondary, fontSize: 12, height: 1.3)),
             ],
             if (data.flow != 'none') ...[
               SizedBox(height: 6),
-              Text('Выделения: ${data.flow}', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+              Text('Выделения: ${data.flow}', style: TextStyle(color: c.secondary, fontSize: 12)),
             ],
             if (data.note.isNotEmpty) ...[
               SizedBox(height: 6),
-              Text(data.note, style: TextStyle(color: AppColors.fg, fontSize: 12, height: 1.35)),
+              Text(data.note, style: TextStyle(color: c.fg, fontSize: 12, height: 1.35)),
             ],
             SizedBox(height: 8),
 
@@ -252,9 +254,9 @@ class CircaPartnerCycleCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'Подробнее о цикле партнёрши →',
+                  AppLocaleNotifier.pick('Подробнее', 'Толугураак', 'Details'),
                   style: TextStyle(
-                    color: AppColors.muted,
+                    color: c.secondary,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w600,
                   ),

@@ -3,13 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class DemoModeStore {
   static const _key = 'kalkan_demo_mode_v1';
-  static final ValueNotifier<bool> enabled = ValueNotifier<bool>(true);
+  static final ValueNotifier<bool> enabled = ValueNotifier<bool>(false);
 
   static Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       if (prefs.containsKey(_key)) {
-        enabled.value = prefs.getBool(_key) ?? true;
+        enabled.value = prefs.getBool(_key) ?? false;
       }
     } catch (_) {}
   }

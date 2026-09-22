@@ -115,8 +115,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 MetricDial(
                   label: AppStrings.tr('home_sleep', language),
-                  value: '${sleepAnalysis.sleepPerformanceScore > 0 ? sleepAnalysis.sleepPerformanceScore : 88}%',
-                  progress: (sleepAnalysis.sleepPerformanceScore > 0 ? sleepAnalysis.sleepPerformanceScore : 88) / 100,
+                  value: '${sleepAnalysis.sleepPerformanceScore}%',
+                  progress: (sleepAnalysis.sleepPerformanceScore) / 100,
                   color: AppColors.sleepBlue,
                   size: 88,
                 ),
@@ -147,14 +147,43 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               ),
               child: Row(
                 children: [
-                  _buildPeriodTab(0, '24ч'),
-                  _buildPeriodTab(1, '7 дней'),
-                  _buildPeriodTab(2, '30 дней'),
-                  _buildPeriodTab(3, '6 мес'),
+                  _buildPeriodTab(0, AppLocaleNotifier.pick('24ч', '24с', '24h')),
+                  _buildPeriodTab(1, AppLocaleNotifier.pick('7 дней', '7 күн', '7 days')),
+                  _buildPeriodTab(2, AppLocaleNotifier.pick('30 дней', '30 күн', '30 days')),
+                  _buildPeriodTab(3, AppLocaleNotifier.pick('6 мес', '6 ай', '6 mo')),
                 ],
               ),
             ),
             SizedBox(height: 16),
+            GlassCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocaleNotifier.pick('Пульс', 'Пульс', 'Heart rate'), style: TextStyle(color: palette.secondary, fontSize: 13)),
+                        const SizedBox(height: 4),
+                        Text(telemetry.heartRate > 0 ? '${telemetry.heartRate}' : '—', style: TextStyle(color: palette.fg, fontSize: 32, fontWeight: FontWeight.w600)),
+                        Text('bpm', style: TextStyle(color: palette.secondary, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocaleNotifier.pick('Покой', 'Тынч', 'Resting'), style: TextStyle(color: palette.secondary, fontSize: 13)),
+                        const SizedBox(height: 4),
+                        Text(telemetry.restingHeartRate > 0 ? '${telemetry.restingHeartRate}' : '—', style: TextStyle(color: palette.fg, fontSize: 32, fontWeight: FontWeight.w600)),
+                        Text('bpm', style: TextStyle(color: palette.secondary, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             WeeklyMetricChart(
               title: language == AppLanguage.kyrgyz ? 'Уйку, 7 күн' : 'Сон, 7 дней',
               unit: '%',

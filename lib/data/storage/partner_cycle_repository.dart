@@ -42,13 +42,14 @@ class PartnerCycleRepository {
     int cycleDay = 14,
     int cycleLength = 28,
   }) async {
+    if (partnerCode.trim().isEmpty) return;
     final phase = MenstrualCycleEngine.determinePhase(cycleDay, cycleLength: cycleLength);
     final tempDelta = MenstrualCycleEngine.expectedThermalDelta(cycleDay, cycleLength: cycleLength);
 
     final linkedData = PartnerCycleData(
       isLinked: true,
-      partnerName: partnerName.trim().isNotEmpty ? partnerName.trim() : 'Айпери',
-      partnerCode: partnerCode.trim().isNotEmpty ? partnerCode.trim() : 'KLK-CYC-7482',
+      partnerName: partnerName.trim(),
+      partnerCode: partnerCode.trim(),
       cycleDay: cycleDay,
       cycleLength: cycleLength,
       phase: phase,
@@ -92,8 +93,8 @@ class PartnerCycleRepository {
     final phase = MenstrualCycleEngine.determinePhase(day, cycleLength: len, periodDuration: profile.periodDurationDays);
     final temp = skinTempDeviation ?? MenstrualCycleEngine.expectedThermalDelta(day, cycleLength: len);
 
-    final partnerCode = prefs.getString('cycle_partner_invite_code') ?? 'KLK-CYC-7482';
-    final partnerName = profile.name.isNotEmpty ? profile.name : 'Айпери';
+    final partnerCode = prefs.getString('cycle_partner_invite_code') ?? '';
+    final partnerName = profile.name;
 
     final updated = notifier.value.copyWith(
       partnerName: partnerName,

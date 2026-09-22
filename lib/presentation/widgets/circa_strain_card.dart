@@ -120,7 +120,7 @@ class CircaStrainCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'Шкала TRIMP (Whoop)',
+                      'Нагрузка',
                       style: TextStyle(
                         color: AppColors.faint,
                         fontSize: 10,

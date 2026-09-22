@@ -7,6 +7,9 @@ class DayJournalEntry {
   final String sleepNote;
   final String workoutNote;
   final String note;
+  final String mood;
+  final bool lateMeal;
+  final bool alcohol;
   final DateTime updatedAt;
 
   const DayJournalEntry({
@@ -15,6 +18,9 @@ class DayJournalEntry {
     this.sleepNote = '',
     this.workoutNote = '',
     this.note = '',
+    this.mood = 'ok',
+    this.lateMeal = false,
+    this.alcohol = false,
     required this.updatedAt,
   });
 
@@ -27,6 +33,9 @@ class DayJournalEntry {
         'sleepNote': sleepNote,
         'workoutNote': workoutNote,
         'note': note,
+        'mood': mood,
+        'lateMeal': lateMeal,
+        'alcohol': alcohol,
         'updatedAt': updatedAt.toIso8601String(),
       };
 
@@ -37,6 +46,9 @@ class DayJournalEntry {
       sleepNote: json['sleepNote'] as String? ?? '',
       workoutNote: json['workoutNote'] as String? ?? '',
       note: json['note'] as String? ?? '',
+      mood: json['mood'] as String? ?? 'ok',
+      lateMeal: json['lateMeal'] as bool? ?? false,
+      alcohol: json['alcohol'] as bool? ?? false,
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ?? DateTime.now(),
     );
   }

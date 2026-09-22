@@ -62,6 +62,15 @@ class _SportScreenState extends State<SportScreen> {
     if (mounted) setState(() => _history = list);
   }
 
+  int get _weekMinutes {
+    final now = DateTime.now();
+    final start = now.subtract(Duration(days: now.weekday - 1));
+    final from = DateTime(start.year, start.month, start.day);
+    return _history
+        .where((w) => !w.startedAt.isBefore(from))
+        .fold<int>(0, (s, w) => s + (w.durationSeconds ~/ 60));
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -292,18 +301,18 @@ class _SportScreenState extends State<SportScreen> {
                         avatar: Icon(
                           sport.icon,
                           size: 16,
-                          color: isSelected ? AppColors.stage : AppColors.muted,
+                          color: isSelected ? Colors.white : palette.secondary,
                         ),
                         label: Text(
                           sport.localizedTitle(language.code),
                           style: TextStyle(
-                            color: isSelected ? AppColors.stage : AppColors.fg,
+                            color: isSelected ? Colors.white : palette.fg,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         selectedColor: AppColors.amber,
-                        backgroundColor: AppColors.surface,
+                        backgroundColor: palette.raised,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(color: isSelected ? AppColors.amber : AppColors.line),
@@ -344,8 +353,8 @@ class _SportScreenState extends State<SportScreen> {
                           SizedBox(width: 8),
                           Text(
                             _isWorkoutActive
-                                ? (_isWorkoutPaused ? 'СЕССИЯ НА ПАУЗЕ' : 'АКТИВНАЯ ТРЕНИРОВКА')
-                                : 'ГОТОВ К СТАРТУ',
+                                ? (_isWorkoutPaused ? AppLocaleNotifier.pick('Пауза', 'Пауза', 'Paused') : AppLocaleNotifier.pick('Тренировка', 'Машыгуу', 'Workout'))
+                                : AppLocaleNotifier.pick('Готов к старту', 'Стартка даяр', 'Ready'),
                             style: TextStyle(
                               color: AppColors.muted,
                               fontSize: 10,
@@ -502,7 +511,7 @@ class _SportScreenState extends State<SportScreen> {
                   ] else ...[
                     // Состояние готовности к старту
                     Text(
-                      'Нажмите для синхронизации записи пульса с чипом браслета. Нагрузка будет зачислена в шкалу TRIMP и опыт Барыса.',
+                      AppLocaleNotifier.pick('Старт пишет пульс с часов в дневную нагрузку.', 'Старт сааттын пульсун күндүк жүктөмгө жазат.', 'Start logs watch heart rate into the day strain.'),
                       style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.4),
                     ),
                     SizedBox(height: 16),
@@ -530,96 +539,19 @@ class _SportScreenState extends State<SportScreen> {
             ),
             SizedBox(height: 14),
 
-            // Тумблер IMU v4.2 автодетекта
-            GlassCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.memory, color: AppColors.sage, size: 16),
-                            SizedBox(width: 6),
-                            Text(
-                              'Автораспознавание движений IMU',
-                              style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Алгоритм v4.2 автоматически стартует сессию при беге или шагах',
-                          style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: _isAutoDetectImu,
-                    activeThumbColor: AppColors.sage,
-                    onChanged: (val) {
-                      setState(() => _isAutoDetectImu = val);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: AppColors.surface,
-                          content: Text(
-                            val ? 'IMU автодетект активен' : 'IMU автодетект выключен',
-                            style: TextStyle(color: AppColors.fg),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 14),
-
-            // Кардио-прогресс недели (Митохондриальное здоровье: Зона 2 и Зона 5)
             GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'НЕДЕЛЬНОЕ КАРДИО (ЗОНЫ 2 И 5)',
-                        style: TextStyle(
-                          color: AppColors.muted,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.1,
-                        ),
-                      ),
-                      Text(
-                        '152 / 200 мин (76%)',
-                        style: TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
-                    child: const LinearProgressIndicator(
-                      value: 0.76,
-                      backgroundColor: AppColors.raised,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.sage),
-                      minHeight: 6,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    '128 мин в Аэробной Зоне 2 + 24 мин интервалов в Зоне 5 обеспечивают омоложение миокарда.',
-                    style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
-                  ),
+                  Text(AppLocaleNotifier.pick('Эта неделя', 'Бул апта', 'This week'), style: TextStyle(color: palette.secondary, fontSize: 13)),
+                  const SizedBox(height: 6),
+                  Text('$_weekMinutes мин', style: TextStyle(color: palette.fg, fontSize: 28, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(AppLocaleNotifier.pick('Сумма ваших сессий за 7 дней.', '7 күндүк сессиялар.', 'Your sessions this week.'), style: TextStyle(color: palette.secondary, fontSize: 12)),
                 ],
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // История тренировок
             Text(

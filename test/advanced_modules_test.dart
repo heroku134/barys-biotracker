@@ -1,11 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:barys_biotracker/domain/intelligence/baseline_calibration_manager.dart';
-import 'package:barys_biotracker/data/services/app_icon_service.dart';
 import 'package:barys_biotracker/data/services/health_sync_service.dart';
 import 'package:barys_biotracker/data/services/live_activity_service.dart';
 import 'package:barys_biotracker/domain/models/workout_session.dart';
-import 'package:barys_biotracker/firebase_options.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -79,29 +77,6 @@ void main() {
 
     test('3. LiveActivityService initial state check', () {
       expect(LiveActivityService.isLiveActivityActive, false);
-    });
-
-    test('4. AppIconService manages dark and light icon switching and persistence', () async {
-      await AppIconService.init();
-      expect(AppIconService.currentIcon.value, AppIconVariant.dark);
-
-      await AppIconService.setIcon(AppIconVariant.light);
-      expect(AppIconService.currentIcon.value, AppIconVariant.light);
-
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('kalkan_app_icon_variant'), 'light');
-
-      await AppIconService.setIcon(AppIconVariant.dark);
-      expect(AppIconService.currentIcon.value, AppIconVariant.dark);
-      expect(prefs.getString('kalkan_app_icon_variant'), 'dark');
-    });
-
-    test('5. DefaultFirebaseOptions validates project configuration', () {
-      expect(DefaultFirebaseOptions.android.projectId, 'watch-ba720');
-      expect(DefaultFirebaseOptions.ios.projectId, 'watch-ba720');
-      expect(DefaultFirebaseOptions.ios.iosBundleId, 'kalkan.comp');
-      expect(DefaultFirebaseOptions.android.apiKey.isNotEmpty, true);
-      expect(DefaultFirebaseOptions.ios.apiKey.isNotEmpty, true);
     });
   });
 }

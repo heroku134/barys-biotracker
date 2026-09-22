@@ -90,8 +90,16 @@ class DaySnapshotRepository {
     ));
   }
 
+  static Future<void> purgePreviewIfDemoOff() async {
+    if (DemoModeStore.enabled.value) return;
+    final all = await loadAll();
+    final kept = all.where((s) => !s.preview).toList();
+    if (kept.length != all.length) await _saveAll(kept);
+  }
+
   /// Fills empty history so Analysis is testable without a watch.
   static Future<void> seedPreviewIfEmpty(BleTelemetry t) async {
+    await purgePreviewIfDemoOff();
     final all = await loadAll();
     if (all.isNotEmpty || !DemoModeStore.enabled.value) return;
     final baseHrv = t.hrv > 0 ? t.hrv : 64.0;

@@ -48,12 +48,24 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
   }
 
   Future<void> _saveLog() async {
-    final next = PregnancyDayLog(energy: _log.energy, nausea: _log.nausea, kicks: _log.kicks, note: _note.text.trim());
+    final next = _log.copyWith(note: _note.text.trim());
     await PregnancyLogRepository.save(DateTime.now(), next);
     setState(() => _log = next);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_ru ? 'День записан' : 'Күн жазылды')));
     }
+  }
+
+  String _babySize(int week) {
+    if (week < 8) return _ru ? 'Размер: как маковое зернышко' : 'Көлөмү: көкнөр данындай';
+    if (week < 12) return _ru ? 'Размер: как лайм (~5 см)' : 'Көлөмү: лаймдай (~5 см)';
+    if (week < 16) return _ru ? 'Размер: как авокадо (~11 см)' : 'Көлөмү: авокадодой (~11 см)';
+    if (week < 20) return _ru ? 'Размер: как банан (~16 см)' : 'Көлөмү: банандай (~16 см)';
+    if (week < 24) return _ru ? 'Размер: как кукуруза (~30 см)' : 'Көлөмү: жүгөрүдөй (~30 см)';
+    if (week < 28) return _ru ? 'Размер: как баклажан (~37 см)' : 'Көлөмү: баклажандай (~37 см)';
+    if (week < 32) return _ru ? 'Размер: как кокос (~42 см)' : 'Көлөмү: кокостой (~42 см)';
+    if (week < 36) return _ru ? 'Размер: как папайя (~47 см)' : 'Көлөмү: папайядай (~47 см)';
+    return _ru ? 'Размер: как арбуз (~50 см)' : 'Көлөмү: дарбыздай (~50 см)';
   }
 
   @override
@@ -94,6 +106,8 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
               Text(_ru ? status.trainingRu : status.trainingKy, style: AppTypography.caption(palette.secondary).copyWith(height: 1.35)),
               const SizedBox(height: 8),
               Text(_ru ? status.bodyRu : status.bodyKy, style: AppTypography.caption(palette.fg).copyWith(height: 1.35)),
+              const SizedBox(height: 8),
+              Text(_babySize(status.week), style: AppTypography.caption(palette.secondary)),
             ]),
           ),
           const SizedBox(height: 12),
@@ -119,7 +133,28 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
                   IconButton(onPressed: () => setState(() => _log = PregnancyDayLog(energy: _log.energy, nausea: _log.nausea, kicks: _log.kicks + 1, note: _note.text)), icon: Icon(Icons.add_circle_outline)),
                 ]),
               ],
-              TextField(controller: _note, maxLines: 2, decoration: InputDecoration(hintText: _ru ? 'Заметка врачу или себе' : 'Белги')),
+              Text('${_ru ? 'Вода' : 'Суу'} ${_log.waterGlasses} ${_ru ? 'стак.' : 'ст.'}', style: AppTypography.caption(palette.secondary)),
+              Slider(value: _log.waterGlasses.toDouble().clamp(0, 12), min: 0, max: 12, divisions: 12, activeColor: AppColors.sleepBlue, onChanged: (v) => setState(() => _log = _log.copyWith(waterGlasses: v.round(), note: _note.text))),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(_ru ? 'Витамины сегодня' : 'Бүгүнкү витамин', style: TextStyle(color: palette.fg, fontSize: 14)),
+                value: _log.vitamins,
+                onChanged: (v) => setState(() => _log = _log.copyWith(vitamins: v, note: _note.text)),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(_ru ? 'Половой акт' : 'Жыныстык акт', style: TextStyle(color: palette.fg, fontSize: 14)),
+                secondary: Icon(_log.intercourse ? Icons.favorite : Icons.favorite_border, color: AppColors.rose),
+                value: _log.intercourse,
+                onChanged: (v) => setState(() => _log = _log.copyWith(intercourse: v, note: _note.text)),
+              ),
+              TextField(
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(hintText: _ru ? 'Вес, кг' : 'Салмак, кг'),
+                onChanged: (s) => _log = _log.copyWith(weightKg: double.tryParse(s.replaceAll(',', '.')), note: _note.text),
+              ),
+              const SizedBox(height: 8),
+              TextField(controller: _note, maxLines: 2, decoration: InputDecoration(hintText: _ru ? 'Схватки, визит, самочувствие' : 'Белги')),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,

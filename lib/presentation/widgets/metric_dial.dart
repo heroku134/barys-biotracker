@@ -74,8 +74,9 @@ class _MetricDialState extends State<MetricDial> with SingleTickerProviderStateM
                       progress: (widget.progress.clamp(0.0, 1.0)) * _sweep.value,
                       color: widget.color,
                       track: palette.hairline,
-                      well: dark ? const Color(0xFF10131A) : const Color(0xFFE8E4DC),
-                      inner: palette.bg,
+                      well: dark ? const Color(0xFF10131A) : const Color(0xFFEFEFEA),
+                      inner: palette.surface,
+                      glow: dark,
                     ),
                     child: Center(
                       child: Text(
@@ -107,6 +108,7 @@ class _DialPainter extends CustomPainter {
   final Color track;
   final Color well;
   final Color inner;
+  final bool glow;
 
   _DialPainter({
     required this.progress,
@@ -114,6 +116,7 @@ class _DialPainter extends CustomPainter {
     required this.track,
     required this.well,
     required this.inner,
+    this.glow = true,
   });
 
   @override
@@ -123,13 +126,15 @@ class _DialPainter extends CustomPainter {
     const start = -math.pi / 2;
 
     canvas.drawCircle(c, r - 1, Paint()..color = well);
-    canvas.drawCircle(
-      c.translate(0, 1.2),
-      r - 10,
-      Paint()
-        ..color = const Color(0x14000000)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
+    if (glow) {
+      canvas.drawCircle(
+        c.translate(0, 1.2),
+        r - 10,
+        Paint()
+          ..color = const Color(0x14000000)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      );
+    }
     canvas.drawCircle(c, r - 11, Paint()..color = inner);
 
     final trackPaint = Paint()
@@ -143,16 +148,23 @@ class _DialPainter extends CustomPainter {
     final rect = Rect.fromCircle(center: c, radius: r);
     final sweep = 2 * math.pi * progress;
 
-    final glow = Paint()
-      ..color = color.withValues(alpha: 0.28)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 12
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-    canvas.drawArc(rect, start, sweep, false, glow);
+    if (glow) {
+      final glowPaint = Paint()
+        ..color = color.withValues(alpha: 0.28)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 12
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      canvas.drawArc(rect, start, sweep, false, glowPaint);
+    }
 
     final ring = Paint()
-      ..shader = SweepGradient(
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round;
+    if (glow) {
+      ring.shader = SweepGradient(
         startAngle: 0,
         endAngle: 2 * math.pi,
         colors: [
@@ -162,15 +174,15 @@ class _DialPainter extends CustomPainter {
           Color.lerp(color, Colors.white, 0.35)!,
         ],
         transform: const GradientRotation(-math.pi / 2),
-      ).createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round;
+      ).createShader(rect);
+    }
     canvas.drawArc(rect, start, sweep, false, ring);
 
-    final end = start + sweep;
-    final tip = Offset(c.dx + r * math.cos(end), c.dy + r * math.sin(end));
-    canvas.drawCircle(tip, 3.2, Paint()..color = Colors.white.withValues(alpha: 0.85));
+    if (glow) {
+      final end = start + sweep;
+      final tip = Offset(c.dx + r * math.cos(end), c.dy + r * math.sin(end));
+      canvas.drawCircle(tip, 3.2, Paint()..color = Colors.white.withValues(alpha: 0.85));
+    }
   }
 
   @override

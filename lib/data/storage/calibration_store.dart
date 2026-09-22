@@ -51,15 +51,14 @@ class CalibrationStore {
     );
   }
 
-  /// One increment per calendar morning (05:00–11:59). Updates running HRV / RHR.
+  /// One increment per calendar day when night HRV/RHR exists.
   static Future<bool> recordMorningSync({
     required double hrv,
     required int rhr,
     DateTime? now,
   }) async {
     final moment = now ?? DateTime.now();
-    if (moment.hour < 5 || moment.hour >= 12) return false;
-    if (hrv <= 0 || rhr <= 0) return false;
+    if (hrv <= 0) return false;
     final prefs = await SharedPreferences.getInstance();
     final key = _todayKey(moment);
     if (prefs.getString(_lastKey) == key) return false;

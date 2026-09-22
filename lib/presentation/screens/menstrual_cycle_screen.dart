@@ -35,6 +35,8 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
   final Set<String> _selectedSymptoms = <String>{};
   final TextEditingController _noteController = TextEditingController();
   final Set<String> _loggedDates = <String>{};
+  final Set<String> _sexDates = <String>{};
+  bool _sexToday = false;
   bool _partnerLinked = false;
   String _partnerInviteCode = 'KLK-CYC-9281';
 
@@ -72,15 +74,22 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     final prefs = await SharedPreferences.getInstance();
     final partner = await PartnerCycleRepository.loadPartnerCycle();
     final marks = <String>{};
+    final sex = <String>{};
     for (final k in prefs.getKeys()) {
       if (k.startsWith('cycle_log_') && k.endsWith('_mark')) {
         marks.add(k.replaceFirst('cycle_log_', '').replaceAll('_mark', ''));
+      }
+      if (k.startsWith('cycle_log_') && k.endsWith('_sex') && prefs.getBool(k) == true) {
+        sex.add(k.replaceFirst('cycle_log_', '').replaceAll('_sex', ''));
       }
     }
     if (!mounted) return;
     setState(() {
       _profile = p.copyWith(gender: Gender.female);
       _loggedDates.addAll(marks);
+      _sexDates
+        ..clear()
+        ..addAll(sex);
       if (partner != null && partner.isLinked) _partnerLinked = true;
     });
     await _loadDay(_selectedDate);
@@ -102,6 +111,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
         ..clear()
         ..addAll(prefs.getStringList('cycle_log_${key}_symptoms') ?? const <String>[]);
       _noteController.text = prefs.getString('cycle_log_${key}_note') ?? '';
+      _sexToday = prefs.getBool('cycle_log_${key}_sex') ?? false;
     });
   }
 
@@ -116,6 +126,12 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     await prefs.setString('cycle_log_${key}_mood', _mood);
     await prefs.setStringList('cycle_log_${key}_symptoms', _selectedSymptoms.toList());
     await prefs.setString('cycle_log_${key}_note', _noteController.text.trim());
+    await prefs.setBool('cycle_log_${key}_sex', _sexToday);
+    if (_sexToday) {
+      _sexDates.add(key);
+    } else {
+      _sexDates.remove(key);
+    }
     await prefs.setString('cycle_flow_day_$day', _flow);
     await PartnerCycleRepository.syncFromFemaleProfile(
       _profile,
@@ -293,6 +309,20 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   ),
                 ),
               ]),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    setState(() => _sexToday = !_sexToday);
+                    await _saveDay(toast: true);
+                  },
+                  icon: Icon(_sexToday ? Icons.favorite : Icons.favorite_border, color: AppColors.rose, size: 18),
+                  label: Text(_sexToday
+                      ? (_ru ? 'Акт записан' : 'Акт жазылды')
+                      : (_ru ? 'Половой акт' : 'Жыныстык акт')),
+                ),
+              ),
               const SizedBox(height: 16),
               _calendar(palette),
               const SizedBox(height: 16),
@@ -489,8 +519,12 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                     children: [
                       Text('$day', style: TextStyle(color: palette.fg, fontSize: 12, fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
                       const SizedBox(height: 2),
-                      Container(width: 5, height: 5, decoration: BoxDecoration(color: _phaseColor(phase), shape: BoxShape.circle)),
-                      if (logged) Container(margin: const EdgeInsets.only(top: 2), width: 3, height: 3, decoration: const BoxDecoration(color: AppColors.amber, shape: BoxShape.circle)),
+                      if (_sexDates.contains(_dateKey(date)))
+                        Icon(Icons.favorite, size: 9, color: AppColors.rose)
+                      else
+                        Container(width: 5, height: 5, decoration: BoxDecoration(color: _phaseColor(phase), shape: BoxShape.circle)),
+                      if (logged && !_sexDates.contains(_dateKey(date)))
+                        Container(margin: const EdgeInsets.only(top: 2), width: 3, height: 3, decoration: const BoxDecoration(color: AppColors.amber, shape: BoxShape.circle)),
                     ],
                   ),
                 ),

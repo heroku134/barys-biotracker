@@ -104,21 +104,7 @@ class PrivateLeagueRepository {
     final jsonStr = prefs.getString(_keyLeague);
 
     final userProfile = profile ?? await UserProfileRepository.loadProfile();
-    final userTelemetry = telemetry ?? BleTelemetry(
-      heartRate: 68,
-      hrv: 62.0,
-      restingHeartRate: 52,
-      respiratoryRate: 14.1,
-      skinTempDeviation: 0.1,
-      sleepMinutes: 460,
-      timeInBedMinutes: 500,
-      sleepEfficiency: 0.92,
-      sleepConsistency: 0.88,
-      restorativeSleepRatio: 0.75,
-      currentDayStrain: 11.4,
-      zoneMinutes: const [40, 30, 20, 10, 5],
-      timestamp: DateTime.now(),
-    );
+    final userTelemetry = telemetry ?? BleTelemetry.empty();
     final readiness = ReadinessEngine.calculate(userTelemetry, baseline: const PersonalBaseline());
 
     final userMember = _buildCurrentUserMember(
@@ -131,7 +117,9 @@ class PrivateLeagueRepository {
       try {
         final savedLeague = PrivateLeague.deserialize(jsonStr);
         // Обновляем метрики текущего пользователя в списке
-        final updatedMembers = savedLeague.members.map((m) {
+        final updatedMembers = savedLeague.members
+            .where((m) => !m.id.startsWith('friend_'))
+            .map((m) {
           if (m.isCurrentUser) return userMember;
           return m;
         }).toList();
@@ -151,14 +139,12 @@ class PrivateLeagueRepository {
       } catch (_) {}
     }
 
-    // Дефолтная приватная лига (3 друга + текущий пользователь = 4/5)
-    final initialMembers = [userMember, ..._buildDefaultFriends()];
     final league = PrivateLeague(
       id: 'league_atelier_01',
-      title: 'КРУГ БАТЫРОВ · ALMATY ATELIER',
-      inviteCode: 'KALKAN-BATYR-04',
+      title: 'Круг',
+      inviteCode: 'KALKAN-0000',
       maxMembers: 5,
-      members: initialMembers,
+      members: [userMember],
     );
     await saveLeague(league);
     return league;

@@ -21,8 +21,8 @@ class PartnerCycleData {
 
   const PartnerCycleData({
     this.isLinked = false,
-    this.partnerName = 'Айпери',
-    this.partnerCode = 'KLK-CYC-7482',
+    this.partnerName = '',
+    this.partnerCode = '',
     this.cycleDay = 14,
     this.cycleLength = 28,
     this.phase = HormonalCyclePhase.ovulatory,
@@ -145,8 +145,8 @@ class PartnerCycleData {
 
     return PartnerCycleData(
       isLinked: map['isLinked'] ?? false,
-      partnerName: map['partnerName'] ?? 'Айпери',
-      partnerCode: map['partnerCode'] ?? 'KLK-CYC-7482',
+      partnerName: map['partnerName'] ?? '',
+      partnerCode: map['partnerCode'] ?? '',
       cycleDay: map['cycleDay'] ?? 14,
       cycleLength: map['cycleLength'] ?? 28,
       phase: parsedPhase,

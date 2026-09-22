@@ -155,15 +155,16 @@ class _PulseWavePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawPath(fillPath, fillPaint);
 
-    // Неоновое свечение волны
-    final glowPaint = Paint()
-      ..color = waveColor.withValues(alpha: 0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
-    canvas.drawPath(path, glowPaint);
+    if (waveColor.computeLuminance() < 0.4) {
+      final glowPaint = Paint()
+        ..color = waveColor.withValues(alpha: 0.28)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6.0
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+      canvas.drawPath(path, glowPaint);
+    }
 
     // Четкая основная линия волны
     final linePaint = Paint()

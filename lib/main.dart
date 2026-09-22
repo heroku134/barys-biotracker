@@ -1,34 +1,27 @@
-import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'core/app_colors.dart';
 import 'core/app_language.dart';
 import 'core/app_theme.dart';
 import 'data/ble/ute_ble_bridge.dart';
-import 'data/services/app_icon_service.dart';
 import 'data/services/ios_widget_service.dart';
 import 'data/services/background_ble_sync_service.dart';
 import 'data/storage/user_profile_repository.dart';
 import 'data/services/cloud_sync_service.dart';
+import 'data/services/fcm_service.dart';
 import 'data/storage/day_snapshot_repository.dart';
 import 'data/services/system_notification_service.dart';
 import 'domain/avatar/avatar_manager.dart';
-import 'firebase_options.dart';
 import 'presentation/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Надежная инициализация Firebase с явными опциями для текущей платформы
+  // Инициализация Firebase с безопасным fallback
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    // Включение локального офлайн-кэша Firestore для предотвращения зависаний
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
-      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-    );
+    await Firebase.initializeApp();
+    await FcmService.init();
   } catch (e) {
     debugPrint('Firebase.initializeApp() note: $e');
   }
@@ -39,7 +32,6 @@ void main() async {
   // Инициализация языка, темы, сохранений и моста
   await AppLocaleNotifier.init();
   await AppThemeNotifier.init();
-  await AppIconService.init();
   AppThemeNotifier.applySystemUi(AppThemeNotifier.current);
   await AvatarManager.init();
   final bleBridge = UteBleBridge();
@@ -53,9 +45,8 @@ void main() async {
   );
   final profile = await UserProfileRepository.loadProfile();
   if (profile.isAuthenticated) {
-    // Фоновая неблокирующая синхронизация при запуске (не задерживает старт UI)
-    unawaited(CloudSyncService.pullDays().catchError((e) => debugPrint('pullDays init note: $e')));
-    unawaited(CloudSyncService.pullPartnerCycle().catchError((e) => debugPrint('pullPartnerCycle init note: $e')));
+    await CloudSyncService.pullDays();
+    await CloudSyncService.pullPartnerCycle();
   }
 
   runApp(BarysBioTrackerApp(
@@ -90,6 +81,10 @@ class BarysBioTrackerApp extends StatelessWidget {
               themeMode: themeMode,
               theme: AppThemeNotifier.lightTheme,
               darkTheme: AppThemeNotifier.darkTheme,
+              builder: (context, child) {
+                AppColors.light = Theme.of(context).brightness == Brightness.light;
+                return child ?? const SizedBox.shrink();
+              },
               home: SplashScreen(
                 bleBridge: bleBridge,
                 isAuthenticated: isAuthenticated,
