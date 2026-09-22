@@ -78,4 +78,19 @@ class CalibrationStore {
     await OnboardingRepository.setCalibrationDays(days);
     return true;
   }
+
+  static Future<void> setCalibrationDays(int days) async {
+    final prefs = await SharedPreferences.getInstance();
+    final clamped = days.clamp(0, 14);
+    await prefs.setInt('kalkan_calibration_days_v1', clamped);
+    await OnboardingRepository.setCalibrationDays(clamped);
+  }
+
+  static Future<void> resetCalibration() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('kalkan_calibration_days_v1', 0);
+    await prefs.remove(_lastKey);
+    await prefs.setInt(_nKey, 0);
+    await OnboardingRepository.setCalibrationDays(0);
+  }
 }

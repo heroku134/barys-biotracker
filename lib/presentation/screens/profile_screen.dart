@@ -28,6 +28,7 @@ import '../../data/storage/account_backup_service.dart';
 import '../../data/storage/climate_mode_store.dart';
 import 'private_league_screen.dart';
 import 'settings_screen.dart';
+import '../../data/storage/calibration_store.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -730,9 +731,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                 ),
                 SwitchListTile(
-                  title: Text(_ru ? 'Демо калибровки' : 'Калибрлөө демо', style: TextStyle(color: AppColors.fg, fontSize: 14)),
+                  title: Text(_ru ? 'Демо калибровки (день 3 из 14)' : 'Калибрлөө демо (3/14)', style: TextStyle(color: AppColors.fg, fontSize: 14)),
                   value: _isCalibrationDemo,
-                  onChanged: (val) => setSheetState(() => _isCalibrationDemo = val),
+                  onChanged: (val) {
+                    setSheetState(() => _isCalibrationDemo = val);
+                    setState(() => _isCalibrationDemo = val);
+                    if (val) {
+                      CalibrationStore.setCalibrationDays(3);
+                    } else {
+                      CalibrationStore.setCalibrationDays(14);
+                    }
+                  },
                 ),
                 TextButton(
                   onPressed: () {

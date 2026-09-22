@@ -57,6 +57,10 @@
 	<string>Приложению требуется доступ к галерее для выбора фото профиля и публикации фото дня.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Приложению требуется камера для создания снимков тренировок и фото дня.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Приложению требуется доступ к геолокации для записи маршрута, темпа и дистанции беговой тренировки.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Приложению требуется доступ к геолокации в фоновом режиме для точной записи бегового трека.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -65,6 +69,7 @@
 		<string>fetch</string>
 		<string>processing</string>
 		<string>remote-notification</string>
+		<string>location</string>
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>

@@ -113,13 +113,11 @@ class PrivateLeagueRepository {
       readiness: readiness,
     );
 
-    if (jsonStr != null) {
+    if (jsonStr != null && jsonStr.isNotEmpty) {
       try {
         final savedLeague = PrivateLeague.deserialize(jsonStr);
-        // Обновляем метрики текущего пользователя в списке
-        final updatedMembers = savedLeague.members
-            .where((m) => !m.id.startsWith('friend_'))
-            .map((m) {
+        // Обновляем метрики текущего пользователя в списке, сохраняя всех друзей
+        final updatedMembers = savedLeague.members.map((m) {
           if (m.isCurrentUser) return userMember;
           return m;
         }).toList();
@@ -136,15 +134,17 @@ class PrivateLeagueRepository {
           maxMembers: savedLeague.maxMembers,
           members: updatedMembers,
         );
-      } catch (_) {}
+      } catch (e) {
+        // Если данные повреждены, продолжим с дефолтным кругом
+      }
     }
 
     final league = PrivateLeague(
-      id: 'league_atelier_01',
-      title: 'Круг',
-      inviteCode: 'KALKAN-0000',
+      id: 'league_kalkan_01',
+      title: 'Круг доверия',
+      inviteCode: 'KALKAN-${userProfile.name.hashCode.abs().toString().padLeft(4, '0').substring(0, 4)}',
       maxMembers: 5,
-      members: [userMember],
+      members: [userMember, ..._buildDefaultFriends()],
     );
     await saveLeague(league);
     return league;

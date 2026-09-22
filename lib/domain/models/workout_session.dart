@@ -58,6 +58,11 @@ class CompletedWorkout {
   final int maxHr;
   final double strain;
   final int xpEarned;
+  final List<List<double>> routeCoordinates;
+  final double avgPaceMinPerKm;
+  final int steps;
+  final int cadence;
+  final List<int> hrZoneSeconds;
 
   const CompletedWorkout({
     required this.id,
@@ -70,7 +75,14 @@ class CompletedWorkout {
     required this.maxHr,
     required this.strain,
     required this.xpEarned,
+    this.routeCoordinates = const [],
+    this.avgPaceMinPerKm = 0.0,
+    this.steps = 0,
+    this.cadence = 0,
+    this.hrZoneSeconds = const [0, 0, 0, 0, 0],
   });
+
+  bool get hasRoute => routeCoordinates.length >= 2;
 
   String get durationFormatted {
     final m = durationSeconds ~/ 60;
@@ -81,6 +93,21 @@ class CompletedWorkout {
       return '$hч $remMм';
     }
     return '$mм ${s.toString().padLeft(2, '0')}с';
+  }
+
+  String get paceFormatted {
+    if (avgPaceMinPerKm <= 0 || avgPaceMinPerKm > 60) {
+      if (distanceKm > 0 && durationSeconds > 0) {
+        final paceDec = (durationSeconds / 60.0) / distanceKm;
+        final pm = paceDec.toInt();
+        final ps = ((paceDec - pm) * 60).round();
+        return "$pm'${ps.toString().padLeft(2, '0')}\" / км";
+      }
+      return "--'--\" / км";
+    }
+    final m = avgPaceMinPerKm.toInt();
+    final s = ((avgPaceMinPerKm - m) * 60).round();
+    return "$m'${s.toString().padLeft(2, '0')}\" / км";
   }
 
   Map<String, dynamic> toJson() => {
@@ -94,9 +121,28 @@ class CompletedWorkout {
     'maxHr': maxHr,
     'strain': strain,
     'xpEarned': xpEarned,
+    'routeCoordinates': routeCoordinates,
+    'avgPaceMinPerKm': avgPaceMinPerKm,
+    'steps': steps,
+    'cadence': cadence,
+    'hrZoneSeconds': hrZoneSeconds,
   };
 
   factory CompletedWorkout.fromJson(Map<String, dynamic> json) {
+    final rawCoords = json['routeCoordinates'] as List<dynamic>?;
+    final List<List<double>> coords = [];
+    if (rawCoords != null) {
+      for (final pt in rawCoords) {
+        if (pt is List && pt.length >= 2) {
+          coords.add([(pt[0] as num).toDouble(), (pt[1] as num).toDouble()]);
+        }
+      }
+    }
+    final rawZones = json['hrZoneSeconds'] as List<dynamic>?;
+    final List<int> zones = rawZones != null
+        ? rawZones.map((e) => (e as num).toInt()).toList()
+        : const [0, 0, 0, 0, 0];
+
     return CompletedWorkout(
       id: json['id'] as String,
       sport: SportType.fromId(json['sportId'] as String),
@@ -108,6 +154,11 @@ class CompletedWorkout {
       maxHr: json['maxHr'] as int,
       strain: (json['strain'] as num).toDouble(),
       xpEarned: json['xpEarned'] as int,
+      routeCoordinates: coords,
+      avgPaceMinPerKm: (json['avgPaceMinPerKm'] as num?)?.toDouble() ?? 0.0,
+      steps: (json['steps'] as num?)?.toInt() ?? 0,
+      cadence: (json['cadence'] as num?)?.toInt() ?? 0,
+      hrZoneSeconds: zones,
     );
   }
 }

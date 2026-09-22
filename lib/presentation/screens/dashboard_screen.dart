@@ -82,7 +82,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!mounted) return;
       setState(() => _telemetry = data);
       _syncIosWidgets();
+      if (data.hrv > 0) {
+        _recordTelemetryCalibration(data);
+      }
     });
+  }
+
+  Future<void> _recordTelemetryCalibration(BleTelemetry data) async {
+    final recorded = await CalibrationStore.recordMorningSync(
+      hrv: data.hrv,
+      rhr: data.restingHeartRate,
+    );
+    if (recorded && mounted) {
+      final b = await CalibrationStore.loadBaseline();
+      setState(() {
+        _baseline = b;
+        _calDays = b.calibrationDaysDone;
+      });
+      _syncIosWidgets();
+    }
   }
 
   void _onPartnerNotifier() {
