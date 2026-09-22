@@ -91,7 +91,7 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "requestPermission" -> {
-                        KalkanNotify.ensureChannel(this)
+                        KalkanNotify.ensureChannels(this)
                         result.success(true)
                     }
                     "scheduleDaily" -> {
@@ -101,7 +101,22 @@ class MainActivity : FlutterActivity() {
                         val minute = (args?.get("minute") as? Number)?.toInt() ?: 0
                         val title = args?.get("title") as? String ?: "KALKAN"
                         val body = args?.get("body") as? String ?: ""
-                        KalkanNotify.scheduleDaily(this, id, hour, minute, title, body)
+                        val channel = args?.get("channel") as? String ?: "morning"
+                        KalkanNotify.scheduleDaily(this, id, hour, minute, title, body, channel)
+                        result.success(true)
+                    }
+                    "cancel" -> {
+                        val id = ((call.arguments as? Map<*, *>)?.get("id") as? Number)?.toInt() ?: 0
+                        KalkanNotify.cancel(this, id)
+                        result.success(true)
+                    }
+                    "showNow" -> {
+                        val args = call.arguments as? Map<*, *>
+                        val id = (args?.get("id") as? Number)?.toInt() ?: 1201
+                        val title = args?.get("title") as? String ?: "KALKAN"
+                        val body = args?.get("body") as? String ?: ""
+                        val channel = args?.get("channel") as? String ?: "workout"
+                        KalkanNotify.show(this, id, title, body, channel)
                         result.success(true)
                     }
                     else -> result.notImplemented()

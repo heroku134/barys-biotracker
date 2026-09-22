@@ -288,9 +288,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                           ),
                           Row(
                             children: [
-                              Text(tr('Обновить', 'Жаңыртуу'), style: TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w500)),
-                              SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_ios, size: 9, color: AppColors.amber),
+                              Text(tr('Обновить', 'Жаңыртуу'), style: const TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w500)),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_forward_ios, size: 9, color: AppColors.amber),
                             ],
                           ),
                         ],

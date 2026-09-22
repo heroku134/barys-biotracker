@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/models/partner_cycle_data.dart';
 import '../../domain/models/user_profile.dart';
+import '../services/cloud_sync_service.dart';
 
 /// Репозиторий синхронизации цикла партнёрши (чтение, запись, реактивные обновления)
 class PartnerCycleRepository {
@@ -31,6 +32,7 @@ class PartnerCycleRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_storageKey, data.serialize());
     notifier.value = data;
+    CloudSyncService.pushCycle(data);
   }
 
   /// Привязка партнера по инвайт-коду

@@ -34,7 +34,7 @@ class CalibrationStore {
   static Future<CalibrationSnapshot> load() async {
     final prefs = await SharedPreferences.getInstance();
     return CalibrationSnapshot(
-      daysDone: prefs.getInt('kalkan_calibration_days_v1') ?? 14,
+      daysDone: prefs.getInt('kalkan_calibration_days_v1') ?? 0,
       meanHrv: prefs.getDouble(_hrvKey) ?? 64.0,
       meanRhr: prefs.getInt(_rhrKey) ?? 52,
       lastMorningKey: prefs.getString(_lastKey),
@@ -59,6 +59,7 @@ class CalibrationStore {
   }) async {
     final moment = now ?? DateTime.now();
     if (moment.hour < 5 || moment.hour >= 12) return false;
+    if (hrv <= 0 || rhr <= 0) return false;
     final prefs = await SharedPreferences.getInstance();
     final key = _todayKey(moment);
     if (prefs.getString(_lastKey) == key) return false;

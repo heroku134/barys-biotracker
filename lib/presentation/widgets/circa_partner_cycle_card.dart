@@ -226,13 +226,25 @@ class CircaPartnerCycleCard extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                         height: 1.35,
                       ),
-                      maxLines: 2,
+                      maxLines: 4,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
+            if (data.symptoms.isNotEmpty) ...[
+              SizedBox(height: 8),
+              Text(data.symptoms.join(' · '), style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.3)),
+            ],
+            if (data.flow != 'none') ...[
+              SizedBox(height: 6),
+              Text('Выделения: ${data.flow}', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+            ],
+            if (data.note.isNotEmpty) ...[
+              SizedBox(height: 6),
+              Text(data.note, style: TextStyle(color: AppColors.fg, fontSize: 12, height: 1.35)),
+            ],
             SizedBox(height: 8),
 
             // 5. Футер

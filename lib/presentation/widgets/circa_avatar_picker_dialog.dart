@@ -136,7 +136,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ФОТО ПРОФИЛЯ АТЛЕТА',
+                    'Фото профиля',
                     style: AppTypography.monoLabel().copyWith(
                       color: AppColors.amber,
                       fontSize: 10,
@@ -145,7 +145,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'Сделайте снимок или выберите готовый аватар',
+                    'Камера или галерея',
                     style: TextStyle(
                       color: AppColors.textNearWhite,
                       fontSize: 13,
@@ -170,7 +170,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                   onPressed: () => _pickImage(context, ImageSource.camera),
                   icon: Icon(Icons.camera_alt_outlined, color: AppColors.amber, size: 18),
                   label: Text(
-                    'КАМЕРА',
+                    'Камера',
                     style: AppTypography.monoBadge().copyWith(color: AppColors.textNearWhite),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -187,7 +187,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                   onPressed: () => _pickImage(context, ImageSource.gallery),
                   icon: Icon(Icons.photo_library_outlined, color: AppColors.sage, size: 18),
                   label: Text(
-                    'ГАЛЕРЕЯ',
+                    'Галерея',
                     style: AppTypography.monoBadge().copyWith(color: AppColors.textNearWhite),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -201,100 +201,6 @@ class CircaAvatarPickerDialog extends StatelessWidget {
             ],
           ),
 
-          SizedBox(height: 18),
-
-          Text(
-            'ИЛИ ВЫБЕРИТЕ КОЛЛЕКЦИОННЫЙ ОБРАЗ:',
-            style: AppTypography.monoLabel().copyWith(fontSize: 9.5, color: AppColors.textMuted),
-          ),
-          SizedBox(height: 10),
-
-          // 2. Сетка пресетов
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: presets.length,
-            itemBuilder: (ctx, index) {
-              final item = presets[index];
-              final path = item['path']!;
-              final isSelected = profile.avatarPath == path ||
-                  (profile.avatarPath == null && index == 0);
-
-              return GestureDetector(
-                onTap: () async {
-                  CircaHaptics.selectionClick();
-                  final updated = profile.copyWith(avatarPath: path);
-                  await UserProfileRepository.saveProfile(updated);
-                  if (ctx.mounted) {
-                    Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: AppColors.surface,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: AppColors.sage),
-                        ),
-                        content: Text(
-                          'Фото владельца «${item['title']}» сохранено',
-                          style: TextStyle(color: AppColors.textNearWhite, fontSize: 12),
-                        ),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.amber.withValues(alpha: 0.15)
-                        : AppColors.raised,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected ? AppColors.amber : AppColors.hairline,
-                      width: isSelected ? 1.5 : 1.0,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? AppColors.amber : AppColors.hairline,
-                            width: 1.0,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: AvatarImageProvider.buildAvatarWidget(path: path),
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        item['title']!,
-                        style: TextStyle(
-                          color: isSelected ? AppColors.amber : AppColors.textNearWhite,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
           SizedBox(height: 14),
 
           // Кнопка закрытия
@@ -303,7 +209,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
-                'ОТМЕНА',
+                'Отмена',
                 style: AppTypography.monoBadge().copyWith(color: AppColors.textSecondary),
               ),
             ),

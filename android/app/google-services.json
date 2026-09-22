@@ -1,22 +1,21 @@
 {
   "project_info": {
-    "project_number": "519829491006",
-    "firebase_url": "https://kpkzav-default-rtdb.firebaseio.com",
-    "project_id": "kpkzav",
-    "storage_bucket": "kpkzav.firebasestorage.app"
+    "project_number": "718180799511",
+    "project_id": "watch-ba720",
+    "storage_bucket": "watch-ba720.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:519829491006:android:10d9c1256c011d7eddb06f",
+        "mobilesdk_app_id": "1:718180799511:android:41ddb5b639f5cb67de3852",
         "android_client_info": {
-          "package_name": "watch.circle"
+          "package_name": "kalkan.comp"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDJ5Jlq2fL6GGxSpfMKAcWwEBE9E79oLG0"
+          "current_key": "AIzaSyD19yDU1QGZpLRTTc2dfunyprwr67yzgsE"
         }
       ],
       "services": {

@@ -92,16 +92,25 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
             final pages = <Widget>[
               DashboardScreen(
                 bleBridge: widget.bleBridge,
-                onOpenAvatar: () => setState(() => _currentIndex = 2),
+                onOpenAvatar: () {
+                  if (isFemale) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => BioAvatarScreen(bleBridge: widget.bleBridge),
+                    ));
+                  } else {
+                    setState(() => _currentIndex = 2);
+                  }
+                },
                 onOpenDeviceSettings: _openDeviceSettings,
               ),
               AnalyticsScreen(bleBridge: widget.bleBridge),
-              BioAvatarScreen(bleBridge: widget.bleBridge, embedded: true),
-              SportScreen(bleBridge: widget.bleBridge),
               if (isFemale)
                 userProfile.isPregnant
                     ? PregnancyScreen(bleBridge: widget.bleBridge)
-                    : MenstrualCycleScreen(bleBridge: widget.bleBridge),
+                    : MenstrualCycleScreen(bleBridge: widget.bleBridge)
+              else
+                BioAvatarScreen(bleBridge: widget.bleBridge, embedded: true),
+              SportScreen(bleBridge: widget.bleBridge),
               ProfileScreen(bleBridge: widget.bleBridge),
             ];
             final safeIndex = _currentIndex.clamp(0, pages.length - 1);
@@ -122,16 +131,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                       children: [
                         _nav(palette, 0, Icons.circle_outlined, AppStrings.tr('nav_today', language)),
                         _nav(palette, 1, Icons.insights_outlined, AppStrings.tr('nav_analysis', language)),
-                        _mascotNav(palette, zone.color, avatar.state.assetFor(userProfile.gender), 2, AppStrings.tr('nav_barys', language)),
-                        _nav(palette, 3, Icons.directions_run, AppStrings.tr('nav_sport', language)),
                         if (isFemale)
-                          _nav(palette, 4, userProfile.isPregnant ? Icons.favorite_outline : Icons.water_drop_outlined, AppStrings.tr(userProfile.isPregnant ? 'nav_pregnancy' : 'nav_cycle', language)),
-                        _nav(
-                          palette,
-                          isFemale ? 5 : 4,
-                          Icons.person_outline,
-                          AppStrings.tr('nav_profile', language),
-                        ),
+                          _nav(palette, 2, userProfile.isPregnant ? Icons.favorite_outline : Icons.water_drop_outlined, AppStrings.tr(userProfile.isPregnant ? 'nav_pregnancy' : 'nav_cycle', language))
+                        else
+                          _mascotNav(palette, zone.color, avatar.state.assetFor(userProfile.gender), 2, AppStrings.tr('nav_barys', language)),
+                        _nav(palette, 3, Icons.directions_run, AppStrings.tr('nav_sport', language)),
+                        _nav(palette, 4, Icons.person_outline, AppStrings.tr('nav_profile', language)),
                       ],
                     ),
                   ),
@@ -195,7 +200,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                   asset,
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
-                  errorBuilder: (context, error, stackTrace) => Icon(Icons.pets, color: AppColors.sage, size: 16),
+                  errorBuilder: (_, __, ___) => Icon(Icons.pets, color: AppColors.sage, size: 16),
                 ),
               ),
             ),

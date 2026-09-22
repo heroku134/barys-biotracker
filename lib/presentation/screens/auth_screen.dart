@@ -6,6 +6,7 @@ import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
+import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
@@ -117,6 +118,7 @@ class _AuthScreenState extends State<AuthScreen> {
       isAuthenticated: true,
     );
     await UserProfileRepository.saveProfile(updatedProfile);
+    await CloudSyncService.afterLogin(updatedProfile);
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -135,6 +137,7 @@ class _AuthScreenState extends State<AuthScreen> {
       isAuthenticated: true,
     );
     await UserProfileRepository.saveProfile(updatedProfile);
+    await CloudSyncService.afterLogin(updatedProfile);
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(

@@ -24,16 +24,16 @@ struct BiometricProvider: TimelineProvider {
     func placeholder(in context: Context) -> BiometricEntry {
         BiometricEntry(
             date: Date(),
-            recoveryScore: 94,
+            recoveryScore: 0,
             recoveryZone: "optimal",
-            currentStrain: 12.4,
+            currentStrain: 0,
             targetStrainMax: 13.8,
-            heartRate: 72,
-            restingHeartRate: 52,
-            hrv: 64,
-            sleepHours: 7,
-            sleepMinutes: 48,
-            sleepScore: 88
+            heartRate: 0,
+            restingHeartRate: 0,
+            hrv: 0,
+            sleepHours: 0,
+            sleepMinutes: 0,
+            sleepScore: 0
         )
     }
 
@@ -51,16 +51,16 @@ struct BiometricProvider: TimelineProvider {
 
     private func loadEntry() -> BiometricEntry {
         let defaults = UserDefaults(suiteName: appGroupId)
-        let score = defaults?.integer(forKey: "recovery_score") ?? 94
+        let score = defaults?.integer(forKey: "recovery_score") ?? 0
         let zone = defaults?.string(forKey: "recovery_zone") ?? "optimal"
-        let strain = defaults?.double(forKey: "current_strain") ?? 12.4
+        let strain = defaults?.double(forKey: "current_strain") ?? 0
         let targetMax = defaults?.double(forKey: "target_strain_max") ?? 13.8
-        let bpm = defaults?.integer(forKey: "heart_rate") ?? 72
-        let rhr = defaults?.integer(forKey: "resting_heart_rate") ?? 52
-        let hrvVal = defaults?.integer(forKey: "hrv") ?? 64
-        let sHours = defaults?.integer(forKey: "sleep_hours") ?? 7
-        let sMins = defaults?.integer(forKey: "sleep_minutes") ?? 48
-        let sScore = defaults?.integer(forKey: "sleep_score") ?? 88
+        let bpm = defaults?.integer(forKey: "heart_rate") ?? 0
+        let rhr = defaults?.integer(forKey: "resting_heart_rate") ?? 0
+        let hrvVal = defaults?.integer(forKey: "hrv") ?? 0
+        let sHours = defaults?.integer(forKey: "sleep_hours") ?? 0
+        let sMins = defaults?.integer(forKey: "sleep_minutes") ?? 0
+        let sScore = defaults?.integer(forKey: "sleep_score") ?? 0
 
         return BiometricEntry(
             date: Date(),

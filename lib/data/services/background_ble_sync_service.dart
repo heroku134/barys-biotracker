@@ -50,7 +50,7 @@ class BackgroundBleSyncService {
         readiness: readiness,
         currentStrain: strainResult.currentStrain,
         targetStrainMax: strainResult.targetStrainMax,
-        sleepScore: 88,
+        sleepScore: 0,
       );
 
       final prefs = await SharedPreferences.getInstance();
@@ -60,8 +60,8 @@ class BackgroundBleSyncService {
         sleep: SleepEngine.calculate(telemetry: telemetry).sleepPerformanceScore,
       );
       await CalibrationStore.recordMorningSync(
-        hrv: telemetry.hrv > 0 ? telemetry.hrv : 64,
-        rhr: telemetry.restingHeartRate > 0 ? telemetry.restingHeartRate : 52,
+        hrv: telemetry.hrv,
+        rhr: telemetry.restingHeartRate,
       );
       await prefs.setString(_prefKeyLastBackgroundSync, DateTime.now().toIso8601String());
 

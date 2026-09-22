@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/user_profile.dart';
+import '../services/cloud_sync_service.dart';
 
 class UserProfileRepository {
   static const String _keyProfile = 'circa_user_profile_v1';
@@ -30,6 +31,7 @@ class UserProfileRepository {
     await prefs.setString(_keyProfile, profile.serialize());
     await prefs.setBool(_keyAuth, profile.isAuthenticated);
     profileNotifier.value = profile;
+    CloudSyncService.pushProfile(profile);
   }
 
   static Future<void> setAuthenticated(bool isAuth) async {

@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "watch.circle"
+        applicationId = "kalkan.comp"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

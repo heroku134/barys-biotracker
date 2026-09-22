@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/telemetry.dart';
 import 'demo_mode_store.dart';
+import '../services/cloud_sync_service.dart';
 
 class DaySnapshot {
   final String dateKey;
@@ -73,6 +74,7 @@ class DaySnapshotRepository {
     all.removeWhere((e) => e.dateKey == snap.dateKey);
     all.add(snap);
     await _saveAll(all);
+    CloudSyncService.pushDay(snap);
   }
 
   static Future<void> recordTelemetry(BleTelemetry t, {required int recovery, required int sleep}) async {

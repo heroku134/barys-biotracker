@@ -9,6 +9,7 @@ import '../../data/ble/ute_ble_bridge.dart';
 import 'auth_screen.dart';
 import 'main_shell.dart';
 import 'onboarding_screen.dart';
+import '../../data/storage/user_profile_repository.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../data/storage/onboarding_repository.dart';
 

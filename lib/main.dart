@@ -1,11 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'core/app_colors.dart';
 import 'core/app_language.dart';
 import 'core/app_theme.dart';
 import 'data/ble/ute_ble_bridge.dart';
 import 'data/services/ios_widget_service.dart';
 import 'data/services/background_ble_sync_service.dart';
 import 'data/storage/user_profile_repository.dart';
+import 'data/services/cloud_sync_service.dart';
 import 'data/storage/day_snapshot_repository.dart';
 import 'data/services/system_notification_service.dart';
 import 'domain/avatar/avatar_manager.dart';
@@ -39,6 +42,10 @@ void main() async {
     ru: AppLocaleNotifier.current != AppLanguage.english,
   );
   final profile = await UserProfileRepository.loadProfile();
+  if (profile.isAuthenticated) {
+    await CloudSyncService.pullDays();
+    await CloudSyncService.pullPartnerCycle();
+  }
 
   runApp(BarysBioTrackerApp(
     bleBridge: bleBridge,

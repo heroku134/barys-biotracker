@@ -5,6 +5,7 @@ import '../../core/app_language.dart';
 import '../../core/app_typography.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/private_league_repository.dart';
+import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/private_league.dart';
 import '../widgets/glass_card.dart';
 
@@ -20,6 +21,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
   PrivateLeague? _league;
   bool _loading = true;
   bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
+  String? _cloudCode;
 
   @override
   void initState() {
@@ -29,7 +31,8 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
 
   Future<void> _load() async {
     final l = await PrivateLeagueRepository.loadLeague(telemetry: widget.bleBridge.currentTelemetry);
-    if (mounted) setState(() { _league = l; _loading = false; });
+    final cloudCode = await CloudSyncService.publishFriendInvite();
+    if (mounted) setState(() { _league = l; _loading = false; _cloudCode = cloudCode; });
   }
 
   @override
@@ -58,10 +61,12 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           Text(
-            _ru ? 'До 5 человек. Только восстановление.' : '5 адамга чейин. Калыбына келүү гана.',
+            _ru ? 'До 5 человек. Код круга:' : '5 адамга чейин. Код:',
             style: AppTypography.caption(palette.secondary),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
+          Text(_cloudCode ?? _league!.inviteCode, style: AppTypography.bodySemibold(palette.fg)),
+          const SizedBox(height: 14),
           ...members.map((m) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: GlassCard(
@@ -75,7 +80,12 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Text(m.isCurrentUser ? (_ru ? '${m.name} · вы' : '${m.name} · сиз') : m.name, style: AppTypography.bodySemibold(palette.fg)),
-                          Text(m.city, style: AppTypography.caption(palette.secondary)),
+                          Text(
+                            _ru
+                                ? 'Восст. ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · сон ${m.sleepHours.toStringAsFixed(1)} ч'
+                                : 'Калыбына ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · уйку ${m.sleepHours.toStringAsFixed(1)} с',
+                            style: AppTypography.caption(palette.secondary),
+                          ),
                         ]),
                       ),
                       Text('${m.recoveryScore}%', style: TextStyle(color: m.recoveryZone.color, fontSize: 18, fontWeight: FontWeight.w600)),
@@ -94,25 +104,31 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
   }
 
   void _add() {
-    final name = TextEditingController();
+    final code = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text(_ru ? 'Друг' : 'Дос', style: TextStyle(color: AppColors.fg)),
-        content: TextField(controller: name, decoration: InputDecoration(hintText: _ru ? 'Имя' : 'Аты')),
+        title: Text(_ru ? 'Код друга' : 'Достун коду', style: TextStyle(color: AppColors.fg)),
+        content: TextField(
+          controller: code,
+          textCapitalization: TextCapitalization.characters,
+          decoration: InputDecoration(hintText: _league?.inviteCode ?? 'KALKAN-XXXX'),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(_ru ? 'Отмена' : 'Жок')),
           TextButton(
             onPressed: () async {
+              final raw = code.text.trim().toUpperCase();
               Navigator.pop(ctx);
-              if (name.text.trim().isEmpty) return;
-              await PrivateLeagueRepository.addFriend(
-                name: name.text.trim(),
-              );
+              if (raw.isEmpty) return;
+              final ok = await CloudSyncService.acceptFriendCode(raw);
+              if (!ok) {
+                await PrivateLeagueRepository.addFriend(name: raw, inviteCode: raw);
+              }
               await _load();
             },
-            child: Text(_ru ? 'Ок' : 'Макул'),
+            child: Text(_ru ? 'Добавить' : 'Кошуу'),
           ),
         ],
       ),

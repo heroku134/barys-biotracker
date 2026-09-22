@@ -21,102 +21,21 @@ class CircaHealthspanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Заголовок
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.sage,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'HEALTHSPAN · БИО-ВОЗРАСТ KALKAN',
-                    style: TextStyle(
-                      color: AppColors.muted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.sage.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.sage.withValues(alpha: 0.4)),
-                ),
-                child: Text(
-                  'VO2max: ${healthspan.estimatedVo2Max}',
-                  style: TextStyle(
-                    color: AppColors.sage,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-
-          // Главное число: Биологический возраст
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                healthspan.circaBiologicalAge.toStringAsFixed(1),
-                style: TextStyle(
-                  color: AppColors.fg,
-                  fontSize: 38,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -1.0,
-                  height: 1.0,
-                ),
-              ),
-              Text(
-                ' года',
-                style: TextStyle(
-                  color: AppColors.muted,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isYounger ? AppColors.sage.withValues(alpha: 0.2) : AppColors.amber.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  isYounger
-                      ? '${healthspan.ageDeltaYears} года к паспорту'
-                      : '+${healthspan.ageDeltaYears} года к паспорту',
-                  style: TextStyle(
-                    color: isYounger ? AppColors.sage : AppColors.amber,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 4),
           Text(
-            'Паспортный возраст: ${healthspan.chronologicalAge} лет',
-            style: TextStyle(
-              color: AppColors.faint,
-              fontSize: 11,
-            ),
+            'Биовозраст',
+            style: TextStyle(color: AppColors.muted, fontSize: 13, fontWeight: FontWeight.w500),
+          ),
+          SizedBox(height: 8),
+          Text(
+            healthspan.circaBiologicalAge.toStringAsFixed(1),
+            style: TextStyle(color: AppColors.fg, fontSize: 40, fontWeight: FontWeight.w600, height: 1.0, letterSpacing: -0.8),
+          ),
+          SizedBox(height: 8),
+          Text(
+            isYounger
+                ? 'На ${healthspan.ageDeltaYears.abs().toStringAsFixed(1)} года моложе паспорта (${healthspan.chronologicalAge})'
+                : 'На ${healthspan.ageDeltaYears.abs().toStringAsFixed(1)} года старше паспорта (${healthspan.chronologicalAge})',
+            style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.35),
           ),
           SizedBox(height: 10),
 

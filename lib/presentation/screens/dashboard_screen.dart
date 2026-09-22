@@ -25,13 +25,21 @@ import 'day_journal_screen.dart';
 import '../widgets/mascot_face.dart';
 import '../../domain/intelligence/day_copy.dart';
 import '../../domain/avatar/avatar_manager.dart';
+import '../../data/storage/onboarding_repository.dart';
 import '../../data/storage/calibration_store.dart';
 import '../../data/storage/day_snapshot_repository.dart';
 import '../../data/storage/local_day_strain.dart';
 import '../../data/storage/climate_mode_store.dart';
+import '../../data/storage/partner_cycle_repository.dart';
+import '../../domain/models/partner_cycle_data.dart';
+import '../widgets/circa_partner_cycle_card.dart';
+import '../widgets/circa_partner_cycle_sheet.dart';
+import '../widgets/glass_card.dart';
+import 'bio_avatar_screen.dart';
 import '../../domain/intelligence/yesterday_miss.dart';
 import '../../data/services/reminder_service.dart';
 import '../../data/services/paired_pulse.dart';
+import '../../data/services/system_notification_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -56,6 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _miss;
   ClimateMode _climate = ClimateMode.normal;
   UserProfile _userProfile = const UserProfile();
+  PartnerCycleData? _partner;
   StreamSubscription<BleTelemetry>? _sub;
   int _calDays = 14;
 
@@ -65,6 +74,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _telemetry = widget.bleBridge.currentTelemetry;
     _loadProfile();
     _loadCal();
+    _partner = PartnerCycleRepository.notifier.value;
+    PartnerCycleRepository.notifier.addListener(_onPartnerNotifier);
     _syncIosWidgets();
     UserProfileRepository.profileNotifier.addListener(_onProfileNotifier);
     _sub = widget.bleBridge.telemetryStream.listen((data) {
@@ -80,12 +91,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _onPartnerNotifier() {
+    if (mounted) {
+      setState(() => _partner = PartnerCycleRepository.notifier.value);
+    }
+  }
+
   void _syncIosWidgets() {
     final readiness = ReadinessEngine.calculate(_telemetry, baseline: _baseline);
+    final strain = StrainEngine.evaluate(currentStrain: _telemetry.currentDayStrain, recoveryZone: readiness.zone);
+    final sleep = SleepEngine.calculate(telemetry: _telemetry, baseline: _baseline);
+    final hasNight = _telemetry.sleepMinutes > 0 || _telemetry.hrv > 0;
+    final line = DayCopy.morning(
+      sleepScore: sleep.sleepPerformanceScore,
+      tMin: strain.targetStrainMin,
+      tMax: strain.targetStrainMax,
+      miss: _miss,
+      climate: _climate,
+    );
     IosWidgetService.updateWidgets(
       telemetry: _telemetry,
       readiness: readiness,
       currentStrain: _telemetry.currentDayStrain > 0 ? _telemetry.currentDayStrain : 0,
+      targetStrainMax: strain.targetStrainMax,
+      sleepScore: sleep.sleepPerformanceScore,
+      morningLine: line,
+      calibrationDay: _calDays,
+      hasNightData: hasNight,
+    );
+    SystemNotificationService.refreshFromDay(
+      recovery: readiness.score,
+      targetMin: strain.targetStrainMin,
+      targetMax: strain.targetStrainMax,
+      strainNow: _telemetry.currentDayStrain,
+      sleepMinutes: _telemetry.sleepMinutes,
+      hrv: _telemetry.hrv,
+      baselineHrv: _baseline.meanHrv,
+      yesterdayMiss: _miss,
+      hasNightData: hasNight,
+      isOffWrist: _telemetry.isOffWrist,
+      calibrationDay: _calDays,
     );
   }
 
@@ -93,13 +138,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _sub?.cancel();
     UserProfileRepository.profileNotifier.removeListener(_onProfileNotifier);
+    PartnerCycleRepository.notifier.removeListener(_onPartnerNotifier);
     super.dispose();
   }
 
   Future<void> _loadCal() async {
     await CalibrationStore.recordMorningSync(
-      hrv: _telemetry.hrv > 0 ? _telemetry.hrv : 64,
-      rhr: _telemetry.restingHeartRate > 0 ? _telemetry.restingHeartRate : 52,
+      hrv: _telemetry.hrv,
+      rhr: _telemetry.restingHeartRate,
     );
     final b = await CalibrationStore.loadBaseline();
     final kind = ReminderService.activeBanner();
@@ -460,6 +506,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
+
+            if (_userProfile.gender == Gender.female)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: GlassCard(
+                    onTap: widget.onOpenAvatar,
+                    child: Row(
+                      children: [
+                        MascotFace(
+                          state: AvatarManager.calculateState(_telemetry, baseline: _baseline),
+                          size: 72,
+                          climate: _climate,
+                          onTap: widget.onOpenAvatar,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(AppLocaleNotifier.pick('Барыс', 'Барыс', 'Barys'), style: AppTypography.bodySemibold(palette.fg)),
+                              const SizedBox(height: 4),
+                              Text(
+                                DayCopy.morning(
+                                  sleepScore: sleepScore,
+                                  tMin: strainResult.targetStrainMin,
+                                  tMax: strainResult.targetStrainMax,
+                                  miss: _miss,
+                                  climate: _climate,
+                                ),
+                                style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            if (_userProfile.gender != Gender.female)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: _partner != null && (_partner!.isLinked || _partner!.partnerName.isNotEmpty)
+                      ? CircaPartnerCycleCard(
+                          data: _partner!,
+                          onTap: () => CircaPartnerCycleSheet.show(context, _partner!),
+                        )
+                      : GlassCard(
+                          onTap: () {
+                            CircaPartnerCycleSheet.show(context, _partner ?? PartnerCycleData(lastSyncTime: DateTime.now()));
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(AppLocaleNotifier.pick('Цикл партнёра', 'Өнөктөштүн цикли', 'Partner cycle'), style: AppTypography.bodySemibold(palette.fg)),
+                              const SizedBox(height: 6),
+                              Text(
+                                AppLocaleNotifier.pick('Привяжите её код — фаза, день, энергия и самочувствие будут здесь.', 'Кодду байлаңыз.', 'Link her code to see phase, day and energy here.'),
+                                style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
+              ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
@@ -472,7 +585,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _stat(palette, 'HRV',
-                          _telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64', 'мс'),
+                          '${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'}', 'мс'),
                     ),
                     const SizedBox(width: 8),
                     Expanded(

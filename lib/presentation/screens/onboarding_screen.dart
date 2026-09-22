@@ -38,6 +38,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       AppLocaleNotifier.pick('14 дней калибровки', '14 күн калибрлөө', '14 days of calibration'),
       AppLocaleNotifier.pick('Это не врач', 'Бул дарыгер эмес', 'Not a clinician'),
     ];
+    const photos = [
+      'assets/images/onboard_watch.jpg',
+      'assets/images/onboard_rings.jpg',
+      'assets/images/onboard_morning.jpg',
+      'assets/images/onboard_legal.jpg',
+    ];
     final bodies = [
       AppLocaleNotifier.pick(
         'Часы без экрана. Телефон показывает сон, восстановление и нагрузку.',
@@ -74,7 +80,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Text(titles[_step], style: AppTypography.screenTitle(palette.fg).copyWith(fontSize: 26, height: 1.2)),
               const SizedBox(height: 12),
               Text(bodies[_step], style: AppTypography.body(palette.secondary).copyWith(height: 1.45)),
-              Spacer(),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Image.asset(photos[_step], fit: BoxFit.cover, width: double.infinity),
+                ),
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: List.generate(4, (i) {
                   return Container(

@@ -19,6 +19,7 @@ import '../widgets/glass_card.dart';
 import '../widgets/metric_dial.dart';
 import '../widgets/weekly_metric_chart.dart';
 import '../../domain/intelligence/readiness_engine.dart';
+import '../../domain/intelligence/strain_engine.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -99,7 +100,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             title: Text(
               AppStrings.tr('analytics_title', language),
               style: TextStyle(
-                color: AppColors.fg,
+                color: palette.fg,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -140,9 +141,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: palette.raised,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.line),
+                border: Border.all(color: palette.hairline),
               ),
               child: Row(
                 children: [
@@ -461,14 +462,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.raised : Colors.transparent,
+            color: isSelected ? KalkanColors.of(context).surface : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
             child: Text(
               title,
               style: TextStyle(
-                color: isSelected ? AppColors.fg : AppColors.muted,
+                color: isSelected ? KalkanColors.of(context).fg : KalkanColors.of(context).secondary,
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),

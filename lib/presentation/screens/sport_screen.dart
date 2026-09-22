@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_typography.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/circa_haptics.dart';
 import '../../data/services/paired_pulse.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/workout_repository.dart';
@@ -17,6 +19,7 @@ import '../widgets/circa_edge_fade.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/glass_card.dart';
 import '../../data/services/live_activity_service.dart';
+import '../../data/services/system_notification_service.dart';
 
 class SportScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -170,6 +173,14 @@ class _SportScreenState extends State<SportScreen> {
     final zone = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry).zone;
 
     LocalDayStrain.add(calculatedStrain);
+    final dayAfter = dayBefore + calculatedStrain;
+    final rec = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry);
+    SystemNotificationService.notifyWorkoutEnd(
+      sessionStrain: calculatedStrain,
+      dayStrain: dayAfter,
+      targetMax: StrainEngine.evaluate(currentStrain: dayAfter, recoveryZone: rec.zone).targetStrainMax,
+    );
+
     await WorkoutRepository.saveWorkout(completed);
     await _loadHistory();
 
