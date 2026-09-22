@@ -35,7 +35,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     color: AppColors.rose.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.favorite,
                     color: AppColors.rose,
                     size: 15,
@@ -47,7 +47,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'БИОРИТМ ПАРТНЁРА · ${data.partnerName.toUpperCase()}',
+                        'Цикл · ${data.partnerName}',
                         style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 9.5,
@@ -137,14 +137,14 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'ТЕРМОСЕНСОР',
                           style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
                         SizedBox(height: 1),
                         Text(
                           '${data.skinTempDeviation >= 0 ? '+' : ''}${data.skinTempDeviation.toStringAsFixed(2)}°C',
-                          style: const TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w800),
+                          style: TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w800),
                         ),
                       ],
                     ),
@@ -162,7 +162,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'ЭНЕРГИЯ',
                           style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
@@ -187,14 +187,14 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'НАСТРОЕНИЕ',
                           style: TextStyle(color: AppColors.faint, fontSize: 8.5, fontWeight: FontWeight.w700),
                         ),
                         SizedBox(height: 1),
                         Text(
                           data.mood.split(' ').first,
-                          style: const TextStyle(fontSize: 12),
+                          style: TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
@@ -215,7 +215,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb_outline, color: AppColors.amber, size: 14),
+                  Icon(Icons.lightbulb_outline, color: AppColors.amber, size: 14),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(

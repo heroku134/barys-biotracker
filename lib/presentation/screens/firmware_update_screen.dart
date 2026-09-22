@@ -45,7 +45,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
     if (widget.watchBatteryPercent < 50) {
       HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: AppColors.surface,
           content: Text(
             'Заряд часов ниже 50%! Подключите СААТ-1 к магнитной зарядке перед прошивкой.',
@@ -83,9 +83,9 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
     final bool canUpdate = widget.watchBatteryPercent >= 50;
 
     return Scaffold(
-      backgroundColor: AppColors.obsidian,
+      backgroundColor: AppColors.stage,
       appBar: AppBar(
-        backgroundColor: AppColors.obsidian,
+        backgroundColor: AppColors.stage,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -93,12 +93,12 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
           onPressed: _isUpdating ? null : () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'ОБНОВЛЕНИЕ ПРОШИВКИ',
-          style: AppTypography.monoLabel.copyWith(
+          'Прошивка',
+          style: AppTypography.monoLabel().copyWith(
             color: AppColors.textNearWhite,
-            fontSize: 12,
-            letterSpacing: 2.0,
-            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            letterSpacing: 0.2,
+            fontWeight: FontWeight.w600,
           ),
         ),
         bottom: PreferredSize(
@@ -144,13 +144,13 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                             style: TextStyle(
                               color: AppColors.textNearWhite,
                               fontSize: 15,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           SizedBox(height: 2),
                           Text(
                             'Текущая версия: v1.2.4 · Доступна: v1.3.0',
-                            style: AppTypography.monoLabel.copyWith(
+                            style: AppTypography.monoLabel().copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 10,
                             ),
@@ -191,13 +191,13 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                             'Заряд аккумулятора часов: ${widget.watchBatteryPercent}%',
                             style: TextStyle(
                               color: canUpdate ? AppColors.textNearWhite : AppColors.rose,
-                              fontSize: 12,
+                              fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
                             canUpdate ? 'Уровень достаточен для DFU (>50%)' : 'Внимание: требуется минимум 50% заряда',
-                            style: AppTypography.monoLabel.copyWith(
+                            style: AppTypography.monoLabel().copyWith(
                               color: AppColors.muted,
                               fontSize: 9.5,
                             ),
@@ -206,7 +206,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                       ),
                     ),
                     if (canUpdate)
-                      const Icon(Icons.check_circle_outline, color: AppColors.sage, size: 18),
+                      Icon(Icons.check_circle_outline, color: AppColors.sage, size: 18),
                   ],
                 ),
               ),
@@ -216,11 +216,11 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
               // 3. СПИСОК ИЗМЕНЕНИЙ (CHANGELOG)
               Text(
                 'ЧТО НОВОГО В V1.3.0 · PRECISION CORE',
-                style: AppTypography.monoLabel.copyWith(
+                style: AppTypography.monoLabel().copyWith(
                   color: AppColors.textSecondary,
                   fontSize: 10,
-                  letterSpacing: 1.5,
-                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               SizedBox(height: 10),
@@ -240,7 +240,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                 'Снижение энергопотребления чипсета на 14% при постоянном подключении.',
               ),
 
-              const Spacer(),
+              Spacer(),
 
               // 4. ПРОГРЕСС ИЛИ КНОПКА ЗАПУСКА
               if (_isUpdating) ...[
@@ -259,11 +259,11 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                         children: [
                           Text(
                             'ПЕРЕДАЧА ПРОШИВКИ (BLE DFU)',
-                            style: AppTypography.monoLabel.copyWith(
+                            style: AppTypography.monoLabel().copyWith(
                               color: AppColors.amber,
                               fontSize: 10,
-                              letterSpacing: 1.5,
-                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.1,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
@@ -271,7 +271,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                             style: TextStyle(
                               color: AppColors.textNearWhite,
                               fontSize: 14,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               fontFeatures: [FontFeature.tabularFigures()],
                             ),
                           ),
@@ -291,14 +291,14 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                         children: [
                           Text(
                             'Блок $_transferredBlocks / $_totalBlocks (CRC32 OK)',
-                            style: AppTypography.monoLabel.copyWith(
+                            style: AppTypography.monoLabel().copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 9.5,
                             ),
                           ),
                           Text(
                             '26.4 kB/s',
-                            style: AppTypography.monoLabel.copyWith(
+                            style: AppTypography.monoLabel().copyWith(
                               color: AppColors.sage,
                               fontSize: 9.5,
                             ),
@@ -319,23 +319,23 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle, color: AppColors.sage, size: 24),
+                      Icon(Icons.check_circle, color: AppColors.sage, size: 24),
                       SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'СААТ-1 успешно обновлен!',
                               style: TextStyle(
                                 color: AppColors.textNearWhite,
                                 fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             Text(
                               'Часы перезагружены и работают на версии v1.3.0',
-                              style: AppTypography.monoLabel.copyWith(
+                              style: AppTypography.monoLabel().copyWith(
                                 color: AppColors.textSecondary,
                                 fontSize: 10,
                               ),
@@ -364,11 +364,11 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                     _isUpdated
                         ? 'ОБНОВЛЕНИЕ ЗАВЕРШЕНО'
                         : (_isUpdating ? 'ПЕРЕДАЧА ДАННЫХ...' : 'НАЧАТЬ ОБНОВЛЕНИЕ ПО ВОЗДУХУ'),
-                    style: AppTypography.monoLabel.copyWith(
+                    style: AppTypography.monoLabel().copyWith(
                       color: AppColors.stage,
                       fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.1,
                     ),
                   ),
                 ),
@@ -406,7 +406,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                 title,
                 style: TextStyle(
                   color: AppColors.textNearWhite,
-                  fontSize: 12,
+                  fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
               ),

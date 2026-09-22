@@ -45,7 +45,7 @@ class CircaCalibrationCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 8),
-                const Text(
+                Text(
                   'КАЛИБРОВКА БАЗЫ',
                   style: TextStyle(
                     color: AppColors.muted,
@@ -54,10 +54,10 @@ class CircaCalibrationCard extends StatelessWidget {
                     letterSpacing: 2.0,
                   ),
                 ),
-                const Spacer(),
+                Spacer(),
                 Text(
                   'День $currentDay из $totalDays',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.amber,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -149,7 +149,7 @@ class CircaCalibrationCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 16),
-                const Text(
+                Text(
                   '14-ДНЕВНЫЙ ПРОТОКОЛ КАЛИБРОВКИ',
                   style: TextStyle(
                     color: AppColors.amber,
@@ -159,7 +159,7 @@ class CircaCalibrationCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 6),
-                const Text(
+                Text(
                   'Формирование биометрической нормы',
                   style: TextStyle(
                     color: AppColors.fg,
@@ -175,7 +175,7 @@ class CircaCalibrationCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: AppColors.line),
                   ),
-                  child: const Text(
+                  child: Text(
                     'В течение первых 14 дней сенсоры KALKAN СААТ-1 изучают индивидуальный вариабельный коридор ВСР и ночного пульса. Базовая точность персональных рекомендаций фиксируется на 14-й день.',
                     style: TextStyle(
                       color: AppColors.fg,
@@ -229,7 +229,7 @@ class CircaCalibrationCard extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    child: Text(
                       'ПОНЯТНО',
                       style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.0, fontSize: 12),
                     ),

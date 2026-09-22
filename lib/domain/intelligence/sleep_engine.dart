@@ -53,7 +53,7 @@ class SleepEngine {
   /// Расчет динамической потребности во сне (Whoop Sleep Planner)
   static SleepAnalysisResult calculate({
     required BleTelemetry telemetry,
-    required PersonalBaseline baseline,
+    PersonalBaseline baseline = const PersonalBaseline(),
     int targetWakeHour = 7,
     int targetWakeMinute = 0,
   }) {
@@ -66,7 +66,7 @@ class SleepEngine {
     // 3. Доплата за вчерашнюю/накопленную нагрузку Strain
     // При Strain > 10.0 добавляется 1.6 мин за каждый балл (Strain 17 дает ~35-45 мин доплаты)
     final strainDiff = math.max(0.0, telemetry.yesterdayStrain - 10.0);
-    final strainSurcharge = (strainDiff * 6.5).round();
+    final strainSurcharge = (strainDiff * 1.6).round();
 
     final totalSleepNeed = baseNeed + debtPortion + strainSurcharge;
 

@@ -10,6 +10,7 @@ class KalkanColors extends ThemeExtension<KalkanColors> {
   final Color fg;
   final Color secondary;
   final Color muted;
+  final Color shadow;
 
   const KalkanColors({
     required this.bg,
@@ -20,6 +21,7 @@ class KalkanColors extends ThemeExtension<KalkanColors> {
     required this.fg,
     required this.secondary,
     required this.muted,
+    required this.shadow,
   });
 
   static const dark = KalkanColors(
@@ -31,17 +33,19 @@ class KalkanColors extends ThemeExtension<KalkanColors> {
     fg: Color(0xFFEDEDED),
     secondary: Color(0xFF8A909D),
     muted: Color(0xFF454B59),
+    shadow: Color(0x00000000),
   );
 
   static const light = KalkanColors(
-    bg: Color(0xFFF3F1EB),
-    surface: Color(0xFFFAF8F4),
-    raised: Color(0xFFE7E3DA),
-    hairline: Color(0xFFD6D4CE),
-    lineStrong: Color(0xFFC8C2B6),
-    fg: Color(0xFF16181D),
-    secondary: Color(0xFF5C616B),
-    muted: Color(0xFF8B9099),
+    bg: Color(0xFFF6F6F4),
+    surface: Color(0xFFFFFFFF),
+    raised: Color(0xFFEEEEEC),
+    hairline: Color(0xFFE2E2DE),
+    lineStrong: Color(0xFFD0D0CA),
+    fg: Color(0xFF121212),
+    secondary: Color(0xFF5A5A5A),
+    muted: Color(0xFF8A8A8A),
+    shadow: Color(0x14000000),
   );
 
   static KalkanColors of(BuildContext context) {
@@ -58,6 +62,7 @@ class KalkanColors extends ThemeExtension<KalkanColors> {
     Color? fg,
     Color? secondary,
     Color? muted,
+    Color? shadow,
   }) {
     return KalkanColors(
       bg: bg ?? this.bg,
@@ -68,6 +73,7 @@ class KalkanColors extends ThemeExtension<KalkanColors> {
       fg: fg ?? this.fg,
       secondary: secondary ?? this.secondary,
       muted: muted ?? this.muted,
+      shadow: shadow ?? this.shadow,
     );
   }
 
@@ -83,6 +89,7 @@ class KalkanColors extends ThemeExtension<KalkanColors> {
       fg: Color.lerp(fg, other.fg, t)!,
       secondary: Color.lerp(secondary, other.secondary, t)!,
       muted: Color.lerp(muted, other.muted, t)!,
+      shadow: Color.lerp(shadow, other.shadow, t)!,
     );
   }
 }
@@ -119,6 +126,7 @@ Color _getLineStrong() => AppColors._t.lineStrong;
 Color _getFg() => AppColors._t.fg;
 Color _getSecondary() => AppColors._t.secondary;
 Color _getMuted() => AppColors._t.muted;
+Color _getShadow() => AppColors._t.shadow;
 
 /// Accents stay constant. Surfaces follow the active theme.
 class AppColors {
@@ -158,6 +166,7 @@ class AppColors {
   static const Color muted = DynamicColor(_getMuted, 0xFF454B59);
   static const Color textMuted = DynamicColor(_getMuted, 0xFF454B59);
   static const Color faint = DynamicColor(_getMuted, 0xFF454B59);
+  static const Color shadow = DynamicColor(_getShadow, 0x00000000);
 
   static const Color cyan = sage;
   static const Color emerald = sage;

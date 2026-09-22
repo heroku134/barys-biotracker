@@ -36,7 +36,7 @@ class CircaHealthspanCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'HEALTHSPAN · БИО-ВОЗРАСТ KALKAN',
                     style: TextStyle(
                       color: AppColors.muted,
@@ -56,7 +56,7 @@ class CircaHealthspanCard extends StatelessWidget {
                 ),
                 child: Text(
                   'VO2max: ${healthspan.estimatedVo2Max}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.sage,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -82,7 +82,7 @@ class CircaHealthspanCard extends StatelessWidget {
                   height: 1.0,
                 ),
               ),
-              const Text(
+              Text(
                 ' года',
                 style: TextStyle(
                   color: AppColors.muted,
@@ -90,7 +90,7 @@ class CircaHealthspanCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
@@ -113,7 +113,7 @@ class CircaHealthspanCard extends StatelessWidget {
           SizedBox(height: 4),
           Text(
             'Паспортный возраст: ${healthspan.chronologicalAge} лет',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.faint,
               fontSize: 11,
             ),
@@ -202,7 +202,7 @@ class CircaHealthspanCard extends StatelessWidget {
                   ),
                   child: Text(
                     'VO2max: ${healthspan.estimatedVo2Max}',
-                    style: const TextStyle(color: AppColors.sage, fontSize: 10, fontWeight: FontWeight.w800),
+                    style: TextStyle(color: AppColors.sage, fontSize: 10, fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
@@ -280,7 +280,7 @@ class CircaHealthspanCard extends StatelessWidget {
             SizedBox(height: 1),
             Text(
               sub,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.faint,
                 fontSize: 7.5,
               ),

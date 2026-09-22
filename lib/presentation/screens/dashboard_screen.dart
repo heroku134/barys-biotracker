@@ -21,6 +21,17 @@ import '../widgets/circa_calibration_card.dart';
 import '../widgets/circa_recovery_breakdown_sheet.dart';
 import '../widgets/metric_dial.dart';
 import 'private_league_screen.dart';
+import 'day_journal_screen.dart';
+import '../widgets/mascot_face.dart';
+import '../../domain/intelligence/day_copy.dart';
+import '../../domain/avatar/avatar_manager.dart';
+import '../../data/storage/calibration_store.dart';
+import '../../data/storage/day_snapshot_repository.dart';
+import '../../data/storage/local_day_strain.dart';
+import '../../data/storage/climate_mode_store.dart';
+import '../../domain/intelligence/yesterday_miss.dart';
+import '../../data/services/reminder_service.dart';
+import '../../data/services/paired_pulse.dart';
 
 class DashboardScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -40,15 +51,20 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late BleTelemetry _telemetry;
-  final PersonalBaseline _baseline = const PersonalBaseline();
+  PersonalBaseline _baseline = const PersonalBaseline();
+  ReminderKind? _banner;
+  String? _miss;
+  ClimateMode _climate = ClimateMode.normal;
   UserProfile _userProfile = const UserProfile();
   StreamSubscription<BleTelemetry>? _sub;
+  int _calDays = 14;
 
   @override
   void initState() {
     super.initState();
     _telemetry = widget.bleBridge.currentTelemetry;
     _loadProfile();
+    _loadCal();
     _syncIosWidgets();
     UserProfileRepository.profileNotifier.addListener(_onProfileNotifier);
     _sub = widget.bleBridge.telemetryStream.listen((data) {
@@ -69,7 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     IosWidgetService.updateWidgets(
       telemetry: _telemetry,
       readiness: readiness,
-      currentStrain: _telemetry.currentDayStrain > 0 ? _telemetry.currentDayStrain : 12.4,
+      currentStrain: _telemetry.currentDayStrain > 0 ? _telemetry.currentDayStrain : 0,
     );
   }
 
@@ -78,6 +94,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _sub?.cancel();
     UserProfileRepository.profileNotifier.removeListener(_onProfileNotifier);
     super.dispose();
+  }
+
+  Future<void> _loadCal() async {
+    await CalibrationStore.recordMorningSync(
+      hrv: _telemetry.hrv > 0 ? _telemetry.hrv : 64,
+      rhr: _telemetry.restingHeartRate > 0 ? _telemetry.restingHeartRate : 52,
+    );
+    final b = await CalibrationStore.loadBaseline();
+    final kind = ReminderService.activeBanner();
+    var show = kind;
+    if (kind != null && !await ReminderService.shouldShow(kind)) show = null;
+    await DaySnapshotRepository.seedPreviewIfEmpty(_telemetry);
+    final rec = ReadinessEngine.calculate(_telemetry, baseline: b);
+    await DaySnapshotRepository.recordTelemetry(
+      _telemetry,
+      recovery: rec.score,
+      sleep: SleepEngine.calculate(telemetry: _telemetry, baseline: b).sleepPerformanceScore,
+    );
+    final miss = await YesterdayMiss.line(ru: AppLocaleNotifier.current != AppLanguage.english, en: 'Sleep or strain slipped yesterday.');
+    final climate = await ClimateModeStore.load();
+    if (mounted) {
+      setState(() {
+        _baseline = b;
+        _calDays = b.calibrationDaysDone;
+        _banner = show;
+        _miss = miss;
+        _climate = climate;
+      });
+    }
+    await PairedPulse.morningIfNeeded(widget.bleBridge);
+  }
+
+  String _morningLine(int sleepScore, double tMin, double tMax, bool ru) {
+    final hour = DateTime.now().hour;
+    final range = '${tMin.toStringAsFixed(0)}–${tMax.toStringAsFixed(1)}';
+    if (hour >= 21) {
+      return ru ? 'Пора снижать свет и лечь до 22:30.' : 'Жарыкты басып, 22:30га чейин уктаңыз.';
+    }
+    if (sleepScore < 70) {
+      return ru
+          ? 'Сегодня $range. Вчера сон не добрали — без тяжёлой работы.'
+          : 'Бүгүн $range. Кечээки уйку жеткен жок.';
+    }
+    return ru
+        ? 'Сегодня $range. Три числа сверху — и запись в дневник, если что-то было.'
+        : 'Бүгүн $range. Үч санды карап, керек болсо күндөлүккө жазыңыз.';
   }
 
   Future<void> _loadProfile() async {
@@ -110,14 +172,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final language = AppLocaleNotifier.current;
     final readiness = ReadinessEngine.calculate(_telemetry, baseline: _baseline);
 
-    final rawStrain = _telemetry.currentDayStrain > 0
+    final fromWatch = _telemetry.currentDayStrain > 0
         ? _telemetry.currentDayStrain
         : StrainEngine.calculateStrainFromZones(_telemetry.zoneMinutes);
-    final currentStrain = rawStrain > 0 ? rawStrain : 12.4;
+    final currentStrain = fromWatch + LocalDayStrain.current();
     final strainResult = StrainEngine.evaluate(
       currentStrain: currentStrain,
       recoveryZone: readiness.zone,
       zoneMinutes: _telemetry.zoneMinutes,
+      climateFactor: ClimateModeStore.strainFactor(_climate),
     );
     final sleepResult = SleepEngine.calculate(telemetry: _telemetry, baseline: _baseline);
     final sleepScore = sleepResult.sleepPerformanceScore > 0 ? sleepResult.sleepPerformanceScore : 88;
@@ -205,6 +268,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+            if (_banner != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                    decoration: BoxDecoration(
+                      color: palette.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: palette.hairline),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _banner == ReminderKind.evening
+                                ? (ru ? 'Лечь до 22:30' : '22:30га чейин уктоо')
+                                : (ru ? 'Восстановление готово' : 'Калыбына келүү даяр'),
+                            style: AppTypography.bodySemibold(palette.fg),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            await ReminderService.dismiss(_banner!);
+                            setState(() => _banner = null);
+                          },
+                          child: Text(ru ? 'Ок' : 'Макул', style: TextStyle(color: AppColors.sage)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
@@ -264,19 +360,102 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: palette.hairline),
                   ),
-                  child: Text(
-                    _coach(readiness.score, strainResult.targetStrainMax, language),
-                    style: AppTypography.body(palette.fg).copyWith(height: 1.4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ru
+                          ? 'Цель нагрузки сегодня  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}'
+                          : 'Бүгүнкү жүктөм  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                        style: AppTypography.bodySemibold(palette.fg),
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: (currentStrain / 21).clamp(0.0, 1.0),
+                          minHeight: 6,
+                          backgroundColor: palette.raised,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            strainResult.isInTargetZone ? AppColors.sage : (currentStrain > strainResult.targetStrainMax ? AppColors.rose : AppColors.strainBlue),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        ru
+                          ? 'Сейчас ${currentStrain.toStringAsFixed(1)} из 21. ${strainResult.budgetStatusText}.'
+                          : 'Азыр ${currentStrain.toStringAsFixed(1)} / 21. ${strainResult.budgetStatusText}.',
+                        style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          MascotFace(
+                            state: AvatarManager.calculateState(_telemetry, baseline: _baseline),
+                            size: 56,
+                            climate: _climate,
+                            onTap: widget.onOpenAvatar,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              DayCopy.morning(
+                                sleepScore: sleepScore,
+                                tMin: strainResult.targetStrainMin,
+                                tMax: strainResult.targetStrainMax,
+                                miss: _miss,
+                                climate: _climate,
+                              ),
+                              style: AppTypography.body(palette.fg).copyWith(height: 1.4, fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        ru
+                          ? 'HRV ночи ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · ваша норма ${_baseline.meanHrv.toStringAsFixed(0)}'
+                          : (AppLocaleNotifier.isEnglish
+                              ? 'Night HRV ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · your baseline ${_baseline.meanHrv.toStringAsFixed(0)}'
+                              : 'Түнкү HRV ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · норма ${_baseline.meanHrv.toStringAsFixed(0)}'),
+                        style: AppTypography.bodySemibold(palette.fg),
+                      ),
+                      if (_miss != null) ...[
+                        const SizedBox(height: 6),
+                        Text(_miss!, style: AppTypography.caption(palette.secondary)),
+                      ],
+                      if (_climate != ClimateMode.normal) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          _climate == ClimateMode.altitude
+                              ? AppLocaleNotifier.pick('Режим высокогорья: цель нагрузки снижена.', 'Бийик тоо режими.', 'Altitude mode: strain budget cut.')
+                              : AppLocaleNotifier.pick('Режим жары: цель нагрузки снижена.', 'Ысык режим.', 'Heat mode: strain budget cut.'),
+                          style: AppTypography.caption(AppColors.amber),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const DayJournalScreen()),
+                          ),
+                          child: Text(ru ? 'Записать день' : 'Күндү жазуу'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-            if (_baseline.isCalibrating)
+            if (_calDays < 14)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                   child: CircaCalibrationCard(
-                    currentDay: _baseline.calibrationDaysDone,
+                    currentDay: _calDays,
                     totalDays: 14,
                   ),
                 ),
@@ -309,6 +488,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                 child: Row(
                   children: [
+                    Expanded(
+                      child: _link(
+                        palette,
+                        ru ? 'Дневник' : 'Күндөлүк',
+                        Icons.edit_note,
+                        () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const DayJournalScreen()),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _link(
                         palette,

@@ -88,29 +88,76 @@ class AppStrings {
     },
 
     // Навигационная панель (Bottom Nav)
+    'sport_history': {
+      AppLanguage.russian: 'История тренировок',
+      AppLanguage.kyrgyz: 'Машыгуулардын тарыхы',
+    },
+    'sport_pause': {
+      AppLanguage.russian: 'Пауза',
+      AppLanguage.kyrgyz: 'Пауза',
+    },
+    'sport_resume': {
+      AppLanguage.russian: 'Продолжить',
+      AppLanguage.kyrgyz: 'Улантуу',
+    },
+    'sport_finish': {
+      AppLanguage.russian: 'Завершить',
+      AppLanguage.kyrgyz: 'Аяктоо',
+    },
+    'sport_start': {
+      AppLanguage.russian: 'Начать тренировку',
+      AppLanguage.kyrgyz: 'Машыгууну баштоо',
+    },
+    'device_functions': {
+      AppLanguage.russian: 'Функции часов',
+      AppLanguage.kyrgyz: 'Сааттын функциялары',
+    },
+    'device_measure_hr': {
+      AppLanguage.russian: 'Замер пульса',
+      AppLanguage.kyrgyz: 'Пульсту өлчөө',
+    },
+    'device_sync_time': {
+      AppLanguage.russian: 'Синхронизировать время',
+      AppLanguage.kyrgyz: 'Убакытты шайкештирүү',
+    },
+    'firmware_title': {
+      AppLanguage.russian: 'Прошивка',
+      AppLanguage.kyrgyz: 'Прошивка',
+    },
     'nav_today': {
       AppLanguage.russian: 'Сегодня',
       AppLanguage.kyrgyz: 'Бүгүн',
+      AppLanguage.english: 'Today',
     },
     'nav_analysis': {
       AppLanguage.russian: 'Анализ',
       AppLanguage.kyrgyz: 'Талдоо',
+      AppLanguage.english: 'Analysis',
     },
     'nav_barys': {
-      AppLanguage.russian: 'БАРЫС',
-      AppLanguage.kyrgyz: 'БАРЫС',
+      AppLanguage.russian: 'Барыс',
+      AppLanguage.kyrgyz: 'Барыс',
+      AppLanguage.english: 'Barys',
     },
     'nav_sport': {
       AppLanguage.russian: 'Спорт',
       AppLanguage.kyrgyz: 'Спорт',
+      AppLanguage.english: 'Sport',
     },
     'nav_cycle': {
       AppLanguage.russian: 'Цикл',
       AppLanguage.kyrgyz: 'Цикл',
+      AppLanguage.english: 'Cycle',
+    },
+    'nav_pregnancy': {
+      AppLanguage.russian: 'Срок',
+      AppLanguage.kyrgyz: 'Мөөнөт',
+      AppLanguage.english: 'Term',
     },
     'nav_profile': {
       AppLanguage.russian: 'Профиль',
       AppLanguage.kyrgyz: 'Профиль',
+      AppLanguage.english: 'Profile',
     },
 
     // Главный экран («Сегодня» / «Бүгүн»)
@@ -173,12 +220,12 @@ class AppStrings {
 
     // Маскот Барыс-Батыр
     'mascot_title': {
-      AppLanguage.russian: 'БИО-МАСКОТ БАРЫС',
-      AppLanguage.kyrgyz: 'БАРЫС БИО-МАСКОТУ',
+      AppLanguage.russian: 'Барыс',
+      AppLanguage.kyrgyz: 'Барыс',
     },
     'mascot_level': {
-      AppLanguage.russian: 'УРОВЕНЬ',
-      AppLanguage.kyrgyz: 'ДЕҢГЭЭЛ',
+      AppLanguage.russian: 'Уровень',
+      AppLanguage.kyrgyz: 'Деңгээл',
     },
     'mascot_rank_cadet': {
       AppLanguage.russian: 'ИРБИС-КАДЕТ',
@@ -201,20 +248,20 @@ class AppStrings {
       AppLanguage.kyrgyz: 'Эволюциянын бардык баскычтары >',
     },
     'mascot_quests_title': {
-      AppLanguage.russian: 'ЕЖЕДНЕВНЫЕ ЗАДАЧИ НАГРУЗКИ',
-      AppLanguage.kyrgyz: 'КҮНДҮК ЖҮКТӨМ ТАПШЫРМАЛАРЫ',
+      AppLanguage.russian: 'Задачи на день',
+      AppLanguage.kyrgyz: 'Бүгүнкү милдеттер',
     },
     'mascot_quest_strain': {
       AppLanguage.russian: 'Закрыть дневной Strain',
       AppLanguage.kyrgyz: 'Күндүк Strain жүктөмүн жабуу',
     },
     'mascot_quest_journal': {
-      AppLanguage.russian: 'Залогировать био-журнал',
-      AppLanguage.kyrgyz: 'Био-журналга белгилөө',
+      AppLanguage.russian: 'Записать самочувствие',
+      AppLanguage.kyrgyz: 'Абалды жазуу',
     },
     'mascot_quest_sleep': {
-      AppLanguage.russian: 'Циркадный отбой до 22:30',
-      AppLanguage.kyrgyz: 'Циркаддык уктоо (22:30 чейин)',
+      AppLanguage.russian: 'Лечь до 22:30',
+      AppLanguage.kyrgyz: '22:30га чейин уктоо',
     },
 
     // Спорт
@@ -259,22 +306,27 @@ class AppStrings {
     'home_sleep': {
       AppLanguage.russian: 'Сон',
       AppLanguage.kyrgyz: 'Уйку',
+      AppLanguage.english: 'Sleep',
     },
     'home_recovery': {
       AppLanguage.russian: 'Восстановление',
       AppLanguage.kyrgyz: 'Калыбына келүү',
+      AppLanguage.english: 'Recovery',
     },
     'home_strain': {
       AppLanguage.russian: 'Нагрузка',
       AppLanguage.kyrgyz: 'Жүктөм',
+      AppLanguage.english: 'Strain',
     },
     'home_synced': {
       AppLanguage.russian: 'Связь',
       AppLanguage.kyrgyz: 'Байланыш',
+      AppLanguage.english: 'Synced',
     },
     'home_offline': {
       AppLanguage.russian: 'Офлайн',
       AppLanguage.kyrgyz: 'Офлайн',
+      AppLanguage.english: 'Offline',
     },
     'home_guest': {
       AppLanguage.russian: 'Гость',
@@ -284,6 +336,7 @@ class AppStrings {
     'analytics_title': {
       AppLanguage.russian: 'Анализ',
       AppLanguage.kyrgyz: 'Анализ',
+      AppLanguage.english: 'Analysis',
     },
     'analytics_stress_timeline': {
       AppLanguage.russian: 'Стресс за день',
@@ -302,6 +355,7 @@ class AppStrings {
     'profile_title': {
       AppLanguage.russian: 'Профиль',
       AppLanguage.kyrgyz: 'Профиль',
+      AppLanguage.english: 'Profile',
     },
     'profile_passport': {
       AppLanguage.russian: 'Данные профиля',
@@ -358,36 +412,36 @@ class AppStrings {
 
     // Приватные лиги (Dunbar Circle)
     'league_appbar_sub': {
-      AppLanguage.russian: 'КРУГ ДОВЕРИЯ · ЛИГА',
-      AppLanguage.kyrgyz: 'ИШЕНИМ ЧӨЙРӨСҮ · ЛИГА',
+      AppLanguage.russian: 'Друзья',
+      AppLanguage.kyrgyz: 'Достор',
     },
     'league_appbar_title': {
-      AppLanguage.russian: 'Приватная лига КАЛКАН',
-      AppLanguage.kyrgyz: 'КАЛКАН жеке лигасы',
+      AppLanguage.russian: 'Круг',
+      AppLanguage.kyrgyz: 'Чөйрө',
     },
     'league_default_title': {
-      AppLanguage.russian: 'КРУГ БАТЫРОВ · ALMATY ATELIER',
-      AppLanguage.kyrgyz: 'БАТЫРЛАР ЧӨЙРӨСҮ · ALMATY ATELIER',
+      AppLanguage.russian: 'Круг друзей',
+      AppLanguage.kyrgyz: 'Достор чөйрөсү',
     },
     'league_slots_format': {
-      AppLanguage.russian: '{current} / {max} МЕСТ',
-      AppLanguage.kyrgyz: '{current} / {max} ОРУН',
+      AppLanguage.russian: '{current} / {max} мест',
+      AppLanguage.kyrgyz: '{current} / {max} орун',
     },
     'league_avg_recovery': {
-      AppLanguage.russian: 'СРЕДНЕЕ ВОССТАНОВЛЕНИЕ КРУГА',
-      AppLanguage.kyrgyz: 'ЧӨЙРӨНҮН ОРТОЧО КАЛЫБЫНА КЕЛҮҮСҮ',
+      AppLanguage.russian: 'Среднее восстановление',
+      AppLanguage.kyrgyz: 'Орточо калыбына келүү',
     },
     'league_sync_badge': {
-      AppLanguage.russian: 'В СИНХРОНЕ',
-      AppLanguage.kyrgyz: 'ШАЙКЕШТИКТЕ',
+      AppLanguage.russian: 'Онлайн',
+      AppLanguage.kyrgyz: 'Онлайн',
     },
     'league_invite_card_title': {
-      AppLanguage.russian: 'ВАШ ИНВАЙТ-КОД ДЛЯ ДРУЗЕЙ',
-      AppLanguage.kyrgyz: 'ДОСТОР ҮЧҮН ЧАКЫРУУ КОДУҢУЗ',
+      AppLanguage.russian: 'Код для друзей',
+      AppLanguage.kyrgyz: 'Достор үчүн код',
     },
     'league_copy_code': {
-      AppLanguage.russian: 'СКОПИРОВАТЬ',
-      AppLanguage.kyrgyz: 'КӨЧҮРҮҮ',
+      AppLanguage.russian: 'Копировать',
+      AppLanguage.kyrgyz: 'Көчүрүү',
     },
     'league_copied_snack': {
       AppLanguage.russian: 'Инвайт-код скопирован в буфер',

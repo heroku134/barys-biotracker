@@ -54,20 +54,20 @@ class PrecisionSleepCard extends StatelessWidget {
             children: [
               Text(
                 'SLEEP SUMMARY',
-                style: AppTypography.monoLabel,
+                style: AppTypography.monoLabel(),
               ),
               Row(
                 children: [
                   Text(
                     'PERFORMANCE  ',
-                    style: AppTypography.monoLabel.copyWith(
+                    style: AppTypography.monoLabel().copyWith(
                       fontSize: 9.5,
                       color: AppColors.textMuted,
                     ),
                   ),
                   Text(
                     '$sleepPerformanceScore%',
-                    style: AppTypography.monoBadge.copyWith(
+                    style: AppTypography.monoBadge().copyWith(
                       color: AppColors.sage,
                     ),
                   ),
@@ -85,7 +85,7 @@ class PrecisionSleepCard extends StatelessWidget {
             children: [
               Text(
                 _formatHoursMins(totalMinutes),
-                style: AppTypography.heroNumberMedium.copyWith(
+                style: AppTypography.heroNumberMedium().copyWith(
                   color: AppColors.textNearWhite,
                   fontSize: 32,
                 ),
@@ -93,15 +93,15 @@ class PrecisionSleepCard extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 'TOTAL ASLEEP',
-                style: AppTypography.monoUnit.copyWith(
+                style: AppTypography.monoUnit().copyWith(
                   fontSize: 10,
                   color: AppColors.textMuted,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Text(
                 'EFFICIENCY 92%',
-                style: AppTypography.monoBadge.copyWith(
+                style: AppTypography.monoBadge().copyWith(
                   fontSize: 9.5,
                   color: AppColors.textSecondary,
                 ),
@@ -187,7 +187,7 @@ class PrecisionSleepCard extends StatelessWidget {
             SizedBox(width: 4),
             Text(
               name,
-              style: AppTypography.monoLabel.copyWith(
+              style: AppTypography.monoLabel().copyWith(
                 fontSize: 8.5,
                 letterSpacing: 1.0,
                 color: AppColors.textSecondary,
@@ -198,7 +198,7 @@ class PrecisionSleepCard extends StatelessWidget {
         SizedBox(height: 3),
         Text(
           _formatHoursMins(mins),
-          style: AppTypography.metricValue.copyWith(
+          style: AppTypography.metricValue().copyWith(
             fontSize: 11,
             color: AppColors.textNearWhite,
           ),

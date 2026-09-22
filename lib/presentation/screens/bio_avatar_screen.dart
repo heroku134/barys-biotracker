@@ -1,24 +1,32 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../domain/intelligence/day_copy.dart';
+import '../widgets/mascot_face.dart';
+import '../../domain/intelligence/strain_engine.dart';
+import '../../domain/intelligence/sleep_engine.dart';
+import '../../domain/intelligence/readiness_engine.dart';
+import '../../data/storage/climate_mode_store.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
-import '../widgets/bio_avatar_widget.dart';
 import '../widgets/circa_edge_fade.dart';
 import '../widgets/glass_card.dart';
 
 class BioAvatarScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
+  final bool embedded;
 
   const BioAvatarScreen({
     super.key,
     required this.bleBridge,
+    this.embedded = false,
   });
 
   @override
@@ -31,11 +39,13 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
   final PersonalBaseline _baseline = const PersonalBaseline();
   AvatarVisualState? _selectedScenario;
   bool _isMorningWoken = false;
+  StreamSubscription<BleTelemetry>? _sub;
 
   @override
   void initState() {
     super.initState();
-    _selectedScenario = AvatarManager.demoOverride;
+    _selectedScenario = null;
+    AvatarManager.setDemoOverride(null);
     _telemetry = widget.bleBridge.currentTelemetry;
     _profile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
 
@@ -43,7 +53,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
 
     AvatarManager.xpNotifier.addListener(_onXpChanged);
 
-    widget.bleBridge.telemetryStream.listen((data) {
+    _sub = widget.bleBridge.telemetryStream.listen((data) {
       if (mounted) {
         setState(() {
           _telemetry = data;
@@ -63,6 +73,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
 
   @override
   void dispose() {
+    _sub?.cancel();
     AvatarManager.xpNotifier.removeListener(_onXpChanged);
     super.dispose();
   }
@@ -167,7 +178,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                   Icon(Icons.tune, color: AppColors.amber, size: 16),
                   SizedBox(width: 8),
                   Text(
-                    'РЕЖИМ ОТЛАДКИ МАСКОТА (DEV)',
+                    'Сценарии персонажа',
                     style: TextStyle(
                       color: AppColors.amber,
                       fontSize: 10,
@@ -178,8 +189,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                 ],
               ),
               SizedBox(height: 6),
-              const Text(
-                'В основном интерфейсе Барыс живёт автономно на основе данных пульса и ВСР. Для демонстрации переключите сценарий вручную:',
+              Text(
+                'Обычный режим берёт данные с часов. Ниже — ручной выбор состояния для проверки.',
                 style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
               ),
               SizedBox(height: 16),
@@ -190,7 +201,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                   physics: const BouncingScrollPhysics(),
                   child: Row(
                     children: [
-                      _buildScenarioChip(null, 'Автономный (ИИ)'),
+                      _buildScenarioChip(null, 'По часам'),
                       SizedBox(width: 8),
                       _buildScenarioChip(AvatarVisualState.charged, 'Бодрый (≥75%)'),
                       SizedBox(width: 8),
@@ -202,7 +213,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                       SizedBox(width: 8),
                       _buildScenarioChip(AvatarVisualState.postWorkout, 'После спорта'),
                       SizedBox(width: 8),
-                      _buildScenarioChip(AvatarVisualState.meditation, 'Баланс / Дзен'),
+                      _buildScenarioChip(AvatarVisualState.meditation, 'Стресс'),
                     ],
                   ),
                 ),
@@ -249,7 +260,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                     Icon(Icons.shield_outlined, color: AppColors.amber, size: 18),
                     SizedBox(width: 8),
                     Text(
-                      'ПУТЬ ЭВОЛЮЦИИ БАРЫСА',
+                      'Ранги',
                       style: TextStyle(
                         color: AppColors.amber,
                         fontSize: 11,
@@ -260,8 +271,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                   ],
                 ),
                 SizedBox(height: 6),
-                const Text(
-                  'Каждая тренировка, каждый закрытый Strain и каждая ночь сна обогащают костюм и статус степного ирбиса:',
+                Text(
+                  'Ранг растёт от тренировок, сна и закрытых задач.',
                   style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
                 ),
                 SizedBox(height: 16),
@@ -355,12 +366,12 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
           SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.auto_awesome, color: AppColors.amber, size: 12),
+              Icon(Icons.auto_awesome, color: AppColors.amber, size: 12),
               SizedBox(width: 6),
               Expanded(
                 child: Text(
                   tier.unlockBenefit,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.amber,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -381,304 +392,181 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     final now = DateTime.now();
     final isMorningTime = now.hour >= 5 && now.hour < 12;
     final progress = AvatarManager.getEvolutionProgress(_profile.level, _profile.currentXp);
+    final palette = KalkanColors.of(context);
+    final canPop = Navigator.of(context).canPop() && !widget.embedded;
 
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
+        final ru = language != AppLanguage.kyrgyz;
         return Scaffold(
-          backgroundColor: AppColors.stage,
+          backgroundColor: palette.bg,
           appBar: AppBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: palette.bg,
             elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios, color: AppColors.muted, size: 18),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+            scrolledUnderElevation: 0,
+            leading: canPop
+                ? IconButton(
+                    icon: Icon(Icons.arrow_back_ios, color: palette.secondary, size: 18),
+                    onPressed: () => Navigator.of(context).pop(),
+                  )
+                : null,
+            automaticallyImplyLeading: false,
             title: Text(
               AppStrings.tr('mascot_title', language),
               style: TextStyle(
-                color: AppColors.fg,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.4,
+                color: palette.fg,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+                fontFamily: 'Manrope',
               ),
             ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.tune, color: AppColors.muted, size: 20),
-            tooltip: 'Режим отладки маскота',
-            onPressed: _showDevScenariosSheet,
+            centerTitle: false,
+            actions: const [],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    SizedBox(height: 14),
-
-                    // 1. Интерактивный Аватар Барыса (Тап = вздох, покач головой, реплика)
-                    Center(
-                      child: BioAvatarWidget(
-                        state: _profile.state,
-                        bpm: _telemetry.heartRate,
-                        size: 230,
-                        evolutionTier: _profile.evolutionTier,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+              child: Column(
+                children: [
+                  Center(
+                    child: MascotFace(
+                      state: AvatarManager.calculateState(_telemetry, baseline: _baseline),
+                      size: 196,
+                      climate: ClimateMode.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    DayCopy.morning(
+                      sleepScore: SleepEngine.calculate(telemetry: _telemetry, baseline: _baseline).sleepPerformanceScore,
+                      tMin: StrainEngine.evaluate(
+                        currentStrain: _telemetry.currentDayStrain > 0 ? _telemetry.currentDayStrain : 0,
+                        recoveryZone: ReadinessEngine.calculate(_telemetry, baseline: _baseline).zone,
+                      ).targetStrainMin,
+                      tMax: StrainEngine.evaluate(
+                        currentStrain: _telemetry.currentDayStrain > 0 ? _telemetry.currentDayStrain : 0,
+                        recoveryZone: ReadinessEngine.calculate(_telemetry, baseline: _baseline).zone,
+                      ).targetStrainMax,
+                    ),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: palette.fg, fontSize: 14, height: 1.4),
+                  ),
+                  const SizedBox(height: 16),
+                  if (isMorningTime && !_isMorningWoken)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: palette.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.amber.withValues(alpha: 0.45)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            ru ? 'Доброе утро' : 'Кутман таң',
+                            style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            ru
+                                ? 'Отметьте пробуждение — персонаж синхронизируется с сегодняшним днём.'
+                                : 'Ойгонууну белгилеңиз — каарман бүгүнкү күнгө шайкештелет.',
+                            style: TextStyle(color: palette.secondary, fontSize: 13, height: 1.35),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _wakeUpTogether,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.amber,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: Text(ru ? 'Отметить утро  +50 XP' : 'Таңды белгилөө  +50 XP'),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-
-                    SizedBox(height: 6),
-
-                    // 2. Утреннее совместное пробуждение (если утро)
-                    if (isMorningTime && !_isMorningWoken)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.amber.withValues(alpha: 0.18),
-                              AppColors.surface,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.amber.withValues(alpha: 0.5),
-                            width: 1.2,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  GlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                Icon(Icons.wb_sunny_outlined, color: AppColors.amber, size: 16),
-                                SizedBox(width: 8),
-                                Text(
-                                  'УТРЕННЕЕ ПРОБУЖДЕНИЕ: БАРЫС ПРОСЫПАЕТСЯ',
-                                  style: TextStyle(
-                                    color: AppColors.amber,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.2,
-                                  ),
+                            Expanded(
+                              child: Text(
+                                _profile.evolutionTier.title,
+                                style: TextStyle(
+                                  color: palette.fg,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
                                 ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            const Text(
-                              '«Доброе утро, батыр. Я спал с тобой 7ч 42м. Твой ночной пульс опускался до 52 bpm — мы восстановились. Готов встретить новый день?»',
-                              style: TextStyle(
-                                color: AppColors.fg,
-                                fontSize: 12,
-                                height: 1.35,
-                                fontStyle: FontStyle.italic,
                               ),
                             ),
-                            SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                onPressed: _wakeUpTogether,
-                                icon: Icon(Icons.check, size: 16, color: AppColors.stage),
-                                label: const Text(
-                                  'ПРОСНУТЬСЯ ВМЕСТЕ (+50 XP)',
-                                  style: TextStyle(
-                                    color: AppColors.stage,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.0,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.amber,
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
+                            Text(
+                              '${_profile.currentXp} / ${_profile.maxXp} XP',
+                              style: TextStyle(color: palette.secondary, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          ru
+                              ? 'Уровень ${_profile.level}'
+                              : '${_profile.level}-деңгээл',
+                          style: TextStyle(color: palette.secondary, fontSize: 12),
+                        ),
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: _profile.progressRatio,
+                            backgroundColor: palette.raised,
+                            valueColor: AlwaysStoppedAnimation<Color>(_profile.evolutionTier.auraColor),
+                            minHeight: 5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              progress.nextTier != null
+                                  ? (ru
+                                      ? 'До ${progress.nextTier!.shortName}: ${progress.xpToNextTier} XP'
+                                      : '${progress.nextTier!.shortName} чейин: ${progress.xpToNextTier} XP')
+                                  : (ru ? 'Максимальный ранг' : 'Жогорку даража'),
+                              style: TextStyle(color: palette.secondary, fontSize: 11),
+                            ),
+                            InkWell(
+                              onTap: _showEvolutionTiersSheet,
+                              child: Text(
+                                ru ? 'Все ранги' : 'Бардык даражалар',
+                                style: TextStyle(color: AppColors.sage, fontSize: 12, fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
                         ),
-                      ),
-
-                    // 4. Карточка прогрессии эволюции (Кадет → Сарбаз → Батыр → Аксакал)
-                    GlassCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        _profile.evolutionTier.title.toUpperCase(),
-                                        style: TextStyle(
-                                          color: _profile.evolutionTier.auraColor,
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 14,
-                                          letterSpacing: 1.2,
-                                        ),
-                                      ),
-                                      SizedBox(width: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: _profile.evolutionTier.auraColor.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          'СТУПЕНЬ ${_profile.evolutionTier.index + 1}/4',
-                                          style: TextStyle(
-                                            color: _profile.evolutionTier.auraColor,
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 2),
-                                  Text(
-                                    'Уровень ${_profile.level} · ${_profile.evolutionTier.ornamentName}',
-                                    style: TextStyle(
-                                      color: AppColors.muted,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                '${_profile.currentXp} / ${_profile.maxXp} XP',
-                                style: TextStyle(
-                                  color: AppColors.fg,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            _profile.evolutionTier.description,
-                            style: TextStyle(
-                              color: AppColors.muted,
-                              fontSize: 11,
-                              height: 1.3,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(3),
-                            child: LinearProgressIndicator(
-                              value: _profile.progressRatio,
-                              backgroundColor: AppColors.raised,
-                              valueColor: AlwaysStoppedAnimation<Color>(_profile.evolutionTier.auraColor),
-                              minHeight: 5,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                progress.nextTier != null
-                                    ? 'До звания ${progress.nextTier!.shortName}: ${progress.xpToNextTier} XP'
-                                    : 'Максимальный легендарный ранг',
-                                style: TextStyle(
-                                  color: _profile.evolutionTier.auraColor,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              InkWell(
-                                onTap: _showEvolutionTiersSheet,
-                                child: const Text(
-                                  'Все ступени эволюции >',
-                                  style: TextStyle(
-                                    color: AppColors.amber,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
-
-                    SizedBox(height: 10),
-
-                    // 5. Статус ЦНС (бодрый или отдых)
-                    GlassCard(
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _profile.state.badgeColor,
-                            ),
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _profile.state.title,
-                                  style: TextStyle(
-                                    color: _profile.state.badgeColor,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  _profile.state.description,
-                                  style: TextStyle(
-                                    color: AppColors.muted,
-                                    fontSize: 12,
-                                    height: 1.35,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    SizedBox(height: 14),
-
-                    // 6. Полноценный чек-лист задач
-                    _buildDailyQuestsChecklist(),
-
-                    SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 14),
+                  _buildDailyQuestsChecklist(),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
       },
     );
   }

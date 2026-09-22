@@ -63,6 +63,50 @@ class MenstrualCycleEngine {
     }
   }
 
+  static int ovulationDay({int cycleLength = 28}) => (cycleLength / 2).round();
+
+  static DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  static int cycleDayForDate(DateTime date, DateTime? lastPeriodStart, {int cycleLength = 28}) {
+    if (lastPeriodStart == null) return 1;
+    final start = dateOnly(lastPeriodStart);
+    final day = dateOnly(date);
+    final diff = day.difference(start).inDays;
+    if (diff < 0) return 1;
+    return (diff % cycleLength) + 1;
+  }
+
+  static DateTime dateForCycleDay(DateTime lastPeriodStart, int cycleDay) {
+    return dateOnly(lastPeriodStart).add(Duration(days: cycleDay - 1));
+  }
+
+  static DateTime nextPeriodStart(DateTime? lastPeriodStart, {int cycleLength = 28}) {
+    final start = dateOnly(lastPeriodStart ?? DateTime.now());
+    var next = start.add(Duration(days: cycleLength));
+    final today = dateOnly(DateTime.now());
+    while (!next.isAfter(today)) {
+      next = next.add(Duration(days: cycleLength));
+    }
+    return next;
+  }
+
+  static DateTime predictedOvulation(DateTime? lastPeriodStart, {int cycleLength = 28}) {
+    final start = dateOnly(lastPeriodStart ?? DateTime.now());
+    return start.add(Duration(days: ovulationDay(cycleLength: cycleLength) - 1));
+  }
+
+  static DateTime fertileStart(DateTime? lastPeriodStart, {int cycleLength = 28}) {
+    return predictedOvulation(lastPeriodStart, cycleLength: cycleLength).subtract(const Duration(days: 4));
+  }
+
+  static DateTime fertileEnd(DateTime? lastPeriodStart, {int cycleLength = 28}) {
+    return predictedOvulation(lastPeriodStart, cycleLength: cycleLength).add(const Duration(days: 1));
+  }
+
+  static int daysUntil(DateTime target) {
+    return dateOnly(target).difference(dateOnly(DateTime.now())).inDays;
+  }
+
   /// Ожидаемое физиологическое отклонение ночной температуры кожи (°C) для каждого дня цикла
   static double expectedThermalDelta(int day, {int cycleLength = 28}) {
     final ovulationDay = (cycleLength / 2).round();

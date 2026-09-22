@@ -116,7 +116,7 @@ class _CircaStrainMilestoneBadgeState extends State<CircaStrainMilestoneBadge>
                   if (mounted) setState(() => _dismissed = true);
                 });
               },
-              child: const Icon(
+              child: Icon(
                 Icons.close,
                 size: 14,
                 color: AppColors.muted,

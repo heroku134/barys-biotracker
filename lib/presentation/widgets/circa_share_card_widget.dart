@@ -39,7 +39,7 @@ class CircaShareCardWidget extends StatelessWidget {
     required this.avatarProfile,
     required this.strainResult,
     this.userName = 'Данияр',
-    this.cityName = 'ALMATY',
+    this.cityName = 'Алматы',
     this.animationProgress,
     this.customSerialNo,
   });
@@ -104,7 +104,7 @@ class CircaShareCardWidget extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Row(
                         children: [
-                          const Text(
+                          Text(
                             'KALKAN SPORT',
                             style: TextStyle(
                               color: AppColors.fg,
@@ -122,7 +122,7 @@ class CircaShareCardWidget extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(color: AppColors.amber.withValues(alpha: 0.6)),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'EDITION PRIVÉE',
                                 style: TextStyle(
                                   color: AppColors.amber,
@@ -175,7 +175,7 @@ class CircaShareCardWidget extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  isRareGold ? 'GOLD EMBOSS' : theme.code,
+                  isRareGold ? 'Редкий' : theme.code,
                   style: TextStyle(
                     color: isRareGold ? AppColors.amber : _getAccentColor(),
                     fontSize: 9,
@@ -209,7 +209,7 @@ class CircaShareCardWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ATHLETE: $userName'.toUpperCase(),
+                      userName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -294,18 +294,18 @@ class CircaShareCardWidget extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'DAILY BIO-STATUS',
                 style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 9,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 2.0,
+                  letterSpacing: 0.3,
                 ),
               ),
               if (isRareGold) ...[
                 SizedBox(width: 12),
-                const Text(
+                Text(
                   '✦ RARE GOLD RECORD ✦',
                   style: TextStyle(
                     color: AppColors.amber,
@@ -354,7 +354,7 @@ class CircaShareCardWidget extends StatelessWidget {
             color: zoneColor,
             fontSize: 14,
             fontWeight: FontWeight.w900,
-            letterSpacing: 2.4,
+            letterSpacing: 0.3,
           ),
         ),
 
@@ -375,7 +375,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const Spacer(),
+        Spacer(),
 
         // 4 колонки ночных маркеров (Precision Swiss Grid)
         Container(
@@ -427,13 +427,13 @@ class CircaShareCardWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'CARDIOVASCULAR STRAIN',
           style: TextStyle(
             color: AppColors.muted,
             fontSize: 9,
             fontWeight: FontWeight.w800,
-            letterSpacing: 2.0,
+            letterSpacing: 0.3,
           ),
         ),
         SizedBox(height: 6),
@@ -444,7 +444,7 @@ class CircaShareCardWidget extends StatelessWidget {
           children: [
             Text(
               animatedStrain.toStringAsFixed(1),
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.amber,
                 fontSize: 76,
                 fontWeight: FontWeight.w900,
@@ -453,7 +453,7 @@ class CircaShareCardWidget extends StatelessWidget {
               ),
             ),
             SizedBox(width: 8),
-            const Text(
+            Text(
               '/ 21.0',
               style: TextStyle(
                 color: AppColors.muted,
@@ -467,7 +467,7 @@ class CircaShareCardWidget extends StatelessWidget {
         SizedBox(height: 8),
         Text(
           'WHOOP TRIMP SCALE · ЦЕЛЬ ${strainResult.targetStrainMin.toStringAsFixed(1)}+',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.amber,
             fontSize: 12,
             fontWeight: FontWeight.w900,
@@ -488,7 +488,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const Spacer(),
+        Spacer(),
 
         // Сводка активности
         Container(
@@ -538,13 +538,13 @@ class CircaShareCardWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'GUARDIAN PROFILE',
           style: TextStyle(
             color: AppColors.muted,
             fontSize: 9,
             fontWeight: FontWeight.w800,
-            letterSpacing: 2.0,
+            letterSpacing: 0.3,
           ),
         ),
         SizedBox(height: 12),
@@ -566,7 +566,7 @@ class CircaShareCardWidget extends StatelessWidget {
             ),
             child: ClipOval(
               child: Image.asset(
-                avatarProfile.state.assetPath,
+                avatarProfile.state.assetFor(),
                 fit: BoxFit.cover,
               ),
             ),
@@ -576,12 +576,12 @@ class CircaShareCardWidget extends StatelessWidget {
         SizedBox(height: 14),
         Center(
           child: Text(
-            avatarProfile.state.title.toUpperCase(),
+            avatarProfile.state.title,
             style: TextStyle(
               color: badgeColor,
               fontSize: 13,
               fontWeight: FontWeight.w900,
-              letterSpacing: 2.0,
+              letterSpacing: 0.3,
             ),
           ),
         ),
@@ -597,7 +597,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
         ),
 
-        const Spacer(),
+        Spacer(),
 
         // 3 RPG атрибута
         Container(
@@ -630,7 +630,7 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.format_quote, color: AppColors.amber, size: 16),
+              Icon(Icons.format_quote, color: AppColors.amber, size: 16),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -681,7 +681,7 @@ class CircaShareCardWidget extends StatelessWidget {
               SizedBox(width: 2),
               Text(
                 unit,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.faint,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,

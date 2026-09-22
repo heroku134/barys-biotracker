@@ -79,7 +79,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'ФАКТОРНЫЙ РАЗБОР ВОССТАНОВЛЕНИЯ',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -104,7 +104,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                                 letterSpacing: -1.0,
                               ),
                             ),
-                            const Text(
+                            Text(
                               ' / 100',
                               style: TextStyle(
                                 color: AppColors.muted,
@@ -163,7 +163,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.tune, color: AppColors.amber, size: 20),
+                      Icon(Icons.tune, color: AppColors.amber, size: 20),
                       SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -171,7 +171,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                           children: [
                             Text(
                               'КАЛИБРОВКА БАЗЫ (ДЕНЬ ${readiness.calibrationDay}/14)',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.amber,
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
@@ -179,7 +179,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                               ),
                             ),
                             SizedBox(height: 2),
-                            const Text(
+                            Text(
                               'Оценка приблизительная. СААТ-1 формирует индивидуальную норму биомаркеров.',
                               style: TextStyle(color: AppColors.muted, fontSize: 10.5),
                             ),
@@ -195,7 +195,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               SizedBox(height: 18),
 
               // Список 5 ночных биомаркеров
-              const Text(
+              Text(
                 'НОЧНЫЕ БИОМАРКЕРЫ (60-ДНЕВНАЯ БАЗА)',
                 style: TextStyle(
                   color: AppColors.muted,
@@ -271,7 +271,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.line),
                 ),
-                child: const Text(
+                child: Text(
                   'Расчёт: Ритм сердца (35%) + Пульс во сне (25%) + Сон (20%) + Дыхание (10%) + Температура (10%). Дневная нагрузка не занижает утреннее восстановление.',
                   style: TextStyle(
                     color: AppColors.muted,
@@ -339,7 +339,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
+                  child: Text(
                     'ЗАКРЫТЬ',
                     style: TextStyle(
                       fontSize: 13,
@@ -429,7 +429,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
               Text(
                 '$score/100',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.faint,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -527,7 +527,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   letterSpacing: 1.6,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
@@ -616,7 +616,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   color: AppColors.sage.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
+                child: Text(
                   'ИНСТРУМЕНТ ВЕЧЕРА',
                   style: TextStyle(
                     color: AppColors.sage,
@@ -629,7 +629,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
             ],
           ),
           SizedBox(height: 10),
-          const Text(
+          Text(
             'Какое вечернее решение вернет вас на пик адаптации завтра:',
             style: TextStyle(
               color: AppColors.muted,
@@ -664,7 +664,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Отбой до 22:30 (Рекомендация KALKAN)',
                         style: TextStyle(
                           color: AppColors.fg,
@@ -675,7 +675,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                       SizedBox(height: 2),
                       Text(
                         'Вероятность зеленой зоны завтра: $greenProbabilityEarly%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.sage,
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
@@ -739,8 +739,8 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              icon: const Icon(Icons.notifications_active_outlined, size: 15),
-              label: const Text(
+              icon: Icon(Icons.notifications_active_outlined, size: 15),
+              label: Text(
                 'ЗАФИКСИРОВАТЬ РИТУАЛ ОТБОЯ НА 22:15',
                 style: TextStyle(
                   fontSize: 10,

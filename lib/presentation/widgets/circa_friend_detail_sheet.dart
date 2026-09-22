@@ -116,7 +116,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                           ),
                           child: Text(
                             '${member.rankTitle} · LVL ${member.level}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.amber,
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
@@ -301,7 +301,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                       ),
                       content: Row(
                         children: [
-                          const Icon(Icons.auto_awesome, color: AppColors.amber, size: 18),
+                          Icon(Icons.auto_awesome, color: AppColors.amber, size: 18),
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -318,11 +318,11 @@ class CircaFriendDetailSheet extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.auto_awesome, size: 16),
+                    Icon(Icons.auto_awesome, size: 16),
                     SizedBox(width: 8),
                     Text(
                       AppStrings.tr('league_send_impulse', language),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.0,
@@ -348,14 +348,14 @@ class CircaFriendDetailSheet extends StatelessWidget {
                           backgroundColor: AppColors.surface,
                           content: Text(
                             '${member.name} удален(а) из закрытого круга.',
-                            style: const TextStyle(color: AppColors.rose, fontSize: 12),
+                            style: TextStyle(color: AppColors.rose, fontSize: 12),
                           ),
                         ),
                       );
                     }
                   },
-                  icon: const Icon(Icons.person_remove_outlined, color: AppColors.rose, size: 16),
-                  label: const Text(
+                  icon: Icon(Icons.person_remove_outlined, color: AppColors.rose, size: 16),
+                  label: Text(
                     'УДАЛИТЬ ИЗ КРУГА',
                     style: TextStyle(color: AppColors.rose, fontSize: 11, fontWeight: FontWeight.w700),
                   ),

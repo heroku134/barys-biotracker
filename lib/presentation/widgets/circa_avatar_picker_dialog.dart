@@ -82,7 +82,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 side: const BorderSide(color: AppColors.sage),
               ),
-              content: const Text(
+              content: Text(
                 'Новое фото профиля успешно сохранено!',
                 style: TextStyle(color: AppColors.textNearWhite, fontSize: 12),
               ),
@@ -96,7 +96,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.surface,
-            content: Text('Ошибка загрузки фото: $e', style: const TextStyle(color: AppColors.rose)),
+            content: Text('Ошибка загрузки фото: $e', style: TextStyle(color: AppColors.rose)),
           ),
         );
       }
@@ -137,14 +137,14 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                 children: [
                   Text(
                     'ФОТО ПРОФИЛЯ АТЛЕТА',
-                    style: AppTypography.monoLabel.copyWith(
+                    style: AppTypography.monoLabel().copyWith(
                       color: AppColors.amber,
                       fontSize: 10,
                       letterSpacing: 1.8,
                     ),
                   ),
                   SizedBox(height: 2),
-                  const Text(
+                  Text(
                     'Сделайте снимок или выберите готовый аватар',
                     style: TextStyle(
                       color: AppColors.textNearWhite,
@@ -168,10 +168,10 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _pickImage(context, ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt_outlined, color: AppColors.amber, size: 18),
+                  icon: Icon(Icons.camera_alt_outlined, color: AppColors.amber, size: 18),
                   label: Text(
                     'КАМЕРА',
-                    style: AppTypography.monoBadge.copyWith(color: AppColors.textNearWhite),
+                    style: AppTypography.monoBadge().copyWith(color: AppColors.textNearWhite),
                   ),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
@@ -185,10 +185,10 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _pickImage(context, ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library_outlined, color: AppColors.sage, size: 18),
+                  icon: Icon(Icons.photo_library_outlined, color: AppColors.sage, size: 18),
                   label: Text(
                     'ГАЛЕРЕЯ',
-                    style: AppTypography.monoBadge.copyWith(color: AppColors.textNearWhite),
+                    style: AppTypography.monoBadge().copyWith(color: AppColors.textNearWhite),
                   ),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
@@ -205,7 +205,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
 
           Text(
             'ИЛИ ВЫБЕРИТЕ КОЛЛЕКЦИОННЫЙ ОБРАЗ:',
-            style: AppTypography.monoLabel.copyWith(fontSize: 9.5, color: AppColors.textMuted),
+            style: AppTypography.monoLabel().copyWith(fontSize: 9.5, color: AppColors.textMuted),
           ),
           SizedBox(height: 10),
 
@@ -304,7 +304,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'ОТМЕНА',
-                style: AppTypography.monoBadge.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.monoBadge().copyWith(color: AppColors.textSecondary),
               ),
             ),
           ),

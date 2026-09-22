@@ -368,7 +368,7 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                           child: Transform.translate(
                             offset: const Offset(0, 10),
                             child: Image.asset(
-                              widget.state.assetPath,
+                              widget.state.assetFor(),
                               fit: BoxFit.cover,
                               alignment: Alignment.topCenter,
                               errorBuilder: (context, error, stackTrace) {

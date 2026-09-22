@@ -18,7 +18,7 @@ class PrecisionCoachCard extends StatelessWidget {
     super.key,
     this.title = 'DAILY INSIGHT',
     required this.insight,
-    this.actionLabel = 'PRIMED FOR STRAIN',
+    this.actionLabel = 'Можно тренироваться',
     this.accentColor = AppColors.sage,
     this.onTap,
   });
@@ -35,7 +35,7 @@ class PrecisionCoachCard extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: AppTypography.monoLabel,
+                style: AppTypography.monoLabel(),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -58,7 +58,7 @@ class PrecisionCoachCard extends StatelessWidget {
                     SizedBox(width: 5),
                     Text(
                       actionLabel,
-                      style: AppTypography.monoBadge.copyWith(
+                      style: AppTypography.monoBadge().copyWith(
                         color: accentColor,
                         fontSize: 9,
                       ),
@@ -71,7 +71,7 @@ class PrecisionCoachCard extends StatelessWidget {
           SizedBox(height: 12),
           Text(
             insight,
-            style: AppTypography.body.copyWith(
+            style: AppTypography.body().copyWith(
               color: AppColors.textNearWhite,
               fontSize: 13,
               height: 1.45,

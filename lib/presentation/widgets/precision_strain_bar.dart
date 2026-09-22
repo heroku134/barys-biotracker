@@ -51,20 +51,20 @@ class PrecisionStrainBar extends StatelessWidget {
             children: [
               Text(
                 'DAY STRAIN',
-                style: AppTypography.monoLabel,
+                style: AppTypography.monoLabel(),
               ),
               Row(
                 children: [
                   Text(
                     'TARGET  ',
-                    style: AppTypography.monoLabel.copyWith(
+                    style: AppTypography.monoLabel().copyWith(
                       fontSize: 9.5,
                       color: AppColors.textMuted,
                     ),
                   ),
                   Text(
                     '${targetMin.toStringAsFixed(1)} — ${targetMax.toStringAsFixed(1)}',
-                    style: AppTypography.monoBadge.copyWith(
+                    style: AppTypography.monoBadge().copyWith(
                       color: AppColors.amber,
                     ),
                   ),
@@ -82,7 +82,7 @@ class PrecisionStrainBar extends StatelessWidget {
             children: [
               Text(
                 currentStrain.toStringAsFixed(1),
-                style: AppTypography.heroNumberMedium.copyWith(
+                style: AppTypography.heroNumberMedium().copyWith(
                   color: AppColors.amber,
                   fontSize: 36,
                 ),
@@ -90,12 +90,12 @@ class PrecisionStrainBar extends StatelessWidget {
               SizedBox(width: 6),
               Text(
                 '/ ${maxStrain.toStringAsFixed(1)}',
-                style: AppTypography.monoUnit.copyWith(
+                style: AppTypography.monoUnit().copyWith(
                   fontSize: 12,
                   color: AppColors.textMuted,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -105,7 +105,7 @@ class PrecisionStrainBar extends StatelessWidget {
                 ),
                 child: Text(
                   _statusLabel,
-                  style: AppTypography.monoBadge.copyWith(
+                  style: AppTypography.monoBadge().copyWith(
                     color: AppColors.amber,
                     fontSize: 9,
                   ),
@@ -196,14 +196,14 @@ class PrecisionStrainBar extends StatelessWidget {
       children: [
         Text(
           '$label  ',
-          style: AppTypography.monoLabel.copyWith(
+          style: AppTypography.monoLabel().copyWith(
             fontSize: 9,
             color: AppColors.textMuted,
           ),
         ),
         Text(
           value,
-          style: AppTypography.metricValue.copyWith(
+          style: AppTypography.metricValue().copyWith(
             fontSize: 12,
             color: AppColors.textNearWhite,
           ),
@@ -211,7 +211,7 @@ class PrecisionStrainBar extends StatelessWidget {
         SizedBox(width: 2),
         Text(
           unit,
-          style: AppTypography.monoUnit.copyWith(
+          style: AppTypography.monoUnit().copyWith(
             fontSize: 9,
             color: AppColors.textSecondary,
           ),

@@ -132,7 +132,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
                       child: Center(
                         child: Text(
                           '${widget.recoveryScore}%',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.sage,
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
@@ -159,7 +159,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
                                 ),
                               ),
                               SizedBox(width: 6),
-                              const Text(
+                              Text(
                                 'УТРЕННИЙ ПИК ВОССТАНОВЛЕНИЯ · 07:15',
                                 style: TextStyle(
                                   color: AppColors.sage,
@@ -171,7 +171,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
                             ],
                           ),
                           SizedBox(height: 3),
-                          const Text(
+                          Text(
                             'ЦНС готова к максимальной адаптации и нагрузкам дня',
                             style: TextStyle(
                               color: AppColors.fg,

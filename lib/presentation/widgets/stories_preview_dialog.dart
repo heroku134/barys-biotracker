@@ -79,7 +79,7 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
       if (path != null) {
         CircaHaptics.success();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             backgroundColor: AppColors.surface,
             content: Text('Карточка 1080x1920 сохранена!', style: TextStyle(color: AppColors.sage)),
           ),
@@ -113,7 +113,7 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
                   SizedBox(width: 8),
                   Text(
                     'ЭКСПОРТ В STORIES (9:16)',
-                    style: AppTypography.monoLabel.copyWith(
+                    style: AppTypography.monoLabel().copyWith(
                       color: AppColors.textNearWhite,
                       fontSize: 11,
                       letterSpacing: 1.5,
@@ -162,7 +162,7 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
                       : Icon(Icons.share_outlined, size: 18, color: AppColors.stage),
                   label: Text(
                     _isExporting ? 'РЕНДЕРИНГ...' : 'ПОДЕЛИТЬСЯ (9:16)',
-                    style: AppTypography.monoLabel.copyWith(
+                    style: AppTypography.monoLabel().copyWith(
                       color: AppColors.stage,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
@@ -191,7 +191,7 @@ class _StoriesPreviewDialogState extends State<StoriesPreviewDialog> {
                   ),
                   child: Text(
                     'СОХРАНИТЬ',
-                    style: AppTypography.monoBadge.copyWith(
+                    style: AppTypography.monoBadge().copyWith(
                       color: AppColors.textNearWhite,
                       fontSize: 9.5,
                     ),

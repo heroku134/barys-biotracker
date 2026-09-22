@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../domain/avatar/avatar_manager.dart';
 import '../../core/circa_haptics.dart';
 import '../../domain/intelligence/stress_engine.dart';
 import 'circa_day_story_dialog.dart';
@@ -154,7 +155,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                 ],
               ),
               SizedBox(height: 6),
-              const Text(
+              Text(
                 'Укажи причину — через 30 дней ИИ Барыса начнет предсказывать пики стресса:',
                 style: TextStyle(color: AppColors.fg, fontSize: 13, height: 1.3),
               ),
@@ -227,7 +228,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
-                    child: const Text(
+                    child: Text(
                       'ОК',
                       style: TextStyle(color: AppColors.stage, fontWeight: FontWeight.w700),
                     ),
@@ -257,7 +258,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
         ),
         content: Row(
           children: [
-            const Icon(Icons.air, color: AppColors.sage, size: 22),
+            Icon(Icons.air, color: AppColors.sage, size: 22),
             SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -316,7 +317,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                     ),
                   ),
                   SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'МОНИТОР СТРЕССА (ВСР + ЧСС)',
                     style: TextStyle(
                       color: AppColors.muted,
@@ -359,7 +360,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'ВОССТАНОВЛЕНИЕ',
                         style: TextStyle(
                           color: AppColors.muted,
@@ -370,7 +371,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       SizedBox(height: 2),
                       Text(
                         '${summary.minutesInRestoration ~/ 60}ч ${summary.minutesInRestoration % 60}м',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.sage,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -391,7 +392,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'ВЫСОКИЙ СТРЕСС',
                         style: TextStyle(
                           color: AppColors.muted,
@@ -402,7 +403,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       SizedBox(height: 2),
                       Text(
                         '${summary.minutesInHighStress} мин',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.rose,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -458,8 +459,8 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.amber, width: 1.5),
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/hero_barys_normal.jpg'),
+                      image: DecorationImage(
+                        image: AssetImage(AvatarVisualState.genderedPath('assets/images/hero_barys_normal.jpg')),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -472,12 +473,12 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                         Row(
                           children: [
                             Text(
-                              'ХРОНИКА: ДЕНЬ В 5 СОБЫТИЯХ',
+                              'День в событиях',
                               style: TextStyle(
                                 color: AppColors.fg,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.2,
                               ),
                             ),
                             SizedBox(width: 6),
@@ -495,7 +496,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right,
                     color: AppColors.amber,
                     size: 20,
@@ -510,7 +511,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'ХРОНОЛОГИЯ СТРЕССА СЕГОДНЯ',
                 style: TextStyle(
                   color: AppColors.muted,
@@ -677,7 +678,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       color: AppColors.rose.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.bolt,
                       color: AppColors.rose,
                       size: 16,
@@ -690,7 +691,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                       children: [
                         Row(
                           children: [
-                            const Text(
+                            Text(
                               'ПОВЫШЕННЫЙ КОРТИЗОЛ · 13:30',
                               style: TextStyle(
                                 color: AppColors.rose,
@@ -699,14 +700,14 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                                 letterSpacing: 1.1,
                               ),
                             ),
-                            const Spacer(),
+                            Spacer(),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: AppColors.rose.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
+                              child: Text(
                                 '84% СТРЕСС',
                                 style: TextStyle(
                                   color: AppColors.rose,
@@ -718,7 +719,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                           ],
                         ),
                         SizedBox(height: 3),
-                        const Text(
+                        Text(
                           'Пик нагрузки (Дедлайн) · Нажмите для протокола и советов',
                           style: TextStyle(
                             color: AppColors.muted,
@@ -731,7 +732,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                     ),
                   ),
                   SizedBox(width: 8),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios,
                     color: AppColors.muted,
                     size: 12,
@@ -778,14 +779,14 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                     color: AppColors.rose.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.bolt, color: AppColors.rose, size: 20),
+                  child: Icon(Icons.bolt, color: AppColors.rose, size: 20),
                 ),
                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'ПЕРСОНАЛЬНЫЙ ПАТТЕРН СТРЕССА',
                         style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2),
                       ),
@@ -807,13 +808,13 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.line),
               ),
-              child: const Text(
+              child: Text(
                 'На основе разметки за 30 дней в 13:30 регулярно фиксируется острый пик кортизола. Прогноз на завтра: вероятность стресса >75% равна 84%.',
                 style: TextStyle(color: AppColors.fg, fontSize: 12, height: 1.4),
               ),
             ),
             SizedBox(height: 12),
-            const Text(
+            Text(
               'Рекомендация СААТ-1: за 10 минут до пиковой встречи переключитесь на дыхательный цикл 4-6 для активации парасимпатической нервной системы (блуждающего нерва).',
               style: TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35, fontStyle: FontStyle.italic),
             ),
@@ -826,7 +827,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   _triggerBreathingPause();
                 },
                 icon: Icon(Icons.air, size: 16, color: AppColors.stage),
-                label: const Text(
+                label: Text(
                   'НАЧАТЬ ДЫХАТЕЛЬНУЮ ПАУЗУ 4-6',
                   style: TextStyle(color: AppColors.stage, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2),
                 ),

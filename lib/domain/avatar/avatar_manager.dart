@@ -8,53 +8,55 @@ import '../intelligence/strain_engine.dart';
 import '../models/personal_baseline.dart';
 import '../models/readiness.dart';
 import '../models/telemetry.dart';
+import '../models/user_profile.dart';
+import '../../data/storage/user_profile_repository.dart';
 
 enum AvatarVisualState {
   charged(
-    'Батыр заряжен',
-    'ЗАРЯЖЕН',
+    'Готов к нагрузке',
+    'Готов',
     AppColors.sage,
-    'Высокий Recovery (≥75%), богатырская форма. Кольцо Sage (+50% к опыту).',
+    'Восстановление высокое. Можно тяжёлую сессию.',
     1.5,
     'assets/images/mascot_charged.jpg',
   ),
   normal(
-    'Батыр в тонусе',
-    'В ТОНУСЕ',
+    'Рабочий день',
+    'Норма',
     AppColors.amber,
-    'Оптимальная готовность (50–74%), рабочий ритм. Сбалансированная нагрузка.',
+    'Среднее восстановление. Держите обычный объём.',
     1.0,
     'assets/images/mascot_normal.jpg',
   ),
   tired(
-    'Батыр уставший (отдых)',
-    'ОТДЫХ',
+    'Нужен отдых',
+    'Отдых',
     AppColors.rose,
-    'Низкий Recovery (<34%) или вчерашний Strain >16. Режим глубокой регенерации сил.',
+    'Восстановление слабое. Сегодня лёгкая нагрузка или отдых.',
     0.8,
     'assets/images/mascot_tired.jpg',
   ),
   sleep(
-    'Батыр отдыхает (ночь)',
-    'ОТБОЙ',
+    'Ночной режим',
+    'Сон',
     AppColors.sage,
-    'Позднее время (после 22:00) или накопленный долг сна. Отдых перед новым днем.',
+    'Пора снижать нагрузку и готовиться ко сну.',
     1.2,
     'assets/images/mascot_sleep.jpg',
   ),
   postWorkout(
-    'Батыр после тренировки',
-    'ПОСЛЕ СПОРТА',
+    'После тренировки',
+    'После спорта',
     AppColors.amber,
-    'Спортивная сессия или дневной бюджет Strain закрыты. Восстановите водный баланс.',
+    'Сессия закрыта. Вода, еда, без новой тяжёлой работы.',
     1.3,
     'assets/images/mascot_workout.jpg',
   ),
   meditation(
-    'Батыр в дзене (баланс)',
-    'БАЛАНС',
+    'Стресс повышен',
+    'Стресс',
     AppColors.sage,
-    'Дневной стресс >65. Дыхательные практики и релаксация для восстановления вариабельности.',
+    'Стресс выше обычного. Дыхание и короткая пауза помогут.',
     1.1,
     'assets/images/mascot_meditation.jpg',
   );
@@ -75,22 +77,38 @@ enum AvatarVisualState {
     this.assetPath,
   );
 
+  String assetFor([Gender? gender]) {
+    final g = gender ?? UserProfileRepository.profileNotifier.value.gender;
+    if (g == Gender.female) {
+      return assetPath.replaceFirst('assets/images/mascot_', 'assets/images/mascot_f_');
+    }
+    return assetPath;
+  }
+
+  static String genderedPath(String path, [Gender? gender]) {
+    final g = gender ?? UserProfileRepository.profileNotifier.value.gender;
+    if (g != Gender.female) return path;
+    return path
+        .replaceFirst('assets/images/hero_barys_', 'assets/images/mascot_f_')
+        .replaceFirst('assets/images/mascot_', 'assets/images/mascot_f_');
+  }
+
   String localizedTitle([AppLanguage? lang]) {
     final l = lang ?? AppLocaleNotifier.current;
     if (l == AppLanguage.kyrgyz) {
       switch (this) {
         case AvatarVisualState.charged:
-          return 'Батыр сергек жана кубаттуу';
+          return 'Жүктөмгө даяр';
         case AvatarVisualState.normal:
-          return 'Батыр тонуста';
+          return 'Кадимки күн';
         case AvatarVisualState.tired:
-          return 'Батыр чарчаган (эс алуу)';
+          return 'Эс алуу керек';
         case AvatarVisualState.sleep:
-          return 'Батыр эс алууда (түн)';
+          return 'Түнкү режим';
         case AvatarVisualState.postWorkout:
-          return 'Батыр машыгуудан кийин';
+          return 'Машыгуудан кийин';
         case AvatarVisualState.meditation:
-          return 'Батыр дзенде (баланс)';
+          return 'Стресс жогору';
       }
     }
     return title;
@@ -111,7 +129,7 @@ enum AvatarVisualState {
         case AvatarVisualState.postWorkout:
           return 'МАШЫГУУ';
         case AvatarVisualState.meditation:
-          return 'БАЛАНС';
+          return 'Стресс';
       }
     }
     return badgeText;
@@ -494,48 +512,35 @@ class AvatarManager {
     PersonalBaseline? baseline,
     DateTime? currentTime,
   }) {
-    if (_demoStateOverride != null) {
-      return _demoStateOverride!;
-    }
-
     final now = currentTime ?? DateTime.now();
     final base = baseline ?? const PersonalBaseline();
-    final readiness = ReadinessEngine.calculate(telemetry, baseline: base);
+    final hrv = telemetry.hrv > 0 ? telemetry.hrv : base.meanHrv;
+    final sleepWeak = base.sleepDebtMinutes >= 45 || (telemetry.sleepMinutes > 0 && telemetry.sleepMinutes < 390);
 
-    // 1. postWorkout: сразу после закрытия спортивной сессии
+    if (now.hour >= 21 || now.hour < 6) {
+      return AvatarVisualState.sleep;
+    }
+    if (base.sleepDebtMinutes >= 90) {
+      return AvatarVisualState.sleep;
+    }
     if (_lastWorkoutTime != null && now.difference(_lastWorkoutTime!).inMinutes < 90) {
       return AvatarVisualState.postWorkout;
     }
-
-    // 2. sleep: позднее время (после 22:00) или накопленный долг сна
-    final isExplicitNight = currentTime != null && (currentTime.hour >= 22 || currentTime.hour < 6);
-    final isDeviceNight = currentTime == null && (now.hour >= 22 || now.hour < 6) && readiness.score < 75;
-    final hasSevereSleepDebt = base.sleepDebtMinutes >= 90;
-    if (isExplicitNight || isDeviceNight || hasSevereSleepDebt) {
-      return AvatarVisualState.sleep;
-    }
-
-    // 3. meditation: высокий уровень дневного стресса (>65)
     if (telemetry.currentStressScore > 65) {
       return AvatarVisualState.meditation;
     }
-
-    // 4. tired: низкий Recovery (<34%) или высокий вчерашний Strain (>16)
-    final is3DaysRed = base.recentRecoveryScores.length >= 3 &&
-        base.recentRecoveryScores.every((s) => s < 34) &&
-        readiness.score < 34;
-    final isYesterdayOverreach = base.yesterdayStrain > 16.0;
-
-    if (is3DaysRed || readiness.score < 34 || isYesterdayOverreach) {
+    if (base.yesterdayStrain >= 16.0) {
       return AvatarVisualState.tired;
     }
-
-    // 5. charged: высокий Recovery (≥75%), богатырская форма, кольцо sage
-    if (readiness.score >= 75 && base.sleepDebtMinutes < 30) {
+    if (hrv > base.meanHrv + 2 && base.sleepDebtMinutes < 30) {
       return AvatarVisualState.charged;
     }
-
-    // 6. normal: оптимальная готовность (50–74%), рабочий ритм
+    if (hrv < base.meanHrv - 3 && sleepWeak) {
+      return AvatarVisualState.tired;
+    }
+    if (hrv < base.meanHrv - 6) {
+      return AvatarVisualState.tired;
+    }
     return AvatarVisualState.normal;
   }
 

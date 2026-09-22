@@ -98,6 +98,52 @@ class AppThemeNotifier extends ValueNotifier<ThemeMode> {
         bodyColor: palette.fg,
         displayColor: palette.fg,
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: palette.raised,
+        hintStyle: TextStyle(color: palette.muted, fontFamily: 'Manrope'),
+        labelStyle: TextStyle(color: palette.secondary, fontFamily: 'Manrope'),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: palette.hairline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: palette.hairline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.sage),
+        ),
+      ),
+      shadowColor: palette.shadow,
+      cardTheme: CardThemeData(
+        color: palette.surface,
+        elevation: brightness == Brightness.light ? 2 : 0,
+        shadowColor: palette.shadow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: palette.hairline),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: palette.surface,
+        shadowColor: palette.shadow,
+        titleTextStyle: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600, fontSize: 18, color: palette.fg),
+        contentTextStyle: TextStyle(fontFamily: 'Manrope', fontSize: 14, height: 1.45, color: palette.secondary),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.surface,
+        shadowColor: palette.shadow,
+        modalBackgroundColor: palette.surface,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: palette.raised,
+        selectedColor: AppColors.sage,
+        labelStyle: TextStyle(color: palette.fg, fontFamily: 'Manrope', fontSize: 12),
+        secondaryLabelStyle: TextStyle(color: Colors.white, fontFamily: 'Manrope', fontSize: 12),
+        side: BorderSide(color: palette.hairline),
+      ),
     );
   }
 }

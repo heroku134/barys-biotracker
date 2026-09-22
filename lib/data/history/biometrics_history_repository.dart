@@ -208,4 +208,39 @@ class BiometricsHistoryRepository {
 
     return points;
   }
+
+  static List<HistoricalPoint> getStrainHistory(HistoryPeriod period) {
+    final now = DateTime.now();
+    final points = <HistoricalPoint>[];
+    final random = math.Random(21);
+    const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    final count = period == HistoryPeriod.month30d ? 14 : 7;
+    for (var i = count - 1; i >= 0; i--) {
+      final t = now.subtract(Duration(days: i));
+      final val = (9.5 + (math.sin(i * 0.9) * 5.0) + random.nextDouble() * 2).clamp(3.0, 18.5);
+      points.add(HistoricalPoint(
+        timestamp: t,
+        value: double.parse(val.toStringAsFixed(1)),
+        label: days[(t.weekday - 1) % 7],
+      ));
+    }
+    return points;
+  }
+
+  static List<HistoricalPoint> getSleepHistory(HistoryPeriod period) {
+    final now = DateTime.now();
+    final points = <HistoricalPoint>[];
+    final random = math.Random(88);
+    const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    for (var i = 6; i >= 0; i--) {
+      final t = now.subtract(Duration(days: i));
+      final val = (78.0 + (math.cos(i * 0.7) * 12.0) + random.nextDouble() * 4).clamp(52.0, 98.0);
+      points.add(HistoricalPoint(
+        timestamp: t,
+        value: val.round().toDouble(),
+        label: days[(t.weekday - 1) % 7],
+      ));
+    }
+    return points;
+  }
 }

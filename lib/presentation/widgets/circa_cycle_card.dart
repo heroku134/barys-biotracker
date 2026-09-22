@@ -141,7 +141,7 @@ class CircaCycleCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const Spacer(),
+                    Spacer(),
                     // Бейдж текущей фазы вместо непонятного чипа градусов
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -204,7 +204,7 @@ class CircaCycleCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: AppColors.amber, size: 18),
+                      Icon(Icons.chevron_right, color: AppColors.amber, size: 18),
                     ],
                   ),
                 ),

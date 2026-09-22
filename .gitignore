@@ -73,3 +73,5 @@ migrate_working_dir/
 *.ipa
 create_zip.py
 update_all_icons.py
+ios_sdk/
+SDK/

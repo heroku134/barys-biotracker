@@ -63,7 +63,7 @@ class CircaHypnogram extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'АРХИТЕКТУРА И ФАЗЫ СНА',
                           style: TextStyle(
                             color: AppColors.amber,
@@ -92,7 +92,7 @@ class CircaHypnogram extends StatelessWidget {
                 SizedBox(height: 16),
 
                 // Декомпозиция Sleep Need: База + Долг + За Strain = Итого
-                const Text(
+                Text(
                   'РАСЧЁТ ПОТРЕБНОСТИ ВО СНЕ (SLEEP NEED)',
                   style: TextStyle(
                     color: AppColors.muted,
@@ -125,7 +125,7 @@ class CircaHypnogram extends StatelessWidget {
                 SizedBox(height: 16),
 
                 // 4 вклада Sleep Performance
-                const Text(
+                Text(
                   'ФАКТОРЫ ВОССТАНОВЛЕНИЯ СНОМ',
                   style: TextStyle(
                     color: AppColors.muted,
@@ -152,7 +152,7 @@ class CircaHypnogram extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'ГИПНОГРАММА НОЧИ (ПО СЕНСОРУ)',
                       style: TextStyle(
                         color: AppColors.muted,
@@ -163,7 +163,7 @@ class CircaHypnogram extends StatelessWidget {
                     ),
                     Text(
                       'Отбой: ${sleepResult.optimalBedtime}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.amber,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -218,7 +218,7 @@ class CircaHypnogram extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text(
+                    child: Text(
                       'ЗАКРЫТЬ',
                       style: TextStyle(
                         fontSize: 13,
@@ -264,7 +264,7 @@ class CircaHypnogram extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'ПОТРЕБНОСТЬ ВО СНЕ',
                     style: TextStyle(
                       color: AppColors.muted,
@@ -284,7 +284,7 @@ class CircaHypnogram extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.bedtime_outlined, size: 12, color: AppColors.amber),
+                    Icon(Icons.bedtime_outlined, size: 12, color: AppColors.amber),
                     SizedBox(width: 4),
                     Text(
                       'Отбой: ${sleepResult.optimalBedtime}',
@@ -324,7 +324,7 @@ class CircaHypnogram extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(

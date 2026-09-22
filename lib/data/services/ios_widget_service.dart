@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 import '../../domain/models/readiness.dart';
@@ -26,14 +25,14 @@ class IosWidgetService {
   static Future<void> updateWidgets({
     required BleTelemetry telemetry,
     required ReadinessResult readiness,
-    double currentStrain = 12.4,
+    double currentStrain = 0,
     double targetStrainMax = 13.8,
     int sleepScore = 88,
   }) async {
     try {
       await init();
 
-      final sleepMins = telemetry.sleepMinutes > 0 ? telemetry.sleepMinutes : 468;
+      final sleepMins = telemetry.sleepMinutes;
       final sleepHours = sleepMins ~/ 60;
       final sleepRemainingMins = sleepMins % 60;
 
@@ -44,11 +43,11 @@ class IosWidgetService {
       await HomeWidget.saveWidgetData<double>('target_strain_max', targetStrainMax);
       await HomeWidget.saveWidgetData<int>(
         'heart_rate',
-        telemetry.heartRate > 0 ? telemetry.heartRate : 72,
+        telemetry.heartRate,
       );
       await HomeWidget.saveWidgetData<int>(
         'resting_heart_rate',
-        telemetry.restingHeartRate > 0 ? telemetry.restingHeartRate : 52,
+        telemetry.restingHeartRate,
       );
       await HomeWidget.saveWidgetData<int>('hrv', telemetry.hrv.round());
       await HomeWidget.saveWidgetData<int>('sleep_hours', sleepHours);
@@ -56,11 +55,11 @@ class IosWidgetService {
       await HomeWidget.saveWidgetData<int>('sleep_score', sleepScore);
 
       // 2. Отправка триггера перезагрузки таймлайна WidgetKit на iOS
-      if (Platform.isIOS) {
-        await HomeWidget.updateWidget(
-          iOSName: iOSWidgetName,
-        );
-      }
+      await HomeWidget.updateWidget(
+        name: 'KalkanHomeWidgetProvider',
+        androidName: 'KalkanHomeWidgetProvider',
+        iOSName: iOSWidgetName,
+      );
     } catch (e) {
       debugPrint('IosWidgetService.updateWidgets note: $e');
     }

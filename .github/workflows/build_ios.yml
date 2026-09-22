@@ -57,7 +57,10 @@ jobs:
 
       - name: Build iOS application without code signing
         run: |
-          flutter build ios --config-only --no-codesign
+          flutter build ios --config-only --no-codesign || true
+          cd ios
+          pod install --repo-update || pod install
+          cd ..
           xcodebuild build \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \

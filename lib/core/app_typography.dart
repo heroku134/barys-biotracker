@@ -222,11 +222,22 @@ class AppTypography {
     colorKind: AppTypographyColor.nearWhite,
   );
 
+  static AppTextStyle label([Color? color]) => color != null
+      ? caption.copyWith(color: color, fontWeight: FontWeight.w500)
+      : const AppTextStyle(
+          fontFamily: sans,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          colorKind: AppTypographyColor.muted,
+        );
+
+  static AppTextStyle hint([Color? color]) => color != null ? bodyMuted.copyWith(color: color) : bodyMuted;
+
   static AppTextStyle get displayHero => heroNumber;
   static AppTextStyle get metricLarge => heroNumberMedium;
   static AppTextStyle get metricMedium => metricValue;
-  static AppTextStyle get cardTitle => monoLabel;
-  static AppTextStyle get overline => monoLabel;
-  static AppTextStyle get badge => monoBadge;
-  static AppTextStyle get buttonLabel => monoLabel;
+  static AppTextStyle get cardTitle => label();
+  static AppTextStyle get overline => label();
+  static AppTextStyle get badge => caption;
+  static AppTextStyle get buttonLabel => bodySemibold;
 }

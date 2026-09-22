@@ -100,8 +100,9 @@ class StrainEngine {
   static StrainCalculationResult evaluate({
     required double currentStrain,
     required RecoveryZone recoveryZone,
-    List<int> zoneMinutes = const [75, 45, 20, 8, 2],
+    List<int> zoneMinutes = const [0, 0, 0, 0, 0],
     List<WorkoutActivity>? activities,
+    double climateFactor = 1.0,
   }) {
     final double targetMin;
     final double targetMax;
@@ -121,17 +122,19 @@ class StrainEngine {
         break;
     }
 
-    final remaining = targetMin - currentStrain;
-    final bool inTarget = currentStrain >= targetMin && currentStrain <= targetMax;
+    final adjMin = double.parse((targetMin * climateFactor).toStringAsFixed(1));
+    final adjMax = double.parse((targetMax * climateFactor).toStringAsFixed(1));
+    final remaining = adjMin - currentStrain;
+    final bool inTarget = currentStrain >= adjMin && currentStrain <= adjMax;
 
     final String statusText;
-    if (currentStrain < targetMin) {
-      final diff = (targetMin - currentStrain).toStringAsFixed(1);
+    if (currentStrain < adjMin) {
+      final diff = (adjMin - currentStrain).toStringAsFixed(1);
       statusText = 'Осталось $diff до оптимальной зоны';
-    } else if (currentStrain <= targetMax) {
+    } else if (currentStrain <= adjMax) {
       statusText = 'В оптимальном тренировочном бюджете';
     } else {
-      final over = (currentStrain - targetMax).toStringAsFixed(1);
+      final over = (currentStrain - adjMax).toStringAsFixed(1);
       statusText = 'Превышение бюджета на +$over (зона риска перетрена)';
     }
 
@@ -152,8 +155,8 @@ class StrainEngine {
 
     return StrainCalculationResult(
       currentStrain: currentStrain,
-      targetStrainMin: targetMin,
-      targetStrainMax: targetMax,
+      targetStrainMin: adjMin,
+      targetStrainMax: adjMax,
       budgetStatusText: statusText,
       remainingToTarget: remaining,
       isInTargetZone: inTarget,

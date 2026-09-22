@@ -428,7 +428,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                           SizedBox(width: 8),
                           Text(
                             _isMotionMode ? 'ЭКСПОРТ СТОРИС 5s' : 'ПОДЕЛИТЬСЯ',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.2,
@@ -461,7 +461,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                         SizedBox(width: 4),
                         Text(
                           _isMotionMode ? 'MP4' : 'PNG',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.0,

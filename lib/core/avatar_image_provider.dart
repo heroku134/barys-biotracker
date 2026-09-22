@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../domain/avatar/avatar_manager.dart';
 
 /// Универсальный загрузчик аватара атлета (поддерживает как локальные файлы с камеры/галереи, так и встроенные ассеты)
 class AvatarImageProvider {
   static ImageProvider getImageProvider(String? path) {
     if (path == null || path.isEmpty) {
-      return const AssetImage('assets/images/mascot_normal.jpg');
+      return AssetImage(AvatarVisualState.genderedPath('assets/images/mascot_normal.jpg'));
     }
     if (path.startsWith('assets/')) {
       return AssetImage(path);
@@ -16,7 +17,7 @@ class AvatarImageProvider {
         return FileImage(file);
       }
     } catch (_) {}
-    return const AssetImage('assets/images/mascot_normal.jpg');
+    return AssetImage(AvatarVisualState.genderedPath('assets/images/mascot_normal.jpg'));
   }
 
   static Widget buildAvatarWidget({
@@ -37,7 +38,7 @@ class AvatarImageProvider {
             fit: fit,
             alignment: alignment,
             errorBuilder: (context, error, stackTrace) => Image.asset(
-              'assets/images/mascot_normal.jpg',
+              AvatarVisualState.genderedPath('assets/images/mascot_normal.jpg'),
               width: width,
               height: height,
               fit: fit,
@@ -49,7 +50,7 @@ class AvatarImageProvider {
     }
 
     return Image.asset(
-      (path != null && path.isNotEmpty) ? path : 'assets/images/mascot_normal.jpg',
+      (path != null && path.isNotEmpty) ? path : AvatarVisualState.genderedPath('assets/images/mascot_normal.jpg'),
       width: width,
       height: height,
       fit: fit,

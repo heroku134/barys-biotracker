@@ -98,6 +98,32 @@ class BleTelemetry {
     this.currentStressScore = 32,
   });
 
+  factory BleTelemetry.empty() => BleTelemetry(
+        heartRate: 0,
+        steps: 0,
+        calories: 0,
+        batteryLevel: 0,
+        isConnected: false,
+        deviceName: 'СААТ-1',
+        timestamp: DateTime.now(),
+        hrv: 0,
+        restingHeartRate: 0,
+        respiratoryRate: 0,
+        skinTempDeviation: 0,
+        isOffWrist: false,
+        sleepMinutes: 0,
+        deepSleepMinutes: 0,
+        remSleepMinutes: 0,
+        timeInBedMinutes: 0,
+        sleepEfficiency: 0,
+        sleepConsistency: 0,
+        restorativeSleepRatio: 0,
+        currentDayStrain: 0,
+        yesterdayStrain: 0,
+        zoneMinutes: const [0, 0, 0, 0, 0],
+        currentStressScore: 0,
+      );
+
   BleTelemetry copyWith({
     int? heartRate,
     int? steps,

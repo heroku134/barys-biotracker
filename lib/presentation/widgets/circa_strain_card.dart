@@ -48,7 +48,7 @@ class CircaStrainCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'НАГРУЗКА (STRAIN)',
                     style: TextStyle(
                       color: AppColors.muted,
@@ -94,7 +94,7 @@ class CircaStrainCard extends StatelessWidget {
                   height: 1.0,
                 ),
               ),
-              const Text(
+              Text(
                 ' / 21.0',
                 style: TextStyle(
                   color: AppColors.muted,
@@ -119,7 +119,7 @@ class CircaStrainCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 2),
-                    const Text(
+                    Text(
                       'Шкала TRIMP (Whoop)',
                       style: TextStyle(
                         color: AppColors.faint,
@@ -180,7 +180,7 @@ class CircaStrainCard extends StatelessWidget {
           SizedBox(height: 16),
 
           // 5 зон пульса (TRIMP)
-          const Text(
+          Text(
             'ВРЕМЯ В ПУЛЬСОВЫХ ЗОНАХ (ЧСС)',
             style: TextStyle(
               color: AppColors.muted,
@@ -196,7 +196,7 @@ class CircaStrainCard extends StatelessWidget {
 
           // Автодетектированная тренировка
           if (strainResult.dailyActivities.isNotEmpty) ...[
-            const Divider(color: AppColors.line, height: 1),
+            Divider(color: AppColors.line, height: 1),
             SizedBox(height: 10),
             for (final act in strainResult.dailyActivities)
               Row(
@@ -207,7 +207,7 @@ class CircaStrainCard extends StatelessWidget {
                       color: AppColors.raised,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.directions_run, size: 16, color: AppColors.amber),
+                    child: Icon(Icons.directions_run, size: 16, color: AppColors.amber),
                   ),
                   SizedBox(width: 10),
                   Expanded(
@@ -232,7 +232,7 @@ class CircaStrainCard extends StatelessWidget {
                                   color: AppColors.sage.withValues(alpha: 0.18),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'АВТОДЕТЕКТ',
                                   style: TextStyle(
                                     color: AppColors.sage,
@@ -257,7 +257,7 @@ class CircaStrainCard extends StatelessWidget {
                   ),
                   Text(
                     '+${act.activityStrain.toStringAsFixed(1)} Strain',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.amber,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,

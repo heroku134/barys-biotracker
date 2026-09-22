@@ -64,7 +64,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                     color: AppColors.rose.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.favorite, color: AppColors.rose, size: 18),
+                  child: Icon(Icons.favorite, color: AppColors.rose, size: 18),
                 ),
                 SizedBox(width: 10),
                 Expanded(
@@ -117,7 +117,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                           border: Border.all(color: pColor.withValues(alpha: 0.4)),
                         ),
                         child: Text(
-                          data.phaseTitle.toUpperCase(),
+                          data.phaseTitle,
                           style: TextStyle(
                             color: pColor,
                             fontSize: 11,
@@ -128,7 +128,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                       ),
                       Text(
                         '${data.skinTempDeviation >= 0 ? '+' : ''}${data.skinTempDeviation.toStringAsFixed(2)}°C к норме',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.amber,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -206,7 +206,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'ОТМЕЧЕНО ПАРТНЁРШЕЙ',
                       style: TextStyle(
                         color: AppColors.muted,
@@ -255,14 +255,14 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                       ));
                       CircaHaptics.success();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text('Совет для партнёра скопирован в буфер'),
                           backgroundColor: AppColors.surface,
                         ),
                       );
                     },
                     icon: Icon(Icons.copy, size: 14, color: AppColors.fg),
-                    label: const Text(
+                    label: Text(
                       'Скопировать',
                       style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
                     ),
@@ -282,7 +282,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                         builder: (ctx) => AlertDialog(
                           backgroundColor: AppColors.surface,
                           title: Text('Отвязать партнёра?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
-                          content: const Text(
+                          content: Text(
                             'Карточка партнёра будет скрыта с главного экрана.',
                             style: TextStyle(color: AppColors.muted, fontSize: 13),
                           ),
@@ -297,7 +297,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                                 backgroundColor: AppColors.rose,
                                 foregroundColor: Colors.white,
                               ),
-                              child: const Text('ОТВЯЗАТЬ'),
+                              child: Text('ОТВЯЗАТЬ'),
                             ),
                           ],
                         ),
@@ -307,8 +307,8 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                         if (context.mounted) Navigator.of(context).pop();
                       }
                     },
-                    icon: const Icon(Icons.link_off, size: 14, color: AppColors.rose),
-                    label: const Text(
+                    icon: Icon(Icons.link_off, size: 14, color: AppColors.rose),
+                    label: Text(
                       'Отвязать',
                       style: TextStyle(color: AppColors.rose, fontSize: 12, fontWeight: FontWeight.w700),
                     ),

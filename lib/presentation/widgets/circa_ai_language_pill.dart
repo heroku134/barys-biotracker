@@ -55,7 +55,7 @@ class CircaAiLanguagePill extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.auto_awesome,
                     size: 9,
                     color: Colors.black,
@@ -64,7 +64,7 @@ class CircaAiLanguagePill extends StatelessWidget {
                 SizedBox(width: 6),
                 Text(
                   language.flag,
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: 12),
                 ),
                 SizedBox(width: 4),
                 Text(
@@ -77,7 +77,7 @@ class CircaAiLanguagePill extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 5),
-                const Icon(
+                Icon(
                   Icons.sync_alt,
                   color: AppColors.muted,
                   size: 11,

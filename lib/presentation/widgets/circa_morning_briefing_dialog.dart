@@ -149,7 +149,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                     ),
                     child: ClipOval(
                       child: Image.asset(
-                        'assets/images/hero_barys_charged.jpg',
+                        AvatarVisualState.genderedPath('assets/images/hero_barys_charged.jpg'),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -159,7 +159,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'НАПУТСТВИЕ БАТЫРА',
                           style: TextStyle(
                             color: AppColors.amber,
@@ -201,7 +201,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                   ),
                 ),
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
+                child: Text(
                   'ПРИНЯТЬ ПЛАН НА ДЕНЬ',
                   style: TextStyle(
                     fontSize: 12,
@@ -236,7 +236,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.faint,
                 fontSize: 9,
                 fontWeight: FontWeight.w700,

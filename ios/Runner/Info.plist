@@ -32,6 +32,10 @@
 		<string>fetch</string>
 		<string>processing</string>
 	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>sport.kalkan.bio.refresh</string>
+	</array>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

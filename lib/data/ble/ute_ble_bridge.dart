@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/telemetry.dart';
 import 'ble_simulator.dart';
+import '../storage/demo_mode_store.dart';
 
 class DiscoveredBleDevice {
   final String name;
@@ -48,16 +49,25 @@ class UteBleBridge {
   List<DiscoveredBleDevice> get discoveredDevices =>
       _discoveredMap.values.toList()..sort((a, b) => b.rssi.compareTo(a.rssi));
 
-  BleTelemetry get currentTelemetry =>
-      (!_useSimulator && _realTelemetry != null) ? _realTelemetry! : _simulator.current;
-  bool get isSimulatorActive => _useSimulator;
+  BleTelemetry get currentTelemetry {
+    if (DemoModeStore.enabled.value) return _simulator.current;
+    return _realTelemetry ?? BleTelemetry.empty();
+  }
+
+  bool get isSimulatorActive => DemoModeStore.enabled.value;
 
   Future<void> init() async {
+    await DemoModeStore.init();
+    _useSimulator = DemoModeStore.enabled.value;
     _simulator.start();
     _simulator.telemetryStream.listen((data) {
-      if (_useSimulator) {
+      if (DemoModeStore.enabled.value) {
         _telemetryController.add(data);
       }
+    });
+    DemoModeStore.enabled.addListener(() {
+      _useSimulator = DemoModeStore.enabled.value;
+      _telemetryController.add(currentTelemetry);
     });
 
     try {
@@ -66,32 +76,32 @@ class UteBleBridge {
           if (event is Map) {
             _useSimulator = false;
             final isConnected = event['isConnected'] as bool? ?? true;
-            final prev = _realTelemetry ?? _simulator.current;
+            final prev = _realTelemetry;
 
             final telemetry = BleTelemetry(
-              heartRate: event['heartRate'] as int? ?? prev.heartRate,
-              steps: event['steps'] as int? ?? prev.steps,
-              calories: event['calories'] as int? ?? prev.calories,
-              batteryLevel: event['batteryLevel'] as int? ?? prev.batteryLevel,
+              heartRate: event['heartRate'] as int? ?? prev?.heartRate ?? 0,
+              steps: event['steps'] as int? ?? prev?.steps ?? 0,
+              calories: event['calories'] as int? ?? prev?.calories ?? 0,
+              batteryLevel: event['batteryLevel'] as int? ?? prev?.batteryLevel ?? 0,
               isConnected: isConnected,
-              deviceName: event['deviceName'] as String? ?? (isConnected ? 'KALKAN СААТ-1' : prev.deviceName),
+              deviceName: event['deviceName'] as String? ?? (isConnected ? 'KALKAN СААТ-1' : (prev?.deviceName ?? 'СААТ-1')),
               timestamp: DateTime.now(),
-              hrv: (event['hrv'] as num?)?.toDouble() ?? prev.hrv,
-              restingHeartRate: event['restingHeartRate'] as int? ?? prev.restingHeartRate,
-              respiratoryRate: (event['respiratoryRate'] as num?)?.toDouble() ?? prev.respiratoryRate,
-              skinTempDeviation: (event['skinTempDeviation'] as num?)?.toDouble() ?? prev.skinTempDeviation,
-              isOffWrist: event['isOffWrist'] as bool? ?? prev.isOffWrist,
-              sleepMinutes: event['sleepMinutes'] as int? ?? prev.sleepMinutes,
-              deepSleepMinutes: event['deepSleepMinutes'] as int? ?? prev.deepSleepMinutes,
-              remSleepMinutes: event['remSleepMinutes'] as int? ?? prev.remSleepMinutes,
-              timeInBedMinutes: event['timeInBedMinutes'] as int? ?? prev.timeInBedMinutes,
-              sleepEfficiency: (event['sleepEfficiency'] as num?)?.toDouble() ?? prev.sleepEfficiency,
-              sleepConsistency: (event['sleepConsistency'] as num?)?.toDouble() ?? prev.sleepConsistency,
-              restorativeSleepRatio: (event['restorativeSleepRatio'] as num?)?.toDouble() ?? prev.restorativeSleepRatio,
-              currentDayStrain: (event['currentDayStrain'] as num?)?.toDouble() ?? prev.currentDayStrain,
-              yesterdayStrain: (event['yesterdayStrain'] as num?)?.toDouble() ?? prev.yesterdayStrain,
-              zoneMinutes: _parseZoneMinutes(event['zoneMinutes']) ?? prev.zoneMinutes,
-              currentStressScore: event['currentStressScore'] as int? ?? prev.currentStressScore,
+              hrv: (event['hrv'] as num?)?.toDouble() ?? prev?.hrv ?? 0,
+              restingHeartRate: event['restingHeartRate'] as int? ?? prev?.restingHeartRate ?? 0,
+              respiratoryRate: (event['respiratoryRate'] as num?)?.toDouble() ?? prev?.respiratoryRate ?? 0,
+              skinTempDeviation: (event['skinTempDeviation'] as num?)?.toDouble() ?? prev?.skinTempDeviation ?? 0,
+              isOffWrist: event['isOffWrist'] as bool? ?? prev?.isOffWrist ?? false,
+              sleepMinutes: event['sleepMinutes'] as int? ?? prev?.sleepMinutes ?? 0,
+              deepSleepMinutes: event['deepSleepMinutes'] as int? ?? prev?.deepSleepMinutes ?? 0,
+              remSleepMinutes: event['remSleepMinutes'] as int? ?? prev?.remSleepMinutes ?? 0,
+              timeInBedMinutes: event['timeInBedMinutes'] as int? ?? prev?.timeInBedMinutes ?? 0,
+              sleepEfficiency: (event['sleepEfficiency'] as num?)?.toDouble() ?? prev?.sleepEfficiency ?? 0,
+              sleepConsistency: (event['sleepConsistency'] as num?)?.toDouble() ?? prev?.sleepConsistency ?? 0,
+              restorativeSleepRatio: (event['restorativeSleepRatio'] as num?)?.toDouble() ?? prev?.restorativeSleepRatio ?? 0,
+              currentDayStrain: (event['currentDayStrain'] as num?)?.toDouble() ?? prev?.currentDayStrain ?? 0,
+              yesterdayStrain: (event['yesterdayStrain'] as num?)?.toDouble() ?? prev?.yesterdayStrain ?? 0,
+              zoneMinutes: _parseZoneMinutes(event['zoneMinutes']) ?? prev?.zoneMinutes ?? const [0, 0, 0, 0, 0],
+              currentStressScore: event['currentStressScore'] as int? ?? prev?.currentStressScore ?? 0,
             );
 
             _realTelemetry = telemetry;
@@ -99,11 +109,11 @@ class UteBleBridge {
           }
         },
         onError: (err) {
-          _useSimulator = true;
+          if (DemoModeStore.enabled.value) _useSimulator = true;
         },
       );
     } catch (_) {
-      _useSimulator = true;
+      if (DemoModeStore.enabled.value) _useSimulator = true;
     }
 
     try {
@@ -245,26 +255,31 @@ class UteBleBridge {
   bool get isCrisisDemo => _simulator.isCrisisDemo;
 
   void setDemoTired(bool tired) {
+    DemoModeStore.setEnabled(true);
     _useSimulator = true;
     _simulator.toggleTiredDemo(tired);
   }
 
   void setDemoCrisis(bool crisis) {
+    DemoModeStore.setEnabled(true);
     _useSimulator = true;
     _simulator.toggleCrisisDemo(crisis);
   }
 
   void setDemoStrain(double strain) {
+    DemoModeStore.setEnabled(true);
     _useSimulator = true;
     _simulator.setSimulatedStrain(strain);
   }
 
   void setSimulatedMetrics({double? strain, int? steps, int? sleepMinutes}) {
+    DemoModeStore.setEnabled(true);
     _useSimulator = true;
     _simulator.setSimulatedMetrics(strain: strain, steps: steps, sleepMinutes: sleepMinutes);
   }
 
   void activateSimulatorMode() {
+    DemoModeStore.setEnabled(true);
     _useSimulator = true;
   }
 

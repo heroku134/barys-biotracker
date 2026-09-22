@@ -8,6 +8,9 @@ import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import 'auth_screen.dart';
 import 'main_shell.dart';
+import 'onboarding_screen.dart';
+import '../../domain/avatar/avatar_manager.dart';
+import '../../data/storage/onboarding_repository.dart';
 
 class SplashScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -44,15 +47,24 @@ class _SplashScreenState extends State<SplashScreen>
     _timer = Timer(widget.displayDuration, _proceedToNextScreen);
   }
 
-  void _proceedToNextScreen() {
+  Future<void> _proceedToNextScreen() async {
     if (_hasNavigated || !mounted) return;
     _hasNavigated = true;
     _timer?.cancel();
     CircaHaptics.selectionClick();
 
-    final nextScreen = widget.isAuthenticated
-        ? MainShell(bleBridge: widget.bleBridge)
-        : AuthScreen(bleBridge: widget.bleBridge);
+    final onboarded = await OnboardingRepository.isDone();
+    final Widget nextScreen;
+    if (!onboarded) {
+      nextScreen = OnboardingScreen(
+        bleBridge: widget.bleBridge,
+        isAuthenticated: widget.isAuthenticated,
+      );
+    } else {
+      nextScreen = widget.isAuthenticated
+          ? MainShell(bleBridge: widget.bleBridge)
+          : AuthScreen(bleBridge: widget.bleBridge);
+    }
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
@@ -100,10 +112,10 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      const Spacer(),
+                      Spacer(),
                       ClipOval(
                         child: Image.asset(
-                          'assets/images/mascot_normal.jpg',
+                          AvatarVisualState.genderedPath('assets/images/mascot_normal.jpg'),
                           width: 128,
                           height: 128,
                           fit: BoxFit.cover,
@@ -133,7 +145,7 @@ class _SplashScreenState extends State<SplashScreen>
                         textAlign: TextAlign.center,
                         style: AppTypography.bodyMuted(palette.secondary),
                       ),
-                      const Spacer(),
+                      Spacer(),
                       Text(
                         AppStrings.tr('entrance_source', language),
                         textAlign: TextAlign.center,

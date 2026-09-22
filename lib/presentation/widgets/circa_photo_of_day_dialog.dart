@@ -101,7 +101,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.surface,
-            content: Text('Ошибка при съемке: $e', style: const TextStyle(color: AppColors.rose)),
+            content: Text('Ошибка при съемке: $e', style: TextStyle(color: AppColors.rose)),
           ),
         );
       }
@@ -142,14 +142,14 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                 children: [
                   Text(
                     'ФОТО ДНЯ · БИОМЕТРИЯ',
-                    style: AppTypography.monoLabel.copyWith(
+                    style: AppTypography.monoLabel().copyWith(
                       color: AppColors.amber,
                       fontSize: 10,
                       letterSpacing: 1.8,
                     ),
                   ),
                   SizedBox(height: 2),
-                  const Text(
+                  Text(
                     'Зафиксируйте форму с наложением показателей',
                     style: TextStyle(
                       color: AppColors.textNearWhite,
@@ -224,7 +224,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                       SizedBox(width: 6),
                       Text(
                         'KALKAN SPORT · СААТ-1',
-                        style: AppTypography.monoLabel.copyWith(
+                        style: AppTypography.monoLabel().copyWith(
                           color: AppColors.textNearWhite,
                           fontSize: 9.5,
                           letterSpacing: 1.5,
@@ -274,8 +274,8 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _isLoading ? null : () => _pickPhoto(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt_outlined, color: AppColors.amber, size: 18),
-                  label: Text('СДЕЛАТЬ СНИМОК', style: AppTypography.monoBadge.copyWith(color: AppColors.textNearWhite)),
+                  icon: Icon(Icons.camera_alt_outlined, color: AppColors.amber, size: 18),
+                  label: Text('СДЕЛАТЬ СНИМОК', style: AppTypography.monoBadge().copyWith(color: AppColors.textNearWhite)),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
                     side: BorderSide(color: AppColors.hairline),
@@ -288,8 +288,8 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _isLoading ? null : () => _pickPhoto(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library_outlined, color: AppColors.sage, size: 18),
-                  label: Text('ИЗ ГАЛЕРЕИ', style: AppTypography.monoBadge.copyWith(color: AppColors.textNearWhite)),
+                  icon: Icon(Icons.photo_library_outlined, color: AppColors.sage, size: 18),
+                  label: Text('ИЗ ГАЛЕРЕИ', style: AppTypography.monoBadge().copyWith(color: AppColors.textNearWhite)),
                   style: OutlinedButton.styleFrom(
                     backgroundColor: AppColors.raised,
                     side: BorderSide(color: AppColors.hairline),
@@ -316,10 +316,10 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                   photoPath: _photoPath,
                 );
               },
-              icon: const Icon(Icons.auto_awesome_motion_outlined, color: AppColors.amber, size: 18),
+              icon: Icon(Icons.auto_awesome_motion_outlined, color: AppColors.amber, size: 18),
               label: Text(
                 'ПОДЕЛИТЬСЯ В STORIES (9:16)',
-                style: AppTypography.monoLabel.copyWith(
+                style: AppTypography.monoLabel().copyWith(
                   color: AppColors.amber,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.4,
@@ -345,7 +345,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                 CircaHaptics.success();
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     backgroundColor: AppColors.surface,
                     content: Text('Фото дня сохранено в профиле атлета!', style: TextStyle(color: AppColors.sage)),
                   ),
@@ -360,7 +360,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
               ),
               child: Text(
                 'ГОТОВО',
-                style: AppTypography.monoLabel.copyWith(
+                style: AppTypography.monoLabel().copyWith(
                   color: AppColors.stage,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.5,
@@ -380,7 +380,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
       children: [
         Text(
           label,
-          style: AppTypography.monoLabel.copyWith(
+          style: AppTypography.monoLabel().copyWith(
             fontSize: 8,
             letterSpacing: 1.0,
             color: AppColors.textSecondary,
@@ -389,7 +389,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
         SizedBox(height: 2),
         Text(
           value,
-          style: AppTypography.metricValue.copyWith(
+          style: AppTypography.metricValue().copyWith(
             color: accentColor,
             fontSize: 12,
           ),

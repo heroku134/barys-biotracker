@@ -93,83 +93,97 @@ class StressEngine {
     }
   }
 
-  /// Генерация суточной ленты стресса на основе пульса vs личного RHR и скользящего окна ВСР
+  static int scoreFromTelemetry(int currentScore, {int heartRate = 0, int restingHeartRate = 0}) {
+    if (currentScore > 0) return currentScore.clamp(0, 100);
+    if (heartRate <= 0) return 0;
+    final rhr = restingHeartRate > 0 ? restingHeartRate : 60;
+    return (((heartRate - rhr) / 80.0) * 100).round().clamp(0, 100);
+  }
+
+  static StressLevel levelFor(int score) {
+    if (score >= 70) return StressLevel.high;
+    if (score >= 35) return StressLevel.medium;
+    return StressLevel.rest;
+  }
+
+  /// Лента дня только из того, что есть: сон, текущий пульс/стресс, нагрузка.
+  /// Минутной ВСР с часов нет — выдуманные «38 мс в 13:30» больше не показываем.
   static StressDaySummary analyze({
     required int currentScore,
     Map<String, String>? customTags,
+    int heartRate = 0,
+    int restingHeartRate = 0,
+    double hrv = 0,
+    double meanHrv = 0,
+    int sleepMinutes = 0,
+    double dayStrain = 0,
+    DateTime? now,
   }) {
-    final StressLevel currentLevel;
-    if (currentScore >= 70) {
-      currentLevel = StressLevel.high;
-    } else if (currentScore >= 35) {
-      currentLevel = StressLevel.medium;
-    } else {
-      currentLevel = StressLevel.rest;
+    final t = now ?? DateTime.now();
+    final score = scoreFromTelemetry(currentScore, heartRate: heartRate, restingHeartRate: restingHeartRate);
+    final currentLevel = levelFor(score);
+    final tags = customTags ?? {};
+    final timeline = <StressTimeSlot>[];
+
+    if (sleepMinutes > 0) {
+      final hours = sleepMinutes / 60.0;
+      timeline.add(StressTimeSlot(
+        id: 'slot_sleep',
+        timeRange: 'Ночь',
+        contextTitle: tags['slot_sleep'] ?? 'Сон',
+        userTag: tags['slot_sleep'],
+        stressScore: hours >= 7 ? 22 : (hours >= 6 ? 40 : 62),
+        level: hours >= 7 ? StressLevel.rest : (hours >= 6 ? StressLevel.medium : StressLevel.high),
+        physiologicalNote: hours >= 7
+            ? 'Сон ${hours.toStringAsFixed(1)} ч.'
+            : 'Сон ${hours.toStringAsFixed(1)} ч — короче обычной нормы 7.5.',
+        barysReaction: hours >= 7 ? 'Ночь закрыта.' : 'Ночь коротковата.',
+        barysAsset: 'assets/images/mascot_sleep.jpg',
+      ));
     }
 
-    final timeline = [
-      StressTimeSlot(
-        id: 'slot_1',
-        timeRange: '07:30 — 09:00',
-        contextTitle: customTags?['slot_1'] ?? 'Пробуждение и дорога',
-        userTag: customTags?['slot_1'],
-        stressScore: 28,
-        level: StressLevel.rest,
-        physiologicalNote: 'Пульс стабилен (56 bpm), парасимпатический тонус на максимуме.',
-        barysReaction: '«Мягкий старт дня без адреналинового удара. Ты проснулся отдохнувшим, батыр.»',
-        barysAsset: 'assets/images/hero_barys_normal.jpg',
-      ),
-      StressTimeSlot(
-        id: 'slot_2',
-        timeRange: '09:30 — 12:30',
-        contextTitle: customTags?['slot_2'] ?? 'Рабочий спринт и аналитика',
-        userTag: customTags?['slot_2'],
-        stressScore: 54,
-        level: StressLevel.medium,
-        physiologicalNote: 'Умеренная симпатическая активация, концентрация внимания.',
-        barysReaction: '«Симпатический тонус активирован. 2.5 часа глубокого фокуса без переутомления.»',
-        barysAsset: 'assets/images/hero_barys_charged.jpg',
-      ),
-      StressTimeSlot(
-        id: 'slot_3',
-        timeRange: '13:30 — 15:00',
-        contextTitle: customTags?['slot_3'] ?? 'Дедлайн / Сложные переговоры',
-        userTag: customTags?['slot_3'],
-        stressScore: 78,
-        level: StressLevel.high,
-        physiologicalNote: 'Кратковременное падение ВСР до 38 мс на фоне острого стресса.',
-        barysReaction: '«Пик кортизола дня! ВСР просела, но сердце выдержало. Шторм позади, батыр.»',
-        barysAsset: 'assets/images/hero_barys_tired.jpg',
-      ),
-      StressTimeSlot(
-        id: 'slot_4',
-        timeRange: '17:30 — 18:30',
-        contextTitle: customTags?['slot_4'] ?? 'Тренировка / Нагрузка',
-        userTag: customTags?['slot_4'],
-        stressScore: 68,
-        level: StressLevel.medium,
-        physiologicalNote: 'Полезный сердечно-сосудистый эустресс. Закрыли 8.4 Strain.',
-        barysReaction: '«Отличный рабочий эустресс! Мышцы нагружены, кровь разогнана по телу.»',
-        barysAsset: 'assets/images/hero_barys_workout.jpg',
-      ),
-      StressTimeSlot(
-        id: 'slot_5',
-        timeRange: '19:30 — 22:00',
-        contextTitle: customTags?['slot_5'] ?? 'Вечерний отдых и ужин',
-        userTag: customTags?['slot_5'],
-        stressScore: 18,
-        level: StressLevel.rest,
-        physiologicalNote: 'Парасимпатическое преобладание, запуск регенерации мелатонина.',
-        barysReaction: '«Восстановление запущено. Отложи экран и приготовься ко сну у очага.»',
-        barysAsset: 'assets/images/hero_barys_sleep.jpg',
-      ),
-    ];
+    final hrLine = heartRate > 0 ? 'Пульс $heartRate.' : 'Пульса с часов нет.';
+    final hrvLine = hrv > 0 && meanHrv > 0
+        ? ' HRV ${hrv.toStringAsFixed(0)} при норме ${meanHrv.toStringAsFixed(0)}.'
+        : (hrv > 0 ? ' HRV ${hrv.toStringAsFixed(0)}.' : '');
+    timeline.add(StressTimeSlot(
+      id: 'slot_now',
+      timeRange: '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}',
+      contextTitle: tags['slot_now'] ?? 'Сейчас',
+      userTag: tags['slot_now'],
+      stressScore: score,
+      level: currentLevel,
+      physiologicalNote: '$hrLine$hrvLine',
+      barysReaction: score >= 70
+          ? 'Стресс высокий. Пауза лучше ещё одной задачи.'
+          : (score >= 35 ? 'Рабочий тон. Без пика.' : 'Спокойно.'),
+      barysAsset: score >= 70
+          ? 'assets/images/mascot_tired.jpg'
+          : (score >= 35 ? 'assets/images/mascot_normal.jpg' : 'assets/images/mascot_charged.jpg'),
+    ));
+
+    if (dayStrain > 0) {
+      timeline.add(StressTimeSlot(
+        id: 'slot_strain',
+        timeRange: 'День',
+        contextTitle: tags['slot_strain'] ?? 'Нагрузка',
+        userTag: tags['slot_strain'],
+        stressScore: (40 + dayStrain * 2).round().clamp(20, 90),
+        level: dayStrain >= 16 ? StressLevel.high : (dayStrain >= 10 ? StressLevel.medium : StressLevel.rest),
+        physiologicalNote: 'Накопленный strain ${dayStrain.toStringAsFixed(1)} из 21.',
+        barysReaction: dayStrain >= 16 ? 'Бюджет дня выбран.' : 'Нагрузка идёт.',
+        barysAsset: 'assets/images/mascot_workout.jpg',
+      ));
+    }
+
+    final highMin = score >= 70 ? 20 : 0;
+    final restMin = score < 35 ? 30 : 0;
 
     return StressDaySummary(
-      currentStressScore: currentScore,
+      currentStressScore: score,
       currentLevel: currentLevel,
-      minutesInHighStress: 65,
-      minutesInRestoration: 210,
+      minutesInHighStress: highMin,
+      minutesInRestoration: restMin,
       timeline: timeline,
     );
   }

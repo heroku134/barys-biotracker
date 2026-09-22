@@ -31,12 +31,12 @@ class CircaTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label.toUpperCase(),
+          label,
           style: TextStyle(
             color: AppColors.muted,
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
-            letterSpacing: 1.8,
+            letterSpacing: 0.2,
           ),
         ),
         SizedBox(height: 6),
@@ -60,7 +60,7 @@ class CircaTextField extends StatelessWidget {
             validator: validator,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(
+              hintStyle: TextStyle(
                 color: AppColors.faint,
                 fontSize: 14,
               ),

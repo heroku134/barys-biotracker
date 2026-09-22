@@ -145,13 +145,13 @@ class _Circa3DRecoveryOrbState extends State<Circa3DRecoveryOrb>
                           primaryColor,
                           Color.lerp(primaryColor, Colors.black, 0.45)!,
                           Color.lerp(primaryColor, Colors.black, 0.82)!,
-                          const Color(0xFF080B0F),
+                          Theme.of(context).brightness == Brightness.dark ? const Color(0xFF080B0F) : const Color(0xFFE8E8E4),
                         ],
                         stops: const [0.0, 0.35, 0.65, 0.88, 1.0],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.65),
+                          color: Colors.black.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.45 : 0.12),
                           blurRadius: 16,
                           offset: const Offset(4, 8),
                         ),
@@ -212,7 +212,7 @@ class _Circa3DRecoveryOrbState extends State<Circa3DRecoveryOrb>
                     // Числовое значение готовности (94)
                     Text(
                       '${widget.score}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 48,
                         fontWeight: FontWeight.w800,
@@ -255,7 +255,7 @@ class _Circa3DRecoveryOrbState extends State<Circa3DRecoveryOrb>
                             ),
                           ),
                           const SizedBox(width: 5),
-                          const Text(
+                          Text(
                             'ВОССТАНОВЛЕНИЕ',
                             style: TextStyle(
                               color: Colors.white,

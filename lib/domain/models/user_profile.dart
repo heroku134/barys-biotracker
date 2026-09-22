@@ -34,6 +34,9 @@ class UserProfile {
   final int periodDurationDays;
   final DateTime? lastPeriodStartDate;
   final String? avatarPath;
+  final bool isPregnant;
+  final DateTime? pregnancyDueDate;
+  final DateTime? pregnancyLmpDate;
 
   const UserProfile({
     this.id = 'circa_user_01',
@@ -55,6 +58,9 @@ class UserProfile {
     this.periodDurationDays = 5,
     this.lastPeriodStartDate,
     this.avatarPath,
+    this.isPregnant = false,
+    this.pregnancyDueDate,
+    this.pregnancyLmpDate,
   });
 
   int get age => DateTime.now().year - birthYear;
@@ -81,6 +87,9 @@ class UserProfile {
     int? periodDurationDays,
     DateTime? lastPeriodStartDate,
     String? avatarPath,
+    bool? isPregnant,
+    DateTime? pregnancyDueDate,
+    DateTime? pregnancyLmpDate,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -102,6 +111,9 @@ class UserProfile {
       periodDurationDays: periodDurationDays ?? this.periodDurationDays,
       lastPeriodStartDate: lastPeriodStartDate ?? this.lastPeriodStartDate,
       avatarPath: avatarPath ?? this.avatarPath,
+      isPregnant: isPregnant ?? this.isPregnant,
+      pregnancyDueDate: pregnancyDueDate ?? this.pregnancyDueDate,
+      pregnancyLmpDate: pregnancyLmpDate ?? this.pregnancyLmpDate,
     );
   }
 
@@ -125,6 +137,9 @@ class UserProfile {
     'periodDurationDays': periodDurationDays,
     'lastPeriodStartDate': lastPeriodStartDate?.toIso8601String(),
     'avatarPath': avatarPath,
+    'isPregnant': isPregnant,
+    'pregnancyDueDate': pregnancyDueDate?.toIso8601String(),
+    'pregnancyLmpDate': pregnancyLmpDate?.toIso8601String(),
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -158,6 +173,9 @@ class UserProfile {
           ? DateTime.tryParse(json['lastPeriodStartDate'] as String)
           : null,
       avatarPath: json['avatarPath'] as String?,
+      isPregnant: json['isPregnant'] as bool? ?? false,
+      pregnancyDueDate: json['pregnancyDueDate'] != null ? DateTime.tryParse(json['pregnancyDueDate'] as String) : null,
+      pregnancyLmpDate: json['pregnancyLmpDate'] != null ? DateTime.tryParse(json['pregnancyLmpDate'] as String) : null,
     );
   }
 

@@ -36,7 +36,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
 
     if (!btEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: AppColors.rose,
           content: Text(
             'Внимание: Bluetooth выключен на телефоне. Включите Bluetooth для поиска часов.',
@@ -53,7 +53,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
       final granted = await widget.bleBridge.requestPermissions();
       if (!granted && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             backgroundColor: AppColors.rose,
             content: Text(
               'Для поиска часов необходимо предоставить разрешение на доступ к Bluetooth и геолокации.',
@@ -118,7 +118,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
         backgroundColor: AppColors.surface,
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: AppColors.sage, size: 20),
+            Icon(Icons.check_circle, color: AppColors.sage, size: 20),
             SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -167,27 +167,14 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
           icon: Icon(Icons.arrow_back, color: AppColors.fg),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'BLUETOOTH BLE',
-              style: TextStyle(
-                color: AppColors.muted,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.0,
-              ),
-            ),
-            Text(
-              'Поиск браслета',
-              style: TextStyle(
-                color: AppColors.fg,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+        title: Text(
+          'Поиск браслета',
+          style: TextStyle(
+            color: AppColors.fg,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.3,
+          ),
         ),
       ),
       body: SafeArea(
@@ -241,7 +228,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                 ),
               ),
               SizedBox(height: 6),
-              const Text(
+              Text(
                 'Включите часы и поднесите их близко к смартфону.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -346,10 +333,10 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: _isScanning ? null : _checkAndStart,
-                      icon: const Icon(Icons.refresh, size: 18),
+                      icon: Icon(Icons.refresh, size: 18),
                       label: Text(
                         _isScanning ? 'ПОИСК В ЭФИРЕ...' : 'ИСКАТЬ СНОВА',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.surface,
@@ -366,7 +353,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _isConnecting ? null : () => _connect(null, true),
                       icon: Icon(Icons.bolt, color: AppColors.stage, size: 18),
-                      label: const Text(
+                      label: Text(
                         'ПОДКЛЮЧИТЬ ДЕМО-РЕЖИМ (СИМУЛЯТОР)',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
                       ),

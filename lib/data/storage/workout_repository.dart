@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/workout_session.dart';
+import 'demo_mode_store.dart';
 
 class WorkoutRepository {
   static const String _keyWorkouts = 'circa_workouts_history_v1';
@@ -15,8 +16,8 @@ class WorkoutRepository {
             .toList();
       } catch (_) {}
     }
-    // Дефолтные тренировки для демонстрации
-    return _getDefaultWorkouts();
+    if (DemoModeStore.enabled.value) return _getDefaultWorkouts();
+    return [];
   }
 
   static Future<void> saveWorkout(CompletedWorkout workout) async {

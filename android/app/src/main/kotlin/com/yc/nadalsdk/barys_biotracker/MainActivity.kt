@@ -87,6 +87,27 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sport.kalkan.biotracker/notify")
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "requestPermission" -> {
+                        KalkanNotify.ensureChannel(this)
+                        result.success(true)
+                    }
+                    "scheduleDaily" -> {
+                        val args = call.arguments as? Map<*, *>
+                        val id = (args?.get("id") as? Number)?.toInt() ?: 1101
+                        val hour = (args?.get("hour") as? Number)?.toInt() ?: 7
+                        val minute = (args?.get("minute") as? Number)?.toInt() ?: 0
+                        val title = args?.get("title") as? String ?: "KALKAN"
+                        val body = args?.get("body") as? String ?: ""
+                        KalkanNotify.scheduleDaily(this, id, hour, minute, title, body)
+                        result.success(true)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
         // 1. MethodChannel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, METHOD_CHANNEL)
             .setMethodCallHandler { call: MethodCall, result: MethodChannel.Result ->
@@ -326,9 +347,6 @@ class MainActivity : FlutterActivity() {
                 "steps" to currentSteps,
                 "calories" to currentCalories,
                 "batteryLevel" to currentBattery,
-                "hrv" to 65.0,
-                "sleepMinutes" to 450,
-                "deepSleepMinutes" to 110,
                 "isConnected" to isConnected,
                 "deviceName" to currentDeviceName
             )

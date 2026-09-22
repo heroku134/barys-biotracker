@@ -99,7 +99,7 @@ class _CircaBreathingRetinaState extends State<CircaBreathingRetina>
             ),
             SizedBox(width: 6),
             Text(
-              'ДЫХАТЕЛЬНЫЙ РИТМ 4.8s · БИОСИСТЕМА ЖИВАЯ',
+              'Дыхание 4.8 с',
               style: TextStyle(
                 color: AppColors.muted.withValues(alpha: 0.8),
                 fontSize: 8.5,

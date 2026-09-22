@@ -131,7 +131,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
                       children: [
                         Text(
                           'RECOVERY',
-                          style: AppTypography.monoLabel.copyWith(
+                          style: AppTypography.monoLabel().copyWith(
                             fontSize: 10,
                             letterSpacing: 2.0,
                             color: AppColors.textSecondary,
@@ -140,7 +140,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
                         SizedBox(height: 2),
                         Text(
                           '$animatedScore',
-                          style: AppTypography.heroNumber.copyWith(
+                          style: AppTypography.heroNumber().copyWith(
                             color: AppColors.textNearWhite,
                             fontSize: widget.size * 0.28,
                           ),
@@ -151,13 +151,13 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
                           children: [
                             Text(
                               '/ 100  ·  ',
-                              style: AppTypography.monoUnit.copyWith(
+                              style: AppTypography.monoUnit().copyWith(
                                 color: AppColors.textMuted,
                               ),
                             ),
                             Text(
                               _zoneLabel,
-                              style: AppTypography.monoBadge.copyWith(
+                              style: AppTypography.monoBadge().copyWith(
                                 color: _zoneColor,
                               ),
                             ),
@@ -224,7 +224,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
       children: [
         Text(
           label,
-          style: AppTypography.monoLabel.copyWith(
+          style: AppTypography.monoLabel().copyWith(
             fontSize: 9.5,
             letterSpacing: 1.2,
             color: AppColors.textSecondary,
@@ -238,7 +238,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
           children: [
             Text(
               value,
-              style: AppTypography.metricValue.copyWith(
+              style: AppTypography.metricValue().copyWith(
                 color: AppColors.textNearWhite,
                 fontSize: 16,
               ),
@@ -246,7 +246,7 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
             SizedBox(width: 3),
             Text(
               unit,
-              style: AppTypography.monoUnit.copyWith(
+              style: AppTypography.monoUnit().copyWith(
                 fontSize: 9.5,
                 color: AppColors.textSecondary,
               ),

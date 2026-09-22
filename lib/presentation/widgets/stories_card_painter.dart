@@ -20,8 +20,8 @@ class StoriesCardWidget extends StatelessWidget {
     required this.readiness,
     required this.currentStrain,
     this.photoPath,
-    this.athleteName = 'КАНАТ АМАНОВ',
-    this.athleteTier = 'BATYR ELITE · TIER I',
+    this.athleteName = 'Канат Аманов',
+    this.athleteTier = 'Батыр',
   });
 
   Color get _zoneColor {
@@ -31,9 +31,9 @@ class StoriesCardWidget extends StatelessWidget {
   }
 
   String get _zoneLabel {
-    if (readiness.score >= 67) return 'OPTIMAL · GREEN ZONE';
-    if (readiness.score >= 34) return 'MODERATE · STRAIN ADVISORY';
-    return 'RESTORATION · LOW CAPACITY';
+    if (readiness.score >= 67) return 'Зелёная зона';
+    if (readiness.score >= 34) return 'Средняя зона';
+    return 'Нужен отдых';
   }
 
   @override
@@ -131,8 +131,8 @@ class StoriesCardWidget extends StatelessWidget {
               ),
               SizedBox(width: 8),
               Text(
-                'KALKAN SPORT · SAAT-1',
-                style: AppTypography.monoLabel.copyWith(
+                'КАЛКАН · СААТ-1',
+                style: AppTypography.monoLabel().copyWith(
                   color: AppColors.textNearWhite,
                   fontSize: 10,
                   letterSpacing: 1.8,
@@ -143,7 +143,7 @@ class StoriesCardWidget extends StatelessWidget {
           ),
           Text(
             athleteTier,
-            style: AppTypography.monoLabel.copyWith(
+            style: AppTypography.monoLabel().copyWith(
               color: AppColors.amber,
               fontSize: 9,
               letterSpacing: 1.2,
@@ -161,11 +161,11 @@ class StoriesCardWidget extends StatelessWidget {
         children: [
           // Прецизионный моноширинный заголовок
           Text(
-            'BIOMETRIC RECOVERY',
-            style: AppTypography.monoLabel.copyWith(
+            'Восстановление',
+            style: AppTypography.monoLabel().copyWith(
               color: AppColors.textSecondary,
               fontSize: 11,
-              letterSpacing: 2.5,
+              letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -207,7 +207,7 @@ class StoriesCardWidget extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 6),
                         child: Text(
                           '%',
-                          style: AppTypography.monoLabel.copyWith(
+                          style: AppTypography.monoLabel().copyWith(
                             color: AppColors.muted,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -218,8 +218,8 @@ class StoriesCardWidget extends StatelessWidget {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'RECOVERY',
-                    style: AppTypography.monoLabel.copyWith(
+                    'Recovery',
+                    style: AppTypography.monoLabel().copyWith(
                       color: _zoneColor,
                       fontSize: 8.5,
                       letterSpacing: 1.5,
@@ -242,7 +242,7 @@ class StoriesCardWidget extends StatelessWidget {
             ),
             child: Text(
               _zoneLabel,
-              style: AppTypography.monoBadge.copyWith(
+              style: AppTypography.monoBadge().copyWith(
                 color: _zoneColor,
                 fontSize: 9.5,
                 letterSpacing: 1.6,
@@ -266,17 +266,17 @@ class StoriesCardWidget extends StatelessWidget {
                 value: currentStrain.toStringAsFixed(1),
                 unit: '/ 21.0',
                 accent: AppColors.amber,
-                subtext: 'OPTIMAL LOAD',
+                subtext: 'Норма нагрузки',
               ),
             ),
             SizedBox(width: 10),
             Expanded(
               child: _buildMetricTile(
-                title: 'RESTING HR',
+                title: 'Пульс покоя',
                 value: '${telemetry.restingHeartRate > 0 ? telemetry.restingHeartRate : 52}',
                 unit: 'BPM',
                 accent: AppColors.rose,
-                subtext: 'NADIR IN DEEP SLEEP',
+                subtext: 'Минимум во сне',
               ),
             ),
           ],
@@ -328,7 +328,7 @@ class StoriesCardWidget extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTypography.monoLabel.copyWith(
+            style: AppTypography.monoLabel().copyWith(
               color: AppColors.textSecondary,
               fontSize: 8.5,
               letterSpacing: 1.2,
@@ -351,7 +351,7 @@ class StoriesCardWidget extends StatelessWidget {
               SizedBox(width: 4),
               Text(
                 unit,
-                style: AppTypography.monoLabel.copyWith(
+                style: AppTypography.monoLabel().copyWith(
                   color: AppColors.muted,
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
@@ -362,7 +362,7 @@ class StoriesCardWidget extends StatelessWidget {
           SizedBox(height: 2),
           Text(
             subtext,
-            style: AppTypography.monoLabel.copyWith(
+            style: AppTypography.monoLabel().copyWith(
               color: AppColors.muted,
               fontSize: 7.5,
               letterSpacing: 0.8,
@@ -405,8 +405,8 @@ class StoriesCardWidget extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'VERIFIED ATHLETIC TELEMETRY',
-                    style: AppTypography.monoLabel.copyWith(
+                    'Данные с часов',
+                    style: AppTypography.monoLabel().copyWith(
                       color: AppColors.textSecondary,
                       fontSize: 7.5,
                       letterSpacing: 1.0,
@@ -418,7 +418,7 @@ class StoriesCardWidget extends StatelessWidget {
           ),
           Text(
             '#KALKANSPORT',
-            style: AppTypography.monoLabel.copyWith(
+            style: AppTypography.monoLabel().copyWith(
               color: AppColors.amber,
               fontSize: 9.5,
               fontWeight: FontWeight.w700,

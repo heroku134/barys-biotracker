@@ -7,7 +7,6 @@ import '../../core/app_strings.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/user_profile.dart';
-import '../widgets/circa_ai_language_pill.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
 import 'main_shell.dart';
@@ -237,12 +236,12 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.error_outline, color: AppColors.rose, size: 18),
+                                  Icon(Icons.error_outline, color: AppColors.rose, size: 18),
                                   SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: const TextStyle(color: AppColors.rose, fontSize: 12),
+                                      style: TextStyle(color: AppColors.rose, fontSize: 12),
                                     ),
                                   ),
                                 ],
@@ -272,7 +271,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     _isSignUp
                                         ? AppStrings.tr('auth_button_signup', language)
                                         : AppStrings.tr('auth_button_login', language),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 1.5,
@@ -307,8 +306,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           // Кнопка быстрого автономного входа (для тестов и автономного режима)
                           OutlinedButton.icon(
                             onPressed: _isLoading ? null : _quickGuestLogin,
-                            icon: const Icon(Icons.flash_on, color: AppColors.sage, size: 16),
-                            label: const Text(
+                            icon: Icon(Icons.flash_on, color: AppColors.sage, size: 16),
+                            label: Text(
                               'БЫСТРЫЙ ВХОД (АВТОНОМНЫЙ РЕЖИМ)',
                               style: TextStyle(
                                 color: AppColors.sage,
@@ -329,11 +328,21 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
 
-                  // Переключатель языка (AI Oval Capsule)
                   Positioned(
-                    top: 10,
-                    right: 18,
-                    child: CircaAiLanguagePill(),
+                    top: 8,
+                    right: 16,
+                    child: TextButton(
+                      onPressed: () {
+                        final next = language == AppLanguage.kyrgyz
+                            ? AppLanguage.russian
+                            : AppLanguage.kyrgyz;
+                        AppLocaleNotifier.setLanguage(next);
+                      },
+                      child: Text(
+                        language == AppLanguage.kyrgyz ? 'KY / RU' : 'RU / KY',
+                        style: TextStyle(color: AppColors.secondary, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ),
                   ),
                 ],
               ),

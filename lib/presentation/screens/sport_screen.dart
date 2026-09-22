@@ -4,9 +4,12 @@ import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
-import '../../core/circa_haptics.dart';
+import '../../data/services/paired_pulse.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/workout_repository.dart';
+import '../../data/storage/local_day_strain.dart';
+import '../../domain/intelligence/readiness_engine.dart';
+import 'workout_summary_screen.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/workout_session.dart';
@@ -37,11 +40,18 @@ class _SportScreenState extends State<SportScreen> {
   int _peakHr = 0;
   double _distanceKm = 0.0;
   int _caloriesBurned = 0;
+  StreamSubscription? _bleSub;
 
   @override
   void initState() {
     super.initState();
     _loadHistory();
+    _bleSub = widget.bleBridge.telemetryStream.listen((data) {
+      if (!mounted || !_isWorkoutActive || _isWorkoutPaused) return;
+      setState(() {
+        if (data.heartRate > _peakHr) _peakHr = data.heartRate;
+      });
+    });
   }
 
   Future<void> _loadHistory() async {
@@ -52,11 +62,12 @@ class _SportScreenState extends State<SportScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _bleSub?.cancel();
     super.dispose();
   }
 
   void _startWorkout() {
-    CircaHaptics.workoutStart();
+    PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.start);
     final initialHr = widget.bleBridge.currentTelemetry.heartRate > 0 ? widget.bleBridge.currentTelemetry.heartRate : 72;
     setState(() {
       _isWorkoutActive = true;
@@ -120,7 +131,7 @@ class _SportScreenState extends State<SportScreen> {
 
   Future<void> _stopWorkout() async {
     _timer?.cancel();
-    CircaHaptics.workoutFinish();
+    PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.finish);
 
     // Завершение iOS Live Activities
     await LiveActivityService.endWorkoutActivity();
@@ -153,6 +164,12 @@ class _SportScreenState extends State<SportScreen> {
       xpEarned: xp,
     );
 
+    final dayBefore = widget.bleBridge.currentTelemetry.currentDayStrain > 0
+        ? widget.bleBridge.currentTelemetry.currentDayStrain
+        : 0.0;
+    final zone = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry).zone;
+
+    LocalDayStrain.add(calculatedStrain);
     await WorkoutRepository.saveWorkout(completed);
     await _loadHistory();
 
@@ -163,72 +180,16 @@ class _SportScreenState extends State<SportScreen> {
       _elapsedSeconds = 0;
     });
 
-    // Диалог поздравления
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.stars, color: AppColors.amber, size: 22),
-            SizedBox(width: 8),
-            Text(
-              'Тренировка завершена!',
-              style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-          ],
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WorkoutSummaryScreen(
+          workout: completed,
+          dayStrainBefore: dayBefore,
+          recoveryZone: zone,
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Дисциплина: ${_selectedSport.title}',
-              style: TextStyle(color: AppColors.muted, fontSize: 13),
-            ),
-            SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('STRAIN НАГРУЗКА', style: TextStyle(color: AppColors.muted, fontSize: 10, fontWeight: FontWeight.w700)),
-                    SizedBox(height: 2),
-                    Text('+$calculatedStrain', style: const TextStyle(color: AppColors.cyan, fontSize: 18, fontWeight: FontWeight.w800)),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('ОПЫТ БАРЫСА', style: TextStyle(color: AppColors.muted, fontSize: 10, fontWeight: FontWeight.w700)),
-                    SizedBox(height: 2),
-                    Text('+$xp XP', style: const TextStyle(color: AppColors.amber, fontSize: 18, fontWeight: FontWeight.w800)),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-            const Divider(color: AppColors.line, height: 1),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Время: ${completed.durationFormatted}', style: TextStyle(color: AppColors.fg, fontSize: 12)),
-                Text('Калории: $cals ккал', style: TextStyle(color: AppColors.fg, fontSize: 12)),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('ОТЛИЧНО', style: TextStyle(color: AppColors.amber, fontWeight: FontWeight.w700)),
-          ),
-        ],
       ),
     );
+    return;
   }
 
   String _formatTimer(int seconds) {
@@ -245,8 +206,9 @@ class _SportScreenState extends State<SportScreen> {
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
+        final palette = KalkanColors.of(context);
         return Scaffold(
-          backgroundColor: AppColors.stage,
+          backgroundColor: palette.bg,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -268,27 +230,14 @@ class _SportScreenState extends State<SportScreen> {
               ),
             ),
             titleSpacing: 6,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'KALKAN SPORT',
-                  style: TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2.2,
-                  ),
-                ),
-                Text(
-                  AppStrings.tr('sport_title', language),
-                  style: TextStyle(
-                    color: AppColors.fg,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            title: Text(
+              AppStrings.tr('sport_title', language),
+              style: TextStyle(
+                color: palette.fg,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+              ),
             ),
         actions: [
           Container(
@@ -301,11 +250,11 @@ class _SportScreenState extends State<SportScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.bolt, color: AppColors.amber, size: 14),
+                Icon(Icons.bolt, color: AppColors.amber, size: 14),
                 SizedBox(width: 4),
                 Text(
                   '${telemetry.currentDayStrain.toStringAsFixed(1)} / 21',
-                  style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: palette.fg, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -339,7 +288,7 @@ class _SportScreenState extends State<SportScreen> {
                           style: TextStyle(
                             color: isSelected ? AppColors.stage : AppColors.fg,
                             fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         selectedColor: AppColors.amber,
@@ -389,18 +338,18 @@ class _SportScreenState extends State<SportScreen> {
                             style: TextStyle(
                               color: AppColors.muted,
                               fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               letterSpacing: 1.6,
                             ),
                           ),
                         ],
                       ),
                       Text(
-                        _selectedSport.title.toUpperCase(),
-                        style: const TextStyle(
+                        _selectedSport.title.toString(),
+                        style: TextStyle(
                           color: AppColors.amber,
                           fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           letterSpacing: 1.0,
                         ),
                       ),
@@ -417,9 +366,9 @@ class _SportScreenState extends State<SportScreen> {
                         Text(
                           _formatTimer(_elapsedSeconds),
                           style: TextStyle(
-                            color: AppColors.fg,
+                            color: palette.fg,
                             fontSize: 44,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             letterSpacing: -1.5,
                           ),
                         ),
@@ -432,11 +381,11 @@ class _SportScreenState extends State<SportScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.favorite, color: AppColors.rose, size: 16),
+                              Icon(Icons.favorite, color: AppColors.rose, size: 16),
                               SizedBox(width: 6),
                               Text(
                                 '$currentBpm bpm',
-                                style: const TextStyle(color: AppColors.rose, fontSize: 13, fontWeight: FontWeight.w800),
+                                style: TextStyle(color: AppColors.rose, fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -458,9 +407,9 @@ class _SportScreenState extends State<SportScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('КАЛОРИИ', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
+                                Text('КАЛОРИИ', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w600)),
                                 SizedBox(height: 2),
-                                Text('$_caloriesBurned ккал', style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
+                                Text('$_caloriesBurned ккал', style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
@@ -477,9 +426,9 @@ class _SportScreenState extends State<SportScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('ДИСТАНЦИЯ', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
+                                  Text(language==AppLanguage.kyrgyz?'Аралык':'Дистанция', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w600)),
                                   SizedBox(height: 2),
-                                  Text('${_distanceKm.toStringAsFixed(2)} км', style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
+                                  Text('${_distanceKm.toStringAsFixed(2)} км', style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600)),
                                 ],
                               ),
                             ),
@@ -496,9 +445,9 @@ class _SportScreenState extends State<SportScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('ПИК ПУЛЬСА', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w700)),
+                                Text('ПИК ПУЛЬСА', style: TextStyle(color: AppColors.muted, fontSize: 9, fontWeight: FontWeight.w600)),
                                 SizedBox(height: 2),
-                                Text('$_peakHr bpm', style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700)),
+                                Text('$_peakHr bpm', style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
@@ -514,7 +463,7 @@ class _SportScreenState extends State<SportScreen> {
                           child: OutlinedButton.icon(
                             onPressed: _togglePause,
                             icon: Icon(_isWorkoutPaused ? Icons.play_arrow : Icons.pause, size: 18),
-                            label: Text(_isWorkoutPaused ? 'ПРОДОЛЖИТЬ' : 'ПАУЗА'),
+                            label: Text(_isWorkoutPaused ? AppStrings.tr('sport_resume', language) : AppStrings.tr('sport_pause', language)),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.fg,
                               side: BorderSide(color: AppColors.line),
@@ -527,8 +476,8 @@ class _SportScreenState extends State<SportScreen> {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: _stopWorkout,
-                            icon: const Icon(Icons.stop, size: 18),
-                            label: const Text('ЗАВЕРШИТЬ'),
+                            icon: Icon(Icons.stop, size: 18),
+                            label: Text(AppStrings.tr('sport_finish', language)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.rose,
                               foregroundColor: AppColors.fg,
@@ -552,8 +501,8 @@ class _SportScreenState extends State<SportScreen> {
                         onPressed: _startWorkout,
                         icon: Icon(Icons.play_arrow, color: AppColors.stage),
                         label: Text(
-                          'НАЧАТЬ ТРЕНИРОВКУ (${_selectedSport.title.toUpperCase()})',
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4),
+                          '${AppStrings.tr('sport_start', language)} · ${_selectedSport.localizedTitle(language.code)}',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: -0.1),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.amber,
@@ -585,7 +534,7 @@ class _SportScreenState extends State<SportScreen> {
                             SizedBox(width: 6),
                             Text(
                               'Автораспознавание движений IMU',
-                              style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w700),
+                              style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -626,18 +575,18 @@ class _SportScreenState extends State<SportScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'НЕДЕЛЬНОЕ КАРДИО (ЗОНЫ 2 И 5)',
                         style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.8,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.1,
                         ),
                       ),
                       Text(
                         '152 / 200 мин (76%)',
-                        style: const TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -652,7 +601,7 @@ class _SportScreenState extends State<SportScreen> {
                     ),
                   ),
                   SizedBox(height: 6),
-                  const Text(
+                  Text(
                     '128 мин в Аэробной Зоне 2 + 24 мин интервалов в Зоне 5 обеспечивают омоложение миокарда.',
                     style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
                   ),
@@ -662,13 +611,13 @@ class _SportScreenState extends State<SportScreen> {
             SizedBox(height: 16),
 
             // История тренировок
-            const Text(
-              'ИСТОРИЯ ТРЕНИРОВОК',
+            Text(
+              AppStrings.tr('sport_history', language),
               style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.0,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
             ),
             SizedBox(height: 8),
@@ -706,7 +655,7 @@ class _SportScreenState extends State<SportScreen> {
                             children: [
                               Text(
                                 item.sport.title,
-                                style: TextStyle(color: AppColors.fg, fontSize: 13, fontWeight: FontWeight.w700),
+                                style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                               SizedBox(height: 2),
                               Text(
@@ -721,12 +670,12 @@ class _SportScreenState extends State<SportScreen> {
                           children: [
                             Text(
                               '+${item.strain} Strain',
-                              style: const TextStyle(color: AppColors.cyan, fontSize: 12, fontWeight: FontWeight.w800),
+                              style: TextStyle(color: AppColors.cyan, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                             SizedBox(height: 2),
                             Text(
                               '+${item.xpEarned} XP',
-                              style: const TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w700),
+                              style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),

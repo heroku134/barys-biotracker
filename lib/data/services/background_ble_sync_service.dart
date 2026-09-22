@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../domain/intelligence/readiness_engine.dart';
 import '../../domain/intelligence/strain_engine.dart';
+import '../../domain/intelligence/sleep_engine.dart';
 import 'ios_widget_service.dart';
+import '../storage/calibration_store.dart';
+import '../storage/day_snapshot_repository.dart';
 
 /// Сервис периодической фоновой синхронизации BLE-пакетов с часами СААТ-1
 class BackgroundBleSyncService {
@@ -34,7 +38,7 @@ class BackgroundBleSyncService {
       // Чтение текущих телеметрических данных с часов
       final telemetry = bridge.currentTelemetry;
       final readiness = ReadinessEngine.calculate(telemetry);
-      final currentStrain = telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 12.4;
+      final currentStrain = telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 0.0;
       final strainResult = StrainEngine.evaluate(
         currentStrain: currentStrain,
         recoveryZone: readiness.zone,
@@ -50,6 +54,15 @@ class BackgroundBleSyncService {
       );
 
       final prefs = await SharedPreferences.getInstance();
+      await DaySnapshotRepository.recordTelemetry(
+        telemetry,
+        recovery: readiness.score,
+        sleep: SleepEngine.calculate(telemetry: telemetry).sleepPerformanceScore,
+      );
+      await CalibrationStore.recordMorningSync(
+        hrv: telemetry.hrv > 0 ? telemetry.hrv : 64,
+        rhr: telemetry.restingHeartRate > 0 ? telemetry.restingHeartRate : 52,
+      );
       await prefs.setString(_prefKeyLastBackgroundSync, DateTime.now().toIso8601String());
 
       debugPrint('BackgroundBleSyncService: Synced successfully at ${DateTime.now()}');
@@ -61,6 +74,17 @@ class BackgroundBleSyncService {
   }
 
   /// Останавливает фоновый опрос
+  static const MethodChannel _channel = MethodChannel('sport.kalkan.biotracker/background');
+
+  /// Просит iOS поставить BGAppRefresh / Android — ничего, если канала нет.
+  static Future<void> requestNativeRefresh() async {
+    try {
+      await _channel.invokeMethod('scheduleRefresh');
+    } catch (e) {
+      debugPrint('BackgroundBleSyncService.requestNativeRefresh note: $e');
+    }
+  }
+
   static void stop() {
     _backgroundTimer?.cancel();
     _backgroundTimer = null;

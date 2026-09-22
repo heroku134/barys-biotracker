@@ -75,7 +75,7 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
             children: [
               Text(
                 'LIVE HEART RATE',
-                style: AppTypography.monoLabel,
+                style: AppTypography.monoLabel(),
               ),
               Row(
                 children: [
@@ -90,7 +90,7 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
                   SizedBox(width: 5),
                   Text(
                     'STREAMING',
-                    style: AppTypography.monoBadge.copyWith(
+                    style: AppTypography.monoBadge().copyWith(
                       color: AppColors.rose,
                       fontSize: 9,
                     ),
@@ -109,7 +109,7 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
             children: [
               Text(
                 '${widget.bpm}',
-                style: AppTypography.heroNumberMedium.copyWith(
+                style: AppTypography.heroNumberMedium().copyWith(
                   color: AppColors.rose,
                   fontSize: 36,
                 ),
@@ -117,12 +117,12 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
               SizedBox(width: 6),
               Text(
                 'BPM',
-                style: AppTypography.monoUnit.copyWith(
+                style: AppTypography.monoUnit().copyWith(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const Spacer(),
+              Spacer(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -130,14 +130,14 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
                     children: [
                       Text(
                         'REST  ',
-                        style: AppTypography.monoLabel.copyWith(
+                        style: AppTypography.monoLabel().copyWith(
                           fontSize: 9,
                           color: AppColors.textMuted,
                         ),
                       ),
                       Text(
                         '${widget.restingBpm}',
-                        style: AppTypography.metricValue.copyWith(fontSize: 12),
+                        style: AppTypography.metricValue().copyWith(fontSize: 12),
                       ),
                     ],
                   ),
@@ -146,14 +146,14 @@ class _PrecisionPulseWaveState extends State<PrecisionPulseWave>
                     children: [
                       Text(
                         'PEAK  ',
-                        style: AppTypography.monoLabel.copyWith(
+                        style: AppTypography.monoLabel().copyWith(
                           fontSize: 9,
                           color: AppColors.textMuted,
                         ),
                       ),
                       Text(
                         '${widget.peakBpm}',
-                        style: AppTypography.metricValue.copyWith(fontSize: 12),
+                        style: AppTypography.metricValue().copyWith(fontSize: 12),
                       ),
                     ],
                   ),

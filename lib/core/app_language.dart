@@ -5,7 +5,8 @@ import 'circa_haptics.dart';
 /// Поддерживаемые языки приложения CIRCA
 enum AppLanguage {
   russian(code: 'ru', title: 'Русский', shortTitle: 'RU', flag: '🇷🇺'),
-  kyrgyz(code: 'ky', title: 'Кыргызча', shortTitle: 'KG', flag: '🇰🇬');
+  kyrgyz(code: 'ky', title: 'Кыргызча', shortTitle: 'KG', flag: '🇰🇬'),
+  english(code: 'en', title: 'English', shortTitle: 'EN', flag: '🇬🇧');
 
   final String code;
   final String title;
@@ -21,6 +22,7 @@ enum AppLanguage {
 
   static AppLanguage fromCode(String? code) {
     if (code == 'ky') return AppLanguage.kyrgyz;
+    if (code == 'en') return AppLanguage.english;
     return AppLanguage.russian;
   }
 }
@@ -36,6 +38,18 @@ class AppLocaleNotifier extends ValueNotifier<AppLanguage> {
   static AppLanguage get current => instance.value;
   static bool get isKyrgyz => instance.value == AppLanguage.kyrgyz;
   static bool get isRussian => instance.value == AppLanguage.russian;
+  static bool get isEnglish => instance.value == AppLanguage.english;
+
+  static String pick(String ru, String ky, [String? en]) {
+    switch (instance.value) {
+      case AppLanguage.kyrgyz:
+        return ky;
+      case AppLanguage.english:
+        return en ?? ru;
+      case AppLanguage.russian:
+        return ru;
+    }
+  }
 
   /// Инициализация сохраненного языка при старте приложения
   static Future<void> init() async {

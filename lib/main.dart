@@ -4,7 +4,10 @@ import 'core/app_language.dart';
 import 'core/app_theme.dart';
 import 'data/ble/ute_ble_bridge.dart';
 import 'data/services/ios_widget_service.dart';
+import 'data/services/background_ble_sync_service.dart';
 import 'data/storage/user_profile_repository.dart';
+import 'data/storage/day_snapshot_repository.dart';
+import 'data/services/system_notification_service.dart';
 import 'domain/avatar/avatar_manager.dart';
 import 'presentation/screens/splash_screen.dart';
 
@@ -28,6 +31,13 @@ void main() async {
   await AvatarManager.init();
   final bleBridge = UteBleBridge();
   await bleBridge.init();
+  BackgroundBleSyncService.start(bleBridge);
+  await BackgroundBleSyncService.performSync(bleBridge);
+  await BackgroundBleSyncService.requestNativeRefresh();
+  await DaySnapshotRepository.seedPreviewIfEmpty(bleBridge.currentTelemetry);
+  await SystemNotificationService.requestAndSchedule(
+    ru: AppLocaleNotifier.current != AppLanguage.english,
+  );
   final profile = await UserProfileRepository.loadProfile();
 
   runApp(BarysBioTrackerApp(

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
+import '../../data/services/paired_pulse.dart';
+import '../../core/app_language.dart';
 import '../../data/ble/ute_ble_bridge.dart';
+import '../../data/storage/demo_mode_store.dart';
 import '../widgets/glass_card.dart';
 import 'device_pair_screen.dart';
 import 'firmware_update_screen.dart';
@@ -16,7 +19,6 @@ class DeviceSettingsScreen extends StatefulWidget {
 }
 
 class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
-  bool _fakeWatchMode = false;
   bool _antiLoss = true;
   bool _disconnectAlert = true;
   bool _smartAlarm = true;
@@ -24,10 +26,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   bool _isMeasuringHr = false;
 
   void _findWatch() {
-    HapticFeedback.heavyImpact();
-    widget.bleBridge.findWatch();
+    PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.find);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         backgroundColor: AppColors.surface,
         content: Row(
           children: [
@@ -53,7 +54,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     if (mounted) {
       setState(() => _isMeasuringHr = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: AppColors.surface,
           content: Row(
             children: [
@@ -80,7 +81,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         backgroundColor: AppColors.surface,
         content: Row(
           children: [
-            const Icon(Icons.sync, color: AppColors.sage, size: 20),
+            Icon(Icons.sync, color: AppColors.sage, size: 20),
             SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -100,33 +101,36 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Сброс до заводских настроек?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
-        content: const Text(
+        title: Text(tr('Сброс до заводских настроек?', 'Баштапкы абалга кайтаруу?'), style: TextStyle(color: AppColors.fg, fontSize: 16)),
+        content: Text(
           'Все несохраненные кэшированные данные на браслете будут очищены, а связь разорвана.',
           style: TextStyle(color: AppColors.muted, fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
+            child: Text(tr('Отмена', 'Жок'), style: TextStyle(color: AppColors.muted)),
           ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
               widget.bleBridge.disconnect();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   backgroundColor: AppColors.surface,
                   content: Text('Браслет сброшен до заводских настроек', style: TextStyle(color: AppColors.rose)),
                 ),
               );
             },
-            child: const Text('СБРОСИТЬ', style: TextStyle(color: AppColors.rose, fontWeight: FontWeight.w700)),
+            child: Text(tr('Сбросить', 'Кайтаруу'), style: TextStyle(color: AppColors.rose, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
   }
+
+  bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
+  String tr(String r, String k) => _ru ? r : k;
 
   @override
   Widget build(BuildContext context) {
@@ -145,28 +149,28 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'УПРАВЛЕНИЕ УСТРОЙСТВОМ',
+              tr('Часы', 'Саат'),
               style: TextStyle(
                 color: AppColors.muted,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.0,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
             ),
             Text(
-              'Часы KALKAN СААТ-1',
+              tr('Часы КАЛКАН СААТ-1', 'КАЛКАН СААТ-1 сааты'),
               style: TextStyle(
                 color: AppColors.fg,
                 fontSize: 16,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.bluetooth_searching, color: AppColors.amber),
-            tooltip: 'Поиск другого браслета',
+            icon: Icon(Icons.bluetooth_searching, color: AppColors.amber),
+            tooltip: tr('Поиск другого браслета', 'Башка билерикти издөө'),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -214,12 +218,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                               style: TextStyle(
                                 color: AppColors.fg,
                                 fontSize: 16,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             SizedBox(height: 2),
                             Text(
-                              telemetry.isConnected ? 'На связи (BLE 5.3 Nordic)' : 'Отключено',
+                              telemetry.isConnected ? tr('На связи', 'Туташкан') : tr('Отключено', 'Өчүк'),
                               style: TextStyle(
                                 color: telemetry.isConnected ? AppColors.sage : AppColors.muted,
                                 fontSize: 12,
@@ -238,14 +242,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.battery_charging_full, color: AppColors.sage, size: 14),
+                            Icon(Icons.battery_charging_full, color: AppColors.sage, size: 14),
                             SizedBox(width: 4),
                             Text(
                               '${telemetry.batteryLevel}%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.sage,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -254,7 +258,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                     ],
                   ),
                   SizedBox(height: 16),
-                  const Divider(color: AppColors.line, height: 1),
+                  Divider(color: AppColors.line, height: 1),
                   SizedBox(height: 12),
                   InkWell(
                     onTap: () => FirmwareUpdateScreen.open(context, watchBattery: telemetry.batteryLevel),
@@ -266,7 +270,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                         children: [
                           Row(
                             children: [
-                              Text('Прошивка: v1.2.4', style: TextStyle(color: AppColors.muted, fontSize: 11)),
+                              Text(tr('Прошивка: v1.2.4', 'Прошивка: v1.2.4'), style: TextStyle(color: AppColors.muted, fontSize: 11)),
                               SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -275,16 +279,16 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'v1.3.0 OTA',
-                                  style: TextStyle(color: AppColors.amber, fontSize: 9, fontWeight: FontWeight.w700),
+                                  style: TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w600),
                                 ),
                               ),
                             ],
                           ),
                           Row(
-                            children: const [
-                              Text('Обновить', style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w600)),
+                            children: [
+                              Text(tr('Обновить', 'Жаңыртуу'), style: TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w500)),
                               SizedBox(width: 4),
                               Icon(Icons.arrow_forward_ios, size: 9, color: AppColors.amber),
                             ],
@@ -303,10 +307,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _findWatch,
-                icon: const Icon(Icons.vibration, size: 18),
-                label: const Text(
-                  'НАЙТИ БРАСЛЕТ (ВИБРАЦИЯ)',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
+                icon: Icon(Icons.vibration, size: 18),
+                label: Text(
+                  tr('Найти браслет', 'Билерикти табуу'),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: -0.1),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.amber,
@@ -319,13 +323,13 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             ),
             SizedBox(height: 20),
 
-            const Text(
-              'ФУНКЦИИ И АВТОМАТИЗАЦИЯ',
+            Text(
+              tr('Функции часов', 'Сааттын функциялары'),
               style: TextStyle(
                 color: AppColors.muted,
                 fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.0,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
             ),
             SizedBox(height: 10),
@@ -344,29 +348,30 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                             Icon(Icons.bolt, color: AppColors.amber, size: 16),
                             SizedBox(width: 6),
                             Text(
-                              'Fake Watch Mode',
-                              style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                              tr('Демо-режим', 'Демо режим'),
+                              style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Эмуляция сенсоров (пульс, сон, шаги) без физического чипа',
+                          tr('Эмуляция сенсоров без часов', 'Сенсорлорду эмуляциялоо'),
                           style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
                         ),
                       ],
                     ),
                   ),
                   Switch(
-                    value: _fakeWatchMode,
+                    value: DemoModeStore.enabled.value,
                     activeThumbColor: AppColors.amber,
-                    onChanged: (val) {
-                      setState(() => _fakeWatchMode = val);
+                    onChanged: (val) async {
+                      await DemoModeStore.setEnabled(val);
+                      setState(() {});
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           backgroundColor: AppColors.surface,
                           content: Text(
-                            val ? 'Fake Watch Mode активирован' : 'Режим переключен на физический BLE чип',
+                            val ? tr('Эмуляция включена', 'Эмуляция күйдү') : tr('Физические часы', 'Чыныгы саат'),
                             style: TextStyle(color: AppColors.fg),
                           ),
                         ),
@@ -388,12 +393,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Антипотеря (Anti-Loss)',
-                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                          tr('Антипотеря', 'Жоготууга каршы'),
+                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Сигнал на смартфоне при отдалении браслета (>10 метров)',
+                          tr('Сигнал, если браслет дальше 10 метров', 'Билерик 10 метрден алыс болсо сигнал'),
                           style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
                         ),
                       ],
@@ -419,12 +424,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Оповещение об отключении',
-                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                          tr('Оповещение об отключении', 'Үзүлгөндө эскертме'),
+                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Мгновенный пуш при разрыве Bluetooth связи',
+                          tr('Пуш при разрыве Bluetooth', 'Bluetooth үзүлгөндө билдирме'),
                           style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
                         ),
                       ],
@@ -450,12 +455,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Умный будильник (Smart Alarm)',
-                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                          tr('Умный будильник', 'Акылдуу ойготкуч'),
+                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Бесшумное пробуждение вибрацией в легкой фазе сна',
+                          tr('Вибрация в лёгкой фазе сна', 'Жеңил уйку фазасында титирөө'),
                           style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
                         ),
                       ],
@@ -481,12 +486,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Напоминание о гидратации',
-                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                          tr('Напоминание пить воду', 'Суу ичүү эскертмеси'),
+                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Легкая вибрация каждые 2 часа в течение дня',
+                          tr('Вибрация каждые 2 часа', 'Ар 2 саатта титирөө'),
                           style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
                         ),
                       ],
@@ -514,10 +519,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                             height: 14,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.rose),
                           )
-                        : const Icon(Icons.favorite, color: AppColors.rose, size: 16),
+                        : Icon(Icons.favorite, color: AppColors.rose, size: 16),
                     label: Text(
-                      _isMeasuringHr ? 'ИЗМЕРЕНИЕ...' : 'ЗАМЕР ПУЛЬСА',
-                      style: TextStyle(color: AppColors.fg, fontSize: 11, fontWeight: FontWeight.w700),
+                      _isMeasuringHr ? tr('Измерение…', 'Өлчөө…') : tr('Замер пульса', 'Пульсту өлчөө'),
+                      style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColors.line),
@@ -530,10 +535,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _syncTime,
-                    icon: const Icon(Icons.access_time, color: AppColors.sage, size: 16),
-                    label: const Text(
-                      'СИНХР. ВРЕМЯ',
-                      style: TextStyle(color: AppColors.fg, fontSize: 11, fontWeight: FontWeight.w700),
+                    icon: Icon(Icons.access_time, color: AppColors.sage, size: 16),
+                    label: Text(
+                      tr('Синхр. время', 'Убакытты шайкештирүү'),
+                      style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColors.line),
@@ -550,9 +555,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             Center(
               child: TextButton.icon(
                 onPressed: _confirmReset,
-                icon: const Icon(Icons.restore, color: AppColors.rose, size: 16),
-                label: const Text(
-                  'Сбросить браслет до заводских настроек',
+                icon: Icon(Icons.restore, color: AppColors.rose, size: 16),
+                label: Text(
+                  tr('Сбросить браслет', 'Билерикти баштапкы абалга'),
                   style: TextStyle(color: AppColors.rose, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),

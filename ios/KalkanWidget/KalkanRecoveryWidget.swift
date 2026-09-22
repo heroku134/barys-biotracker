@@ -64,16 +64,16 @@ struct BiometricProvider: TimelineProvider {
 
         return BiometricEntry(
             date: Date(),
-            recoveryScore: score == 0 ? 94 : score,
+            recoveryScore: score,
             recoveryZone: zone,
-            currentStrain: strain == 0.0 ? 12.4 : strain,
-            targetStrainMax: targetMax == 0.0 ? 13.8 : targetMax,
-            heartRate: bpm == 0 ? 72 : bpm,
-            restingHeartRate: rhr == 0 ? 52 : rhr,
-            hrv: hrvVal == 0 ? 64 : hrvVal,
-            sleepHours: sHours == 0 ? 7 : sHours,
-            sleepMinutes: sMins == 0 ? 48 : sMins,
-            sleepScore: sScore == 0 ? 88 : sScore
+            currentStrain: strain,
+            targetStrainMax: targetMax,
+            heartRate: bpm,
+            restingHeartRate: rhr,
+            hrv: hrvVal,
+            sleepHours: sHours,
+            sleepMinutes: sMins,
+            sleepScore: sScore
         )
     }
 }

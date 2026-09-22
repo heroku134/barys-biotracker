@@ -9,12 +9,15 @@ import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/stress_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../data/history/biometrics_history_repository.dart';
+import '../../data/storage/day_snapshot_repository.dart';
+import '../../data/storage/demo_mode_store.dart';
 import '../widgets/circa_healthspan_card.dart';
 import '../widgets/circa_hypnogram.dart';
 import '../widgets/circa_sparkline.dart';
 import '../widgets/circa_stress_timeline.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/metric_dial.dart';
+import '../widgets/weekly_metric_chart.dart';
 import '../../domain/intelligence/readiness_engine.dart';
 
 class AnalyticsScreen extends StatefulWidget {
@@ -29,6 +32,37 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int _selectedPeriod = 1; // 0: 24ч, 1: 7д, 2: 30д, 3: 6мес
   final _baseline = const PersonalBaseline();
+  List<DaySnapshot> _week = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWeek();
+  }
+
+  Future<void> _loadWeek() async {
+    await DaySnapshotRepository.seedPreviewIfEmpty(widget.bleBridge.currentTelemetry);
+    final rec = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry, baseline: _baseline);
+    await DaySnapshotRepository.recordTelemetry(
+      widget.bleBridge.currentTelemetry,
+      recovery: rec.score,
+      sleep: SleepEngine.calculate(telemetry: widget.bleBridge.currentTelemetry, baseline: _baseline).sleepPerformanceScore,
+    );
+    final week = await DaySnapshotRepository.lastDays(7);
+    if (mounted) setState(() => _week = week);
+  }
+
+  List<HistoricalPoint> _pts(double Function(DaySnapshot s) pick) {
+    if (_week.isEmpty) return const [];
+    return [
+      for (final s in _week)
+        HistoricalPoint(
+          timestamp: DateTime.tryParse(s.dateKey) ?? DateTime.now(),
+          value: pick(s),
+          label: s.dateKey.substring(5).replaceAll('-', '.'),
+        )
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +71,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       telemetry: telemetry,
       baseline: _baseline,
     );
-    final stressSummary = StressEngine.analyze(currentScore: telemetry.currentStressScore);
+    final stressSummary = StressEngine.analyze(
+      currentScore: telemetry.currentStressScore,
+      heartRate: telemetry.heartRate,
+      restingHeartRate: telemetry.restingHeartRate,
+      hrv: telemetry.hrv,
+      meanHrv: _baseline.meanHrv,
+      sleepMinutes: telemetry.sleepMinutes,
+      dayStrain: telemetry.currentDayStrain,
+    );
     final healthspan = HealthspanEngine.calculate(
       restingHeartRate: telemetry.restingHeartRate,
       weeklyZone2Minutes: 160,
@@ -48,8 +90,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
+        final palette = KalkanColors.of(context);
         return Scaffold(
-          backgroundColor: AppColors.stage,
+          backgroundColor: palette.bg,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -85,8 +128,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ),
                 MetricDial(
                   label: AppStrings.tr('home_strain', language),
-                  value: (telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 12.4).toStringAsFixed(1),
-                  progress: ((telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 12.4) / 21).clamp(0.0, 1.0),
+                  value: (telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 0).toStringAsFixed(1),
+                  progress: ((telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 0) / 21).clamp(0.0, 1.0),
                   color: AppColors.strainBlue,
                   size: 88,
                 ),
@@ -111,7 +154,30 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               ),
             ),
             SizedBox(height: 16),
-
+            WeeklyMetricChart(
+              title: language == AppLanguage.kyrgyz ? 'Уйку, 7 күн' : 'Сон, 7 дней',
+              unit: '%',
+              points: _pts((s) => s.sleep.toDouble()).isNotEmpty ? _pts((s) => s.sleep.toDouble()) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getSleepHistory(_currentHistoryPeriod) : const []),
+              color: AppColors.sleepBlue,
+              maxValue: 100,
+            ),
+            const SizedBox(height: 12),
+            WeeklyMetricChart(
+              title: language == AppLanguage.kyrgyz ? 'Калыбына келүү, 7 күн' : 'Восстановление, 7 дней',
+              unit: '%',
+              points: _pts((s) => s.recovery.toDouble()).isNotEmpty ? _pts((s) => s.recovery.toDouble()) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getRecoveryHistory(_currentHistoryPeriod) : const []),
+              color: AppColors.sage,
+              maxValue: 100,
+            ),
+            const SizedBox(height: 12),
+            WeeklyMetricChart(
+              title: language == AppLanguage.kyrgyz ? 'Жүктөм, 7 күн' : 'Нагрузка, 7 дней',
+              unit: '',
+              points: _pts((s) => s.strain).isNotEmpty ? _pts((s) => s.strain) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getStrainHistory(_currentHistoryPeriod) : const []),
+              color: AppColors.strainBlue,
+              maxValue: 21,
+            ),
+            const SizedBox(height: 16),
             // 1. Профиль пульса (ЧСС) по периодам
             GlassCard(
               child: Column(
@@ -125,13 +191,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.8,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.1,
                         ),
                       ),
                       Text(
                         'Покой: ${telemetry.restingHeartRate} уд/мин',
-                        style: const TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -175,7 +241,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       color: AppColors.amber.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
+                    child: Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
                   ),
                   SizedBox(width: 12),
                   Expanded(
@@ -187,8 +253,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           style: TextStyle(
                             color: AppColors.amber,
                             fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.1,
                           ),
                         ),
                         SizedBox(height: 2),
@@ -197,7 +263,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         SizedBox(height: 2),
@@ -255,7 +321,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 SizedBox(width: 8),
                 Text(
                   'ФИЗИОЛОГИЧЕСКИЙ ЦИКЛ И ВАРИАТИВНОСТЬ',
-                  style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                  style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: -0.1),
                 ),
               ],
             ),
@@ -292,7 +358,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   Expanded(
                     child: Text(
                       'Текущая фаза: Фолликулярная (Эстроген ↑, ВСР на пике, оптимум для тренировок)',
-                      style: TextStyle(color: AppColors.amber, fontSize: 11.5, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: AppColors.amber, fontSize: 11.5, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -342,7 +408,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           children: [
             Text('00:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('06:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('12:00 (Пик)', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
+            Text('12:00 (Пик)', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
             Text('18:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('23:59', style: TextStyle(color: AppColors.faint, fontSize: 10)),
           ],
@@ -357,7 +423,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Text('Чт', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('Пт', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('Сб', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Вс', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
+            Text('Вс', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         );
       case 2:
@@ -367,7 +433,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             Text('1-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('2-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('3-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('4-я нед', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
+            Text('4-я нед', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         );
       case 3:
@@ -376,7 +442,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           children: [
             Text('6 мес назад', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('3 мес назад', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Текущий месяц', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w700)),
+            Text('Текущий месяц', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         );
       default:
