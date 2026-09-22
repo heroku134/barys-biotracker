@@ -38,7 +38,7 @@ class PartnerCycleRepository {
   /// Привязка партнера по инвайт-коду
   static Future<void> linkPartner({
     required String partnerCode,
-    required String partnerName,
+    String? partnerName,
     int cycleDay = 14,
     int cycleLength = 28,
   }) async {
@@ -46,9 +46,13 @@ class PartnerCycleRepository {
     final phase = MenstrualCycleEngine.determinePhase(cycleDay, cycleLength: cycleLength);
     final tempDelta = MenstrualCycleEngine.expectedThermalDelta(cycleDay, cycleLength: cycleLength);
 
+    final resolvedName = (partnerName != null && partnerName.trim().isNotEmpty)
+        ? partnerName.trim()
+        : 'Партнёр';
+
     final linkedData = PartnerCycleData(
       isLinked: true,
-      partnerName: partnerName.trim(),
+      partnerName: resolvedName,
       partnerCode: partnerCode.trim(),
       cycleDay: cycleDay,
       cycleLength: cycleLength,
@@ -68,7 +72,12 @@ class PartnerCycleRepository {
   /// Отвязка партнёра
   static Future<void> unlinkPartner() async {
     final current = notifier.value;
-    final unlinked = current.copyWith(isLinked: false, lastSyncTime: DateTime.now());
+    final unlinked = current.copyWith(
+      isLinked: false,
+      partnerName: '',
+      partnerCode: '',
+      lastSyncTime: DateTime.now(),
+    );
     await savePartnerCycle(unlinked);
   }
 

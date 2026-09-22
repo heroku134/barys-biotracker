@@ -5,6 +5,8 @@ import 'package:barys_biotracker/data/storage/private_league_repository.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:barys_biotracker/data/storage/partner_cycle_repository.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -68,6 +70,32 @@ void main() {
       final league = await PrivateLeagueRepository.loadLeague();
       expect(league.members.isNotEmpty, isTrue);
       expect(league.members.any((m) => m.isCurrentUser), isTrue);
+    });
+
+    test('PartnerCycleRepository handles linking with and without name, and clean unlinking', () async {
+      final initial = await PartnerCycleRepository.loadPartnerCycle();
+      expect(initial.isLinked, isFalse);
+
+      // Auto-name fallback when empty
+      await PartnerCycleRepository.linkPartner(partnerCode: 'KLK-1234');
+      final linkedAuto = await PartnerCycleRepository.loadPartnerCycle();
+      expect(linkedAuto.isLinked, isTrue);
+      expect(linkedAuto.partnerName, 'Партнёр');
+      expect(linkedAuto.partnerCode, 'KLK-1234');
+
+      // Named link
+      await PartnerCycleRepository.linkPartner(partnerCode: 'KLK-5678', partnerName: 'Айпери');
+      final linkedNamed = await PartnerCycleRepository.loadPartnerCycle();
+      expect(linkedNamed.isLinked, isTrue);
+      expect(linkedNamed.partnerName, 'Айпери');
+      expect(linkedNamed.partnerCode, 'KLK-5678');
+
+      // Clean unlinking
+      await PartnerCycleRepository.unlinkPartner();
+      final unlinked = await PartnerCycleRepository.loadPartnerCycle();
+      expect(unlinked.isLinked, isFalse);
+      expect(unlinked.partnerName, isEmpty);
+      expect(unlinked.partnerCode, isEmpty);
     });
   });
 }

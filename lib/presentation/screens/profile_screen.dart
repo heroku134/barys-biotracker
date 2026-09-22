@@ -547,7 +547,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _openPartnerLinkDialog() {
     final codeCtrl = TextEditingController();
-    final nameCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -555,22 +554,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: Text(_ru ? 'Код партнёра' : 'Өнөктөштүн коду', style: TextStyle(color: AppColors.fg)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(controller: codeCtrl, decoration: InputDecoration(labelText: _ru ? 'Код' : 'Код')),
-            TextField(controller: nameCtrl, decoration: InputDecoration(labelText: _ru ? 'Имя' : 'Аты')),
+            Text(
+              _ru
+                  ? 'Введите код приглашения. Имя и фаза цикла определятся автоматически.'
+                  : 'Чакыруу кодун киргизиңиз. Аты жана цикли автоматтык түрдө аныкталат.',
+              style: TextStyle(color: AppColors.secondary, fontSize: 13, height: 1.35),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: codeCtrl,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                labelText: _ru ? 'Код' : 'Код',
+                hintText: 'KALKAN-XXXX',
+              ),
+            ),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: Text(_ru ? 'Отмена' : 'Жок')),
           TextButton(
             onPressed: () async {
+              final code = codeCtrl.text.trim();
+              if (code.isEmpty) return;
               Navigator.pop(ctx);
-              await PartnerCycleRepository.linkPartner(
-                partnerCode: codeCtrl.text.trim(),
-                partnerName: nameCtrl.text.trim().isEmpty ? nameCtrl.text.trim() : nameCtrl.text.trim(),
-                cycleDay: 14,
-                cycleLength: 28,
-              );
+              await CloudSyncService.linkPartner(code);
               await _loadPartnerCycle();
             },
             child: Text(_ru ? 'Привязать' : 'Байлоо'),

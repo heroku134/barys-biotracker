@@ -83,9 +83,11 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
         sex.add(k.replaceFirst('cycle_log_', '').replaceAll('_sex', ''));
       }
     }
+    final cloudCode = await CloudSyncService.publishCycleInvite();
     if (!mounted) return;
     setState(() {
       _profile = p.copyWith(gender: Gender.female);
+      _partnerInviteCode = cloudCode;
       _loggedDates.addAll(marks);
       _sexDates
         ..clear()
@@ -552,7 +554,12 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     );
   }
 
-  void _openPartnerSheet() {
+  Future<void> _openPartnerSheet() async {
+    final code = await CloudSyncService.publishCycleInvite();
+    if (mounted) {
+      setState(() => _partnerInviteCode = code);
+    }
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -562,25 +569,63 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_ru ? 'Партнёр' : 'Өнөктөш', style: TextStyle(color: AppColors.fg, fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(_ru ? 'Пригласить партнёра' : 'Өнөктөштү чакыруу', style: TextStyle(color: AppColors.fg, fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Text(_ru ? 'Код: $_partnerInviteCode' : 'Код: $_partnerInviteCode', style: TextStyle(color: AppColors.secondary)),
-            const SizedBox(height: 12),
-            Row(children: [
-              ElevatedButton(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: _partnerInviteCode));
-                  Navigator.pop(ctx);
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.sage, foregroundColor: Colors.white, elevation: 0),
-                child: Text(_ru ? 'Копировать' : 'Көчүрүү'),
+            Text(
+              _ru
+                  ? 'Передайте этот код партнёру. В его приложении ваши имя и фаза определятся автоматически.'
+                  : 'Бул кодду өнөктөшүңүзгө бериңиз. Анын колдонмосунда атыңыз жана фазаңыз автоматтык түрдө чыгат.',
+              style: TextStyle(color: AppColors.secondary, fontSize: 13, height: 1.35),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.raised,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.line),
               ),
-              TextButton(
-                onPressed: () {
-                  setState(() => _partnerLinked = !_partnerLinked);
-                  Navigator.pop(ctx);
-                },
-                child: Text(_partnerLinked ? (_ru ? 'Отключить' : 'Өчүрүү') : (_ru ? 'Связано' : 'Байланды')),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _partnerInviteCode,
+                      style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.copy, size: 18, color: AppColors.sage),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _partnerInviteCode));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(_ru ? 'Код скопирован: $_partnerInviteCode' : 'Код көчүрүлдү: $_partnerInviteCode'),
+                          backgroundColor: AppColors.surface,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: _partnerInviteCode));
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(_ru ? 'Код скопирован: $_partnerInviteCode' : 'Код көчүрүлдү: $_partnerInviteCode'),
+                        backgroundColor: AppColors.surface,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.copy, size: 16),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.sage, foregroundColor: Colors.white, elevation: 0),
+                  label: Text(_ru ? 'Скопировать код' : 'Кодду көчүрүү'),
+                ),
               ),
             ]),
           ],

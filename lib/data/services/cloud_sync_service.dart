@@ -18,7 +18,10 @@ class CloudSyncService {
     return FirebaseFirestore.instance;
   }
 
-  static String? get uid => FirebaseAuth.instance.currentUser?.uid;
+  static String? get uid {
+    if (Firebase.apps.isEmpty) return null;
+    return FirebaseAuth.instance.currentUser?.uid;
+  }
 
   static Future<void> pushProfile(UserProfile profile) async {
     final db = _db;
@@ -173,11 +176,32 @@ class CloudSyncService {
     }
   }
 
+  static Future<String> publishCycleInvite() async {
+    final db = _db;
+    final id = uid;
+    final profile = UserProfileRepository.profileNotifier.value;
+    final nameSeed = profile.name.isNotEmpty ? profile.name : '0000';
+    final code = 'KALKAN-${(id ?? nameSeed).hashCode.abs().toString().padLeft(4, '0').substring(0, 4)}';
+    if (db == null || id == null) return code;
+    try {
+      await db.collection('invites').doc(code).set({
+        'ownerUid': id,
+        'type': 'cycle',
+        'name': profile.name.isNotEmpty ? profile.name : 'Партнёр',
+        'createdAt': FieldValue.serverTimestamp(),
+      }).timeout(const Duration(seconds: 4));
+    } catch (e) {
+      debugPrint('CloudSync.publishCycleInvite: $e');
+    }
+    return code;
+  }
+
   static Future<void> pushCycle(PartnerCycleData data) async {
     final db = _db;
     final id = uid;
     if (db == null || id == null) return;
     try {
+      final profile = UserProfileRepository.profileNotifier.value;
       await db.collection('cycle').doc(id).set({
         'cycleDay': data.cycleDay,
         'cycleLength': data.cycleLength,
@@ -187,7 +211,7 @@ class CloudSyncService {
         'energyScore': data.energyScore,
         'symptoms': data.symptoms,
         'note': data.note,
-        'partnerName': data.partnerName,
+        'partnerName': profile.name.isNotEmpty ? profile.name : data.partnerName,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
     } catch (e) {
@@ -195,24 +219,46 @@ class CloudSyncService {
     }
   }
 
-  static Future<bool> linkPartner(String code, String name) async {
+  static Future<bool> linkPartner(String code, [String? name]) async {
     final db = _db;
     final id = uid;
     final raw = code.trim().toUpperCase();
-    if (db == null || id == null || raw.isEmpty) return false;
+    if (raw.isEmpty) return false;
+
+    String resolvedName = (name ?? '').trim();
+
     try {
-      final inv = await db.collection('invites').doc(raw).get().timeout(const Duration(seconds: 4));
-      if (!inv.exists) return false;
-      final owner = inv.data()?['ownerUid'] as String?;
-      if (owner == null) return false;
-      await db.collection('partners').doc(id).set({'partnerUid': owner, 'code': raw}).timeout(const Duration(seconds: 4));
-      await PartnerCycleRepository.linkPartner(partnerCode: raw, partnerName: name);
-      await pullPartnerCycle();
-      return true;
+      if (db != null && id != null) {
+        final inv = await db.collection('invites').doc(raw).get().timeout(const Duration(seconds: 4));
+        if (inv.exists) {
+          final owner = inv.data()?['ownerUid'] as String?;
+          final inviteName = inv.data()?['name'] as String?;
+          if (resolvedName.isEmpty && inviteName != null && inviteName.isNotEmpty) {
+            resolvedName = inviteName;
+          }
+          if (owner != null) {
+            await db.collection('partners').doc(id).set({'partnerUid': owner, 'code': raw}).timeout(const Duration(seconds: 4));
+            try {
+              final userDoc = await db.collection('users').doc(owner).get().timeout(const Duration(seconds: 3));
+              final userName = userDoc.data()?['name'] as String?;
+              if (userName != null && userName.isNotEmpty) {
+                resolvedName = userName;
+              }
+            } catch (_) {}
+          }
+        }
+      }
     } catch (e) {
       debugPrint('CloudSync.linkPartner: $e');
-      return false;
     }
+
+    if (resolvedName.isEmpty) {
+      resolvedName = 'Партнёр';
+    }
+
+    await PartnerCycleRepository.linkPartner(partnerCode: raw, partnerName: resolvedName);
+    await pullPartnerCycle();
+    return true;
   }
 
   static Future<void> pullPartnerCycle() async {
@@ -227,8 +273,10 @@ class CloudSyncService {
       final d = doc.data();
       if (d == null) return;
       final current = await PartnerCycleRepository.loadPartnerCycle();
+      final cloudName = d['partnerName'] as String?;
       await PartnerCycleRepository.savePartnerCycle(current.copyWith(
         isLinked: true,
+        partnerName: cloudName != null && cloudName.isNotEmpty ? cloudName : (current.partnerName.isNotEmpty ? current.partnerName : 'Партнёр'),
         cycleDay: (d['cycleDay'] as num?)?.toInt() ?? current.cycleDay,
         cycleLength: (d['cycleLength'] as num?)?.toInt() ?? current.cycleLength,
         mood: d['mood'] as String? ?? current.mood,

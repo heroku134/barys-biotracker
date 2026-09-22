@@ -575,31 +575,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-            if (_userProfile.gender != Gender.female)
+            if (_userProfile.gender != Gender.female && _partner != null && _partner!.isLinked)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: _partner != null && (_partner!.isLinked || _partner!.partnerName.isNotEmpty)
-                      ? CircaPartnerCycleCard(
-                          data: _partner!,
-                          onTap: () => CircaPartnerCycleSheet.show(context, _partner!),
-                        )
-                      : GlassCard(
-                          onTap: () {
-                            CircaPartnerCycleSheet.show(context, _partner ?? PartnerCycleData(lastSyncTime: DateTime.now()));
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(AppLocaleNotifier.pick('Цикл партнёра', 'Өнөктөштүн цикли', 'Partner cycle'), style: AppTypography.bodySemibold(palette.fg)),
-                              const SizedBox(height: 6),
-                              Text(
-                                AppLocaleNotifier.pick('Привяжите её код — фаза, день, энергия и самочувствие будут здесь.', 'Кодду байлаңыз.', 'Link her code to see phase, day and energy here.'),
-                                style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
-                              ),
-                            ],
-                          ),
-                        ),
+                  child: CircaPartnerCycleCard(
+                    data: _partner!,
+                    onTap: () => CircaPartnerCycleSheet.show(context, _partner!),
+                  ),
                 ),
               ),
             SliverToBoxAdapter(
