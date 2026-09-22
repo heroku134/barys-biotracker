@@ -9,6 +9,7 @@ import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/partner_cycle_repository.dart';
 import '../../data/storage/user_profile_repository.dart';
+import '../../data/services/cloud_sync_service.dart';
 import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
@@ -92,7 +93,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
       _sexDates
         ..clear()
         ..addAll(sex);
-      if (partner != null && partner.isLinked) _partnerLinked = true;
+      if (partner.isLinked) _partnerLinked = true;
     });
     await _loadDay(_selectedDate);
   }
