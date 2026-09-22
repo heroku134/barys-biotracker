@@ -28,7 +28,6 @@ class WorkoutSummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = KalkanColors.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final ru = AppLocaleNotifier.current != AppLanguage.kyrgyz;
     final after = dayStrainBefore + workout.strain;
     final budget = StrainEngine.evaluate(currentStrain: after, recoveryZone: recoveryZone);
 
@@ -40,13 +39,13 @@ class WorkoutSummaryScreen extends StatelessWidget {
         backgroundColor: palette.bg,
         elevation: 0,
         title: Text(
-          ru ? 'Отчёт о тренировке' : 'Машыгуунун отчёту',
+          AppLocaleNotifier.pick('Отчёт о тренировке', 'Машыгуунун отчёту', 'Workout Report'),
           style: AppTypography.screenTitle(palette.fg),
         ),
         actions: [
           IconButton(
             icon: Icon(Icons.ios_share, color: palette.secondary),
-            tooltip: ru ? 'Поделиться отчетом' : 'Бөлүшүү',
+            tooltip: AppLocaleNotifier.pick('Поделиться отчетом', 'Бөлүшүү', 'Share Report'),
             onPressed: () {
               CircaHaptics.selectionClick();
               final text = '''
@@ -117,12 +116,12 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _heroStat(palette, ru ? 'Время' : 'Убакыт', workout.durationFormatted),
+                    _heroStat(palette, AppLocaleNotifier.pick('Время', 'Убакыт', 'Time'), workout.durationFormatted),
                     if (workout.distanceKm > 0)
-                      _heroStat(palette, ru ? 'Дистанция' : 'Аралык', '${workout.distanceKm.toStringAsFixed(2)} км'),
+                      _heroStat(palette, AppLocaleNotifier.pick('Дистанция', 'Аралык', 'Distance'), '${workout.distanceKm.toStringAsFixed(2)} км'),
                     if (workout.distanceKm > 0)
-                      _heroStat(palette, ru ? 'Ср. темп' : 'Орт. темп', workout.paceFormatted),
-                    _heroStat(palette, ru ? 'Ккал' : 'Ккал', '${workout.calories}'),
+                      _heroStat(palette, AppLocaleNotifier.pick('Ср. темп', 'Орт. темп', 'Avg. Pace'), workout.paceFormatted),
+                    _heroStat(palette, AppLocaleNotifier.pick('Ккал', 'Ккал', 'Calories'), '${workout.calories}'),
                   ],
                 ),
               ],
@@ -132,7 +131,7 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
 
           // 3. Блок данных с часов СААТ-1
           Text(
-            ru ? 'БИОМЕТРИЯ С ЧАСОВ СААТ-1' : 'СААТ-1 БИОМЕТРИЯСЫ',
+            AppLocaleNotifier.pick('БИОМЕТРИЯ С ЧАСОВ СААТ-1', 'СААТ-1 БИОМЕТРИЯСЫ', 'СААТ-1 WATCH BIOMETRICS'),
             style: TextStyle(
               color: palette.secondary,
               fontSize: 11,
@@ -149,24 +148,24 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
               children: [
                 Row(
                   children: [
-                    _bioTile(palette, Icons.favorite, AppColors.rose, ru ? 'Пульс ср.' : 'Орт. пульс', '${workout.avgHr} bpm'),
+                    _bioTile(palette, Icons.favorite, AppColors.rose, AppLocaleNotifier.pick('Пульс ср.', 'Орт. пульс', 'Avg HR'), '${workout.avgHr} bpm'),
                     const SizedBox(width: 10),
-                    _bioTile(palette, Icons.bolt, AppColors.amber, ru ? 'Пульс макс.' : 'Макс. пульс', '${workout.maxHr} bpm'),
+                    _bioTile(palette, Icons.bolt, AppColors.amber, AppLocaleNotifier.pick('Пульс макс.', 'Макс. пульс', 'Max HR'), '${workout.maxHr} bpm'),
                   ],
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _bioTile(palette, Icons.directions_walk, AppColors.sage, ru ? 'Шаги' : 'Кадамдар', '${workout.steps > 0 ? workout.steps : (workout.durationSeconds * 2.5).toInt()}'),
+                    _bioTile(palette, Icons.directions_walk, AppColors.sage, AppLocaleNotifier.pick('Шаги', 'Кадамдар', 'Steps'), '${workout.steps > 0 ? workout.steps : (workout.durationSeconds * 2.5).toInt()}'),
                     const SizedBox(width: 10),
-                    _bioTile(palette, Icons.speed, const Color(0xFF2563EB), ru ? 'Каденс' : 'Каденс', '${workout.cadence > 0 ? workout.cadence : 162} спм'),
+                    _bioTile(palette, Icons.speed, const Color(0xFF2563EB), AppLocaleNotifier.pick('Каденс', 'Каденс', 'Cadence'), '${workout.cadence > 0 ? workout.cadence : 162} спм'),
                   ],
                 ),
                 const SizedBox(height: 14),
 
                 // Пульсовые зоны
                 Text(
-                  ru ? 'Пульсовые зоны интенсивности' : 'Жүрөк кагышынын зоналары',
+                  AppLocaleNotifier.pick('Пульсовые зоны интенсивности', 'Жүрөк кагышынын зоналары', 'Heart Rate Intensity Zones'),
                   style: TextStyle(color: palette.secondary, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
@@ -185,7 +184,7 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(ru ? 'Суточный Strain' : 'Күндүк Strain', style: AppTypography.caption(palette.secondary)),
+                    Text(AppLocaleNotifier.pick('Суточный Strain', 'Күндүк Strain', 'Daily Strain'), style: AppTypography.caption(palette.secondary)),
                     Text(
                       '${dayStrainBefore.toStringAsFixed(1)} → ${after.toStringAsFixed(1)} / 21.0',
                       style: TextStyle(color: palette.fg, fontWeight: FontWeight.w700, fontSize: 12),
@@ -239,7 +238,7 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               label: Text(
-                ru ? 'Записать в дневник и закрыть' : 'Күндөлүккө жазып жабуу',
+                AppLocaleNotifier.pick('Записать в дневник и закрыть', 'Күндөлүккө жазып жабуу', 'Save to Journal & Close'),
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
@@ -248,7 +247,10 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
           Center(
             child: TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(ru ? 'Закрыть без записи' : 'Жазуусуз жабуу', style: TextStyle(color: palette.secondary)),
+              child: Text(
+                AppLocaleNotifier.pick('Закрыть без записи', 'Жазуусуз жабуу', 'Close without saving'),
+                style: TextStyle(color: palette.secondary),
+              ),
             ),
           ),
         ],

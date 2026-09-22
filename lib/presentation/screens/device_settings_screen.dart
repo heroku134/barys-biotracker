@@ -129,8 +129,43 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     );
   }
 
-  bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
-  String tr(String r, String k) => _ru ? r : k;
+  static const Map<String, String> _enDict = {
+    'Сброс до заводских настроек?': 'Reset to factory settings?',
+    'Отмена': 'Cancel',
+    'Сбросить': 'Reset',
+    'Часы': 'Watch',
+    'Часы КАЛКАН СААТ-1': 'KALKAN SAAT-1 Watch',
+    'Поиск другого браслета': 'Search for another band',
+    'На связи': 'Connected',
+    'Отключено': 'Disconnected',
+    'Прошивка: v1.2.4': 'Firmware: v1.2.4',
+    'Обновить': 'Update',
+    'Найти браслет': 'Find band',
+    'Функции часов': 'Watch features',
+    'Демо-режим': 'Demo mode',
+    'Эмуляция сенсоров без часов': 'Sensor emulation without watch',
+    'Эмуляция включена': 'Emulation enabled',
+    'Физические часы': 'Physical watch',
+    'Антипотеря': 'Anti-loss',
+    'Сигнал, если браслет дальше 10 метров': 'Alert if band is farther than 10m',
+    'Оповещение об отключении': 'Disconnect alert',
+    'Пуш при разрыве Bluetooth': 'Push notification when Bluetooth drops',
+    'Умный будильник': 'Smart alarm',
+    'Вибрация в лёгкой фазе сна': 'Vibration during light sleep phase',
+    'Напоминание пить воду': 'Hydration reminder',
+    'Вибрация каждые 2 часа': 'Vibrate every 2 hours',
+    'Измерение…': 'Measuring…',
+    'Замер пульса': 'Measure pulse',
+    'Синхр. время': 'Sync time',
+    'Сбросить браслет': 'Reset band',
+  };
+
+  String tr(String r, String k, [String? e]) {
+    final lang = AppLocaleNotifier.current;
+    if (lang == AppLanguage.kyrgyz) return k;
+    if (lang == AppLanguage.english) return e ?? _enDict[r] ?? r;
+    return r;
+  }
 
   @override
   Widget build(BuildContext context) {

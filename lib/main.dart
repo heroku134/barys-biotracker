@@ -74,9 +74,11 @@ class BarysBioTrackerApp extends StatelessWidget {
           valueListenable: AppLocaleNotifier.instance,
           builder: (context, language, _) {
             return MaterialApp(
-              title: language == AppLanguage.kyrgyz
-                  ? 'КАЛКАН СПОРТ · СААТ-1'
-                  : 'КАЛКАН СПОРТ · СААТ-1',
+              title: AppLocaleNotifier.pick(
+                'КАЛКАН СПОРТ · СААТ-1',
+                'КАЛКАН СПОРТ · СААТ-1',
+                'KALKAN SPORT · SAAT-1',
+              ),
               debugShowCheckedModeBanner: false,
               themeMode: themeMode,
               theme: AppThemeNotifier.lightTheme,

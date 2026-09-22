@@ -185,7 +185,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(height: 12),
             WeeklyMetricChart(
-              title: language == AppLanguage.kyrgyz ? 'Уйку, 7 күн' : 'Сон, 7 дней',
+              title: AppLocaleNotifier.pick('Сон, 7 дней', 'Уйку, 7 күн', 'Sleep, 7 days'),
               unit: '%',
               points: _pts((s) => s.sleep.toDouble()).isNotEmpty ? _pts((s) => s.sleep.toDouble()) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getSleepHistory(_currentHistoryPeriod) : const []),
               color: AppColors.sleepBlue,
@@ -193,7 +193,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(height: 12),
             WeeklyMetricChart(
-              title: language == AppLanguage.kyrgyz ? 'Калыбына келүү, 7 күн' : 'Восстановление, 7 дней',
+              title: AppLocaleNotifier.pick('Восстановление, 7 дней', 'Калыбына келүү, 7 күн', 'Recovery, 7 days'),
               unit: '%',
               points: _pts((s) => s.recovery.toDouble()).isNotEmpty ? _pts((s) => s.recovery.toDouble()) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getRecoveryHistory(_currentHistoryPeriod) : const []),
               color: AppColors.sage,
@@ -201,7 +201,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(height: 12),
             WeeklyMetricChart(
-              title: language == AppLanguage.kyrgyz ? 'Жүктөм, 7 күн' : 'Нагрузка, 7 дней',
+              title: AppLocaleNotifier.pick('Нагрузка, 7 дней', 'Жүктөм, 7 күн', 'Strain, 7 days'),
               unit: '',
               points: _pts((s) => s.strain).isNotEmpty ? _pts((s) => s.strain) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getStrainHistory(_currentHistoryPeriod) : const []),
               color: AppColors.strainBlue,
@@ -226,7 +226,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         ),
                       ),
                       Text(
-                        'Покой: ${telemetry.restingHeartRate} уд/мин',
+                        '${AppLocaleNotifier.pick('Покой', 'Тынч', 'Resting')}: ${telemetry.restingHeartRate} bpm',
                         style: TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -279,7 +279,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Цикл',
+                          AppLocaleNotifier.pick('Цикл', 'Цикл', 'Cycle'),
                           style: TextStyle(
                             color: AppColors.amber,
                             fontSize: 10,
@@ -289,7 +289,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Фолликулярная фаза · ВСР на пике',
+                          AppLocaleNotifier.pick(
+                            'Фолликулярная фаза · ВСР на пике',
+                            'Фолликулярдык фаза · ЖЖВ туу чокусунда',
+                            'Follicular phase · HRV peak',
+                          ),
                           style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 13,
@@ -298,7 +302,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'Нажмите для подсказки по нагрузкам ›',
+                          AppLocaleNotifier.pick(
+                            'Нажмите для подсказки по нагрузкам ›',
+                            'Жүктөм боюнча сунуштарды көрүү ›',
+                            'Tap for strain guidance ›',
+                          ),
                           style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 11,
@@ -350,7 +358,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
                 SizedBox(width: 8),
                 Text(
-                  'ФИЗИОЛОГИЧЕСКИЙ ЦИКЛ И ВАРИАТИВНОСТЬ',
+                  AppLocaleNotifier.pick(
+                    'ФИЗИОЛОГИЧЕСКИЙ ЦИКЛ И ВАРИАТИВНОСТЬ',
+                    'ФИЗИОЛОГИЯЛЫК ЦИКЛ ЖАНА ВАРИАТИВДҮҮЛҮК',
+                    'PHYSIOLOGICAL CYCLE & VARIABILITY',
+                  ),
                   style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: -0.1),
                 ),
               ],
@@ -364,13 +376,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 border: Border.all(color: AppColors.line),
               ),
               child: Text(
-                'Колебания ВСР и пульса покоя в лютеиновой или фолликулярной фазе — это естественный физиологический процесс, а не падение спортивной формы.',
+                AppLocaleNotifier.pick(
+                  'Колебания ВСР и пульса покоя в лютеиновой или фолликулярной фазе — это естественный физиологический процесс, а не падение спортивной формы.',
+                  'Лютеиндик же фолликулярдык фазадагы ЖЖВ менен пульстун өзгөрүшү — бул табигый физиологиялык процесс, спорттук форманын түшүшү эмес.',
+                  'Fluctuations in HRV and resting HR across cycle phases are natural physiological adaptations, not a loss of fitness.',
+                ),
                 style: TextStyle(color: AppColors.fg, fontSize: 13, height: 1.4),
               ),
             ),
             SizedBox(height: 12),
             Text(
-              'СААТ-1 автоматически учитывает фазу цикла и калибрует целевой бюджет суточной нагрузки, защищая нервную систему и сердце от перетренированности.',
+              AppLocaleNotifier.pick(
+                'СААТ-1 автоматически учитывает фазу цикла и калибрует целевой бюджет суточной нагрузки, защищая нервную систему и сердце от перетренированности.',
+                'СААТ-1 цикл фазасын автоматтык түрдө эске алып, суткалык жүктөм бюджетин калибрлеп, нерв системасын ашыкча чарчоодон коргойт.',
+                'SAAT-1 automatically factors in your cycle phase and calibrates your daily strain budget, guarding against overtraining.',
+              ),
               style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
             ),
             SizedBox(height: 16),
@@ -387,7 +407,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Текущая фаза: Фолликулярная (Эстроген ↑, ВСР на пике, оптимум для тренировок)',
+                      AppLocaleNotifier.pick(
+                        'Текущая фаза: Фолликулярная (Эстроген ↑, ВСР на пике, оптимум для тренировок)',
+                        'Учурдагы фаза: Фолликулярдык (Эстроген ↑, ЖЖВ туу чокусунда, машыгууларга оптималдуу)',
+                        'Current phase: Follicular (Estrogen ↑, peak HRV, optimal for high strain)',
+                      ),
                       style: TextStyle(color: AppColors.amber, fontSize: 11.5, fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -418,15 +442,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   String _getHeartRateCardTitle(int period) {
     switch (period) {
       case 0:
-        return 'СУТОЧНЫЙ ПРОФИЛЬ ПУЛЬСА (24 ЧАСА)';
+        return AppLocaleNotifier.pick('СУТОЧНЫЙ ПРОФИЛЬ ПУЛЬСА (24 ЧАСА)', 'КҮНДҮК ПУЛЬС ПРОФИЛИ (24 СААТ)', 'DAILY HEART RATE PROFILE (24 HOURS)');
       case 1:
-        return 'НЕДЕЛЬНЫЙ ТРЕНД ПУЛЬСА (7 ДНЕЙ)';
+        return AppLocaleNotifier.pick('НЕДЕЛЬНЫЙ ТРЕНД ПУЛЬСА (7 ДНЕЙ)', 'ЖУМАЛЫК ПУЛЬС ТРЕНДИ (7 КҮН)', 'WEEKLY HEART RATE TREND (7 DAYS)');
       case 2:
-        return 'МЕСЯЧНЫЙ ТРЕНД ПУЛЬСА (30 ДНЕЙ)';
+        return AppLocaleNotifier.pick('МЕСЯЧНЫЙ ТРЕНД ПУЛЬСА (30 ДНЕЙ)', 'АЙЛЫК ПУЛЬС ТРЕНДИ (30 КҮН)', 'MONTHLY HEART RATE TREND (30 DAYS)');
       case 3:
-        return 'ПОЛУГОДОВОЙ ТРЕНД ПУЛЬСА (6 МЕСЯЦЕВ)';
+        return AppLocaleNotifier.pick('ПОЛУГОДОВОЙ ТРЕНД ПУЛЬСА (6 МЕСЯЦЕВ)', 'ЖАРЫМ ЖЫЛДЫК ПУЛЬС ТРЕНДИ (6 АЙ)', '6-MONTH HEART RATE TREND');
       default:
-        return 'ТРЕНД ПУЛЬСА (ЧСС)';
+        return AppLocaleNotifier.pick('ТРЕНД ПУЛЬСА (ЧСС)', 'ПУЛЬС ТРЕНДИ (ЖЖК)', 'HEART RATE TREND (HR)');
     }
   }
 
@@ -438,41 +462,49 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           children: [
             Text('00:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('06:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('12:00 (Пик)', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
+            Text('12:00 (${AppLocaleNotifier.pick('Пик', 'Чок', 'Peak')})', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
             Text('18:00', style: TextStyle(color: AppColors.faint, fontSize: 10)),
             Text('23:59', style: TextStyle(color: AppColors.faint, fontSize: 10)),
           ],
         );
       case 1:
+        final labels = AppLocaleNotifier.pick(
+          ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+          ['Дш', 'Шш', 'Шр', 'Бш', 'Жм', 'Иш', 'Жк'],
+          ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        );
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Пн', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Вт', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Ср', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Чт', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Пт', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Сб', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Вс', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
+            for (int i = 0; i < 6; i++)
+              Text(labels[i], style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text(labels[6], style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         );
       case 2:
+        final w1 = AppLocaleNotifier.pick('1-я нед', '1-апта', 'Wk 1');
+        final w2 = AppLocaleNotifier.pick('2-я нед', '2-апта', 'Wk 2');
+        final w3 = AppLocaleNotifier.pick('3-я нед', '3-апта', 'Wk 3');
+        final w4 = AppLocaleNotifier.pick('4-я нед', '4-апта', 'Wk 4');
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('1-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('2-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('3-я нед', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('4-я нед', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
+            Text(w1, style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text(w2, style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text(w3, style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text(w4, style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         );
       case 3:
+        final m6 = AppLocaleNotifier.pick('6 мес назад', '6 ай мурун', '6 mo ago');
+        final m3 = AppLocaleNotifier.pick('3 мес назад', '3 ай мурун', '3 mo ago');
+        final now = AppLocaleNotifier.pick('Текущий месяц', 'Учурдагы ай', 'Current month');
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('6 мес назад', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('3 мес назад', style: TextStyle(color: AppColors.faint, fontSize: 10)),
-            Text('Текущий месяц', style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
+            Text(m6, style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text(m3, style: TextStyle(color: AppColors.faint, fontSize: 10)),
+            Text(now, style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         );
       default:

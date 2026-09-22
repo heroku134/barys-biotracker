@@ -22,8 +22,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String _icon = 'obsidian';
 
-  bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
-
   @override
   void initState() {
     super.initState();

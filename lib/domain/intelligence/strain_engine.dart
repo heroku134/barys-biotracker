@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../core/app_language.dart';
 import '../models/readiness.dart';
 
 /// Модель отдельной тренировки (включая автодетектированные)
@@ -130,19 +131,31 @@ class StrainEngine {
     final String statusText;
     if (currentStrain < adjMin) {
       final diff = (adjMin - currentStrain).toStringAsFixed(1);
-      statusText = 'Осталось $diff до оптимальной зоны';
+      statusText = AppLocaleNotifier.pick(
+        'Осталось $diff до оптимальной зоны',
+        'Оптималдуу зонага чейин $diff калды',
+        '$diff remaining to optimal zone',
+      );
     } else if (currentStrain <= adjMax) {
-      statusText = 'В оптимальном тренировочном бюджете';
+      statusText = AppLocaleNotifier.pick(
+        'В оптимальном тренировочном бюджете',
+        'Оптималдуу машыгуу бюджетинде',
+        'In optimal training target',
+      );
     } else {
       final over = (currentStrain - adjMax).toStringAsFixed(1);
-      statusText = 'Превышение бюджета на +$over (зона риска перетрена)';
+      statusText = AppLocaleNotifier.pick(
+        'Превышение бюджета на +$over (зона риска перетрена)',
+        'Бюджеттен +$over ашып кетти (ашыкча чарчоо зонасы)',
+        '+$over over target budget (overtraining zone)',
+      );
     }
 
     final defaultActivities = activities ??
         [
           WorkoutActivity(
             id: 'act_1',
-            title: 'Аэробный кросс / Зона 2',
+            title: AppLocaleNotifier.pick('Аэробный кросс / Зона 2', 'Аэробдук кросс / 2-зона', 'Aerobic Cross / Zone 2'),
             timestamp: DateTime.now().subtract(const Duration(hours: 5)),
             durationMinutes: 38,
             avgHeartRate: 142,

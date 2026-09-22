@@ -375,15 +375,10 @@ class _AuthScreenState extends State<AuthScreen> {
                     top: 8,
                     right: 16,
                     child: TextButton(
-                      onPressed: () {
-                        final next = language == AppLanguage.kyrgyz
-                            ? AppLanguage.russian
-                            : AppLanguage.kyrgyz;
-                        AppLocaleNotifier.setLanguage(next);
-                      },
+                      onPressed: () => AppLocaleNotifier.toggleLanguage(),
                       child: Text(
-                        language == AppLanguage.kyrgyz ? 'KY / RU' : 'RU / KY',
-                        style: TextStyle(color: AppColors.secondary, fontSize: 12, fontWeight: FontWeight.w600),
+                        '${language.flag} ${language.shortTitle}',
+                        style: TextStyle(color: AppColors.secondary, fontSize: 13, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),

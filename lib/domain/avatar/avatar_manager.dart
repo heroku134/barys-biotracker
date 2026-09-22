@@ -111,6 +111,22 @@ enum AvatarVisualState {
           return 'Стресс жогору';
       }
     }
+    if (l == AppLanguage.english) {
+      switch (this) {
+        case AvatarVisualState.charged:
+          return 'Ready for strain';
+        case AvatarVisualState.normal:
+          return 'In tone';
+        case AvatarVisualState.tired:
+          return 'Rest needed';
+        case AvatarVisualState.sleep:
+          return 'Night mode';
+        case AvatarVisualState.postWorkout:
+          return 'Post-workout';
+        case AvatarVisualState.meditation:
+          return 'Breathing / Stress';
+      }
+    }
     return title;
   }
 
@@ -130,6 +146,22 @@ enum AvatarVisualState {
           return 'МАШЫГУУ';
         case AvatarVisualState.meditation:
           return 'Стресс';
+      }
+    }
+    if (l == AppLanguage.english) {
+      switch (this) {
+        case AvatarVisualState.charged:
+          return 'CHARGED';
+        case AvatarVisualState.normal:
+          return 'IN TONE';
+        case AvatarVisualState.tired:
+          return 'REST';
+        case AvatarVisualState.sleep:
+          return 'SLEEP';
+        case AvatarVisualState.postWorkout:
+          return 'WORKOUT';
+        case AvatarVisualState.meditation:
+          return 'STRESS';
       }
     }
     return badgeText;
@@ -213,6 +245,18 @@ enum BarysEvolutionTier {
           return 'Даанышман Аксакал';
       }
     }
+    if (l == AppLanguage.english) {
+      switch (this) {
+        case BarysEvolutionTier.cadet:
+          return 'Snow Leopard Cadet';
+        case BarysEvolutionTier.sarbaz:
+          return 'Steppe Sarbaz';
+        case BarysEvolutionTier.batyr:
+          return 'Khan Batyr';
+        case BarysEvolutionTier.aksakal:
+          return 'Wise Aksakal';
+      }
+    }
     return title;
   }
 
@@ -228,6 +272,18 @@ enum BarysEvolutionTier {
           return 'Батыр';
         case BarysEvolutionTier.aksakal:
           return 'Аксакал';
+      }
+    }
+    if (l == AppLanguage.english) {
+      switch (this) {
+        case BarysEvolutionTier.cadet:
+          return 'Cadet';
+        case BarysEvolutionTier.sarbaz:
+          return 'Sarbaz';
+        case BarysEvolutionTier.batyr:
+          return 'Batyr';
+        case BarysEvolutionTier.aksakal:
+          return 'Aksakal';
       }
     }
     return shortName;
@@ -267,6 +323,11 @@ class DailyQuest {
       if (id == 'strain') return 'Күндүк Strain жүктөмүн жабуу';
       if (id == 'journal') return 'Био-журналга белгилөө';
       if (id == 'sleep') return 'Циркаддык уктоо (22:30 чейин)';
+    }
+    if (l == AppLanguage.english) {
+      if (id == 'strain') return 'Hit daily Strain target';
+      if (id == 'journal') return 'Log in bio-journal';
+      if (id == 'sleep') return 'Circadian sleep (before 10:30 PM)';
     }
     return title;
   }
@@ -311,6 +372,18 @@ class AvatarProfile {
           return 'Хан Батыры';
         case BarysEvolutionTier.aksakal:
           return 'Даанышман Аксакал';
+      }
+    }
+    if (l == AppLanguage.english) {
+      switch (evolutionTier) {
+        case BarysEvolutionTier.cadet:
+          return 'Snow Leopard Cadet';
+        case BarysEvolutionTier.sarbaz:
+          return 'Steppe Sarbaz';
+        case BarysEvolutionTier.batyr:
+          return 'Khan Batyr';
+        case BarysEvolutionTier.aksakal:
+          return 'Wise Aksakal';
       }
     }
     return rankTitle;

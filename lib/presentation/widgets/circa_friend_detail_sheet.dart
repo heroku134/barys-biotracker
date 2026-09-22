@@ -195,10 +195,10 @@ class CircaFriendDetailSheet extends StatelessWidget {
                         SizedBox(width: 8),
                         Text(
                           member.recoveryZone == RecoveryZone.optimal
-                              ? (language == AppLanguage.kyrgyz ? 'Жашыл коридор' : 'Зеленый коридор')
+                              ? AppLocaleNotifier.pick('Зеленый коридор', 'Жашыл коридор', 'Optimal corridor')
                               : (member.recoveryZone == RecoveryZone.moderate
-                                  ? (language == AppLanguage.kyrgyz ? 'Адаптивдүү коридор' : 'Адаптивный коридор')
-                                  : (language == AppLanguage.kyrgyz ? 'Эс алуу зонасы' : 'Зона отдыха')),
+                                  ? AppLocaleNotifier.pick('Адаптивный коридор', 'Адаптивдүү коридор', 'Adaptive corridor')
+                                  : AppLocaleNotifier.pick('Зона отдыха', 'Эс алуу зонасы', 'Rest zone')),
                           style: TextStyle(
                             color: zoneColor,
                             fontSize: 12,
@@ -232,7 +232,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                 child: _buildMetricTile(
                   label: AppStrings.tr('friend_detail_strain', language),
                   value: '${member.currentDayStrain.toStringAsFixed(1)} / 21',
-                  sub: language == AppLanguage.kyrgyz ? 'Күндүк Strain' : 'Суточный Strain',
+                  sub: AppLocaleNotifier.pick('Суточный Strain', 'Күндүк Strain', 'Daily Strain'),
                   icon: Icons.bolt,
                   color: AppColors.amber,
                 ),
@@ -241,8 +241,8 @@ class CircaFriendDetailSheet extends StatelessWidget {
               Expanded(
                 child: _buildMetricTile(
                   label: AppStrings.tr('friend_detail_sleep', language),
-                  value: '${member.sleepHours.toStringAsFixed(1)}ч',
-                  sub: '${member.sleepPerformance}% ${language == AppLanguage.kyrgyz ? 'натыйжалуулук' : 'эффективности'}',
+                  value: '${member.sleepHours.toStringAsFixed(1)}h',
+                  sub: '${member.sleepPerformance}% ${AppLocaleNotifier.pick('эффективности', 'натыйжалуулук', 'performance')}',
                   icon: Icons.bedtime_outlined,
                   color: AppColors.sage,
                 ),
@@ -255,8 +255,8 @@ class CircaFriendDetailSheet extends StatelessWidget {
               Expanded(
                 child: _buildMetricTile(
                   label: AppStrings.tr('friend_detail_hrv', language),
-                  value: '${member.hrv.round()} мс',
-                  sub: language == AppLanguage.kyrgyz ? 'Вегетативдик тең салмак' : 'Баланс вегетатики',
+                  value: '${member.hrv.round()} ms',
+                  sub: AppLocaleNotifier.pick('Баланс вегетатики', 'Вегетативдик тең салмак', 'Autonomic balance'),
                   icon: Icons.graphic_eq,
                   color: AppColors.sage,
                 ),
@@ -266,7 +266,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                 child: _buildMetricTile(
                   label: AppStrings.tr('friend_detail_rhr', language),
                   value: '${member.restingHeartRate} bpm',
-                  sub: language == AppLanguage.kyrgyz ? 'Миокард базасы' : 'База миокарда',
+                  sub: AppLocaleNotifier.pick('База миокарда', 'Миокард базасы', 'Resting baseline'),
                   icon: Icons.monitor_heart_outlined,
                   color: AppColors.rose,
                 ),

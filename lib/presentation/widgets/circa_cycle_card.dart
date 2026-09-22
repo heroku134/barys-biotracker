@@ -100,17 +100,17 @@ class CircaCycleCard extends StatelessWidget {
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
+                      children: [
                         Text(
-                          'Инфо',
-                          style: TextStyle(
+                          AppLocaleNotifier.pick('Инфо', 'Маалымат', 'Info'),
+                          style: const TextStyle(
                             color: AppColors.muted,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.muted),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_forward_ios, size: 10, color: AppColors.muted),
                       ],
                     ),
                   ],
@@ -134,7 +134,7 @@ class CircaCycleCard extends StatelessWidget {
                     ),
                     SizedBox(width: 4),
                     Text(
-                      '/ ${analysis.totalDays} ${language == AppLanguage.kyrgyz ? 'күн' : 'день'}',
+                      '/ ${analysis.totalDays} ${AppLocaleNotifier.pick('день', 'күн', 'day')}',
                       style: TextStyle(
                         color: AppColors.muted,
                         fontSize: 13,
@@ -194,9 +194,11 @@ class CircaCycleCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          language == AppLanguage.kyrgyz
-                              ? 'Күч жана чыдамкайлыктын туу чокусу · Кененирээк →'
-                              : 'Пик выносливости и сил · Подробнее →',
+                          AppLocaleNotifier.pick(
+                            'Пик выносливости и сил · Подробнее →',
+                            'Күч жана чыдамкайлыктын туу чокусу · Кененирээк →',
+                            'Peak stamina and strength · Details →',
+                          ),
                           style: TextStyle(
                             color: AppColors.fg,
                             fontSize: 12,

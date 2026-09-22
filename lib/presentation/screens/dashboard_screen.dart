@@ -214,20 +214,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _coach(int score, double strainMax, AppLanguage lang) {
-    final ru = lang != AppLanguage.kyrgyz;
+    if (lang == AppLanguage.kyrgyz) {
+      if (score >= 67) return 'Денең жүктөмгө даяр. Оор машыгуу мүмкүн, strain чеги ${strainMax.toStringAsFixed(1)}.';
+      if (score >= 34) return 'Кадимки күн. Орто жүктөмдү кармоо, ${strainMax.toStringAsFixed(1)}дан ашпа.';
+      return 'Калыбына келүү начар. Бүгүн 1–2 зона, уйкуну эртерээк.';
+    }
+    if (lang == AppLanguage.english) {
+      if (score >= 67) return 'Body is primed for strain. Heavy session recommended, target strain ${strainMax.toStringAsFixed(1)}.';
+      if (score >= 34) return 'Moderate day. Keep steady load, do not exceed ${strainMax.toStringAsFixed(1)}.';
+      return 'Low recovery. Prioritize Zone 1–2 and sleep earlier than usual.';
+    }
     if (score >= 67) {
-      return ru
-          ? 'Тело готово к нагрузке. Можно тяжёлую сессию, потолок strain ${strainMax.toStringAsFixed(1)}.'
-          : 'Денең жүктөмгө даяр. Оор машыгуу мүмкүн, strain чеги ${strainMax.toStringAsFixed(1)}.';
+      return 'Тело готово к нагрузке. Можно тяжёлую сессию, потолок strain ${strainMax.toStringAsFixed(1)}.';
     }
     if (score >= 34) {
-      return ru
-          ? 'Обычный день. Держи среднюю нагрузку, не заходи за ${strainMax.toStringAsFixed(1)}.'
-          : 'Кадимки күн. Орто жүктөмдү кармоо, ${strainMax.toStringAsFixed(1)}дан ашпа.';
+      return 'Обычный день. Держи среднюю нагрузку, не заходи за ${strainMax.toStringAsFixed(1)}.' ;
     }
-    return ru
-        ? 'Восстановление слабое. Сегодня зона 1–2, сон раньше обычного.'
-        : 'Калыбына келүү начар. Бүгүн 1–2 зона, уйкуну эртерээк.';
+    return 'Восстановление слабое. Сегодня зона 1–2, сон раньше обычного.';
   }
 
   @override
@@ -250,7 +253,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final sleepScore = sleepResult.sleepPerformanceScore;
     final name = _userProfile.name.isNotEmpty ? _userProfile.name : AppStrings.tr('home_guest', language);
     final isConnected = _telemetry.isConnected;
-    final ru = language != AppLanguage.kyrgyz;
 
     return Scaffold(
       backgroundColor: palette.bg,
@@ -348,8 +350,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: Text(
                             _banner == ReminderKind.evening
-                                ? (ru ? 'Лечь до 22:30' : '22:30га чейин уктоо')
-                                : (ru ? 'Восстановление готово' : 'Калыбына келүү даяр'),
+                                ? AppLocaleNotifier.pick('Лечь до 22:30', '22:30га чейин уктоо', 'Sleep before 22:30')
+                                : AppLocaleNotifier.pick('Восстановление готово', 'Калыбына келүү даяр', 'Recovery score ready'),
                             style: AppTypography.bodySemibold(palette.fg),
                           ),
                         ),
@@ -358,7 +360,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             await ReminderService.dismiss(_banner!);
                             setState(() => _banner = null);
                           },
-                          child: Text(ru ? 'Ок' : 'Макул', style: TextStyle(color: AppColors.sage)),
+                          child: Text(AppLocaleNotifier.pick('Ок', 'Макул', 'OK'), style: TextStyle(color: AppColors.sage)),
                         ),
                       ],
                     ),
@@ -428,9 +430,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        ru
-                          ? 'Цель нагрузки сегодня  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}'
-                          : 'Бүгүнкү жүктөм  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                        AppLocaleNotifier.pick(
+                          'Цель нагрузки сегодня  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                          'Бүгүнкү жүктөм  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                          'Target Strain Today  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                        ),
                         style: AppTypography.bodySemibold(palette.fg),
                       ),
                       const SizedBox(height: 6),
@@ -447,9 +451,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        ru
-                          ? 'Сейчас ${currentStrain.toStringAsFixed(1)} из 21. ${strainResult.budgetStatusText}.'
-                          : 'Азыр ${currentStrain.toStringAsFixed(1)} / 21. ${strainResult.budgetStatusText}.',
+                        AppLocaleNotifier.pick(
+                          'Сейчас ${currentStrain.toStringAsFixed(1)} из 21. ${strainResult.budgetStatusText}.',
+                          'Азыр ${currentStrain.toStringAsFixed(1)} / 21. ${strainResult.budgetStatusText}.',
+                          'Currently ${currentStrain.toStringAsFixed(1)} of 21. ${strainResult.budgetStatusText}.',
+                        ),
                         style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
                       ),
                       const SizedBox(height: 8),
@@ -479,11 +485,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        ru
-                          ? 'HRV ночи ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · ваша норма ${_baseline.meanHrv.toStringAsFixed(0)}'
-                          : (AppLocaleNotifier.isEnglish
-                              ? 'Night HRV ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · your baseline ${_baseline.meanHrv.toStringAsFixed(0)}'
-                              : 'Түнкү HRV ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · норма ${_baseline.meanHrv.toStringAsFixed(0)}'),
+                        AppLocaleNotifier.pick(
+                          'HRV ночи ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · ваша норма ${_baseline.meanHrv.toStringAsFixed(0)}',
+                          'Түнкү HRV ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · норма ${_baseline.meanHrv.toStringAsFixed(0)}',
+                          'Night HRV ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · your baseline ${_baseline.meanHrv.toStringAsFixed(0)}',
+                        ),
                         style: AppTypography.bodySemibold(palette.fg),
                       ),
                       if (_miss != null) ...[
@@ -591,7 +597,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: _stat(palette, ru ? 'ЧСС' : 'ЖС',
+                      child: _stat(palette, AppLocaleNotifier.pick('ЧСС', 'ЖС', 'HR'),
                           '${_telemetry.heartRate > 0 ? _telemetry.heartRate : 72}', 'bpm'),
                     ),
                     const SizedBox(width: 8),
@@ -601,7 +607,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _stat(palette, ru ? 'Покой' : 'Тынч',
+                      child: _stat(palette, AppLocaleNotifier.pick('Покой', 'Тынч', 'Resting'),
                           '${_telemetry.restingHeartRate > 0 ? _telemetry.restingHeartRate : 52}', 'bpm'),
                     ),
                   ],
@@ -616,7 +622,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: _link(
                         palette,
-                        ru ? 'Дневник' : 'Күндөлүк',
+                        AppLocaleNotifier.pick('Дневник', 'Күндөлүк', 'Journal'),
                         Icons.edit_note,
                         () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const DayJournalScreen()),
@@ -627,7 +633,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: _link(
                         palette,
-                        ru ? 'Друзья' : 'Достор',
+                        AppLocaleNotifier.pick('Друзья', 'Достор', 'Friends'),
                         Icons.people_outline,
                         () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge)),
@@ -638,7 +644,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: _link(
                         palette,
-                        ru ? 'Персонаж' : 'Каарман',
+                        AppLocaleNotifier.pick('Барыс', 'Барыс', 'Barys'),
                         Icons.pets_outlined,
                         widget.onOpenAvatar,
                       ),
@@ -647,7 +653,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: _link(
                         palette,
-                        ru ? 'Часы' : 'Саат',
+                        AppLocaleNotifier.pick('Часы', 'Саат', 'Watch'),
                         Icons.watch_outlined,
                         () => widget.onOpenDeviceSettings?.call(),
                       ),

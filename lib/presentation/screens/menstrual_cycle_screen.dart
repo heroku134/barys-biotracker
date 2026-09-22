@@ -42,6 +42,8 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
   String _partnerInviteCode = 'KLK-CYC-9281';
 
   bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
+  String _t(String ru, String ky, String en) => AppLocaleNotifier.pick(ru, ky, en);
+
   int get _length => _profile.cycleLengthDays > 0 ? _profile.cycleLengthDays : 28;
   int get _periodLen => _profile.periodDurationDays > 0 ? _profile.periodDurationDays : 5;
   int get _selectedDay => MenstrualCycleEngine.cycleDayForDate(

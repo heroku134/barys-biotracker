@@ -399,7 +399,6 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
-        final ru = language != AppLanguage.kyrgyz;
         return Scaffold(
           backgroundColor: palette.bg,
           appBar: AppBar(
@@ -470,14 +469,16 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            ru ? 'Доброе утро' : 'Кутман таң',
+                            AppLocaleNotifier.pick('Доброе утро', 'Кутман таң', 'Good morning'),
                             style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            ru
-                                ? 'Отметьте пробуждение — персонаж синхронизируется с сегодняшним днём.'
-                                : 'Ойгонууну белгилеңиз — каарман бүгүнкү күнгө шайкештелет.',
+                            AppLocaleNotifier.pick(
+                              'Отметьте пробуждение — персонаж синхронизируется с сегодняшним днём.',
+                              'Ойгонууну белгилеңиз — каарман бүгүнкү күнгө шайкештелет.',
+                              'Mark wake-up — character syncs with today.',
+                            ),
                             style: TextStyle(color: palette.secondary, fontSize: 13, height: 1.35),
                           ),
                           const SizedBox(height: 10),
@@ -492,7 +493,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
-                              child: Text(ru ? 'Отметить утро  +50 XP' : 'Таңды белгилөө  +50 XP'),
+                              child: Text(AppLocaleNotifier.pick('Отметить утро  +50 XP', 'Таңды белгилөө  +50 XP', 'Log morning  +50 XP')),
                             ),
                           ),
                         ],
@@ -506,7 +507,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                _profile.evolutionTier.title,
+                                _profile.evolutionTier.localizedTitle(language),
                                 style: TextStyle(
                                   color: palette.fg,
                                   fontWeight: FontWeight.w600,
@@ -522,9 +523,11 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          ru
-                              ? 'Уровень ${_profile.level}'
-                              : '${_profile.level}-деңгээл',
+                          AppLocaleNotifier.pick(
+                            'Уровень ${_profile.level}',
+                            '${_profile.level}-деңгээл',
+                            'Level ${_profile.level}',
+                          ),
                           style: TextStyle(color: palette.secondary, fontSize: 12),
                         ),
                         const SizedBox(height: 10),
@@ -543,16 +546,18 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                           children: [
                             Text(
                               progress.nextTier != null
-                                  ? (ru
-                                      ? 'До ${progress.nextTier!.shortName}: ${progress.xpToNextTier} XP'
-                                      : '${progress.nextTier!.shortName} чейин: ${progress.xpToNextTier} XP')
-                                  : (ru ? 'Максимальный ранг' : 'Жогорку даража'),
+                                  ? AppLocaleNotifier.pick(
+                                      'До ${progress.nextTier!.localizedShortName(language)}: ${progress.xpToNextTier} XP',
+                                      '${progress.nextTier!.localizedShortName(language)} чейин: ${progress.xpToNextTier} XP',
+                                      'To ${progress.nextTier!.localizedShortName(language)}: ${progress.xpToNextTier} XP',
+                                    )
+                                  : AppLocaleNotifier.pick('Максимальный ранг', 'Жогорку даража', 'Maximum rank'),
                               style: TextStyle(color: palette.secondary, fontSize: 11),
                             ),
                             InkWell(
                               onTap: _showEvolutionTiersSheet,
                               child: Text(
-                                ru ? 'Все ранги' : 'Бардык даражалар',
+                                AppLocaleNotifier.pick('Все ранги', 'Бардык даражалар', 'All ranks'),
                                 style: TextStyle(color: AppColors.sage, fontSize: 12, fontWeight: FontWeight.w600),
                               ),
                             ),

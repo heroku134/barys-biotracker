@@ -24,8 +24,6 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
   Gender _gender = Gender.male;
   int _step = 0;
 
-  bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
-
   @override
   void dispose() {
     _height.dispose();

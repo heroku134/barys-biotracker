@@ -23,8 +23,6 @@ class _DayJournalScreenState extends State<DayJournalScreen> {
   bool _alcohol = false;
   List<DayJournalEntry> _history = [];
 
-  bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
-
   @override
   void initState() {
     super.initState();

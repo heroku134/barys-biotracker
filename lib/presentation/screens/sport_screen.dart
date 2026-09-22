@@ -360,12 +360,26 @@ class _SportScreenState extends State<SportScreen> {
     return "$m'${s.toString().padLeft(2, '0')}\"";
   }
 
-  String _hrZoneTitle(int bpm, bool ru) {
-    if (bpm < 100) return ru ? 'З1 · Разминка' : '1-зона';
-    if (bpm < 125) return ru ? 'З2 · Жиросжигание' : '2-зона';
-    if (bpm < 150) return ru ? 'З3 · Аэробная' : '3-зона';
-    if (bpm < 170) return ru ? 'З4 · Порог' : '4-зона';
-    return ru ? 'З5 · Пик' : '5-зона';
+  String _hrZoneTitle(int bpm, AppLanguage lang) {
+    if (lang == AppLanguage.kyrgyz) {
+      if (bpm < 100) return '1-зона · Жылынуу';
+      if (bpm < 125) return '2-зона · Май күйгүзүү';
+      if (bpm < 150) return '3-зона · Аэробдук';
+      if (bpm < 170) return '4-зона · Босого';
+      return '5-зона · Чок';
+    }
+    if (lang == AppLanguage.english) {
+      if (bpm < 100) return 'Z1 · Warm Up';
+      if (bpm < 125) return 'Z2 · Fat Burn';
+      if (bpm < 150) return 'Z3 · Aerobic';
+      if (bpm < 170) return 'Z4 · Threshold';
+      return 'Z5 · Peak';
+    }
+    if (bpm < 100) return 'З1 · Разминка';
+    if (bpm < 125) return 'З2 · Жиросжигание';
+    if (bpm < 150) return 'З3 · Аэробная';
+    if (bpm < 170) return 'З4 · Порог';
+    return 'З5 · Пик';
   }
 
   Color _hrZoneColor(int bpm) {
@@ -385,7 +399,6 @@ class _SportScreenState extends State<SportScreen> {
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
         final palette = KalkanColors.of(context);
-        final ru = language != AppLanguage.kyrgyz;
 
         return Scaffold(
           backgroundColor: palette.bg,
@@ -683,7 +696,7 @@ class _SportScreenState extends State<SportScreen> {
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
-                                    _hrZoneTitle(currentBpm, ru),
+                                    _hrZoneTitle(currentBpm, language),
                                     style: TextStyle(
                                       color: _hrZoneColor(currentBpm),
                                       fontSize: 10,
@@ -701,14 +714,14 @@ class _SportScreenState extends State<SportScreen> {
                         Row(
                           children: [
                             if (_selectedSport.hasDistance) ...[
-                              _metricBox(palette, ru ? 'ДИСТАНЦИЯ' : 'АРАЛЫК', '${_distanceKm.toStringAsFixed(2)} км'),
+                              _metricBox(palette, AppLocaleNotifier.pick('ДИСТАНЦИЯ', 'АРАЛЫК', 'DISTANCE'), '${_distanceKm.toStringAsFixed(2)} км'),
                               const SizedBox(width: 8),
-                              _metricBox(palette, ru ? 'ТЕМП' : 'ТЕМП', _currentPaceFormatted),
+                              _metricBox(palette, AppLocaleNotifier.pick('ТЕМП', 'ТЕМП', 'PACE'), _currentPaceFormatted),
                               const SizedBox(width: 8),
                             ],
-                            _metricBox(palette, ru ? 'КАЛОРИИ' : 'ККАЛ', '$_caloriesBurned'),
+                            _metricBox(palette, AppLocaleNotifier.pick('КАЛОРИИ', 'ККАЛ', 'CALORIES'), '$_caloriesBurned'),
                             const SizedBox(width: 8),
-                            _metricBox(palette, ru ? 'ПИК HR' : 'ПИК HR', '$_peakHr bpm'),
+                            _metricBox(palette, AppLocaleNotifier.pick('ПИК HR', 'ПИК HR', 'PEAK HR'), '$_peakHr bpm'),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -747,11 +760,12 @@ class _SportScreenState extends State<SportScreen> {
                           ],
                         ),
                       ] else ...[
-                        // Состояние готовности к старту
                         Text(
-                          ru
-                              ? 'СААТ-1 синхронизирует живой пульс, каденс и кардио-нагрузку в режиме реального времени.'
-                              : 'СААТ-1 реалдуу убакытта пульс, каденс жана жүктөмдү жазат.',
+                          AppLocaleNotifier.pick(
+                            'СААТ-1 синхронизирует живой пульс, каденс и кардио-нагрузку в режиме реального времени.',
+                            'СААТ-1 реалдуу убакытта пульс, каденс жана жүктөмдү жазат.',
+                            'SAAT-1 syncs live heart rate, cadence and cardio load in real time.',
+                          ),
                           style: TextStyle(color: palette.secondary, fontSize: 12, height: 1.4),
                         ),
                         const SizedBox(height: 16),
@@ -793,16 +807,18 @@ class _SportScreenState extends State<SportScreen> {
                                 const Icon(Icons.memory, color: AppColors.sage, size: 16),
                                 const SizedBox(width: 8),
                                 Text(
-                                  ru ? 'Автораспознавание движений IMU' : 'IMU кыймылды автоматтык таануу',
+                                  AppLocaleNotifier.pick('Автораспознавание движений IMU', 'IMU кыймылды автоматтык таануу', 'IMU Auto Movement Detection'),
                                   style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              ru
-                                  ? 'Алгоритм v4.2 автоматически стартует сессию при беге или шагах'
-                                  : 'v4.2 алгоритми чуркоодо автоматтык түрдө баштайт',
+                              AppLocaleNotifier.pick(
+                                'Алгоритм v4.2 автоматически стартует сессию при беге или шагах',
+                                'v4.2 алгоритми чуркоодо автоматтык түрдө баштайт',
+                                'v4.2 algorithm auto-starts sessions on run or walking',
+                              ),
                               style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                             ),
                           ],
@@ -810,6 +826,7 @@ class _SportScreenState extends State<SportScreen> {
                       ),
                       Switch.adaptive(
                         value: true,
+                        activeTrackColor: AppColors.sage,
                         activeColor: AppColors.sage,
                         onChanged: (val) {
                           CircaHaptics.selectionClick();
@@ -817,7 +834,9 @@ class _SportScreenState extends State<SportScreen> {
                             SnackBar(
                               backgroundColor: palette.surface,
                               content: Text(
-                                val ? 'IMU автодетект активен' : 'IMU автодетект выключен',
+                                val
+                                    ? AppLocaleNotifier.pick('IMU автодетект активен', 'IMU автодетект активдүү', 'IMU auto-detect active')
+                                    : AppLocaleNotifier.pick('IMU автодетект выключен', 'IMU автодетект өчүрүлдү', 'IMU auto-detect disabled'),
                                 style: TextStyle(color: palette.fg),
                               ),
                             ),
@@ -839,7 +858,7 @@ class _SportScreenState extends State<SportScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            ru ? 'НЕДЕЛЬНОЕ КАРДИО (ЗОНЫ 2 И 5)' : 'АПТАЛЫК КАРДИО (2 ЖАНА 5-ЗОНА)',
+                            AppLocaleNotifier.pick('НЕДЕЛЬНОЕ КАРДИО (ЗОНЫ 2 И 5)', 'АПТАЛЫК КАРДИО (2 ЖАНА 5-ЗОНА)', 'WEEKLY CARDIO (ZONES 2 & 5)'),
                             style: TextStyle(
                               color: palette.secondary,
                               fontSize: 10,
@@ -869,9 +888,11 @@ class _SportScreenState extends State<SportScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        ru
-                            ? '128 мин в Аэробной Зоне 2 + 24 мин интервалов в Зоне 5 обеспечивают омоложение миокарда.'
-                            : 'Аэробдук 2-зонадагы 128 мүнөт + 5-зонадагы 24 мүнөт интервалдар жүрөктү жашартат.',
+                        AppLocaleNotifier.pick(
+                          '128 мин в Аэробной Зоне 2 + 24 мин интервалов в Зоне 5 обеспечивают омоложение миокарда.',
+                          'Аэробдук 2-зонадагы 128 мүнөт + 5-зонадагы 24 мүнөт интервалдар жүрөктү жашартат.',
+                          '128 min in Aerobic Zone 2 + 24 min Zone 5 intervals optimize heart rejuvenation.',
+                        ),
                         style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.35),
                       ),
                     ],
@@ -881,7 +902,7 @@ class _SportScreenState extends State<SportScreen> {
 
                 // 6. История тренировок
                 Text(
-                  ru ? 'История тренировок' : 'Машыгуу тарыхы',
+                  AppLocaleNotifier.pick('История тренировок', 'Машыгуу тарыхы', 'Workout History'),
                   style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
@@ -891,7 +912,7 @@ class _SportScreenState extends State<SportScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Center(
                       child: Text(
-                        ru ? 'Пока нет сохранённых тренировок.' : 'Машыгуулар жок.',
+                        AppLocaleNotifier.pick('Пока нет сохранённых тренировок.', 'Машыгуулар жок.', 'No saved workouts yet.'),
                         style: TextStyle(color: palette.secondary, fontSize: 13),
                       ),
                     ),

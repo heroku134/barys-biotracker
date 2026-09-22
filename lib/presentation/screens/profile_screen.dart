@@ -81,7 +81,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
+  String _tr(String ru, String ky, String en) => AppLocaleNotifier.pick(ru, ky, en);
+  bool get _ru => AppLocaleNotifier.current == AppLanguage.russian;
 
   @override
   Widget build(BuildContext context) {
@@ -96,23 +97,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           appBar: AppBar(
             backgroundColor: palette.bg,
             elevation: 0,
-            title: Text(AppStrings.tr('profile_title', language), style: AppTypography.screenTitle(palette.fg)),
+            title: Text(
+              _tr('Профиль и СААТ-1', 'Профиль жана СААТ-1', 'Profile & SAAT-1'),
+              style: AppTypography.screenTitle(palette.fg),
+            ),
             actions: [
               IconButton(
-                icon: Icon(Icons.logout, color: AppColors.rose, size: 20),
+                icon: Icon(Icons.logout, color: palette.secondary),
                 onPressed: _logout,
               ),
             ],
           ),
           body: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             children: [
               if (_isCrisisMode) _crisisBanner(palette),
               _identityCard(palette, telemetry, language),
-              if (_profile.gender == Gender.female) ...[
-                const SizedBox(height: 12),
-                _pregnancyCard(palette),
-              ],
               const SizedBox(height: 12),
               _deviceCard(palette, telemetry, language),
               const SizedBox(height: 12),
@@ -121,14 +121,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _linkTile(
                 palette,
                 icon: Icons.people_outline,
-                title: _ru ? 'Круг друзей' : 'Достор',
-                subtitle: _ru ? 'Приватная лига' : 'Жеке лига',
+                title: _tr('Круг друзей', 'Достор', 'Friends Circle'),
+                subtitle: _tr('Приватная лига', 'Жеке лига', 'Private League'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge)),
                 ),
               ),
-              const SizedBox(height: 12),
-              _partnerCard(palette, language),
+              if (_profile.gender != Gender.female) ...[
+                const SizedBox(height: 12),
+                _partnerCard(palette, language),
+              ],
               const SizedBox(height: 12),
               _languageCard(palette, language),
               const SizedBox(height: 12),
@@ -153,9 +155,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                _ru
-                    ? 'Часы не ставят диагноз. Цифры показывают тренд восстановления и нагрузки.'
-                    : 'Саат диагноз койбойт. Сандар калыбына келүү жана жүктөмдүн багытын көрсөтөт.',
+                _tr(
+                  'Часы не ставят диагноз. Цифры показывают тренд восстановления и нагрузки.',
+                  'Саат диагноз койбойт. Сандар калыбына келүү жана жүктөмдүн багытын көрсөтөт.',
+                  'The watch does not diagnose. Numbers indicate recovery and strain trends.',
+                ),
                 style: AppTypography.caption(palette.secondary).copyWith(height: 1.4),
               ),
             ],
@@ -180,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              _ru ? 'Демо: кризисный режим включён' : 'Демо: кризис режими күйүк',
+              _tr('Демо: кризисный режим включён', 'Демо: кризис режими күйүк', 'Demo: crisis mode enabled'),
               style: TextStyle(color: palette.fg, fontSize: 13),
             ),
           ),
@@ -191,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 widget.bleBridge.setDemoCrisis(false);
               });
             },
-            child: Text(_ru ? 'Выкл' : 'Өчүр', style: TextStyle(color: AppColors.rose)),
+            child: Text(_tr('Выкл', 'Өчүр', 'Off'), style: TextStyle(color: AppColors.rose)),
           ),
         ],
       ),
@@ -199,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _identityCard(KalkanColors palette, BleTelemetry telemetry, AppLanguage language) {
-    final name = _profile.name.isNotEmpty ? _profile.name : (_ru ? 'Гость' : 'Конок');
+    final name = _profile.name.isNotEmpty ? _profile.name : _tr('Гость', 'Конок', 'Guest');
     return GlassCard(
       child: Row(
         children: [
@@ -223,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(name, style: AppTypography.bodySemibold(palette.fg)),
                 const SizedBox(height: 2),
                 Text(
-                  '${_profile.age} · ${_profile.gender == Gender.female ? (_ru ? 'Женский' : 'Аял') : (_ru ? 'Мужской' : 'Эркек')}',
+                  '${_profile.age} · ${_profile.gender == Gender.female ? _tr('Женский', 'Аял', 'Female') : _tr('Мужской', 'Эркек', 'Male')}',
                   style: AppTypography.caption(palette.secondary),
                 ),
               ],
@@ -231,7 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           TextButton(
             onPressed: _showEditNameDialog,
-            child: Text(_ru ? 'Имя' : 'Аты', style: TextStyle(color: AppColors.sage)),
+            child: Text(_tr('Имя', 'Аты', 'Name'), style: TextStyle(color: AppColors.sage)),
           ),
         ],
       ),
@@ -256,8 +260,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(telemetry.deviceName.isNotEmpty ? telemetry.deviceName : 'СААТ-1', style: AppTypography.bodySemibold(palette.fg)),
                 Text(
                   telemetry.isConnected
-                      ? (_ru ? 'Подключены · ${telemetry.batteryLevel}%' : 'Туташкан · ${telemetry.batteryLevel}%')
-                      : (_ru ? 'Нет связи' : 'Байланыш жок'),
+                      ? (_tr('Подключены · ${telemetry.batteryLevel}%', 'Туташкан · ${telemetry.batteryLevel}%', 'Connected · ${telemetry.batteryLevel}%'))
+                      : (_tr('Нет связи', 'Байланыш жок', 'Not connected')),
                   style: AppTypography.caption(telemetry.isConnected ? AppColors.sage : palette.secondary),
                 ),
               ],
@@ -276,25 +280,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              Expanded(child: Text(_ru ? 'Данные и цели' : 'Маалымат жана максат', style: AppTypography.bodySemibold(palette.fg))),
-              TextButton(onPressed: _showBiodataModal, child: Text(_ru ? 'Изменить' : 'Өзгөртүү', style: TextStyle(color: AppColors.sage))),
+              Expanded(child: Text(_tr('Данные и цели', 'Маалымат жана максат', 'Data & Goals'), style: AppTypography.bodySemibold(palette.fg))),
+              TextButton(onPressed: _showBiodataModal, child: Text(_tr('Изменить', 'Өзгөртүү', 'Edit'), style: TextStyle(color: AppColors.sage))),
             ],
           ),
           const SizedBox(height: 8),
           Row(children: [
-            _metric(palette, _ru ? 'Рост' : 'Бою', '${_profile.heightCm.toInt()} см'),
+            _metric(palette, _tr('Рост', 'Бою', 'Height'), '${_profile.heightCm.toInt()} см'),
             const SizedBox(width: 8),
-            _metric(palette, _ru ? 'Вес' : 'Салмагы', '${_profile.weightKg.toStringAsFixed(1)} кг'),
+            _metric(palette, _tr('Вес', 'Салмагы', 'Weight'), '${_profile.weightKg.toStringAsFixed(1)} кг'),
             const SizedBox(width: 8),
             _metric(palette, 'BMI', _profile.bmi.toStringAsFixed(1)),
           ]),
           const SizedBox(height: 8),
           Row(children: [
-            _metric(palette, _ru ? 'Шаги' : 'Кадам', '${_profile.stepGoal}'),
+            _metric(palette, _tr('Шаги', 'Кадам', 'Steps'), '${_profile.stepGoal}'),
             const SizedBox(width: 8),
-            _metric(palette, _ru ? 'Ккал' : 'Ккал', '${_profile.calorieGoal}'),
+            _metric(palette, _tr('Ккал', 'Ккал', 'Calories'), '${_profile.calorieGoal}'),
             const SizedBox(width: 8),
-            _metric(palette, _ru ? 'Сон' : 'Уйку', '${_profile.sleepGoalHours.toStringAsFixed(0)} ч'),
+            _metric(palette, _tr('Сон', 'Уйку', 'Sleep'), '${_profile.sleepGoalHours.toStringAsFixed(0)} ч'),
           ]),
         ],
       ),
@@ -346,12 +350,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_ru ? 'Цикл партнёра' : 'Өнөктөштүн цикли', style: AppTypography.bodySemibold(palette.fg)),
+          Text(_tr('Цикл партнёра', 'Өнөктөштүн цикли', 'Partner Cycle'), style: AppTypography.bodySemibold(palette.fg)),
           const SizedBox(height: 6),
           Text(
             linked
-                ? '${_partnerCycle!.partnerName} · ${_ru ? 'день' : 'күн'} ${_partnerCycle!.currentCycleDay} · ${_partnerCycle!.phaseTitle}'
-                : (_ru ? 'Привяжите код, чтобы видеть фазу на главном экране.' : 'Кодду байлаңыз — фаза башкы экранда көрүнөт.'),
+                ? '${_partnerCycle!.partnerName} · ${_tr('день', 'күн', 'day')} ${_partnerCycle!.currentCycleDay} · ${_partnerCycle!.phaseTitle}'
+                : (_tr('Привяжите код, чтобы видеть фазу на главном экране.', 'Кодду байлаңыз — фаза башкы экранда көрүнөт.', 'Link code to view partner phase on home screen.')),
             style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
           ),
           const SizedBox(height: 12),
@@ -360,7 +364,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => CircaPartnerCycleSheet.show(context, _partnerCycle!),
-                  child: Text(_ru ? 'Подробно' : 'Толук'),
+                  child: Text(_tr('Подробно', 'Толук', 'Details')),
                 ),
               ),
               const SizedBox(width: 8),

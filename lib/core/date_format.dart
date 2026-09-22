@@ -48,14 +48,43 @@ class AppDates {
     'жекшемби',
   ];
 
+  static const _enMonths = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  static const _enWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+
   static String formatLong(DateTime date, AppLanguage language) {
-    final week = language == AppLanguage.kyrgyz ? _kyWeek : _ruWeek;
-    final months = language == AppLanguage.kyrgyz ? _kyMonths : _ruMonths;
-    final w = week[date.weekday - 1];
-    final m = months[date.month - 1];
     if (language == AppLanguage.kyrgyz) {
+      final w = _kyWeek[date.weekday - 1];
+      final m = _kyMonths[date.month - 1];
       return '$w, ${date.day}-$m';
     }
+    if (language == AppLanguage.english) {
+      final w = _enWeek[date.weekday - 1];
+      final m = _enMonths[date.month - 1];
+      return '$w, $m ${date.day}';
+    }
+    final w = _ruWeek[date.weekday - 1];
+    final m = _ruMonths[date.month - 1];
     return '$w, ${date.day} $m';
   }
 }

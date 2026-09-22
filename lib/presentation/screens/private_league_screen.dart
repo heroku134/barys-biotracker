@@ -21,8 +21,9 @@ class PrivateLeagueScreen extends StatefulWidget {
 class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
   PrivateLeague? _league;
   bool _loading = true;
-  bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
   String? _cloudCode;
+
+  String _t(String ru, String ky, String en) => AppLocaleNotifier.pick(ru, ky, en);
 
   @override
   void initState() {
@@ -45,9 +46,9 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
       if (mounted) setState(() => _loading = false);
     }
 
-    // 2. В фоне получаем облачный код приглашения (с защитой от зависания 2 сек)
+    // 2. Фоново обновляем инвайт код через Firestore без блокировки пользователя
     try {
-      final cloudCode = await CloudSyncService.publishFriendInvite()
+      final cloudCode = await CloudSyncService.publishCycleInvite()
           .timeout(const Duration(seconds: 2), onTimeout: () => _league?.inviteCode ?? 'KALKAN-0000');
       if (mounted && cloudCode.isNotEmpty) {
         setState(() => _cloudCode = cloudCode);
@@ -66,7 +67,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
         appBar: AppBar(
           backgroundColor: palette.bg,
           elevation: 0,
-          title: Text(_ru ? 'Круг друзей' : 'Достор', style: AppTypography.screenTitle(palette.fg)),
+          title: Text(_t('Круг друзей', 'Достор', 'Circle of friends'), style: AppTypography.screenTitle(palette.fg)),
         ),
         body: Center(
           child: CircularProgressIndicator(color: AppColors.sage),
@@ -88,10 +89,10 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
       appBar: AppBar(
         backgroundColor: palette.bg,
         elevation: 0,
-        title: Text(_ru ? 'Круг друзей' : 'Достор', style: AppTypography.screenTitle(palette.fg)),
+        title: Text(_t('Круг друзей', 'Достор', 'Circle of friends'), style: AppTypography.screenTitle(palette.fg)),
         actions: [
           IconButton(
-            tooltip: _ru ? 'Скопировать код' : 'Кодду көчүрүү',
+            tooltip: _t('Скопировать код', 'Кодду көчүрүү', 'Copy code'),
             icon: Icon(Icons.share_outlined, color: palette.secondary),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: inviteCode));
@@ -100,7 +101,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                 SnackBar(
                   backgroundColor: palette.surface,
                   content: Text(
-                    _ru ? 'Код круга скопирован: $inviteCode' : 'Код көчүрүлдү: $inviteCode',
+                    _t('Код круга скопирован: $inviteCode', 'Код көчүрүлдү: $inviteCode', 'Circle code copied: $inviteCode'),
                     style: TextStyle(color: palette.fg),
                   ),
                 ),
@@ -122,7 +123,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _ru ? 'ПРИВАТНАЯ ЛИГА (ДАНБАР 3-5)' : 'ЖЕКЕ ЛИГА',
+                      _t('ПРИВАТНАЯ ЛИГА (ДАНБАР 3-5)', 'ЖЕКЕ ЛИГА', 'PRIVATE LEAGUE (DUNBAR 3-5)'),
                       style: TextStyle(
                         color: palette.secondary,
                         fontSize: 10,
@@ -145,9 +146,11 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  _ru
-                      ? 'Делитесь физиологической готовностью только с близким кругом. Код для подключения:'
-                      : 'Жакын досторуңуз менен гана бөлүшүңүз. Кошулуу коду:',
+                  _t(
+                    'Делитесь физиологической готовностью только с близким кругом. Код для подключения:',
+                    'Жакын досторуңуз менен гана бөлүшүңүз. Кошулуу коду:',
+                    'Share physiological readiness only with your inner circle. Invite code:',
+                  ),
                   style: AppTypography.caption(palette.secondary),
                 ),
                 const SizedBox(height: 12),
@@ -158,7 +161,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         backgroundColor: palette.surface,
-                        content: Text(_ru ? 'Код скопирован в буфер' : 'Код көчүрүлдү', style: TextStyle(color: palette.fg)),
+                        content: Text(_t('Код скопирован в буфер', 'Код көчүрүлдү', 'Code copied to clipboard'), style: TextStyle(color: palette.fg)),
                       ),
                     );
                   },
@@ -194,7 +197,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
           const SizedBox(height: 16),
 
           Text(
-            _ru ? 'Участники круга' : 'Катышуучулар',
+            _t('Участники круга', 'Катышуучулар', 'Circle members'),
             style: AppTypography.bodySemibold(palette.fg),
           ),
           const SizedBox(height: 10),
@@ -226,7 +229,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    m.isCurrentUser ? (_ru ? '${m.name} (Вы)' : '${m.name} (Сиз)') : m.name,
+                                    m.isCurrentUser ? _t('${m.name} (Вы)', '${m.name} (Сиз)', '${m.name} (You)') : m.name,
                                     style: AppTypography.bodySemibold(palette.fg),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -249,9 +252,11 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              _ru
-                                  ? 'Готовность: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · сон ${m.sleepHours.toStringAsFixed(1)} ч'
-                                  : 'Даярдык: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · уйку ${m.sleepHours.toStringAsFixed(1)} с',
+                              _t(
+                                'Готовность: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · сон ${m.sleepHours.toStringAsFixed(1)} ч',
+                                'Даярдык: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · уйку ${m.sleepHours.toStringAsFixed(1)} с',
+                                'Readiness: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · sleep ${m.sleepHours.toStringAsFixed(1)} h',
+                              ),
                               style: AppTypography.caption(palette.secondary),
                             ),
                           ],
@@ -294,7 +299,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                             PopupMenuItem(
                               value: 'remove',
                               child: Text(
-                                _ru ? 'Удалить из круга' : 'Кругдан чыгаруу',
+                                _t('Удалить из круга', 'Кругдан чыгаруу', 'Remove from circle'),
                                 style: const TextStyle(color: AppColors.rose, fontSize: 13),
                               ),
                             ),
@@ -313,7 +318,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
               child: OutlinedButton.icon(
                 onPressed: _add,
                 icon: const Icon(Icons.person_add_outlined, size: 18),
-                label: Text(_ru ? 'Добавить друга по коду' : 'Код менен дос кошуу'),
+                label: Text(_t('Добавить друга по коду', 'Код менен дос кошуу', 'Add friend by code')),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: palette.fg,
                   side: BorderSide(color: palette.hairline),
@@ -337,7 +342,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
         backgroundColor: palette.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          _ru ? 'Добавить друга' : 'Дос кошуу',
+          _t('Добавить друга', 'Дос кошуу', 'Add friend'),
           style: TextStyle(color: palette.fg, fontWeight: FontWeight.w700, fontSize: 18),
         ),
         content: Column(
@@ -345,9 +350,11 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _ru
-                  ? 'Введите код приглашения друга (например, KALKAN-4821):'
-                  : 'Досуңуздун кодун жазыңыз (мисалы, KALKAN-4821):',
+              _t(
+                'Введите код приглашения друга (например, KALKAN-4821):',
+                'Досуңуздун кодун жазыңыз (мисалы, KALKAN-4821):',
+                "Enter friend's invite code (e.g. KALKAN-4821):",
+              ),
               style: TextStyle(color: palette.secondary, fontSize: 13),
             ),
             const SizedBox(height: 12),
@@ -372,7 +379,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(_ru ? 'Отмена' : 'Жок', style: TextStyle(color: palette.secondary)),
+            child: Text(_t('Отмена', 'Жок', 'Cancel'), style: TextStyle(color: palette.secondary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -393,7 +400,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text(_ru ? 'Добавить' : 'Кошуу'),
+            child: Text(_t('Добавить', 'Кошуу', 'Add')),
           ),
         ],
       ),

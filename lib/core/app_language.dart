@@ -40,12 +40,23 @@ class AppLocaleNotifier extends ValueNotifier<AppLanguage> {
   static bool get isRussian => instance.value == AppLanguage.russian;
   static bool get isEnglish => instance.value == AppLanguage.english;
 
-  static String pick(String ru, String ky, [String? en]) {
+  static T pick<T>(T ru, T ky, [T? en]) {
     switch (instance.value) {
       case AppLanguage.kyrgyz:
         return ky;
       case AppLanguage.english:
         return en ?? ru;
+      case AppLanguage.russian:
+        return ru;
+    }
+  }
+
+  static T t<T>(T ru, T ky, T en) {
+    switch (instance.value) {
+      case AppLanguage.kyrgyz:
+        return ky;
+      case AppLanguage.english:
+        return en;
       case AppLanguage.russian:
         return ru;
     }
@@ -73,11 +84,13 @@ class AppLocaleNotifier extends ValueNotifier<AppLanguage> {
     } catch (_) {}
   }
 
-  /// Быстрое переключение между русским и кыргызским
+  /// Быстрое циклическое переключение между тремя языками: RU -> KY -> EN -> RU
   static Future<void> toggleLanguage() async {
-    final next = instance.value == AppLanguage.russian
-        ? AppLanguage.kyrgyz
-        : AppLanguage.russian;
+    final next = switch (instance.value) {
+      AppLanguage.russian => AppLanguage.kyrgyz,
+      AppLanguage.kyrgyz => AppLanguage.english,
+      AppLanguage.english => AppLanguage.russian,
+    };
     await setLanguage(next);
   }
 }
