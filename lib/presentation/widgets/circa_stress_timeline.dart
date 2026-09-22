@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../domain/avatar/avatar_manager.dart';
-import '../../core/circa_haptics.dart';
 import '../../domain/intelligence/stress_engine.dart';
 import 'circa_day_story_dialog.dart';
 import 'glass_card.dart';
@@ -246,57 +245,9 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
     }
   }
 
-  void _triggerBreathingPause() {
-    HapticFeedback.heavyImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.surface,
-        duration: const Duration(seconds: 4),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: AppColors.sage, width: 1.2),
-        ),
-        content: Row(
-          children: [
-            Icon(Icons.air, color: AppColors.sage, size: 22),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ДЫХАТЕЛЬНАЯ ПАУЗА 4-6 АКТИВИРОВАНА',
-                    style: TextStyle(
-                      color: AppColors.sage,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Вдох через нос на 4 счёта ... медленный выдох ртом на 6 счетов.',
-                    style: TextStyle(color: AppColors.fg, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final summary = widget.stressSummary;
-
-    // Ищем слот пикового стресса для предиктивной аналитики
-    final peakSlot = _slots.firstWhere(
-      (s) => s.stressScore >= 70,
-      orElse: () => _slots[2],
-    );
 
     return GlassCard(
       child: Column(
@@ -654,105 +605,6 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
               ),
             ),
         ],
-      ),
-    );
-  }
-
-  void _showStressDetailModal(BuildContext context, StressTimeSlot slot) {
-    CircaHaptics.selectionClick();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.line,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.rose.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.bolt, color: AppColors.rose, size: 20),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ПЕРСОНАЛЬНЫЙ ПАТТЕРН СТРЕССА',
-                        style: TextStyle(color: AppColors.rose, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.2),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Пик кортизола в 13:30 (${slot.userTag ?? 'Переговоры / Дедлайн'})',
-                        style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.raised,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.line),
-              ),
-              child: Text(
-                'На основе разметки за 30 дней в 13:30 регулярно фиксируется острый пик кортизола. Прогноз на завтра: вероятность стресса >75% равна 84%.',
-                style: TextStyle(color: AppColors.fg, fontSize: 12, height: 1.4),
-              ),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'Рекомендация СААТ-1: за 10 минут до пиковой встречи переключитесь на дыхательный цикл 4-6 для активации парасимпатической нервной системы (блуждающего нерва).',
-              style: TextStyle(color: AppColors.muted, fontSize: 11.5, height: 1.35, fontStyle: FontStyle.italic),
-            ),
-            SizedBox(height: 18),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  _triggerBreathingPause();
-                },
-                icon: Icon(Icons.air, size: 16, color: AppColors.stage),
-                label: Text(
-                  'НАЧАТЬ ДЫХАТЕЛЬНУЮ ПАУЗУ 4-6',
-                  style: TextStyle(color: AppColors.stage, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.2),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.amber,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

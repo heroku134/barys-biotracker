@@ -71,10 +71,8 @@ class _RunRouteMapWidgetState extends State<RunRouteMapWidget> with SingleTicker
     final palette = KalkanColors.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // CartoDB Dark Matter / Positron
-    final tileUrl = isDark
-        ? 'https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png'
-        : 'https://a.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png';
+    // Бесплатный и стабильный провайдер карт OpenStreetMap (без водяных знаков и API ключей)
+    const osmUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
     final routePoints = widget.points.isNotEmpty
         ? widget.points
@@ -95,11 +93,23 @@ class _RunRouteMapWidgetState extends State<RunRouteMapWidget> with SingleTicker
             ),
             children: [
               TileLayer(
-                urlTemplate: tileUrl,
+                urlTemplate: osmUrl,
                 userAgentPackageName: 'sport.kalkan.bio',
                 maxZoom: 19,
-                subdomains: const ['a', 'b', 'c', 'd'],
                 errorTileCallback: (tile, error, stackTrace) {},
+                tileBuilder: isDark
+                    ? (context, tileWidget, tile) {
+                        return ColorFiltered(
+                          colorFilter: const ColorFilter.matrix(<double>[
+                            -0.22, 0, 0, 0, 48,
+                            0, -0.22, 0, 0, 48,
+                            0, 0, -0.22, 0, 52,
+                            0, 0, 0, 1, 0,
+                          ]),
+                          child: tileWidget,
+                        );
+                      }
+                    : null,
               ),
               if (routePoints.length >= 2)
                 PolylineLayer(

@@ -171,7 +171,8 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
 
   @override
   Widget build(BuildContext context) {
-    final slot = _slots[_currentIndex];
+    if (_slots.isEmpty) return const SizedBox.shrink();
+    final slot = _slots[_currentIndex.clamp(0, _slots.length - 1)];
     final size = MediaQuery.of(context).size;
 
     return Scaffold(

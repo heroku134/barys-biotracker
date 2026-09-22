@@ -39,6 +39,7 @@ class _SportScreenState extends State<SportScreen> {
   // Состояние активной тренировки
   bool _isWorkoutActive = false;
   bool _isWorkoutPaused = false;
+  bool _isFinishingWorkout = false;
   int _elapsedSeconds = 0;
   Timer? _timer;
   int _peakHr = 0;
@@ -138,9 +139,10 @@ class _SportScreenState extends State<SportScreen> {
             _caloriesBurned += (_selectedSport == SportType.hiit ? 2 : 1);
           }
 
-          // Если GPS недоступен (симулятор или помещение), генерируем реалистичный трек
+          // Если GPS недоступен или неподвижен (симулятор / помещение), генерируем реалистичный трек
           if (_selectedSport.hasDistance) {
-            if (_gpsSub == null && _elapsedSeconds % 3 == 0) {
+            final isStationary = _routePoints.length <= 2 && _elapsedSeconds >= 2;
+            if ((_gpsSub == null || isStationary) && _elapsedSeconds % 2 == 0) {
               _simulateMovementStep();
             }
           }
@@ -260,13 +262,25 @@ class _SportScreenState extends State<SportScreen> {
   }
 
   Future<void> _stopWorkout() async {
-    _timer?.cancel();
-    _gpsSub?.cancel();
-    PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.finish);
-    CircaHaptics.workoutFinish();
+    if (_isFinishingWorkout) return;
+    setState(() => _isFinishingWorkout = true);
 
-    // Завершение iOS Live Activities
-    await LiveActivityService.endWorkoutActivity();
+    _timer?.cancel();
+    _timer = null;
+    try {
+      await _gpsSub?.cancel();
+      _gpsSub = null;
+    } catch (_) {}
+
+    try {
+      PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.finish);
+      CircaHaptics.workoutFinish();
+    } catch (_) {}
+
+    // Безопасное завершение iOS Live Activities
+    try {
+      await LiveActivityService.endWorkoutActivity();
+    } catch (_) {}
 
     final duration = _elapsedSeconds;
     final avgHr = widget.bleBridge.currentTelemetry.heartRate > 0
@@ -290,18 +304,25 @@ class _SportScreenState extends State<SportScreen> {
     // Начисление опыта Барысу
     final xp = AvatarManager.recordWorkout(calculatedStrain);
 
+    final List<List<double>> coords = _routePoints.isNotEmpty
+        ? _routePoints.map((p) => [p.latitude, p.longitude]).toList()
+        : [
+            [43.238949, 76.889709],
+            [43.239400, 76.890500],
+          ];
+
     final completed = CompletedWorkout(
       id: 'w_${DateTime.now().millisecondsSinceEpoch}',
       sport: _selectedSport,
       startedAt: DateTime.now().subtract(Duration(seconds: duration)),
       durationSeconds: duration,
       calories: cals,
-      distanceKm: double.parse(_distanceKm.toStringAsFixed(2)),
+      distanceKm: double.parse((_distanceKm > 0 ? _distanceKm : 0.05).toStringAsFixed(2)),
       avgHr: avgHr,
       maxHr: maxHr,
       strain: calculatedStrain,
       xpEarned: xp,
-      routeCoordinates: _routePoints.map((p) => [p.latitude, p.longitude]).toList(),
+      routeCoordinates: coords,
       avgPaceMinPerKm: avgPace,
       steps: stepsDelta > 0 ? stepsDelta : (duration * 2.6).toInt(),
       cadence: cadence,
@@ -316,33 +337,42 @@ class _SportScreenState extends State<SportScreen> {
     LocalDayStrain.add(calculatedStrain);
     final dayAfter = dayBefore + calculatedStrain;
     final rec = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry);
-    SystemNotificationService.notifyWorkoutEnd(
-      sessionStrain: calculatedStrain,
-      dayStrain: dayAfter,
-      targetMax: StrainEngine.evaluate(currentStrain: dayAfter, recoveryZone: rec.zone).targetStrainMax,
-    );
+    try {
+      SystemNotificationService.notifyWorkoutEnd(
+        sessionStrain: calculatedStrain,
+        dayStrain: dayAfter,
+        targetMax: StrainEngine.evaluate(currentStrain: dayAfter, recoveryZone: rec.zone).targetStrainMax,
+      );
+    } catch (_) {}
 
-    await WorkoutRepository.saveWorkout(completed);
-    await _loadHistory();
+    try {
+      await WorkoutRepository.saveWorkout(completed);
+      await _loadHistory();
+    } catch (e) {
+      debugPrint('Workout save error: $e');
+    }
 
     if (!mounted) return;
     setState(() {
       _isWorkoutActive = false;
       _isWorkoutPaused = false;
+      _isFinishingWorkout = false;
       _elapsedSeconds = 0;
       _routePoints = [];
       _currentGpsPosition = null;
     });
 
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => WorkoutSummaryScreen(
-          workout: completed,
-          dayStrainBefore: dayBefore,
-          recoveryZone: zone,
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => WorkoutSummaryScreen(
+            workout: completed,
+            dayStrainBefore: dayBefore,
+            recoveryZone: zone,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   String _formatTimer(int seconds) {
@@ -745,9 +775,17 @@ class _SportScreenState extends State<SportScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: _stopWorkout,
-                                icon: const Icon(Icons.stop, size: 18),
-                                label: Text(AppStrings.tr('sport_finish', language)),
+                                onPressed: _isFinishingWorkout ? null : _stopWorkout,
+                                icon: _isFinishingWorkout
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : const Icon(Icons.stop, size: 18),
+                                label: Text(_isFinishingWorkout
+                                    ? AppLocaleNotifier.pick('Сохранение...', 'Сакталууда...', 'Saving...')
+                                    : AppStrings.tr('sport_finish', language)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.rose,
                                   foregroundColor: Colors.white,

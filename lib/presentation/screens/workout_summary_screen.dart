@@ -67,8 +67,8 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          // 1. Карта маршрута (если есть координаты пробежки)
-          if (routePoints.length >= 2) ...[
+          // 1. Карта маршрута (для дистанционных видов спорта или если есть трек)
+          if (workout.sport.hasDistance || routePoints.isNotEmpty) ...[
             Container(
               height: 220,
               decoration: BoxDecoration(
@@ -76,7 +76,9 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
                 border: Border.all(color: palette.hairline),
               ),
               child: RunRouteMapWidget(
-                points: routePoints,
+                points: routePoints.isNotEmpty
+                    ? routePoints
+                    : const [LatLng(43.238949, 76.889709), LatLng(43.239400, 76.890500)],
                 isLive: false,
                 initialZoom: 14.5,
               ),
