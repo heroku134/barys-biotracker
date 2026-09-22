@@ -8,6 +8,18 @@ import CoreBluetooth
 import ActivityKit
 #endif
 
+#if canImport(Darwin)
+import Darwin
+#endif
+
+// MARK: - Swift Concurrency Runtime Compatibility Stub
+// Resolves `_swift_coroFrameAlloc` missing symbol when linking with UTEBluetoothRYApi static framework.
+@_cdecl("swift_coroFrameAlloc")
+public func _kalkan_swift_coroFrameAlloc(_ size: Int, _ typeId: UInt64) -> UnsafeMutableRawPointer? {
+  let allocSize = size == 0 ? 1 : size
+  return malloc(allocSize)
+}
+
 #if canImport(UTEBluetoothRYApi)
 import UTEBluetoothRYApi
 
