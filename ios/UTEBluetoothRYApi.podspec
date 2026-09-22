@@ -9,7 +9,6 @@ Pod::Spec.new do |s|
   s.source           = { :path => '.' }
   s.platform         = :ios, '13.0'
   s.vendored_frameworks = 'Frameworks/UTEBluetoothRYApi.framework'
-  s.source_files     = 'Classes/**/*.{h,m,c}'
   s.resources        = 'Frameworks/UTEBluetoothRYApi.framework/UTEBluetoothRYApi.bundle'
   s.libraries        = 'c++'
   s.frameworks       = 'CoreBluetooth', 'UIKit', 'Foundation'
