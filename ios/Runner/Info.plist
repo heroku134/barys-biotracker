@@ -16,6 +16,30 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>barys_biotracker</string>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>AppIcon-Light</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-Light</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Приложению требуется Bluetooth для подключения к часам KALKAN СААТ-1 и синхронизации биометрии.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>

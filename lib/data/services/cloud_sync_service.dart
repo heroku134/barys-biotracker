@@ -31,7 +31,7 @@ class CloudSyncService {
         'email': profile.email,
         'gender': profile.gender.name,
         'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
       if (profile.gender == Gender.female) {
         await db.collection('cycle').doc(id).set({
           'cycleDay': profile.cycleDay ?? 1,
@@ -39,10 +39,10 @@ class CloudSyncService {
           'phase': (profile.cyclePhase ?? HormonalCyclePhase.follicular).name,
           'partnerName': profile.name,
           'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+        }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
       }
     } catch (e) {
-      debugPrint('CloudSync.pushProfile: $e');
+      debugPrint('CloudSync.pushProfile note: $e');
     }
   }
 
@@ -51,28 +51,32 @@ class CloudSyncService {
     final id = uid;
     if (db == null || id == null) return null;
     try {
-      final snap = await db.collection('users').doc(id).get();
+      final snap = await db.collection('users').doc(id).get().timeout(const Duration(seconds: 4));
       final raw = snap.data()?['profileRaw'] as String?;
       if (raw == null || raw.isEmpty) return null;
       return UserProfile.deserialize(raw).copyWith(isAuthenticated: true);
     } catch (e) {
-      debugPrint('CloudSync.pullProfile: $e');
+      debugPrint('CloudSync.pullProfile note: $e');
       return null;
     }
   }
 
   static Future<void> afterLogin(UserProfile local) async {
-    final remote = await pullProfile();
-    if (remote != null) {
-      final merged = remote.copyWith(
-        isAuthenticated: true,
-        email: local.email.isNotEmpty ? local.email : remote.email,
-      );
-      await UserProfileRepository.saveProfile(merged);
-    } else {
-      await pushProfile(local);
+    try {
+      final remote = await pullProfile();
+      if (remote != null) {
+        final merged = remote.copyWith(
+          isAuthenticated: true,
+          email: local.email.isNotEmpty ? local.email : remote.email,
+        );
+        await UserProfileRepository.saveProfile(merged);
+      } else {
+        await pushProfile(local);
+      }
+      await pullDays();
+    } catch (e) {
+      debugPrint('CloudSync.afterLogin note: $e');
     }
-    await pullDays();
   }
 
   static Future<void> pushDay(DaySnapshot day) async {
@@ -80,9 +84,9 @@ class CloudSyncService {
     final id = uid;
     if (db == null || id == null) return;
     try {
-      await db.collection('days').doc(id).collection('snapshots').doc(day.dateKey).set(day.toJson());
+      await db.collection('days').doc(id).collection('snapshots').doc(day.dateKey).set(day.toJson()).timeout(const Duration(seconds: 4));
     } catch (e) {
-      debugPrint('CloudSync.pushDay: $e');
+      debugPrint('CloudSync.pushDay note: $e');
     }
   }
 
@@ -91,12 +95,12 @@ class CloudSyncService {
     final id = uid;
     if (db == null || id == null) return;
     try {
-      final qs = await db.collection('days').doc(id).collection('snapshots').get();
+      final qs = await db.collection('days').doc(id).collection('snapshots').get().timeout(const Duration(seconds: 4));
       for (final doc in qs.docs) {
         await DaySnapshotRepository.upsert(DaySnapshot.fromJson(doc.data()));
       }
     } catch (e) {
-      debugPrint('CloudSync.pullDays: $e');
+      debugPrint('CloudSync.pullDays note: $e');
     }
   }
 
@@ -163,9 +167,9 @@ class CloudSyncService {
         'note': data.note,
         'partnerName': data.partnerName,
         'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
     } catch (e) {
-      debugPrint('CloudSync.pushCycle: $e');
+      debugPrint('CloudSync.pushCycle note: $e');
     }
   }
 
@@ -175,16 +179,16 @@ class CloudSyncService {
     final raw = code.trim().toUpperCase();
     if (db == null || id == null || raw.isEmpty) return false;
     try {
-      final inv = await db.collection('invites').doc(raw).get();
+      final inv = await db.collection('invites').doc(raw).get().timeout(const Duration(seconds: 4));
       if (!inv.exists) return false;
       final owner = inv.data()?['ownerUid'] as String?;
       if (owner == null) return false;
-      await db.collection('partners').doc(id).set({'partnerUid': owner, 'code': raw});
+      await db.collection('partners').doc(id).set({'partnerUid': owner, 'code': raw}).timeout(const Duration(seconds: 4));
       await PartnerCycleRepository.linkPartner(partnerCode: raw, partnerName: name);
       await pullPartnerCycle();
       return true;
     } catch (e) {
-      debugPrint('CloudSync.linkPartner: $e');
+      debugPrint('CloudSync.linkPartner note: $e');
       return false;
     }
   }
@@ -194,10 +198,10 @@ class CloudSyncService {
     final id = uid;
     if (db == null || id == null) return;
     try {
-      final link = await db.collection('partners').doc(id).get();
+      final link = await db.collection('partners').doc(id).get().timeout(const Duration(seconds: 4));
       final other = link.data()?['partnerUid'] as String?;
       if (other == null) return;
-      final doc = await db.collection('cycle').doc(other).get();
+      final doc = await db.collection('cycle').doc(other).get().timeout(const Duration(seconds: 4));
       final d = doc.data();
       if (d == null) return;
       final current = await PartnerCycleRepository.loadPartnerCycle();

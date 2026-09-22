@@ -16,6 +16,7 @@ import '../../domain/models/partner_cycle_data.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
+import '../../data/services/app_icon_service.dart';
 import '../widgets/circa_avatar_picker_dialog.dart';
 import '../widgets/circa_morning_briefing_dialog.dart';
 import '../widgets/circa_partner_cycle_sheet.dart';
@@ -447,14 +448,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_ru ? 'Тема' : 'Тема', style: AppTypography.bodySemibold(palette.fg)),
+          Text(AppLocaleNotifier.pick('Тема оформления', 'Тема', 'Theme'), style: AppTypography.bodySemibold(palette.fg)),
           const SizedBox(height: 10),
           Row(children: [
             Expanded(child: _choice(palette, _ru ? 'Тёмная' : 'Караңгы', dark, () => AppThemeNotifier.setThemeMode(ThemeMode.dark))),
             const SizedBox(width: 8),
             Expanded(child: _choice(palette, _ru ? 'Светлая' : 'Жарык', !dark, () => AppThemeNotifier.setThemeMode(ThemeMode.light))),
           ]),
+          const SizedBox(height: 16),
+          Text(AppLocaleNotifier.pick('Иконка приложения', 'Колдонмо белгиси', 'App Icon'), style: AppTypography.bodySemibold(palette.fg)),
+          const SizedBox(height: 10),
+          ValueListenableBuilder<AppIconVariant>(
+            valueListenable: AppIconService.currentIcon,
+            builder: (context, iconVariant, _) {
+              final isDarkIcon = iconVariant == AppIconVariant.dark;
+              return Row(
+                children: [
+                  Expanded(
+                    child: _iconChoice(
+                      palette,
+                      title: AppLocaleNotifier.pick('Обсидиан', 'Обсидиан', 'Obsidian'),
+                      subtitle: AppLocaleNotifier.pick('Тёмная', 'Кара', 'Dark'),
+                      imageAsset: 'assets/images/kalkan_app_icon_dark_1024.png',
+                      active: isDarkIcon,
+                      onTap: () => AppIconService.setIcon(AppIconVariant.dark),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _iconChoice(
+                      palette,
+                      title: AppLocaleNotifier.pick('Фарфор', 'Фарфор', 'Porcelain'),
+                      subtitle: AppLocaleNotifier.pick('Светлая', 'Жарык', 'Light'),
+                      imageAsset: 'assets/images/kalkan_app_icon_light_1024.png',
+                      active: !isDarkIcon,
+                      onTap: () => AppIconService.setIcon(AppIconVariant.light),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _iconChoice(
+    KalkanColors palette, {
+    required String title,
+    required String subtitle,
+    required String imageAsset,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: active ? AppColors.sage.withValues(alpha: 0.12) : palette.raised,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: active ? AppColors.sage : palette.hairline,
+            width: active ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                imageAsset,
+                width: 38,
+                height: 38,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: palette.fg,
+                      fontSize: 13,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: palette.secondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (active)
+              Icon(Icons.check_circle, color: AppColors.sage, size: 16),
+          ],
+        ),
       ),
     );
   }

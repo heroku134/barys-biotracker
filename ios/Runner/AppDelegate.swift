@@ -460,6 +460,32 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
 
       KalkanBleManager.shared.initSdk()
 
+      let iconChannel = FlutterMethodChannel(
+        name: "sport.kalkan.biotracker/app_icon",
+        binaryMessenger: controller.binaryMessenger
+      )
+      iconChannel.setMethodCallHandler { call, result in
+        if call.method == "setAlternateIconName" {
+          let args = call.arguments as? [String: Any]
+          let iconName = args?["name"] as? String
+          if UIApplication.shared.supportsAlternateIcons {
+            UIApplication.shared.setAlternateIconName(iconName) { error in
+              if let error = error {
+                result(FlutterError(code: "ICON_ERROR", message: error.localizedDescription, details: nil))
+              } else {
+                result(true)
+              }
+            }
+          } else {
+            result(false)
+          }
+        } else if call.method == "getCurrentIconName" {
+          result(UIApplication.shared.alternateIconName)
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      }
+
       let bleMethodChannel = FlutterMethodChannel(
         name: "com.nadal.ble/methods",
         binaryMessenger: controller.binaryMessenger

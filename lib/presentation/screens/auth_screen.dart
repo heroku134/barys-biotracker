@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -77,74 +78,146 @@ class _AuthScreenState extends State<AuthScreen> {
     });
 
     String? firebaseDisplayName;
+    bool navigated = false;
+
     try {
       if (Firebase.apps.isNotEmpty) {
         if (_isSignUp) {
-          final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-            email: email,
-            password: pass,
-          );
+          final cred = await FirebaseAuth.instance
+              .createUserWithEmailAndPassword(
+                email: email,
+                password: pass,
+              )
+              .timeout(const Duration(seconds: 8));
           if (name.isNotEmpty) {
-            await cred.user?.updateDisplayName(name);
+            await cred.user?.updateDisplayName(name).timeout(const Duration(seconds: 4));
           }
           firebaseDisplayName = name;
         } else {
-          final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: email,
-            password: pass,
-          );
+          final cred = await FirebaseAuth.instance
+              .signInWithEmailAndPassword(
+                email: email,
+                password: pass,
+              )
+              .timeout(const Duration(seconds: 8));
           firebaseDisplayName = cred.user?.displayName;
         }
       } else {
-        await Future.delayed(const Duration(milliseconds: 300));
+        await Future.delayed(const Duration(milliseconds: 200));
         firebaseDisplayName = name.isNotEmpty ? name : 'Искандер';
       }
+
+      // 1. Немедленно сохраняем локальный профиль (автономная надежность)
+      final currentProfile = await UserProfileRepository.loadProfile();
+      final updatedProfile = currentProfile.copyWith(
+        email: email,
+        name: firebaseDisplayName ?? (_isSignUp ? name : (currentProfile.name.isNotEmpty ? currentProfile.name : 'Искандер')),
+        gender: _selectedGender,
+        cycleDay: _selectedGender == Gender.female ? (currentProfile.cycleDay ?? 14) : null,
+        lastPeriodStartDate: _selectedGender == Gender.female
+            ? (currentProfile.lastPeriodStartDate ?? DateTime.now().subtract(const Duration(days: 14)))
+            : null,
+        isAuthenticated: true,
+      );
+      await UserProfileRepository.saveProfile(updatedProfile);
+
+      // 2. Фоновая облачная синхронизация БЕЗ блокировки UI (не подвешивает переход)
+      unawaited(CloudSyncService.afterLogin(updatedProfile).catchError((e) {
+        debugPrint('CloudSync background note: $e');
+      }));
+
+      navigated = true;
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => MainShell(bleBridge: widget.bleBridge),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException: ${e.code} - ${e.message}');
+      String userFriendly;
+      switch (e.code) {
+        case 'user-not-found':
+          userFriendly = 'Пользователь не найден. Переключитесь на «Создать аккаунт».';
+          break;
+        case 'wrong-password':
+        case 'invalid-credential':
+          userFriendly = 'Неверный пароль или email. Проверьте правильность ввода.';
+          break;
+        case 'email-already-in-use':
+          userFriendly = 'Этот email уже зарегистрирован. Нажмите «Уже есть аккаунт? Войти».';
+          break;
+        case 'weak-password':
+          userFriendly = 'Пароль слишком простой (минимум 6 символов).';
+          break;
+        case 'invalid-email':
+          userFriendly = 'Некорректный формат email адреса.';
+          break;
+        case 'network-request-failed':
+          userFriendly = 'Ошибка сети. Проверьте соединение или используйте «Быстрый вход».';
+          break;
+        default:
+          userFriendly = e.message ?? 'Ошибка авторизации (${e.code})';
+      }
+      if (mounted) {
+        setState(() => _errorMessage = userFriendly);
+      }
+    } on TimeoutException catch (_) {
+      debugPrint('Auth request timed out');
+      if (mounted) {
+        setState(() => _errorMessage = 'Таймаут соединения с сервером. Воспользуйтесь кнопкой «Быстрый вход».');
+      }
     } catch (e) {
-      // Автономный fallback: если нет сети или Firebase не настроен, работаем 100% локально
-      debugPrint('Auth offline fallback mode: $e');
-      firebaseDisplayName = name.isNotEmpty ? name : email.split('@').first;
+      debugPrint('Auth unexpected error: $e');
+      if (mounted) {
+        setState(() => _errorMessage = 'Ошибка входа: $e');
+      }
+    } finally {
+      if (!navigated && mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
-    // Сохраняем профиль локально (автономная база данных SharedPreferences)
-    final currentProfile = await UserProfileRepository.loadProfile();
-    final updatedProfile = currentProfile.copyWith(
-      email: email,
-      name: firebaseDisplayName ?? (_isSignUp ? name : (currentProfile.name.isNotEmpty ? currentProfile.name : 'Искандер')),
-      gender: _selectedGender,
-      cycleDay: _selectedGender == Gender.female ? (currentProfile.cycleDay ?? 14) : null,
-      lastPeriodStartDate: _selectedGender == Gender.female
-          ? (currentProfile.lastPeriodStartDate ?? DateTime.now().subtract(const Duration(days: 14)))
-          : null,
-      isAuthenticated: true,
-    );
-    await UserProfileRepository.saveProfile(updatedProfile);
-    await CloudSyncService.afterLogin(updatedProfile);
-
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => MainShell(bleBridge: widget.bleBridge),
-      ),
-    );
   }
 
   Future<void> _quickGuestLogin() async {
-    setState(() => _isLoading = true);
-    final currentProfile = await UserProfileRepository.loadProfile();
-    final updatedProfile = currentProfile.copyWith(
-      name: currentProfile.name.isNotEmpty ? currentProfile.name : 'Искандер',
-      email: currentProfile.email.isNotEmpty ? currentProfile.email : 'barys@kalkan.sport',
-      isAuthenticated: true,
-    );
-    await UserProfileRepository.saveProfile(updatedProfile);
-    await CloudSyncService.afterLogin(updatedProfile);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => MainShell(bleBridge: widget.bleBridge),
-      ),
-    );
+    bool navigated = false;
+    try {
+      final currentProfile = await UserProfileRepository.loadProfile();
+      final updatedProfile = currentProfile.copyWith(
+        name: currentProfile.name.isNotEmpty ? currentProfile.name : 'Искандер',
+        email: currentProfile.email.isNotEmpty ? currentProfile.email : 'barys@kalkan.sport',
+        gender: _selectedGender,
+        isAuthenticated: true,
+      );
+      await UserProfileRepository.saveProfile(updatedProfile);
+
+      // Фоновая синхронизация
+      unawaited(CloudSyncService.afterLogin(updatedProfile).catchError((e) {
+        debugPrint('Guest sync background note: $e');
+      }));
+
+      navigated = true;
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => MainShell(bleBridge: widget.bleBridge),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Quick guest login error: $e');
+      if (mounted) {
+        setState(() => _errorMessage = 'Сбой локального входа: $e');
+      }
+    } finally {
+      if (!navigated && mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
