@@ -66,7 +66,7 @@ class KalkanBleManager: NSObject, UTEBluetoothDelegate, FlutterStreamHandler {
       result(FlutterError(code: "DEVICE_NOT_FOUND", message: "Device \(address) not found in scan results", details: nil))
       return
     }
-    UTEBluetoothMgr.sharedInstance().connectDevice(model)
+    UTEBluetoothMgr.sharedInstance().connect(model)
     result(true)
   }
 
@@ -83,7 +83,7 @@ class KalkanBleManager: NSObject, UTEBluetoothDelegate, FlutterStreamHandler {
 
   func findDevice(result: @escaping FlutterResult) {
     if isConnected {
-      UTEDeviceMgr.sharedInstance().setFindWearCmd(1)
+      UTEDeviceMgr.sharedInstance().setFindWearCmd(1) { _, _ in }
       result(true)
     } else {
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
@@ -102,7 +102,8 @@ class KalkanBleManager: NSObject, UTEBluetoothDelegate, FlutterStreamHandler {
   func syncTime(result: @escaping FlutterResult) {
     if isConnected {
       let seconds = Int(Date().timeIntervalSince1970)
-      UTEDeviceMgr.sharedInstance().setTimeClock(seconds)
+      let timeZone = TimeZone.current.secondsFromGMT() / 3600
+      UTEDeviceMgr.sharedInstance().setTimeClock(seconds, timeZone: timeZone, minuteOffset: 0) { _, _ in }
       result(true)
     } else {
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
@@ -136,8 +137,8 @@ class KalkanBleManager: NSObject, UTEBluetoothDelegate, FlutterStreamHandler {
       connectedModel = UTEBluetoothMgr.sharedInstance().connnectModel
       currentDeviceName = connectedModel?.name ?? "KALKAN СААТ-1"
 
-      UTEDeviceMgr.sharedInstance().setContinueMeasureHeartRateSwitch(true)
-      UTEDeviceMgr.sharedInstance().setAutoHeartRate(true)
+      UTEDeviceMgr.sharedInstance().setContinueMeasureHeartRateSwitch(true) { _, _ in }
+      UTEDeviceMgr.sharedInstance().setAutoHeartRate(true) { _, _ in }
 
       UTEDeviceMgr.sharedInstance().onNotifyCurrentData { [weak self] item in
         guard let self = self, let item = item else { return }
@@ -197,8 +198,8 @@ class KalkanBleManager: NSObject, UTEBluetoothDelegate, FlutterStreamHandler {
             if model.totalCalorie > 0 {
               self?.currentCalories = model.totalCalorie
             }
-            if let last = model.lastHeartRate, last.heartRate > 0 {
-              self?.currentBpm = last.heartRate
+            if let last = model.lastHeartRate, last.rate > 0 {
+              self?.currentBpm = last.rate
             }
           }
           self?.pushTelemetry()
