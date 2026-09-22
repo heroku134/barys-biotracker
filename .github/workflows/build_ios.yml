@@ -60,6 +60,8 @@ jobs:
           flutter build ios --config-only --no-codesign || true
           cd ios
           pod install --repo-update || pod install
+          # Prevent CocoaPods resource copy script from aborting when pod privacy bundles are placed in CONFIGURATION_BUILD_DIR
+          find "Pods/Target Support Files" -name "*-resources.sh" -exec sed -i '' 's/exit 1/return 0/g' {} + 2>/dev/null || true
           cd ..
           xcodebuild build \
             -workspace ios/Runner.xcworkspace \
@@ -78,7 +80,14 @@ jobs:
       - name: Package Payload into IPA
         run: |
           mkdir -p Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
+          APP_DIR=$(find build -name "Runner.app" -type d | head -n 1)
+          if [ -z "$APP_DIR" ]; then
+            APP_DIR="build/ios/iphoneos/Runner.app"
+          fi
+          echo "Packaging Runner.app from: $APP_DIR"
+          cp -r "$APP_DIR" Payload/
+          # Ensure any generated .bundle files (privacy manifests, vendor SDK bundles) are inside the app
+          find build -name "*.bundle" -exec cp -R {} Payload/Runner.app/ \; 2>/dev/null || true
           zip -r KALKAN_SPORT.ipa Payload
           cp KALKAN_SPORT.ipa barys_biotracker.ipa
           ls -lh KALKAN_SPORT.ipa
