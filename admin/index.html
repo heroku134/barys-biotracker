@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KALKAN SPORT · Панель администратора платформы</title>
+  
+  <!-- Стили интерфейса Obsidian Athletic -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Chart.js для биометрических и спортивных графиков -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Firebase Compat Web SDK (для прямой работы без сборщиков) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Боковая панель навигации (Sidebar) -->
+  <aside class="sidebar">
+    <div class="brand-section">
+      <div class="brand-logo-badge">K</div>
+      <div>
+        <div class="brand-title">KALKAN SPORT</div>
+        <div class="brand-sub">ADMIN CONSOLE</div>
+      </div>
+    </div>
+
+    <ul class="nav-menu">
+      <li class="nav-item active" data-tab="overview">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        <span>Обзор</span>
+      </li>
+      <li class="nav-item" data-tab="athletes">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span>Атлеты</span>
+      </li>
+      <li class="nav-item" data-tab="telemetry">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Телеметрия СААТ-1</span>
+      </li>
+      <li class="nav-item" data-tab="workouts">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span>Тренировки</span>
+      </li>
+      <li class="nav-item" data-tab="leagues">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        <span>Лиги и Партнёры</span>
+      </li>
+      <li class="nav-item" data-tab="push">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <span>Пуш-рассылки</span>
+      </li>
+      <li class="nav-item" data-tab="settings">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>Настройки & База</span>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="database-pill">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="statusPulseDot" class="pulse-dot"></span>
+          <span id="statusModeLabel">Live Firestore</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Основная область приложения -->
+  <main class="main-wrapper">
+    <!-- Верхняя панель (Header) -->
+    <header class="top-header">
+      <div class="header-left">
+        <h1 class="page-heading" id="pageHeading">Обзор платформы KALKAN</h1>
+      </div>
+
+      <div class="header-actions">
+        <div class="search-box">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="globalSearchInput" placeholder="Поиск атлета...">
+        </div>
+
+        <button class="btn btn-outline" onclick="adminApp.exportCSV()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Экспорт CSV
+        </button>
+
+        <button class="btn btn-primary" onclick="adminApp.openAddModal()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Добавить атлета
+        </button>
+      </div>
+    </header>
+
+    <!-- Тело контента с вкладками -->
+    <div class="content-body">
+      
+      <!-- ВКЛАДКА 1: ОБЗОР -->
+      <section id="tab-overview" class="tab-pane active">
+        <div class="kpi-grid">
+          <div class="kpi-card amber">
+            <span class="kpi-label">Всего атлетов</span>
+            <span class="kpi-value" id="kpiTotalAthletes">10</span>
+            <div class="kpi-trend">В базе данных системы</div>
+          </div>
+          <div class="kpi-card sage">
+            <span class="kpi-label">Активных сегодня</span>
+            <span class="kpi-value" id="kpiActiveToday">9</span>
+            <div class="kpi-trend">Синхронизировали СААТ-1</div>
+          </div>
+          <div class="kpi-card cyan">
+            <span class="kpi-label">Средняя готовность</span>
+            <span class="kpi-value" id="kpiAvgRecovery">78%</span>
+            <div class="kpi-trend">Recovery Score платформы</div>
+          </div>
+          <div class="kpi-card coral">
+            <span class="kpi-label">Средний Strain</span>
+            <span class="kpi-value" id="kpiAvgStrain">12.1</span>
+            <div class="kpi-trend">Дневная нагрузка (0-21)</div>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Датчики СААТ-1</span>
+            <span class="kpi-value" id="kpiConnectedDevices">8 / 10</span>
+            <div class="kpi-trend">BLE 5.3 на связи</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="card-header">
+              <h3 class="card-title">Динамика нагрузки и пульса по дням</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chartWeeklyActivity"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="card-header">
+              <h3 class="card-title">Распределение Recovery</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="chartRecoveryDist"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card" style="padding: 20px;">
+          <div class="card-header">
+            <h3 class="card-title">Живая лента событий СААТ-1 и синхронизаций</h3>
+          </div>
+          <div class="log-feed" id="liveLogFeed">
+            <!-- Логи генерируются из app.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ВКЛАДКА 2: АТЛЕТЫ -->
+      <section id="tab-athletes" class="tab-pane">
+        <div class="table-card">
+          <div class="table-toolbar">
+            <div class="filter-chips">
+              <span class="chip active" data-filter-group="gender" data-value="all">Все полы</span>
+              <span class="chip" data-filter-group="gender" data-value="male">Мужчины</span>
+              <span class="chip" data-filter-group="gender" data-value="female">Женщины</span>
+            </div>
+
+            <div class="filter-chips">
+              <span class="chip active" data-filter-group="recovery" data-value="all">Все зоны</span>
+              <span class="chip" data-filter-group="recovery" data-value="optimal">Зелёная (>66%)</span>
+              <span class="chip" data-filter-group="recovery" data-value="normal">Жёлтая (34-66%)</span>
+              <span class="chip" data-filter-group="recovery" data-value="low">Красная (&lt;34%)</span>
+            </div>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Атлет</th>
+                <th>Готовность</th>
+                <th>Нагрузка (Strain)</th>
+                <th>Биометрия</th>
+                <th>СААТ-1</th>
+                <th>Калибровка</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="athletesTableBody">
+              <!-- Заполняется динамически -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ВКЛАДКА 3: ТЕЛЕМЕТРИЯ -->
+      <section id="tab-telemetry" class="tab-pane">
+        <div style="margin-bottom: 20px;">
+          <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Биометрическая матрица датчиков СААТ-1</h2>
+          <p style="color: var(--text-secondary); font-size: 13px;">
+            Прямой мониторинг вариабельности сердечного ритма (HRV), пульса покоя, фаз сна и суточного стресса.
+          </p>
+        </div>
+        <div class="kpi-grid" id="telemetryGrid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+          <!-- Карточки телеметрии -->
+        </div>
+      </section>
+
+      <!-- ВКЛАДКА 4: ТРЕНИРОВКИ -->
+      <section id="tab-workouts" class="tab-pane">
+        <div class="table-card">
+          <div class="table-toolbar">
+            <h3 class="card-title">Журнал сессий и тренировок</h3>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Атлет</th>
+                <th>Вид спорта</th>
+                <th>Длительность</th>
+                <th>Дистанция</th>
+                <th>Калории</th>
+                <th>Пульс (ср/макс)</th>
+                <th>Strain</th>
+                <th>Дата</th>
+              </tr>
+            </thead>
+            <tbody id="workoutsTableBody">
+              <!-- Заполняется динамически -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ВКЛАДКА 5: ЛИГИ И ПАРТНЁРЫ -->
+      <section id="tab-leagues" class="tab-pane">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h2 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">Приватные лиги Данбара & Партнёрские циклы</h2>
+            <p style="color: var(--text-secondary); font-size: 13px;">Соревнования среди друзей и защищённая связка партнёров по 6-значным кодам.</p>
+          </div>
+        </div>
+        <div class="kpi-grid" id="leaguesContainer" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+          <!-- Лиги -->
+        </div>
+      </section>
+
+      <!-- ВКЛАДКА 6: ПУШ-УВЕДОМЛЕНИЯ -->
+      <section id="tab-push" class="tab-pane">
+        <div class="charts-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="chart-card">
+            <h3 class="card-title" style="margin-bottom: 16px;">Отправка Push-уведомления (FCM)</h3>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="form-group">
+                <label>Быстрые шаблоны сообщений</label>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <button class="btn btn-outline btn-sm" onclick="adminApp.setPushTemplate('Готовность рассчитана', 'Ваше утреннее восстановление 84%. Цель нагрузки на сегодня: 14.5 Strain.')">Утренний отчёт</button>
+                  <button class="btn btn-outline btn-sm" onclick="adminApp.setPushTemplate('Время сна', 'Наденьте СААТ-1 перед сном для точного замера HRV и фаз восстановления.')">Сон и СААТ-1</button>
+                  <button class="btn btn-outline btn-sm" onclick="adminApp.setPushTemplate('Низкое восстановление', 'Тело перегружено. Рекомендуем отдых или легкую прогулку.')">Отдых</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Аудитория получателей</label>
+                <select id="pushAudience" class="form-control">
+                  <option value="Все активные атлеты">Все активные атлеты платформы</option>
+                  <option value="Красная зона Recovery">Атлеты с низким Recovery (&lt;34%)</option>
+                  <option value="Атлеты на калибровке">Атлеты в процессе 14-дневной калибровки</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Заголовок уведомления</label>
+                <input type="text" id="pushTitle" class="form-control" placeholder="Например: Утренний брифинг готов">
+              </div>
+
+              <div class="form-group">
+                <label>Текст сообщения</label>
+                <textarea id="pushBody" class="form-control" rows="3" placeholder="Введите текст сообщения..."></textarea>
+              </div>
+
+              <button class="btn btn-primary" onclick="adminApp.sendPushNotificationForm()">
+                Отправить пуш-уведомление
+              </button>
+            </div>
+          </div>
+
+          <div class="table-card" style="padding: 20px;">
+            <h3 class="card-title" style="margin-bottom: 14px;">История последних рассылок</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Заголовок</th>
+                  <th>Сообщение</th>
+                  <th>Аудитория</th>
+                  <th>Время</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="pushHistoryBody">
+                <!-- История пушей -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ВКЛАДКА 7: НАСТРОЙКИ & ЭКСПОРТ -->
+      <section id="tab-settings" class="tab-pane">
+        <div class="charts-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="chart-card">
+            <h3 class="card-title" style="margin-bottom: 16px;">Конфигурация источника данных</h3>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <div>
+                  <strong style="display: block; font-size: 14px;">Режим Live Firestore</strong>
+                  <span style="color: var(--text-muted); font-size: 12px;">Проект Firebase: watch-ba720</span>
+                </div>
+                <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                  <input type="checkbox" id="liveModeToggle" onchange="adminApp.toggleLiveMode(this.checked)" style="opacity: 0; width: 0; height: 0;">
+                  <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2C3240; border-radius: 24px; transition: .3s;"></span>
+                </label>
+              </div>
+
+              <div style="background: var(--bg-input); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); font-size: 12px; line-height: 1.6;">
+                <div style="color: var(--text-muted); margin-bottom: 4px;">СИСТЕМНЫЕ ПАРАМЕТРЫ:</div>
+                <div>Project ID: <strong style="font-family: var(--font-mono);">watch-ba720</strong></div>
+                <div>Storage Bucket: <strong style="font-family: var(--font-mono);">watch-ba720.firebasestorage.app</strong></div>
+                <div>FCM Sender ID: <strong style="font-family: var(--font-mono);">718180799511</strong></div>
+                <div>Bundle ID: <strong style="font-family: var(--font-mono);">kalkan.comp</strong></div>
+              </div>
+
+              <button class="btn btn-outline" onclick="adminApp.resetAllData()">
+                Сбросить данные к демо-состоянию по умолчанию
+              </button>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <h3 class="card-title" style="margin-bottom: 16px;">Экспорт и Импорт данных</h3>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <p style="color: var(--text-secondary); font-size: 13px;">
+                Полный экспорт базы данных в JSON для создания локального бэкапа или в CSV для анализа в Excel / Python.
+              </p>
+
+              <div style="display: flex; gap: 10px;">
+                <button class="btn btn-outline" style="flex: 1;" onclick="adminApp.exportJSON()">
+                  Скачать JSON бэкап
+                </button>
+                <button class="btn btn-outline" style="flex: 1;" onclick="adminApp.exportCSV()">
+                  Скачать CSV таблицу
+                </button>
+              </div>
+
+              <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px; margin-top: 8px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px;">Восстановление из JSON файла</label>
+                <input type="file" id="jsonFileInput" accept=".json" onchange="adminApp.importJSONFile(event)" class="form-control" style="padding: 6px;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: РЕДАКТИРОВАНИЕ АТЛЕТА -->
+<div id="modalEditAthlete" class="modal-overlay">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title">Редактирование параметров атлета</h3>
+      <button class="modal-close" onclick="adminApp.closeModal('modalEditAthlete')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editAthleteId">
+      
+      <div class="form-group">
+        <label>Имя и фамилия</label>
+        <input type="text" id="editName" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="editEmail" class="form-control">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>Пол</label>
+          <select id="editGender" class="form-control">
+            <option value="male">Мужской</option>
+            <option value="female">Женский</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Готовность (Recovery %)</label>
+          <input type="number" id="editRecovery" class="form-control" min="0" max="100">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>Рост (см)</label>
+          <input type="number" id="editHeight" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Вес (кг)</label>
+          <input type="number" id="editWeight" class="form-control">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>HRV пульса (мс)</label>
+          <input type="number" id="editHrv" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Текущий Strain (0-21)</label>
+          <input type="number" step="0.1" id="editStrain" class="form-control">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="adminApp.closeModal('modalEditAthlete')">Отмена</button>
+      <button class="btn btn-primary" onclick="adminApp.saveAthleteForm()">Сохранить изменения</button>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: ДОБАВЛЕНИЕ АТЛЕТА -->
+<div id="modalAddAthlete" class="modal-overlay">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title">Добавление нового атлета</h3>
+      <button class="modal-close" onclick="adminApp.closeModal('modalAddAthlete')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Имя и фамилия</label>
+        <input type="text" id="addName" class="form-control" placeholder="Например: Эркин Садыков">
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="addEmail" class="form-control" placeholder="erkin@kalkan.sport">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>Пол</label>
+          <select id="addGender" class="form-control">
+            <option value="male">Мужской</option>
+            <option value="female">Женский</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Возраст (лет)</label>
+          <input type="number" id="addAge" class="form-control" value="26">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>Рост (см)</label>
+          <input type="number" id="addHeight" class="form-control" value="178">
+        </div>
+        <div class="form-group">
+          <label>Вес (кг)</label>
+          <input type="number" id="addWeight" class="form-control" value="74">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="adminApp.closeModal('modalAddAthlete')">Отмена</button>
+      <button class="btn btn-primary" onclick="adminApp.createAthleteForm()">Зарегистрировать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Контейнер для всплывающих Toast-уведомлений -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Скрипты приложения -->
+<script src="mock-data.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

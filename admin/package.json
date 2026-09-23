@@ -1,0 +1,27 @@
+{
+  "name": "kalkan-sport-admin",
+  "version": "1.0.0",
+  "description": "KALKAN SPORT - Premium Athletic Admin Dashboard & Biometric Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "serve": "npx serve -l 3000 ."
+  },
+  "keywords": [
+    "kalkan",
+    "biotracker",
+    "admin",
+    "dashboard",
+    "telemetry",
+    "sports",
+    "saat-1"
+  ],
+  "author": "KALKAN SPORT Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {}
+}
