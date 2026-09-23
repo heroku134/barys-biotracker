@@ -25,6 +25,20 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
   int _step = 0;
 
   @override
+  void initState() {
+    super.initState();
+    UserProfileRepository.loadProfile().then((p) {
+      if (mounted) {
+        setState(() {
+          if (p.heightCm > 0) _height.text = p.heightCm.toInt().toString();
+          if (p.weightKg > 0) _weight.text = p.weightKg.toInt().toString();
+          _gender = p.gender;
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _height.dispose();
     _weight.dispose();
@@ -33,15 +47,14 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
 
   Future<void> _saveBody() async {
     final p = await UserProfileRepository.loadProfile();
-    final h = double.tryParse(_height.text.replaceAll(',', '.')) ?? 170;
-    final w = double.tryParse(_weight.text.replaceAll(',', '.')) ?? 70;
+    final h = double.tryParse(_height.text.replaceAll(',', '.')) ?? (p.heightCm > 0 ? p.heightCm : 170);
+    final w = double.tryParse(_weight.text.replaceAll(',', '.')) ?? (p.weightKg > 0 ? p.weightKg : 70);
     await UserProfileRepository.saveProfile(p.copyWith(
       heightCm: h,
       weightKg: w,
       gender: _gender,
       isAuthenticated: true,
     ));
-    await DemoModeStore.setEnabled(false);
     setState(() => _step = 1);
   }
 
@@ -50,6 +63,9 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       await Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => DevicePairScreen(bleBridge: widget.bleBridge),
       ));
+    } else {
+      // Пользователь нажал "Позже": включаем демо-режим, чтобы главный экран не был пустым
+      await DemoModeStore.setEnabled(true);
     }
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(

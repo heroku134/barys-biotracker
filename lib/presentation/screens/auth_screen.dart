@@ -6,12 +6,14 @@ import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
 import '../../data/ble/ute_ble_bridge.dart';
+import '../../data/storage/demo_mode_store.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
 import 'account_setup_screen.dart';
+import 'main_shell.dart';
 
 class AuthScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -24,9 +26,9 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool _isSignUp = false;
-  final _emailController = TextEditingController(text: 'barys@circa.health');
-  final _passwordController = TextEditingController(text: 'circabiotracker2026');
-  final _nameController = TextEditingController(text: 'Алихан');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
   Gender _selectedGender = Gender.male;
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -142,11 +144,22 @@ class _AuthScreenState extends State<AuthScreen> {
 
       navigated = true;
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => AccountSetupScreen(bleBridge: widget.bleBridge),
-        ),
-      );
+
+      // Если это вход в существующий аккаунт или анкета уже была заполнена — сразу в MainShell
+      final hasCompletedBodySetup = currentProfile.heightCm > 0 && currentProfile.weightKg > 0;
+      if (!_isSignUp || hasCompletedBodySetup) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MainShell(bleBridge: widget.bleBridge),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => AccountSetupScreen(bleBridge: widget.bleBridge),
+          ),
+        );
+      }
     } finally {
       if (!navigated && mounted) {
         setState(() => _isLoading = false);
@@ -163,11 +176,12 @@ class _AuthScreenState extends State<AuthScreen> {
     try {
       final currentProfile = await UserProfileRepository.loadProfile();
       final updatedProfile = currentProfile.copyWith(
-        name: currentProfile.name.isNotEmpty ? currentProfile.name : 'Искандер',
-        email: currentProfile.email.isNotEmpty ? currentProfile.email : 'barys@kalkan.sport',
+        name: currentProfile.name.isNotEmpty ? currentProfile.name : 'Гость',
+        email: currentProfile.email.isNotEmpty ? currentProfile.email : 'guest@kalkan.sport',
         isAuthenticated: true,
       );
       await UserProfileRepository.saveProfile(updatedProfile);
+      await DemoModeStore.setEnabled(true);
       unawaited(CloudSyncService.afterLogin(updatedProfile).catchError((e) {
         debugPrint('CloudSync guest note: $e');
       }));
@@ -176,7 +190,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => AccountSetupScreen(bleBridge: widget.bleBridge),
+          builder: (context) => MainShell(bleBridge: widget.bleBridge),
         ),
       );
     } finally {
@@ -243,7 +257,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
                           CircaTextField(
                             label: AppStrings.tr('auth_email_label', language),
-                            hint: 'barys@circa.health',
+                            hint: 'name@example.com',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             prefixIcon: Icon(Icons.alternate_email, color: AppColors.muted, size: 20),

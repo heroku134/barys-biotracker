@@ -424,10 +424,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: Text(_ru ? 'Выйти?' : 'Чыгуу?', style: TextStyle(color: AppColors.fg)),
-        content: Text(_ru ? 'Синхронизация остановится до следующего входа.' : 'Кийинки кирүүгө чейин синхрон токтотулат.', style: TextStyle(color: AppColors.secondary)),
+        title: Text(_tr('Выйти?', 'Чыгуу?', 'Sign out?'), style: TextStyle(color: AppColors.fg)),
+        content: Text(_tr('Синхронизация остановится до следующего входа.', 'Кийинки кирүүгө чейин синхрон токтотулат.', 'Cloud synchronization will stop until your next sign in.'), style: TextStyle(color: AppColors.secondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: Text(_ru ? 'Отмена' : 'Жок')),
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: Text(_tr('Отмена', 'Жок', 'Cancel'))),
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogCtx);
@@ -440,7 +440,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 (_) => false,
               );
             },
-            child: Text(_ru ? 'Выйти' : 'Чыгуу', style: TextStyle(color: AppColors.rose)),
+            child: Text(_tr('Выйти', 'Чыгуу', 'Sign out'), style: TextStyle(color: AppColors.rose)),
           ),
         ],
       ),

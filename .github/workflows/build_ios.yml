@@ -100,6 +100,8 @@ jobs:
             -o build/KalkanWidget.appex/KalkanWidget || echo "Warning: swiftc compilation encountered note"
 
           cp ios/KalkanWidget/Info.plist build/KalkanWidget.appex/Info.plist
+          echo -n "XPC!????" > build/KalkanWidget.appex/PkgInfo
+          plutil -lint build/KalkanWidget.appex/Info.plist || true
 
           if [ -f "build/KalkanWidget.appex/KalkanWidget" ]; then
             echo "KalkanWidget compiled successfully!"

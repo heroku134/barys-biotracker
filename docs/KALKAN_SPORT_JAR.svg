@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 760" width="640" height="760">
+  <defs>
+    <linearGradient id="bodyG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000000"/>
+      <stop offset="0.18" stop-color="#161616"/>
+      <stop offset="0.45" stop-color="#2b2b2b"/>
+      <stop offset="0.72" stop-color="#191919"/>
+      <stop offset="1" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="lidG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.85"/>
+      <stop offset="0.5" stop-color="#2a2a2a" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.85"/>
+    </linearGradient>
+    <radialGradient id="redG" cx="0.5" cy="0.42" r="0.8">
+      <stop offset="0" stop-color="#c02a2a"/>
+      <stop offset="0.5" stop-color="#961c1c"/>
+      <stop offset="1" stop-color="#4a0d0d"/>
+    </radialGradient>
+    <linearGradient id="shadeX" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.92"/>
+      <stop offset="0.14" stop-color="#000000" stop-opacity="0.25"/>
+      <stop offset="0.5" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="0.86" stop-color="#000000" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.92"/>
+    </linearGradient>
+    <linearGradient id="txtG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#cccccc"/>
+    </linearGradient>
+    <pattern id="ribs" width="9" height="12" patternUnits="userSpaceOnUse">
+      <rect width="9" height="12" fill="#0e0e0e"/>
+      <rect x="1" width="3.5" height="12" fill="#1f1f1f"/>
+      <rect x="6" width="1.5" height="12" fill="#040404"/>
+    </pattern>
+    <clipPath id="labelClip">
+      <rect x="150" y="182" width="340" height="470"/>
+    </clipPath>
+    <clipPath id="lidClip">
+      <path d="M159,148 V66 Q159,48 177,48 H463 Q481,48 481,66 V148 Z"/>
+    </clipPath>
+    <clipPath id="bodyClip">
+      <path d="M150,140 H490 V664 Q490,702 452,702 H188 Q150,702 150,664 Z"/>
+    </clipPath>
+    <filter id="blur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="320" cy="714" rx="195" ry="24" fill="#000000" opacity="0.5" filter="url(#blur)"/>
+
+  <!-- body -->
+  <g clip-path="url(#bodyClip)">
+    <rect x="150" y="140" width="340" height="562" fill="url(#bodyG)"/>
+
+    <!-- label -->
+    <g clip-path="url(#labelClip)">
+      <rect x="150" y="182" width="340" height="470" fill="#0a0a0a"/>
+      <polygon points="320,150 490,300 490,500 320,760 150,500 150,300" fill="url(#redG)"/>
+      <line x1="150" y1="182" x2="490" y2="652" stroke="#d92a2a" stroke-width="2.5" opacity="0.9"/>
+      <line x1="490" y1="182" x2="150" y2="652" stroke="#d92a2a" stroke-width="2.5" opacity="0.9"/>
+      <line x1="150" y1="230" x2="360" y2="182" stroke="#d92a2a" stroke-width="1.5" opacity="0.55"/>
+      <line x1="490" y1="230" x2="280" y2="182" stroke="#d92a2a" stroke-width="1.5" opacity="0.55"/>
+      <rect x="150" y="182" width="340" height="470" fill="url(#shadeX)"/>
+      <rect x="222" y="182" width="16" height="470" fill="#ffffff" opacity="0.05"/>
+
+      <!-- shield logo -->
+      <g transform="translate(320,236)">
+        <path d="M0,-32 L22,-22 V4 Q22,22 0,32 Q-22,22 -22,4 V-22 Z" fill="#141414" stroke="#c22222" stroke-width="3"/>
+        <g fill="#d42a2a">
+          <path d="M-1,-4 Q-10,-17 -21,-15 Q-17,-9 -13,-3 Q-15,5 -8,7 Q-6,1 -1,-4 Z"/>
+          <path d="M1,-4 Q10,-17 21,-15 Q17,-9 13,-3 Q15,5 8,7 Q6,1 1,-4 Z"/>
+          <path d="M0,-17 L3,-10 L2,7 L0,13 L-2,7 L-3,-10 Z"/>
+          <circle cx="0" cy="-19" r="3.2"/>
+          <path d="M2,-20 L7,-18.5 L2,-17 Z"/>
+        </g>
+      </g>
+
+      <!-- texts -->
+      <text x="320" y="342" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="62" letter-spacing="3" fill="url(#txtG)">KALKAN</text>
+      <text x="320" y="392" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="400" font-size="22" letter-spacing="12" fill="#eeeeee">SPORT</text>
+      <text x="320" y="478" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="34" letter-spacing="1" fill="#f4f4f4">CREATINE</text>
+      <text x="320" y="520" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="34" letter-spacing="1" fill="#f4f4f4">MONOHYDRATE</text>
+      <text x="320" y="568" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="13" letter-spacing="2.5" fill="#dddddd">PERFORMANCE • STRENGTH • RECOVERY</text>
+      <text x="320" y="624" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="400" font-size="18" letter-spacing="1" fill="#f0f0f0">300g | 100 Servings</text>
+    </g>
+
+    <rect x="150" y="672" width="340" height="30" fill="#000000" opacity="0.4"/>
+    <rect x="150" y="140" width="340" height="42" fill="#000000" opacity="0.35"/>
+  </g>
+
+  <!-- lid -->
+  <path d="M159,148 V66 Q159,48 177,48 H463 Q481,48 481,66 V148 Z" fill="url(#ribs)"/>
+  <g clip-path="url(#lidClip)">
+    <rect x="159" y="48" width="322" height="100" fill="url(#lidG)"/>
+    <ellipse cx="320" cy="56" rx="152" ry="9" fill="#161616"/>
+    <ellipse cx="320" cy="54" rx="140" ry="5" fill="#242424" opacity="0.7"/>
+    <rect x="159" y="122" width="322" height="26" fill="#0a0a0a"/>
+    <rect x="159" y="122" width="322" height="2" fill="#2c2c2c" opacity="0.8"/>
+    <rect x="200" y="48" width="14" height="76" fill="#ffffff" opacity="0.05"/>
+  </g>
+</svg>
