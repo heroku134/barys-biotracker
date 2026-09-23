@@ -19,7 +19,6 @@ import '../widgets/glass_card.dart';
 import '../widgets/metric_dial.dart';
 import '../widgets/weekly_metric_chart.dart';
 import '../../domain/intelligence/readiness_engine.dart';
-import '../../domain/intelligence/strain_engine.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   final UteBleBridge bleBridge;

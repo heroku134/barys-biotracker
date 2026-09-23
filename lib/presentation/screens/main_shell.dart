@@ -200,7 +200,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                   asset,
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
-                  errorBuilder: (_, __, ___) => Icon(Icons.pets, color: AppColors.sage, size: 16),
+                  errorBuilder: (_, _, _) => Icon(Icons.pets, color: AppColors.sage, size: 16),
                 ),
               ),
             ),

@@ -864,8 +864,8 @@ class _SportScreenState extends State<SportScreen> {
                       ),
                       Switch.adaptive(
                         value: true,
-                        activeTrackColor: AppColors.sage,
-                        activeColor: AppColors.sage,
+                        activeTrackColor: AppColors.sage.withValues(alpha: 0.5),
+                        activeThumbColor: AppColors.sage,
                         onChanged: (val) {
                           CircaHaptics.selectionClick();
                           ScaffoldMessenger.of(context).showSnackBar(

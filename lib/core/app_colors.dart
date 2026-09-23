@@ -106,6 +106,7 @@ class DynamicColor extends Color {
   int toARGB32() => _resolver().toARGB32();
 
   @override
+  // ignore: deprecated_member_use
   int get alpha => _resolver().alpha;
 
   @override
@@ -126,9 +127,11 @@ class DynamicColor extends Color {
   }
 
   @override
+  // ignore: deprecated_member_use
   Color withAlpha(int a) => _resolver().withAlpha(a);
 
   @override
+  // ignore: deprecated_member_use
   Color withOpacity(double opacity) => _resolver().withOpacity(opacity);
 
   @override

@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_typography.dart';
-import '../../core/avatar_image_provider.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/user_profile.dart';

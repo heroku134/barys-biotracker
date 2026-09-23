@@ -25,7 +25,6 @@ import 'day_journal_screen.dart';
 import '../widgets/mascot_face.dart';
 import '../../domain/intelligence/day_copy.dart';
 import '../../domain/avatar/avatar_manager.dart';
-import '../../data/storage/onboarding_repository.dart';
 import '../../data/storage/calibration_store.dart';
 import '../../data/storage/day_snapshot_repository.dart';
 import '../../data/storage/local_day_strain.dart';
@@ -35,7 +34,6 @@ import '../../domain/models/partner_cycle_data.dart';
 import '../widgets/circa_partner_cycle_card.dart';
 import '../widgets/circa_partner_cycle_sheet.dart';
 import '../widgets/glass_card.dart';
-import 'bio_avatar_screen.dart';
 import '../../domain/intelligence/yesterday_miss.dart';
 import '../../data/services/reminder_service.dart';
 import '../../data/services/paired_pulse.dart';
@@ -190,47 +188,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await PairedPulse.morningIfNeeded(widget.bleBridge);
   }
 
-  String _morningLine(int sleepScore, double tMin, double tMax, bool ru) {
-    final hour = DateTime.now().hour;
-    final range = '${tMin.toStringAsFixed(0)}–${tMax.toStringAsFixed(1)}';
-    if (hour >= 21) {
-      return ru ? 'Пора снижать свет и лечь до 22:30.' : 'Жарыкты басып, 22:30га чейин уктаңыз.';
-    }
-    if (sleepScore < 70) {
-      return ru
-          ? 'Сегодня $range. Вчера сон не добрали — без тяжёлой работы.'
-          : 'Бүгүн $range. Кечээки уйку жеткен жок.';
-    }
-    return ru
-        ? 'Сегодня $range. Три числа сверху — и запись в дневник, если что-то было.'
-        : 'Бүгүн $range. Үч санды карап, керек болсо күндөлүккө жазыңыз.';
-  }
-
   Future<void> _loadProfile() async {
     try {
       final p = await UserProfileRepository.loadProfile();
       if (mounted) setState(() => _userProfile = p);
     } catch (_) {}
-  }
-
-  String _coach(int score, double strainMax, AppLanguage lang) {
-    if (lang == AppLanguage.kyrgyz) {
-      if (score >= 67) return 'Денең жүктөмгө даяр. Оор машыгуу мүмкүн, strain чеги ${strainMax.toStringAsFixed(1)}.';
-      if (score >= 34) return 'Кадимки күн. Орто жүктөмдү кармоо, ${strainMax.toStringAsFixed(1)}дан ашпа.';
-      return 'Калыбына келүү начар. Бүгүн 1–2 зона, уйкуну эртерээк.';
-    }
-    if (lang == AppLanguage.english) {
-      if (score >= 67) return 'Body is primed for strain. Heavy session recommended, target strain ${strainMax.toStringAsFixed(1)}.';
-      if (score >= 34) return 'Moderate day. Keep steady load, do not exceed ${strainMax.toStringAsFixed(1)}.';
-      return 'Low recovery. Prioritize Zone 1–2 and sleep earlier than usual.';
-    }
-    if (score >= 67) {
-      return 'Тело готово к нагрузке. Можно тяжёлую сессию, потолок strain ${strainMax.toStringAsFixed(1)}.';
-    }
-    if (score >= 34) {
-      return 'Обычный день. Держи среднюю нагрузку, не заходи за ${strainMax.toStringAsFixed(1)}.' ;
-    }
-    return 'Восстановление слабое. Сегодня зона 1–2, сон раньше обычного.';
   }
 
   @override
@@ -603,7 +565,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _stat(palette, 'HRV',
-                          '${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'}', 'мс'),
+                          _telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64', 'мс'),
                     ),
                     const SizedBox(width: 8),
                     Expanded(

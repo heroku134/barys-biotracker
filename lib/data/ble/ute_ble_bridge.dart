@@ -50,11 +50,11 @@ class UteBleBridge {
       _discoveredMap.values.toList()..sort((a, b) => b.rssi.compareTo(a.rssi));
 
   BleTelemetry get currentTelemetry {
-    if (DemoModeStore.enabled.value) return _simulator.current;
+    if (isSimulatorActive) return _simulator.current;
     return _realTelemetry ?? BleTelemetry.empty();
   }
 
-  bool get isSimulatorActive => DemoModeStore.enabled.value;
+  bool get isSimulatorActive => _useSimulator && DemoModeStore.enabled.value;
 
   Future<void> init() async {
     await DemoModeStore.init();

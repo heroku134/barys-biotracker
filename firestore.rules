@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Вспомогательная функция проверки авторизации
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 1. Профиль пользователя и телеметрия
+    match /users/{userId} {
+      // Читать могут авторизованные пользователи (для поиска друзей по ID/имени)
+      allow read: if isAuthenticated();
+      // Писать может только сам владелец
+      allow write: if isOwner(userId);
+    }
+
+    // 2. Женский цикл (приватные данные здоровья)
+    match /cycle/{userId} {
+      // Владелица может читать и писать
+      allow write: if isOwner(userId);
+      // Читать может владелица ИЛИ явно привязанный партнёр
+      allow read: if isOwner(userId) || (
+        isAuthenticated() &&
+        exists(/databases/$(database)/documents/partners/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/partners/$(request.auth.uid)).data.partnerUid == userId
+      );
+    }
+
+    // 3. Снимки суточных биометрических данных
+    match /days/{userId}/snapshots/{dateKey} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // 4. Лига Данбара (круг друзей)
+    match /friends/{userId}/members/{memberId} {
+      allow read: if isOwner(userId);
+      allow write: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == memberId);
+    }
+
+    // 5. Одноразовые инвайт-коды связки (партнёр и друзья)
+    match /invites/{code} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // 6. Записи привязки партнёров
+    match /partners/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}

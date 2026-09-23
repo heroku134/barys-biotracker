@@ -95,12 +95,12 @@ class _MascotFaceState extends State<MascotFace> with TickerProviderStateMixin {
                       widget.state.assetFor(),
                       fit: BoxFit.cover,
                       alignment: Alignment.topCenter,
-                      errorBuilder: (_, __, ___) => ColoredBox(
+                      errorBuilder: (_, _, _) => ColoredBox(
                         color: AppColors.raised,
                         child: Icon(Icons.pets, color: AppColors.amber, size: widget.size * 0.4),
                       ),
                     ),
-                    if (_wash.alpha > 0) ColoredBox(color: _wash),
+                    if (_wash.a > 0) ColoredBox(color: _wash),
                     if (blink > 0)
                       Align(
                         alignment: Alignment.topCenter,

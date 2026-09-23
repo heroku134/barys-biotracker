@@ -16,7 +16,6 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
-import '../widgets/bio_avatar_widget.dart';
 import '../widgets/circa_edge_fade.dart';
 import '../widgets/glass_card.dart';
 
@@ -422,8 +421,13 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                 fontFamily: 'Manrope',
               ),
             ),
-            centerTitle: false,
-            actions: const [],
+            actions: [
+              IconButton(
+                icon: Icon(Icons.tune, color: palette.secondary, size: 20),
+                tooltip: 'Сценарии',
+                onPressed: _showDevScenariosSheet,
+              ),
+            ],
           ),
           body: SafeArea(
             child: SingleChildScrollView(

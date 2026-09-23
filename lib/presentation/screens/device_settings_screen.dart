@@ -402,6 +402,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                     activeThumbColor: AppColors.amber,
                     onChanged: (val) async {
                       await DemoModeStore.setEnabled(val);
+                      if (!context.mounted) return;
                       setState(() {});
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

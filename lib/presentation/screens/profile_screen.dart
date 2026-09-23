@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
-import '../../core/app_strings.dart';
-import '../../core/app_theme.dart';
 import '../../core/app_typography.dart';
 import '../../core/avatar_image_provider.dart';
 import '../../data/ble/ute_ble_bridge.dart';
@@ -22,8 +20,6 @@ import '../widgets/circa_partner_cycle_sheet.dart';
 import '../widgets/glass_card.dart';
 import 'auth_screen.dart';
 import 'device_settings_screen.dart';
-import '../../data/storage/account_backup_service.dart';
-import '../../data/storage/climate_mode_store.dart';
 import 'private_league_screen.dart';
 import 'settings_screen.dart';
 import '../../data/storage/calibration_store.dart';
@@ -404,102 +400,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
-  }
-
-  Widget _themeCard(KalkanColors palette, AppLanguage language) {
-    final dark = AppThemeNotifier.isDark;
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(_ru ? 'Тема' : 'Тема', style: AppTypography.bodySemibold(palette.fg)),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: _choice(palette, _ru ? 'Тёмная' : 'Караңгы', dark, () => AppThemeNotifier.setThemeMode(ThemeMode.dark))),
-            const SizedBox(width: 8),
-            Expanded(child: _choice(palette, _ru ? 'Светлая' : 'Жарык', !dark, () => AppThemeNotifier.setThemeMode(ThemeMode.light))),
-          ]),
-        ],
-      ),
-    );
-  }
-
-
-  Widget _pregnancyCard(KalkanColors palette) {
-    return GlassCard(
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppLocaleNotifier.pick('Беременность', 'Кош бойлуулук', 'Pregnancy'), style: AppTypography.bodySemibold(palette.fg)),
-                const SizedBox(height: 4),
-                Text(
-                  _profile.isPregnant
-                      ? AppLocaleNotifier.pick('Режим включён', 'Режим күйүк', 'Mode on')
-                      : AppLocaleNotifier.pick('Дневник срока, не диагноз', 'Мөөнөт күндөлүгү', 'A term diary, not a diagnosis'),
-                  style: AppTypography.caption(palette.secondary),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: _profile.isPregnant,
-            activeThumbColor: AppColors.sage,
-            onChanged: (v) async {
-              final next = _profile.copyWith(isPregnant: v);
-              await UserProfileRepository.saveProfile(next);
-              if (mounted) setState(() => _profile = next);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _climateCard(KalkanColors palette) {
-    return FutureBuilder<ClimateMode>(
-      future: ClimateModeStore.load(),
-      builder: (context, snap) {
-        final mode = snap.data ?? ClimateMode.normal;
-        return GlassCard(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(AppLocaleNotifier.pick('Регион', 'Аймак', 'Region'), style: AppTypography.bodySemibold(palette.fg)),
-            const SizedBox(height: 10),
-            Row(children: [
-              Expanded(child: _choice(palette, AppLocaleNotifier.pick('Обычный', 'Кадимки', 'Normal'), mode == ClimateMode.normal, () async { await ClimateModeStore.save(ClimateMode.normal); setState(() {}); })),
-              const SizedBox(width: 6),
-              Expanded(child: _choice(palette, AppLocaleNotifier.pick('Горы', 'Тоо', 'Altitude'), mode == ClimateMode.altitude, () async { await ClimateModeStore.save(ClimateMode.altitude); setState(() {}); })),
-              const SizedBox(width: 6),
-              Expanded(child: _choice(palette, AppLocaleNotifier.pick('Жара', 'Ысык', 'Heat'), mode == ClimateMode.heat, () async { await ClimateModeStore.save(ClimateMode.heat); setState(() {}); })),
-            ]),
-          ]),
-        );
-      },
-    );
-  }
-
-  Future<void> _restoreBackup() async {
-    final controller = TextEditingController();
-    final raw = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(AppLocaleNotifier.pick('JSON копии', 'JSON', 'Backup JSON'), style: TextStyle(color: AppColors.fg)),
-        content: TextField(controller: controller, maxLines: 6),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocaleNotifier.pick('Отмена', 'Жок', 'Cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, controller.text), child: Text(AppLocaleNotifier.pick('Ок', 'Макул', 'OK'))),
-        ],
-      ),
-    );
-    if (raw == null || raw.trim().isEmpty) return;
-    try {
-      await AccountBackupService.restoreFromJsonText(raw.trim());
-      final p = await UserProfileRepository.loadProfile();
-      if (mounted) setState(() => _profile = p);
-    } catch (_) {}
   }
 
   Widget _choice(KalkanColors palette, String label, bool active, VoidCallback onTap) {

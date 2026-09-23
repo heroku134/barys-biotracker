@@ -11,7 +11,6 @@ import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
-import 'main_shell.dart';
 import 'account_setup_screen.dart';
 
 class AuthScreen extends StatefulWidget {

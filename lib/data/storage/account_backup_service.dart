@@ -38,7 +38,7 @@ class AccountBackupService {
 
   static Future<void> share() async {
     final file = await writeFile();
-    await Share.shareXFiles([XFile(file.path)], text: 'KALKAN backup');
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)], text: 'KALKAN backup'));
   }
 
   static Future<void> restoreMap(Map<String, dynamic> data) async {
