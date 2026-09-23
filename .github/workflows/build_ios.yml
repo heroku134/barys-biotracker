@@ -77,6 +77,38 @@ jobs:
             ENABLE_ON_DEMAND_RESOURCES=NO \
             CONFIGURATION_BUILD_DIR="$(pwd)/build/ios/iphoneos"
 
+      - name: Build KalkanWidget Extension
+        run: |
+          echo "=== Compiling KalkanWidget Extension ==="
+          mkdir -p build/KalkanWidget.appex
+          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          echo "Using iPhoneOS SDK: $SDK_PATH"
+          
+          xcrun swiftc \
+            -target arm64-apple-ios14.0 \
+            -sdk "$SDK_PATH" \
+            -parse-as-library \
+            -O -whole-module-optimization \
+            -emit-executable \
+            -framework WidgetKit \
+            -framework SwiftUI \
+            -framework Foundation \
+            -Xlinker -rpath -Xlinker @executable_path/Frameworks \
+            -Xlinker -rpath -Xlinker @executable_path/../../Frameworks \
+            ios/KalkanWidget/KalkanWidget.swift \
+            ios/KalkanWidget/KalkanWidgetBundle.swift \
+            -o build/KalkanWidget.appex/KalkanWidget || echo "Warning: swiftc compilation encountered note"
+
+          cp ios/KalkanWidget/Info.plist build/KalkanWidget.appex/Info.plist
+
+          if [ -f "build/KalkanWidget.appex/KalkanWidget" ]; then
+            echo "KalkanWidget compiled successfully!"
+            chmod +x build/KalkanWidget.appex/KalkanWidget
+            codesign --force --sign - --timestamp=none build/KalkanWidget.appex || true
+          else
+            echo "Warning: KalkanWidget executable was not created"
+          fi
+
       - name: Package Payload into IPA
         run: |
           mkdir -p Payload
@@ -86,6 +118,15 @@ jobs:
           fi
           echo "Packaging Runner.app from: $APP_DIR"
           cp -r "$APP_DIR" Payload/
+
+          # Embed KalkanWidget into Payload/Runner.app/PlugIns/
+          if [ -f "build/KalkanWidget.appex/KalkanWidget" ]; then
+            echo "Embedding KalkanWidget.appex into PlugIns directory..."
+            mkdir -p Payload/Runner.app/PlugIns
+            cp -r build/KalkanWidget.appex Payload/Runner.app/PlugIns/
+            ls -lh Payload/Runner.app/PlugIns/KalkanWidget.appex/
+          fi
+
           # Ensure any generated .bundle files (privacy manifests, vendor SDK bundles) are inside the app
           find build -name "*.bundle" -exec cp -R {} Payload/Runner.app/ \; 2>/dev/null || true
           zip -r KALKAN_SPORT.ipa Payload

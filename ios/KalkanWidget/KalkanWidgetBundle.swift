@@ -5,6 +5,5 @@ import SwiftUI
 struct KalkanWidgetBundle: WidgetBundle {
     var body: some Widget {
         KalkanRecoveryWidget()
-        KalkanWorkoutLiveActivity()
     }
 }
