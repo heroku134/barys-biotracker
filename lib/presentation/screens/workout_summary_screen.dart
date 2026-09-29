@@ -136,9 +136,57 @@ class WorkoutSummaryScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
+          // 2.1 Информационный баннер внешнего трекера (если импортировано)
+          if (workout.isExternal) ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: workout.sourceColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: workout.sourceColor.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: workout.sourceColor.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(workout.sourceIcon, color: workout.sourceColor, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${AppLocaleNotifier.pick("Импортировано из", "Импорттолгон булак:", "Imported from")} ${workout.sourceDisplayName}',
+                          style: TextStyle(color: workout.sourceColor, fontSize: 13, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          AppLocaleNotifier.pick(
+                            'Тренировка записана сторонним сервисом без браслета. Сердечный Strain рассчитан алгоритмом KALKAN и добавлен в суточный баланс.',
+                            'Машыгуу тышкы трекерден жүктөлдү. Жүрөк жүктөмү KALKAN алгоритми менен эсептелди.',
+                            'Workout imported from external tracker. Cardiovascular Strain calculated by KALKAN engine and added to daily budget.',
+                          ),
+                          style: TextStyle(color: palette.fg.withValues(alpha: 0.85), fontSize: 11, height: 1.3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
           // 3. Блок данных с часов СААТ-1
           Text(
-            AppLocaleNotifier.pick('БИОМЕТРИЯ С ЧАСОВ СААТ-1', 'СААТ-1 БИОМЕТРИЯСЫ', 'СААТ-1 WATCH BIOMETRICS'),
+            workout.isExternal
+                ? AppLocaleNotifier.pick('БИОМЕТРИЯ СЕССИИ (${workout.sourceDisplayName.toUpperCase()})', 'МАШЫГУУ БИОМЕТРИЯСЫ', 'SESSION BIOMETRICS')
+                : AppLocaleNotifier.pick('БИОМЕТРИЯ С ЧАСОВ СААТ-1', 'СААТ-1 БИОМЕТРИЯСЫ', 'СААТ-1 WATCH BIOMETRICS'),
             style: TextStyle(
               color: palette.secondary,
               fontSize: 11,

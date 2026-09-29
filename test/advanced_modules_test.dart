@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:barys_biotracker/domain/intelligence/baseline_calibration_manager.dart';
 import 'package:barys_biotracker/data/services/health_sync_service.dart';
 import 'package:barys_biotracker/data/services/live_activity_service.dart';
+import 'package:barys_biotracker/data/storage/local_day_strain.dart';
 import 'package:barys_biotracker/domain/models/workout_session.dart';
 
 void main() {
@@ -77,6 +78,24 @@ void main() {
 
     test('3. LiveActivityService initial state check', () {
       expect(LiveActivityService.isLiveActivityActive, false);
+    });
+
+    test('4. HealthSyncService imports external workouts from Strava / Garmin and adds Strain', () async {
+      final initialStrain = LocalDayStrain.current();
+
+      final imported = await HealthSyncService.importExternalWorkouts(allowSampleImport: true);
+      expect(imported.isNotEmpty, true);
+      expect(imported.first.isExternal, true);
+      expect(imported.first.strain > 0, true);
+      expect(imported.first.xpEarned > 0, true);
+
+      // Verify daily strain was updated if workout happened today
+      final currentStrain = LocalDayStrain.current();
+      expect(currentStrain >= initialStrain, true);
+
+      // Verify deduplication: re-import should yield 0 new workouts
+      final reImported = await HealthSyncService.importExternalWorkouts(allowSampleImport: true);
+      expect(reImported.isEmpty, true);
     });
   });
 }

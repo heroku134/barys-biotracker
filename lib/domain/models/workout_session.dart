@@ -80,6 +80,9 @@ class CompletedWorkout {
   final int steps;
   final int cadence;
   final List<int> hrZoneSeconds;
+  final String? externalSource;
+  final String? externalId;
+  final String? sourceAppName;
 
   const CompletedWorkout({
     required this.id,
@@ -97,9 +100,61 @@ class CompletedWorkout {
     this.steps = 0,
     this.cadence = 0,
     this.hrZoneSeconds = const [0, 0, 0, 0, 0],
+    this.externalSource,
+    this.externalId,
+    this.sourceAppName,
   });
 
   bool get hasRoute => routeCoordinates.length >= 2;
+  bool get isExternal => externalSource != null && externalSource!.isNotEmpty;
+
+  String get sourceDisplayName {
+    if (sourceAppName != null && sourceAppName!.isNotEmpty) return sourceAppName!;
+    switch (externalSource) {
+      case 'strava':
+        return 'Strava';
+      case 'garmin':
+        return 'Garmin';
+      case 'apple_health':
+        return 'Apple Health';
+      case 'health_connect':
+        return 'Health Connect';
+      case 'whoop':
+        return 'Whoop';
+      default:
+        return 'Внешний трекер';
+    }
+  }
+
+  Color get sourceColor {
+    switch (externalSource) {
+      case 'strava':
+        return const Color(0xFFFC4C02);
+      case 'garmin':
+        return const Color(0xFF007CC3);
+      case 'apple_health':
+        return const Color(0xFFFF2D55);
+      case 'health_connect':
+        return const Color(0xFF34A853);
+      default:
+        return const Color(0xFFE5A93C);
+    }
+  }
+
+  IconData get sourceIcon {
+    switch (externalSource) {
+      case 'strava':
+        return Icons.navigation_outlined;
+      case 'garmin':
+        return Icons.watch_outlined;
+      case 'apple_health':
+        return Icons.favorite_outline;
+      case 'health_connect':
+        return Icons.sync;
+      default:
+        return Icons.cloud_sync_outlined;
+    }
+  }
 
   String get durationFormatted {
     final m = durationSeconds ~/ 60;
@@ -127,6 +182,48 @@ class CompletedWorkout {
     return "$m'${s.toString().padLeft(2, '0')}\" / км";
   }
 
+  CompletedWorkout copyWith({
+    String? id,
+    SportType? sport,
+    DateTime? startedAt,
+    int? durationSeconds,
+    int? calories,
+    double? distanceKm,
+    int? avgHr,
+    int? maxHr,
+    double? strain,
+    int? xpEarned,
+    List<List<double>>? routeCoordinates,
+    double? avgPaceMinPerKm,
+    int? steps,
+    int? cadence,
+    List<int>? hrZoneSeconds,
+    String? externalSource,
+    String? externalId,
+    String? sourceAppName,
+  }) {
+    return CompletedWorkout(
+      id: id ?? this.id,
+      sport: sport ?? this.sport,
+      startedAt: startedAt ?? this.startedAt,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      calories: calories ?? this.calories,
+      distanceKm: distanceKm ?? this.distanceKm,
+      avgHr: avgHr ?? this.avgHr,
+      maxHr: maxHr ?? this.maxHr,
+      strain: strain ?? this.strain,
+      xpEarned: xpEarned ?? this.xpEarned,
+      routeCoordinates: routeCoordinates ?? this.routeCoordinates,
+      avgPaceMinPerKm: avgPaceMinPerKm ?? this.avgPaceMinPerKm,
+      steps: steps ?? this.steps,
+      cadence: cadence ?? this.cadence,
+      hrZoneSeconds: hrZoneSeconds ?? this.hrZoneSeconds,
+      externalSource: externalSource ?? this.externalSource,
+      externalId: externalId ?? this.externalId,
+      sourceAppName: sourceAppName ?? this.sourceAppName,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'sportId': sport.id,
@@ -143,6 +240,9 @@ class CompletedWorkout {
     'steps': steps,
     'cadence': cadence,
     'hrZoneSeconds': hrZoneSeconds,
+    'externalSource': externalSource,
+    'externalId': externalId,
+    'sourceAppName': sourceAppName,
   };
 
   factory CompletedWorkout.fromJson(Map<String, dynamic> json) {
@@ -176,6 +276,9 @@ class CompletedWorkout {
       steps: (json['steps'] as num?)?.toInt() ?? 0,
       cadence: (json['cadence'] as num?)?.toInt() ?? 0,
       hrZoneSeconds: zones,
+      externalSource: json['externalSource'] as String?,
+      externalId: json['externalId'] as String?,
+      sourceAppName: json['sourceAppName'] as String?,
     );
   }
 }

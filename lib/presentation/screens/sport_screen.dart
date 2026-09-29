@@ -23,6 +23,7 @@ import '../widgets/glass_card.dart';
 import '../widgets/run_route_map_widget.dart';
 import '../../data/services/live_activity_service.dart';
 import '../../data/services/system_notification_service.dart';
+import '../../data/services/health_sync_service.dart';
 
 enum SportCategoryFilter {
   all,
@@ -86,6 +87,45 @@ class _SportScreenState extends State<SportScreen> {
   Future<void> _loadHistory() async {
     final list = await WorkoutRepository.loadWorkouts();
     if (mounted) setState(() => _history = list);
+  }
+
+  bool _isHealthSyncing = false;
+
+  Future<void> _syncWithHealthKit() async {
+    if (_isHealthSyncing) return;
+    CircaHaptics.selectionClick();
+    setState(() => _isHealthSyncing = true);
+    try {
+      final report = await HealthSyncService.syncAll(allowSampleImport: true);
+      await _loadHistory();
+      if (!mounted) return;
+      CircaHaptics.success();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.surface,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Row(
+            children: [
+              const Icon(Icons.cloud_done_outlined, color: AppColors.sage, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  report.importedWorkoutsCount > 0
+                      ? '${AppLocaleNotifier.pick("Импортировано", "Импорттолду", "Imported")}: +${report.importedWorkoutsCount} (${report.importedWorkouts.map((w) => w.sourceDisplayName).toSet().join(', ')}) · +${report.addedStrain.toStringAsFixed(1)} Strain'
+                      : AppLocaleNotifier.pick('Все внешние тренировки синхронизированы', 'Бардык машыгуулар синхрондоштурулду', 'All external workouts are up to date'),
+                  style: TextStyle(color: KalkanColors.of(context).fg, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Sync health error: $e');
+    } finally {
+      if (mounted) setState(() => _isHealthSyncing = false);
+    }
   }
 
   int get _weekMinutes {
@@ -420,6 +460,11 @@ class _SportScreenState extends State<SportScreen> {
 
       try {
         await WorkoutRepository.saveWorkout(completed);
+        await HealthSyncService.exportWorkoutToHealth(
+          workout: completed,
+          strain: calculatedStrain,
+          activeCalories: cals,
+        );
         await _loadHistory();
       } catch (e) {
         debugPrint('Workout save error: $e');
@@ -1189,6 +1234,92 @@ class _SportScreenState extends State<SportScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // 5.1 Двусторонний обмен Apple Health / Health Connect / Strava / Garmin
+                GlassCard(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFC4C02).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.sync_alt, color: Color(0xFFFC4C02), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  AppLocaleNotifier.pick('Apple Health & Strava', 'Apple Health жана Strava', 'Apple Health & Strava'),
+                                  style: TextStyle(color: palette.fg, fontWeight: FontWeight.w700, fontSize: 13),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.sage.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: const Text(
+                                    'AUTO SYNC',
+                                    style: TextStyle(color: AppColors.sage, fontSize: 8.5, fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              AppLocaleNotifier.pick(
+                                'Импорт заездов, заплывов и бега из Strava / Garmin в Strain',
+                                'Strava / Garmin машыгууларын күндүк Strainге кошуу',
+                                'Auto-import rides, swims & runs into daily Strain',
+                              ),
+                              style: TextStyle(color: palette.secondary, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: _isHealthSyncing ? null : _syncWithHealthKit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: palette.raised,
+                          foregroundColor: palette.fg,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: palette.hairline),
+                          ),
+                        ),
+                        child: _isHealthSyncing
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.refresh, size: 14, color: palette.fg),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    AppLocaleNotifier.pick('Синхр.', 'Синхр.', 'Sync'),
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // 6. История тренировок
                 Text(
                   AppLocaleNotifier.pick('История тренировок', 'Машыгуу тарыхы', 'Workout History'),
@@ -1238,7 +1369,33 @@ class _SportScreenState extends State<SportScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(w.sport.title, style: TextStyle(color: palette.fg, fontWeight: FontWeight.w600, fontSize: 13)),
+                                    Row(
+                                      children: [
+                                        Text(w.sport.title, style: TextStyle(color: palette.fg, fontWeight: FontWeight.w600, fontSize: 13)),
+                                        if (w.isExternal) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: w.sourceColor.withValues(alpha: 0.15),
+                                              borderRadius: BorderRadius.circular(5),
+                                              border: Border.all(color: w.sourceColor.withValues(alpha: 0.4), width: 0.8),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(w.sourceIcon, size: 10, color: w.sourceColor),
+                                                const SizedBox(width: 3),
+                                                Text(
+                                                  w.sourceDisplayName,
+                                                  style: TextStyle(color: w.sourceColor, fontSize: 9, fontWeight: FontWeight.w700),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                     const SizedBox(height: 2),
                                     Text(
                                       '${w.durationFormatted}${w.distanceKm > 0 ? " · ${w.distanceKm.toStringAsFixed(2)} км" : ""} · ${w.calories} ккал',
