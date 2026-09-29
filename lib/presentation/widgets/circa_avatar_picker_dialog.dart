@@ -16,6 +16,21 @@ class CircaAvatarPickerDialog extends StatelessWidget {
 
   static const List<Map<String, String>> presets = [
     {
+      'title': 'Барыс (Калпак)',
+      'subtitle': 'Маскот Батыр',
+      'path': 'assets/images/mascot_male_face.png',
+    },
+    {
+      'title': 'Барыса (Атлетка)',
+      'subtitle': 'Маскот Чемпионка',
+      'path': 'assets/images/mascot_female_face.png',
+    },
+    {
+      'title': 'Дуэт Маскотов',
+      'subtitle': 'Защитники KALKAN',
+      'path': 'assets/images/mascots_pair_transparent.png',
+    },
+    {
       'title': 'Батыр',
       'subtitle': 'Степной воин',
       'path': 'assets/images/warrior_cutout_clean.png',
@@ -29,11 +44,6 @@ class CircaAvatarPickerDialog extends StatelessWidget {
       'title': 'Классика',
       'subtitle': 'Минимализм',
       'path': 'assets/images/face_crop.png',
-    },
-    {
-      'title': 'Маскот Барыс',
-      'subtitle': 'Снежный барс',
-      'path': 'assets/images/hero_barys_normal.jpg',
     },
     {
       'title': 'Бодрый Барыс',
@@ -50,6 +60,30 @@ class CircaAvatarPickerDialog extends StatelessWidget {
       isScrollControlled: true,
       builder: (ctx) => CircaAvatarPickerDialog(profile: profile),
     );
+  }
+
+  Future<void> _selectPreset(BuildContext context, String path) async {
+    CircaHaptics.selectionClick();
+    final updated = profile.copyWith(avatarPath: path);
+    await UserProfileRepository.saveProfile(updated);
+    if (context.mounted) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.surface,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: AppColors.sage),
+          ),
+          content: Text(
+            'Аватар успешно обновлён!',
+            style: TextStyle(color: AppColors.textNearWhite, fontSize: 12),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
@@ -126,7 +160,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,9 +176,9 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                       letterSpacing: 1.8,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Камера или галерея',
+                    'Маскоты или собственное фото',
                     style: TextStyle(
                       color: AppColors.textNearWhite,
                       fontSize: 13,
@@ -159,7 +193,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // 1. Быстрые кнопки камеры и галереи
           Row(
@@ -180,7 +214,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _pickImage(context, ImageSource.gallery),
@@ -200,7 +234,85 @@ class CircaAvatarPickerDialog extends StatelessWidget {
             ],
           ),
 
-          SizedBox(height: 14),
+          const SizedBox(height: 18),
+
+          // 2. Секция выбора маскотов KALKAN
+          Text(
+            'МАСКОТЫ KALKAN',
+            style: AppTypography.monoLabel().copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 10,
+              letterSpacing: 1.4,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          SizedBox(
+            height: 96,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: presets.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 10),
+              itemBuilder: (ctx, index) {
+                final item = presets[index];
+                final isSelected = profile.avatarPath == item['path'];
+                return GestureDetector(
+                  onTap: () => _selectPreset(context, item['path']!),
+                  child: Container(
+                    width: 80,
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.amber.withValues(alpha: 0.15) : AppColors.raised,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? AppColors.amber : AppColors.hairline,
+                        width: isSelected ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? AppColors.amber : AppColors.hairline,
+                              width: 1.0,
+                            ),
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              item['path']!,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.topCenter,
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.pets, color: AppColors.amber, size: 24),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item['title']!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isSelected ? AppColors.amber : AppColors.textNearWhite,
+                            fontSize: 9,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 14),
 
           // Кнопка закрытия
           SizedBox(

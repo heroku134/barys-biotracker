@@ -18,6 +18,7 @@ import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_avatar_picker_dialog.dart';
 import '../widgets/circa_calibration_card.dart';
+import '../widgets/circa_mascot_hero_card.dart';
 import '../widgets/circa_recovery_breakdown_sheet.dart';
 import '../widgets/metric_dial.dart';
 import 'private_league_screen.dart';
@@ -33,7 +34,6 @@ import '../../data/storage/partner_cycle_repository.dart';
 import '../../domain/models/partner_cycle_data.dart';
 import '../widgets/circa_partner_cycle_card.dart';
 import '../widgets/circa_partner_cycle_sheet.dart';
-import '../widgets/glass_card.dart';
 import '../../domain/intelligence/yesterday_miss.dart';
 import '../../data/services/reminder_service.dart';
 import '../../data/services/paired_pulse.dart';
@@ -379,7 +379,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
+                child: CircaMascotHeroCard(
+                  state: AvatarManager.calculateState(_telemetry, baseline: _baseline),
+                  readiness: readiness,
+                  onTap: widget.onOpenAvatar,
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -504,45 +514,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
 
-            if (_userProfile.gender == Gender.female)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: GlassCard(
-                    onTap: widget.onOpenAvatar,
-                    child: Row(
-                      children: [
-                        MascotFace(
-                          state: AvatarManager.calculateState(_telemetry, baseline: _baseline),
-                          size: 72,
-                          climate: _climate,
-                          onTap: widget.onOpenAvatar,
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(AppLocaleNotifier.pick('Барыс', 'Барыс', 'Barys'), style: AppTypography.bodySemibold(palette.fg)),
-                              const SizedBox(height: 4),
-                              Text(
-                                DayCopy.morning(
-                                  sleepScore: sleepScore,
-                                  tMin: strainResult.targetStrainMin,
-                                  tMax: strainResult.targetStrainMax,
-                                  miss: _miss,
-                                  climate: _climate,
-                                ),
-                                style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             if (_userProfile.gender != Gender.female && _partner != null && _partner!.isLinked)
               SliverToBoxAdapter(
                 child: Padding(

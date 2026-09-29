@@ -39,6 +39,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
   final PersonalBaseline _baseline = const PersonalBaseline();
   AvatarVisualState? _selectedScenario;
   bool _isMorningWoken = false;
+  int _mascotDisplayMode = 0;
   StreamSubscription<BleTelemetry>? _sub;
 
   @override
@@ -385,7 +386,118 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     );
   }
 
+  Widget _buildModeTab(int index, String label) {
+    final isSelected = _mascotDisplayMode == index;
+    return GestureDetector(
+      onTap: () {
+        CircaHaptics.selectionClick();
+        setState(() => _mascotDisplayMode = index);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.amber.withValues(alpha: 0.18) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: isSelected ? Border.all(color: AppColors.amber, width: 1.0) : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? AppColors.amber : AppColors.muted,
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildMascotVisual(AvatarVisualState state, KalkanColors palette) {
+    switch (_mascotDisplayMode) {
+      case 0:
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    state.badgeColor.withValues(alpha: 0.25),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            Image.asset(
+              'assets/images/mascots_pair_transparent.png',
+              height: 220,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => MascotFace(state: state, size: 196),
+            ),
+          ],
+        );
+      case 1:
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    state.badgeColor.withValues(alpha: 0.25),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            Image.asset(
+              'assets/images/mascot_male_transparent.png',
+              height: 220,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => MascotFace(state: state, size: 196),
+            ),
+          ],
+        );
+      case 2:
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    state.badgeColor.withValues(alpha: 0.25),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            Image.asset(
+              'assets/images/mascot_female_transparent.png',
+              height: 220,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => MascotFace(state: state, size: 196),
+            ),
+          ],
+        );
+      case 3:
+      default:
+        return MascotFace(
+          state: state,
+          size: 196,
+          climate: ClimateMode.normal,
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -435,14 +547,36 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
               child: Column(
                 children: [
-                  Center(
-                    child: MascotFace(
-                      state: AvatarManager.calculateState(_telemetry, baseline: _baseline),
-                      size: 196,
-                      climate: ClimateMode.normal,
+                  // Переключатель отображения маскотов
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: palette.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: palette.hairline),
+                    ),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildModeTab(0, 'Пара маскотов'),
+                          _buildModeTab(1, 'Барыс'),
+                          _buildModeTab(2, 'Барыса'),
+                          _buildModeTab(3, 'Портрет'),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+
+                  Center(
+                    child: _buildMascotVisual(
+                      AvatarManager.calculateState(_telemetry, baseline: _baseline),
+                      palette,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Text(
                     DayCopy.morning(
                       sleepScore: SleepEngine.calculate(telemetry: _telemetry, baseline: _baseline).sleepPerformanceScore,
