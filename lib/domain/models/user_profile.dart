@@ -96,7 +96,11 @@ class UserProfile {
     return (caloriesPerMin * minutes).round();
   }
 
-  double get bmi => weightKg / ((heightCm / 100) * (heightCm / 100));
+  double get bmi {
+    if (heightCm <= 50 || weightKg <= 10) return 22.0;
+    final h = heightCm / 100.0;
+    return weightKg / (h * h);
+  }
 
   UserProfile copyWith({
     String? id,

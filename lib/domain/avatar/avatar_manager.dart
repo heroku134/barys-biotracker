@@ -590,14 +590,16 @@ class AvatarManager {
     final hrv = telemetry.hrv > 0 ? telemetry.hrv : base.meanHrv;
     final sleepWeak = base.sleepDebtMinutes >= 45 || (telemetry.sleepMinutes > 0 && telemetry.sleepMinutes < 390);
 
+    if (_lastWorkoutTime != null &&
+        now.difference(_lastWorkoutTime!).inMinutes >= 0 &&
+        now.difference(_lastWorkoutTime!).inMinutes < 90) {
+      return AvatarVisualState.postWorkout;
+    }
     if (now.hour >= 21 || now.hour < 6) {
       return AvatarVisualState.sleep;
     }
     if (base.sleepDebtMinutes >= 90) {
       return AvatarVisualState.sleep;
-    }
-    if (_lastWorkoutTime != null && now.difference(_lastWorkoutTime!).inMinutes < 90) {
-      return AvatarVisualState.postWorkout;
     }
     if (telemetry.currentStressScore > 65) {
       return AvatarVisualState.meditation;

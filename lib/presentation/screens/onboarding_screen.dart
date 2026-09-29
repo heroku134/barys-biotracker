@@ -4,6 +4,8 @@ import '../../core/app_language.dart';
 import '../../core/app_typography.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/onboarding_repository.dart';
+import '../../data/storage/user_profile_repository.dart';
+import 'account_setup_screen.dart';
 import 'auth_screen.dart';
 import 'device_pair_screen.dart';
 import 'main_shell.dart';
@@ -22,10 +24,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _finish({required bool calibrate}) async {
     await OnboardingRepository.markDone(startCalibration: calibrate);
+    final profile = await UserProfileRepository.loadProfile();
     if (!mounted) return;
-    final next = widget.isAuthenticated
-        ? MainShell(bleBridge: widget.bleBridge)
-        : AuthScreen(bleBridge: widget.bleBridge);
+    final Widget next;
+    if (!widget.isAuthenticated) {
+      next = AuthScreen(bleBridge: widget.bleBridge);
+    } else if (!profile.hasCompletedProfile) {
+      next = AccountSetupScreen(bleBridge: widget.bleBridge);
+    } else {
+      next = MainShell(bleBridge: widget.bleBridge);
+    }
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => next));
   }
 

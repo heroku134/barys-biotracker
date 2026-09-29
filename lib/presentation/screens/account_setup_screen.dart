@@ -119,6 +119,32 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
     final h = double.tryParse(_heightController.text.replaceAll(',', '.')) ?? 175.0;
     final w = double.tryParse(_weightController.text.replaceAll(',', '.')) ?? 72.0;
 
+    int stepGoal = 10000;
+    int calorieGoal = 650;
+    double sleepGoal = 8.0;
+    switch (_selectedGoal) {
+      case 'endurance':
+        stepGoal = 12000;
+        calorieGoal = 750;
+        sleepGoal = 8.5;
+        break;
+      case 'strength':
+        stepGoal = 8000;
+        calorieGoal = 650;
+        sleepGoal = 8.5;
+        break;
+      case 'fat_loss':
+        stepGoal = 10000;
+        calorieGoal = 800;
+        sleepGoal = 8.0;
+        break;
+      case 'health':
+        stepGoal = 8000;
+        calorieGoal = 500;
+        sleepGoal = 8.0;
+        break;
+    }
+
     final p = await UserProfileRepository.loadProfile();
     final updated = p.copyWith(
       name: name.isNotEmpty ? name : (p.name.isNotEmpty ? p.name : 'Атлет'),
@@ -126,6 +152,9 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       weightKg: w.clamp(30.0, 250.0),
       birthYear: _birthDate.year,
       gender: _gender,
+      stepGoal: stepGoal,
+      calorieGoal: calorieGoal,
+      sleepGoalHours: sleepGoal,
       isAuthenticated: true,
       hasCompletedProfile: true,
     );

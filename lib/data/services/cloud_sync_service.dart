@@ -8,6 +8,7 @@ import '../storage/day_snapshot_repository.dart';
 import '../storage/partner_cycle_repository.dart';
 import '../storage/private_league_repository.dart';
 import '../storage/user_profile_repository.dart';
+import 'fcm_service.dart';
 
 /// Firestore only (Spark). No Storage.
 class CloudSyncService {
@@ -33,6 +34,14 @@ class CloudSyncService {
         'name': profile.name,
         'email': profile.email,
         'gender': profile.gender.name,
+        'hasCompletedProfile': profile.hasCompletedProfile,
+        'heightCm': profile.heightCm,
+        'weightKg': profile.weightKg,
+        'birthYear': profile.birthYear,
+        'stepGoal': profile.stepGoal,
+        'calorieGoal': profile.calorieGoal,
+        'sleepGoalHours': profile.sleepGoalHours,
+        'isPregnant': profile.isPregnant,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
       if (profile.gender == Gender.female) {
@@ -55,9 +64,46 @@ class CloudSyncService {
     if (db == null || id == null) return null;
     try {
       final snap = await db.collection('users').doc(id).get().timeout(const Duration(seconds: 4));
-      final raw = snap.data()?['profileRaw'] as String?;
-      if (raw == null || raw.isEmpty) return null;
-      return UserProfile.deserialize(raw).copyWith(isAuthenticated: true);
+      if (!snap.exists) return null;
+      final data = snap.data();
+      if (data == null) return null;
+
+      final raw = data['profileRaw'] as String?;
+      UserProfile? profile;
+      if (raw != null && raw.isNotEmpty) {
+        try {
+          profile = UserProfile.deserialize(raw);
+        } catch (_) {}
+      }
+
+      if (profile == null) {
+        final name = (data['name'] as String?) ?? '';
+        final email = (data['email'] as String?) ?? '';
+        final genderStr = data['gender'] as String?;
+        final hasCompleted = (data['hasCompletedProfile'] as bool?) ?? false;
+        final h = (data['heightCm'] as num?)?.toDouble() ?? 175.0;
+        final w = (data['weightKg'] as num?)?.toDouble() ?? 72.0;
+        final b = (data['birthYear'] as num?)?.toInt() ?? 1996;
+        final s = (data['stepGoal'] as num?)?.toInt() ?? 10000;
+        final c = (data['calorieGoal'] as num?)?.toInt() ?? 650;
+        final sl = (data['sleepGoalHours'] as num?)?.toDouble() ?? 8.0;
+        final isPreg = (data['isPregnant'] as bool?) ?? false;
+
+        profile = UserProfile(
+          name: name,
+          email: email,
+          gender: genderStr == 'female' ? Gender.female : Gender.male,
+          hasCompletedProfile: hasCompleted,
+          heightCm: h,
+          weightKg: w,
+          birthYear: b,
+          stepGoal: s,
+          calorieGoal: c,
+          sleepGoalHours: sl,
+          isPregnant: isPreg,
+        );
+      }
+      return profile.copyWith(isAuthenticated: true);
     } catch (e) {
       debugPrint('CloudSync.pullProfile: $e');
       return null;
@@ -76,6 +122,9 @@ class CloudSyncService {
       await pushProfile(local);
     }
     await pullDays();
+    try {
+      await FcmService.init();
+    } catch (_) {}
   }
 
   static Future<void> pushDay(DaySnapshot day) async {

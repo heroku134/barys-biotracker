@@ -9,6 +9,7 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/demo_mode_store.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
+import '../../domain/models/user_profile.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
 import 'account_setup_screen.dart';
@@ -114,28 +115,60 @@ class _AuthScreenState extends State<AuthScreen> {
         firebaseDisplayName = name.isNotEmpty ? name : email.split('@').first;
       }
 
-      // Сохраняем профиль локально
-      final currentProfile = await UserProfileRepository.loadProfile();
-      final updatedProfile = currentProfile.copyWith(
-        email: email,
-        name: firebaseDisplayName?.isNotEmpty == true
-            ? firebaseDisplayName!
-            : (_isSignUp ? name : (currentProfile.name.isNotEmpty ? currentProfile.name : '')),
-        isAuthenticated: true,
-      );
-      await UserProfileRepository.saveProfile(updatedProfile);
+      UserProfile effectiveProfile;
+      if (!_isSignUp) {
+        // Вход в существующий аккаунт:
+        // Сначала пробуем получить данные из облака, чтобы НЕ затирать профиль и не спрашивать пол/возраст повторно
+        UserProfile? remoteProfile;
+        try {
+          remoteProfile = await CloudSyncService.pullProfile();
+        } catch (e) {
+          debugPrint('Auth pullProfile note: $e');
+        }
 
-      // Фоновая облачная синхронизация БЕЗ блокировки UI
-      unawaited(CloudSyncService.afterLogin(updatedProfile).catchError((e) {
-        debugPrint('CloudSync background note: $e');
-      }));
+        final currentProfile = await UserProfileRepository.loadProfile();
+        if (remoteProfile != null) {
+          effectiveProfile = remoteProfile.copyWith(
+            email: email,
+            name: remoteProfile.name.isNotEmpty
+                ? remoteProfile.name
+                : (firebaseDisplayName?.isNotEmpty == true ? firebaseDisplayName! : currentProfile.name),
+            isAuthenticated: true,
+          );
+        } else {
+          effectiveProfile = currentProfile.copyWith(
+            email: email,
+            name: firebaseDisplayName?.isNotEmpty == true
+                ? firebaseDisplayName!
+                : (currentProfile.name.isNotEmpty ? currentProfile.name : ''),
+            isAuthenticated: true,
+          );
+        }
+        await UserProfileRepository.saveProfile(effectiveProfile);
+        unawaited(CloudSyncService.afterLogin(effectiveProfile).catchError((e) {
+          debugPrint('CloudSync background note: $e');
+        }));
+      } else {
+        // Регистрация нового аккаунта:
+        // Явно сбрасываем hasCompletedProfile в false, чтобы новый пользователь обязательно прошёл AccountSetupScreen
+        effectiveProfile = UserProfile(
+          email: email,
+          name: name.isNotEmpty ? name : (firebaseDisplayName ?? ''),
+          isAuthenticated: true,
+          hasCompletedProfile: false,
+        );
+        await UserProfileRepository.saveProfile(effectiveProfile);
+        unawaited(CloudSyncService.pushProfile(effectiveProfile).catchError((e) {
+          debugPrint('CloudSync pushProfile note: $e');
+        }));
+      }
 
       navigated = true;
       if (!mounted) return;
 
       // Если это вход в существующий аккаунт с уже заполненным профилем — сразу в MainShell
       // Если это регистрация ИЛИ профиль ещё не заполнен — обязательно в AccountSetupScreen
-      if (!_isSignUp && updatedProfile.hasCompletedProfile && updatedProfile.name.isNotEmpty) {
+      if (!_isSignUp && effectiveProfile.hasCompletedProfile && effectiveProfile.name.isNotEmpty) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => MainShell(bleBridge: widget.bleBridge),

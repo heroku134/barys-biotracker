@@ -5,12 +5,15 @@ import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
 import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
-import '../../data/ble/ute_ble_bridge.dart';
+import 'account_setup_screen.dart';
 import 'auth_screen.dart';
 import 'main_shell.dart';
 import 'onboarding_screen.dart';
+import '../../data/ble/ute_ble_bridge.dart';
 import '../../domain/avatar/avatar_manager.dart';
+import '../../data/services/cloud_sync_service.dart';
 import '../../data/storage/onboarding_repository.dart';
+import '../../data/storage/user_profile_repository.dart';
 
 class SplashScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -54,16 +57,30 @@ class _SplashScreenState extends State<SplashScreen>
     CircaHaptics.selectionClick();
 
     final onboarded = await OnboardingRepository.isDone();
+    var profile = await UserProfileRepository.loadProfile();
     final Widget nextScreen;
     if (!onboarded) {
       nextScreen = OnboardingScreen(
         bleBridge: widget.bleBridge,
         isAuthenticated: widget.isAuthenticated,
       );
+    } else if (!widget.isAuthenticated) {
+      nextScreen = AuthScreen(bleBridge: widget.bleBridge);
     } else {
-      nextScreen = widget.isAuthenticated
-          ? MainShell(bleBridge: widget.bleBridge)
-          : AuthScreen(bleBridge: widget.bleBridge);
+      if (!profile.hasCompletedProfile) {
+        try {
+          final remote = await CloudSyncService.pullProfile();
+          if (remote != null && remote.hasCompletedProfile) {
+            profile = remote;
+            await UserProfileRepository.saveProfile(profile);
+          }
+        } catch (_) {}
+      }
+      if (!profile.hasCompletedProfile) {
+        nextScreen = AccountSetupScreen(bleBridge: widget.bleBridge);
+      } else {
+        nextScreen = MainShell(bleBridge: widget.bleBridge);
+      }
     }
 
     if (!mounted) return;

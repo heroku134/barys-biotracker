@@ -82,7 +82,7 @@ class KalkanBackendAdapter {
               name: d.name || "Атлет KALKAN",
               email: d.email || "no-email@kalkan.sport",
               gender: d.gender || "male",
-              age: d.age || 26,
+              age: d.birthYear ? (new Date().getFullYear() - d.birthYear) : (d.age || 26),
               heightCm: d.heightCm || 175,
               weightKg: d.weightKg || 72,
               status: "active",

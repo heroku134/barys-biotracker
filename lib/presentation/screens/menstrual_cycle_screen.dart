@@ -413,6 +413,43 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              // Переход в режим беременности
+              GlassCard(
+                onTap: _enablePregnancyMode,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.rose.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.favorite, color: AppColors.rose, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _ru ? 'Режим беременности' : 'Кош бойлуулук режими',
+                            style: AppTypography.bodySemibold(palette.fg),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _ru
+                                ? 'Включить трекинг триместров и адаптацию нагрузки'
+                                : 'Триместрлерди жана жүктөмдү көзөмөлдөө',
+                            style: AppTypography.caption(palette.secondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: palette.muted),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -682,5 +719,37 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _enablePregnancyMode() async {
+    final lmp = _profile.lastPeriodStartDate ?? DateTime.now().subtract(const Duration(days: 30));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: lmp,
+      firstDate: DateTime.now().subtract(const Duration(days: 300)),
+      lastDate: DateTime.now(),
+      helpText: _ru ? 'Первый день последних месячных (LMP)' : 'Акыркы этек кирдин биринчи күнү',
+    );
+    if (picked != null) {
+      final due = picked.add(const Duration(days: 280));
+      final updated = _profile.copyWith(
+        isPregnant: true,
+        pregnancyLmpDate: picked,
+        pregnancyDueDate: due,
+      );
+      await UserProfileRepository.saveProfile(updated);
+      if (mounted) {
+        setState(() => _profile = updated);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.surface,
+            content: Text(
+              _ru ? 'Режим беременности включён' : 'Кош бойлуулук режими күйгүзүлдү',
+              style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+            ),
+          ),
+        );
+      }
+    }
   }
 }
