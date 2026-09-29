@@ -1,8 +1,10 @@
 package com.yc.nadalsdk.barys_biotracker
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.widget.RemoteViews
 
@@ -15,6 +17,17 @@ class KalkanHomeWidgetProvider : AppWidgetProvider() {
         val sleepM = readInt(prefs, "sleep_minutes")
         val line = prefs.getString("morning_line", "") ?: ""
         val hasNight = prefs.getBoolean("has_night_data", false) || recovery > 0
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         for (id in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.kalkan_widget)
             views.setTextViewText(R.id.widget_recovery, if (hasNight && recovery > 0) "$recovery" else "—")
@@ -24,6 +37,8 @@ class KalkanHomeWidgetProvider : AppWidgetProvider() {
                 if (sleepH > 0 || sleepM > 0) "${sleepH}ч ${sleepM.toString().padStart(2, '0')}" else "—"
             )
             views.setTextViewText(R.id.widget_line, line)
+            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+
             appWidgetManager.updateAppWidget(id, views)
         }
     }

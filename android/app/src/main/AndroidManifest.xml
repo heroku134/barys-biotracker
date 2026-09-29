@@ -27,7 +27,9 @@
         </receiver>
         <receiver
             android:name=".KalkanHomeWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_name"
+            android:description="@string/widget_description">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -73,5 +75,6 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <package android:name="com.google.android.apps.healthdata" />
     </queries>
 </manifest>

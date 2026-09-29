@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
+import '../../data/services/health_sync_service.dart';
 import '../../data/storage/demo_mode_store.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/user_profile.dart';
@@ -27,7 +29,8 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
   DateTime _birthDate = DateTime(1996, 6, 15);
   Gender _gender = Gender.male;
   String _selectedGoal = 'endurance';
-  int _step = 0; // 0: Биометрия, 1: Подключение СААТ-1
+  int _step = 0; // 0: Биометрия, 1: Подключение СААТ-1, 2: Apple Health / Health Connect
+  bool _isSyncingHealth = false;
 
   @override
   void initState() {
@@ -162,7 +165,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
     setState(() => _step = 1);
   }
 
-  Future<void> _finish({required bool pair}) async {
+  Future<void> _proceedToHealthSync({required bool pair}) async {
     CircaHaptics.selectionClick();
     if (pair) {
       await Navigator.of(context).push(MaterialPageRoute(
@@ -171,6 +174,41 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
     } else {
       await DemoModeStore.setEnabled(true);
     }
+    if (!mounted) return;
+    setState(() => _step = 2);
+  }
+
+  Future<void> _syncHealth() async {
+    CircaHaptics.selectionClick();
+    setState(() => _isSyncingHealth = true);
+    try {
+      await HealthSyncService.requestPermissions();
+      final report = await HealthSyncService.syncAll(allowSampleImport: true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(report.message),
+            backgroundColor: AppColors.sage,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Onboarding health sync note: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncingHealth = false);
+        _enterMainShell();
+      }
+    }
+  }
+
+  void _skipHealthSync() {
+    CircaHaptics.selectionClick();
+    _enterMainShell();
+  }
+
+  void _enterMainShell() {
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => MainShell(bleBridge: widget.bleBridge)),
@@ -187,10 +225,21 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       appBar: AppBar(
         backgroundColor: palette.bg,
         elevation: 0,
+        leading: _step > 0
+            ? IconButton(
+                icon: Icon(Icons.arrow_back_ios_new, color: palette.fg, size: 20),
+                onPressed: () {
+                  CircaHaptics.selectionClick();
+                  setState(() => _step--);
+                },
+              )
+            : null,
         title: Text(
           _step == 0
               ? AppLocaleNotifier.pick('Настройка профиля', 'Профилди жөндөө', 'Profile Setup')
-              : AppLocaleNotifier.pick('Часы СААТ-1', 'СААТ-1 сааты', 'SAAT-1 Watch'),
+              : (_step == 1
+                  ? AppLocaleNotifier.pick('Часы СААТ-1', 'СААТ-1 сааты', 'SAAT-1 Watch')
+                  : AppLocaleNotifier.pick('Синхронизация здоровья', 'Ден соолукту байланыштыруу', 'Health Sync')),
           style: AppTypography.screenTitle(palette.fg),
         ),
       ),
@@ -198,6 +247,30 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
+            // Индикатор шагов (1/3, 2/3, 3/3)
+            Row(
+              children: List.generate(3, (index) {
+                final isActive = index <= _step;
+                final isCurrent = index == _step;
+                return Expanded(
+                  child: Container(
+                    height: 4,
+                    margin: EdgeInsets.only(
+                      left: index == 0 ? 0 : 4,
+                      right: index == 2 ? 0 : 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isCurrent
+                          ? AppColors.amber
+                          : (isActive ? AppColors.sage : palette.hairline),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 16),
+
             if (_step == 0) ...[
               Text(
                 AppLocaleNotifier.pick(
@@ -485,7 +558,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                   ),
                 ),
               ),
-            ] else ...[
+            ] else if (_step == 1) ...[
               // ШАГ 2: Подключение часов СААТ-1
               Text(
                 AppLocaleNotifier.pick(
@@ -525,7 +598,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => _finish(pair: true),
+                  onPressed: () => _proceedToHealthSync(pair: true),
                   icon: const Icon(Icons.bluetooth_searching, size: 20),
                   label: Text(
                     AppLocaleNotifier.pick('Подключить СААТ-1', 'СААТ-1 саатын туташтыруу', 'Pair SAAT-1 Watch'),
@@ -546,7 +619,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () => _finish(pair: false),
+                  onPressed: () => _proceedToHealthSync(pair: false),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: palette.fg,
                     side: BorderSide(color: palette.hairline),
@@ -555,6 +628,215 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                   ),
                   child: Text(
                     AppLocaleNotifier.pick('Продолжить в автономном режиме', 'Автономдук режимде улантуу', 'Continue in Standalone Mode'),
+                    style: TextStyle(color: palette.secondary, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ] else ...[
+              // ШАГ 3: Синхронизация с Apple Health / Google Health Connect
+              Text(
+                Platform.isIOS
+                    ? AppLocaleNotifier.pick(
+                        'Синхронизируйте KALKAN SPORT с Apple Health, чтобы объединить данные сна, пульса и тренировок из сторонних приложений (Strava, Apple Fitness, Garmin).',
+                        'Strava, Apple Fitness жана Garmin машыгууларын бириктирүү үчүн KALKAN SPORTту Apple Health менен байланыштырыңыз.',
+                        'Sync KALKAN SPORT with Apple Health to combine sleep, HR and workouts from third-party apps (Strava, Apple Fitness, Garmin).',
+                      )
+                    : AppLocaleNotifier.pick(
+                        'Синхронизируйте KALKAN SPORT с Google Health Connect, чтобы автоматически подтягивать пробежки, заезды и тренировки из Strava, Garmin и других приложений.',
+                        'Strava, Garmin жана башка колдонмолордон машыгууларды жүктөө үчүн Google Health Connect менен байланыштырыңыз.',
+                        'Sync KALKAN SPORT with Google Health Connect to import runs, rides and workouts from Strava, Garmin and other apps.',
+                      ),
+                style: AppTypography.caption(palette.secondary).copyWith(height: 1.45),
+              ),
+              const SizedBox(height: 20),
+
+              // Hero Card
+              Center(
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.raised,
+                    border: Border.all(color: AppColors.sage.withValues(alpha: 0.6), width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.sage.withValues(alpha: 0.15),
+                        blurRadius: 24,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Platform.isIOS ? Icons.favorite_rounded : Icons.health_and_safety_rounded,
+                    size: 50,
+                    color: AppColors.sage,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              Center(
+                child: Text(
+                  Platform.isIOS ? 'Apple HealthKit' : 'Google Health Connect',
+                  style: TextStyle(
+                    color: palette.fg,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: Text(
+                  AppLocaleNotifier.pick(
+                    'Двусторонний обмен данными и авто-импорт',
+                    'Эки тараптуу маалымат алмашуу жана авто-импорт',
+                    'Two-Way Data Exchange & Auto-Import',
+                  ),
+                  style: AppTypography.caption(palette.secondary),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // Поддерживаемые источники (чипы)
+              Center(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    _sourceChip(
+                      label: Platform.isIOS ? 'Apple Health' : 'Health Connect',
+                      icon: Icons.monitor_heart,
+                      color: AppColors.sage,
+                    ),
+                    _sourceChip(
+                      label: 'Strava',
+                      icon: Icons.directions_bike,
+                      color: const Color(0xFFFC5200),
+                    ),
+                    _sourceChip(
+                      label: 'Garmin',
+                      icon: Icons.navigation_rounded,
+                      color: const Color(0xFF007CC3),
+                    ),
+                    _sourceChip(
+                      label: Platform.isIOS ? 'Fitness' : 'Samsung Health',
+                      icon: Icons.fitness_center,
+                      color: AppColors.amber,
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Преимущества синхронизации
+              GlassCard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _benefitRow(
+                      palette: palette,
+                      icon: Icons.sync_alt_rounded,
+                      iconColor: AppColors.amber,
+                      title: AppLocaleNotifier.pick(
+                        'Чтение внешних тренировок',
+                        'Сырткы машыгууларды окуу',
+                        'External Workouts Sync',
+                      ),
+                      desc: AppLocaleNotifier.pick(
+                        'Если вы плавали или бегали со Strava/Garmin без телефона, сессия автоматически подтянется.',
+                        'Эгер Strava же Garmin менен телефонсуз машыксаңыз, сессия автоматтык түрдө кошулат.',
+                        'If you ran or swam with Strava/Garmin without your phone, sessions are imported automatically.',
+                      ),
+                    ),
+                    Divider(color: palette.hairline, height: 24),
+                    _benefitRow(
+                      palette: palette,
+                      icon: Icons.bolt_rounded,
+                      iconColor: AppColors.sage,
+                      title: AppLocaleNotifier.pick(
+                        'Автоматический Strain',
+                        'Автоматтык Strain эсептөө',
+                        'Automatic Strain',
+                      ),
+                      desc: AppLocaleNotifier.pick(
+                        'Кардионагрузка рассчитывается по пульсовым зонам KALKAN и добавляется в дневной баланс.',
+                        'Жүрөк жүктөмү KALKAN пульс зоналары менен эсептелип, күндүк баланска кошулат.',
+                        'Cardiovascular load is calibrated to KALKAN heart zones and adds to your daily balance.',
+                      ),
+                    ),
+                    Divider(color: palette.hairline, height: 24),
+                    _benefitRow(
+                      palette: palette,
+                      icon: Icons.pets_rounded,
+                      iconColor: AppColors.accent,
+                      title: AppLocaleNotifier.pick(
+                        'Прокачка Барыса (XP)',
+                        'Барысты өстүрүү (XP)',
+                        'Barys Experience (XP)',
+                      ),
+                      desc: AppLocaleNotifier.pick(
+                        'Каждая сессия приносит очки опыта вашему барсу-маскоту.',
+                        'Ар бир машыгуу маскотуңузга тажрыйба упайларын алып келет.',
+                        'Every workout awards experience points to your mascot companion.',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Кнопка 1: Синхронизировать
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isSyncingHealth ? null : _syncHealth,
+                  icon: _isSyncingHealth
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.black,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.sync_rounded, size: 20),
+                  label: Text(
+                    _isSyncingHealth
+                        ? AppLocaleNotifier.pick('Синхронизация...', 'Синхрондолууда...', 'Syncing...')
+                        : AppLocaleNotifier.pick('Синхронизировать', 'Синхрондоштуруу', 'Enable Health Sync'),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.sage,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Кнопка 2: Пропустить
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: _isSyncingHealth ? null : _skipHealthSync,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: palette.fg,
+                    side: BorderSide(color: palette.hairline),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: Text(
+                    AppLocaleNotifier.pick('Пропустить', 'Өткөрүп жиберүү', 'Skip for Now'),
                     style: TextStyle(color: palette.secondary, fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -630,4 +912,79 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       ),
     );
   }
+
+  Widget _sourceChip({
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _benefitRow({
+    required KalkanColors palette,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String desc,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: palette.fg,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                desc,
+                style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
+
