@@ -48,18 +48,25 @@ class WorkoutSummaryScreen extends StatelessWidget {
             tooltip: AppLocaleNotifier.pick('Поделиться отчетом', 'Бөлүшүү', 'Share Report'),
             onPressed: () {
               CircaHaptics.selectionClick();
-              final text = '''
-🛡️ KALKAN SPORT · СААТ-1
-${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${workout.startedAt.year}
-⏱️ Время: ${workout.durationFormatted}
-📍 Дистанция: ${workout.distanceKm.toStringAsFixed(2)} км
-⚡ Темп: ${workout.paceFormatted}
-❤️ Пульс ср/макс: ${workout.avgHr} / ${workout.maxHr} bpm
-🔥 Калории: ${workout.calories} ккал
-👟 Шаги / каденс: ${workout.steps} / ${workout.cadence} спм
-📈 Strain: +${workout.strain.toStringAsFixed(1)}
-''';
-              SharePlus.instance.share(ShareParams(text: text.trim()));
+              final buffer = StringBuffer();
+              buffer.writeln('🛡️ KALKAN SPORT · СААТ-1');
+              buffer.writeln('${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${workout.startedAt.year}');
+              buffer.writeln('⏱️ Время: ${workout.durationFormatted}');
+              if (workout.distanceKm > 0) {
+                buffer.writeln('📍 Дистанция: ${workout.distanceKm.toStringAsFixed(2)} км');
+                if (workout.avgPaceMinPerKm > 0) {
+                  buffer.writeln('⚡ Темп: ${workout.paceFormatted}');
+                }
+              }
+              buffer.writeln('❤️ Пульс ср/макс: ${workout.avgHr} / ${workout.maxHr} bpm');
+              buffer.writeln('🔥 Калории: ${workout.calories} ккал');
+              if (workout.cadence > 0) {
+                buffer.writeln('👟 Шаги / каденс: ${workout.steps} / ${workout.cadence} спм');
+              } else if (workout.steps > 0) {
+                buffer.writeln('👟 Шаги: ${workout.steps}');
+              }
+              buffer.writeln('📈 Strain: +${workout.strain.toStringAsFixed(1)}');
+              SharePlus.instance.share(ShareParams(text: buffer.toString().trim()));
             },
           ),
         ],
@@ -67,8 +74,8 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          // 1. Карта маршрута (для дистанционных видов спорта или если есть трек)
-          if (workout.sport.hasDistance || routePoints.isNotEmpty) ...[
+          // 1. Карта маршрута (ТОЛЬКО для уличных видов спорта с реальным GPS-треком)
+          if (workout.sport.needsGps && routePoints.isNotEmpty) ...[
             Container(
               height: 220,
               decoration: BoxDecoration(
@@ -76,9 +83,7 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
                 border: Border.all(color: palette.hairline),
               ),
               child: RunRouteMapWidget(
-                points: routePoints.isNotEmpty
-                    ? routePoints
-                    : const [LatLng(43.238949, 76.889709), LatLng(43.239400, 76.890500)],
+                points: routePoints,
                 isLive: false,
                 initialZoom: 14.5,
               ),
@@ -121,7 +126,7 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
                     _heroStat(palette, AppLocaleNotifier.pick('Время', 'Убакыт', 'Time'), workout.durationFormatted),
                     if (workout.distanceKm > 0)
                       _heroStat(palette, AppLocaleNotifier.pick('Дистанция', 'Аралык', 'Distance'), '${workout.distanceKm.toStringAsFixed(2)} км'),
-                    if (workout.distanceKm > 0)
+                    if (workout.distanceKm > 0 && workout.avgPaceMinPerKm > 0)
                       _heroStat(palette, AppLocaleNotifier.pick('Ср. темп', 'Орт. темп', 'Avg. Pace'), workout.paceFormatted),
                     _heroStat(palette, AppLocaleNotifier.pick('Ккал', 'Ккал', 'Calories'), '${workout.calories}'),
                   ],
@@ -155,14 +160,21 @@ ${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${
                     _bioTile(palette, Icons.bolt, AppColors.amber, AppLocaleNotifier.pick('Пульс макс.', 'Макс. пульс', 'Max HR'), '${workout.maxHr} bpm'),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _bioTile(palette, Icons.directions_walk, AppColors.sage, AppLocaleNotifier.pick('Шаги', 'Кадамдар', 'Steps'), '${workout.steps > 0 ? workout.steps : (workout.durationSeconds * 2.5).toInt()}'),
-                    const SizedBox(width: 10),
-                    _bioTile(palette, Icons.speed, const Color(0xFF2563EB), AppLocaleNotifier.pick('Каденс', 'Каденс', 'Cadence'), '${workout.cadence > 0 ? workout.cadence : 162} спм'),
-                  ],
-                ),
+                if (!workout.sport.isIndoor || workout.steps > 0) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _bioTile(palette, Icons.directions_walk, AppColors.sage, AppLocaleNotifier.pick('Шаги', 'Кадамдар', 'Steps'), '${workout.steps}'),
+                      if (workout.cadence > 0) ...[
+                        const SizedBox(width: 10),
+                        _bioTile(palette, Icons.speed, const Color(0xFF2563EB), AppLocaleNotifier.pick('Каденс', 'Каденс', 'Cadence'), '${workout.cadence} спм'),
+                      ] else ...[
+                        const SizedBox(width: 10),
+                        _bioTile(palette, Icons.local_fire_department, AppColors.amber, AppLocaleNotifier.pick('Калории', 'Ккал', 'Calories'), '${workout.calories} ккал'),
+                      ],
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 14),
 
                 // Пульсовые зоны

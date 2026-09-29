@@ -11,17 +11,24 @@ import '../../data/services/paired_pulse.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/workout_repository.dart';
 import '../../data/storage/local_day_strain.dart';
+import '../../data/storage/user_profile_repository.dart';
 import '../../domain/intelligence/readiness_engine.dart';
 import 'workout_summary_screen.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/strain_engine.dart';
+import '../../domain/models/user_profile.dart';
 import '../../domain/models/workout_session.dart';
-import '../widgets/circa_edge_fade.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/run_route_map_widget.dart';
 import '../../data/services/live_activity_service.dart';
 import '../../data/services/system_notification_service.dart';
+
+enum SportCategoryFilter {
+  all,
+  outdoor,
+  indoor,
+}
 
 class SportScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -34,6 +41,8 @@ class SportScreen extends StatefulWidget {
 
 class _SportScreenState extends State<SportScreen> {
   SportType _selectedSport = SportType.runOutdoor;
+  SportCategoryFilter _categoryFilter = SportCategoryFilter.all;
+  UserProfile _userProfile = const UserProfile();
   List<CompletedWorkout> _history = [];
 
   // Состояние активной тренировки
@@ -47,6 +56,10 @@ class _SportScreenState extends State<SportScreen> {
   int _caloriesBurned = 0;
   StreamSubscription? _bleSub;
 
+  // Таймер отдыха между подходами (для силовых и зальных тренировок)
+  int _restSecondsRemaining = 0;
+  Timer? _restTimer;
+
   // GPS и беговой маршрут
   List<LatLng> _routePoints = [];
   LatLng? _currentGpsPosition;
@@ -59,6 +72,9 @@ class _SportScreenState extends State<SportScreen> {
   void initState() {
     super.initState();
     _loadHistory();
+    UserProfileRepository.loadProfile().then((p) {
+      if (mounted) setState(() => _userProfile = p);
+    });
     _bleSub = widget.bleBridge.telemetryStream.listen((data) {
       if (!mounted || !_isWorkoutActive || _isWorkoutPaused) return;
       setState(() {
@@ -81,12 +97,45 @@ class _SportScreenState extends State<SportScreen> {
         .fold<int>(0, (s, w) => s + (w.durationSeconds ~/ 60));
   }
 
+  List<SportType> get _filteredSports {
+    switch (_categoryFilter) {
+      case SportCategoryFilter.outdoor:
+        return SportType.values.where((s) => s.isOutdoor).toList();
+      case SportCategoryFilter.indoor:
+        return SportType.values.where((s) => s.isIndoor).toList();
+      case SportCategoryFilter.all:
+        return SportType.values;
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
+    _restTimer?.cancel();
     _bleSub?.cancel();
     _gpsSub?.cancel();
     super.dispose();
+  }
+
+  void _startRestTimer(int seconds) {
+    _restTimer?.cancel();
+    CircaHaptics.selectionClick();
+    setState(() => _restSecondsRemaining = seconds);
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      setState(() {
+        if (_restSecondsRemaining > 1) {
+          _restSecondsRemaining--;
+        } else {
+          _restSecondsRemaining = 0;
+          t.cancel();
+          CircaHaptics.success();
+        }
+      });
+    });
   }
 
   void _startWorkout() {
@@ -97,6 +146,7 @@ class _SportScreenState extends State<SportScreen> {
     setState(() {
       _isWorkoutActive = true;
       _isWorkoutPaused = false;
+      _isFinishingWorkout = false;
       _elapsedSeconds = 0;
       _peakHr = initialHr;
       _distanceKm = 0.0;
@@ -105,9 +155,11 @@ class _SportScreenState extends State<SportScreen> {
       _currentGpsPosition = null;
       _initialWatchSteps = widget.bleBridge.currentTelemetry.steps;
       _hrZoneSeconds = [0, 0, 0, 0, 0];
+      _restSecondsRemaining = 0;
     });
 
-    if (_selectedSport.hasDistance) {
+    // Запуск GPS ТОЛЬКО для тренировок на открытом воздухе
+    if (_selectedSport.needsGps) {
       _startGps();
     }
 
@@ -127,21 +179,22 @@ class _SportScreenState extends State<SportScreen> {
           _elapsedSeconds++;
           final currentBpm = widget.bleBridge.currentTelemetry.heartRate > 0
               ? widget.bleBridge.currentTelemetry.heartRate
-              : (110 + (_elapsedSeconds % 25));
+              : (108 + (_elapsedSeconds % 28));
           if (currentBpm > _peakHr) _peakHr = currentBpm;
 
-          // Фиксация пульсовых зон каждую секунду
-          final zi = (currentBpm < 100) ? 0 : (currentBpm < 125) ? 1 : (currentBpm < 150) ? 2 : (currentBpm < 170) ? 3 : 4;
+          // Фиксация пульсовых зон по формуле 220 - age
+          final zi = _userProfile.getHeartRateZone(currentBpm);
           _hrZoneSeconds[zi]++;
 
-          // Расчет сожженных калорий
-          if (_elapsedSeconds % 4 == 0) {
-            _caloriesBurned += (_selectedSport == SportType.hiit ? 2 : 1);
-          }
+          // Расчет сожженных калорий по физиологической формуле Keytel
+          _caloriesBurned = _userProfile.calculateCaloriesBurned(
+            durationSeconds: _elapsedSeconds,
+            avgHr: currentBpm,
+          );
 
-          // Если GPS недоступен или неподвижен (симулятор / помещение), генерируем реалистичный трек
-          if (_selectedSport.hasDistance) {
-            final isStationary = _routePoints.length <= 2 && _elapsedSeconds >= 2;
+          // Для уличных видов спорта с GPS: симуляция шага только если GPS залип на симуляторе
+          if (_selectedSport.needsGps) {
+            final isStationary = _routePoints.length <= 2 && _elapsedSeconds >= 4;
             if ((_gpsSub == null || isStationary) && _elapsedSeconds % 2 == 0) {
               _simulateMovementStep();
             }
@@ -154,7 +207,7 @@ class _SportScreenState extends State<SportScreen> {
               avgHeartRate: currentBpm,
               sportType: _selectedSport.id,
             );
-            final zone = (currentBpm < 100) ? 1 : (currentBpm < 125) ? 2 : (currentBpm < 150) ? 3 : (currentBpm < 170) ? 4 : 5;
+            final zone = zi + 1;
             LiveActivityService.updateWorkoutActivity(
               heartRate: currentBpm,
               heartRateZone: zone,
@@ -265,113 +318,138 @@ class _SportScreenState extends State<SportScreen> {
     if (_isFinishingWorkout) return;
     setState(() => _isFinishingWorkout = true);
 
-    _timer?.cancel();
-    _timer = null;
     try {
-      await _gpsSub?.cancel();
-      _gpsSub = null;
-    } catch (_) {}
+      _timer?.cancel();
+      _timer = null;
+      _restTimer?.cancel();
+      _restTimer = null;
+      try {
+        await _gpsSub?.cancel();
+        _gpsSub = null;
+      } catch (_) {}
 
-    try {
-      PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.finish);
-      CircaHaptics.workoutFinish();
-    } catch (_) {}
+      try {
+        PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.finish);
+        CircaHaptics.workoutFinish();
+      } catch (_) {}
 
-    // Безопасное завершение iOS Live Activities
-    try {
-      await LiveActivityService.endWorkoutActivity();
-    } catch (_) {}
+      // Безопасное завершение iOS Live Activities
+      try {
+        await LiveActivityService.endWorkoutActivity();
+      } catch (_) {}
 
-    final duration = _elapsedSeconds;
-    final avgHr = widget.bleBridge.currentTelemetry.heartRate > 0
-        ? widget.bleBridge.currentTelemetry.heartRate
-        : 128;
-    final maxHr = _peakHr > 0 ? _peakHr : avgHr;
-    final cals = _caloriesBurned > 0 ? _caloriesBurned : (duration ~/ 8);
+      final duration = _elapsedSeconds;
+      final avgHr = widget.bleBridge.currentTelemetry.heartRate > 0
+          ? widget.bleBridge.currentTelemetry.heartRate
+          : 128;
+      final maxHr = _peakHr > 0 ? _peakHr : avgHr;
+      final cals = _caloriesBurned > 0
+          ? _caloriesBurned
+          : _userProfile.calculateCaloriesBurned(durationSeconds: duration, avgHr: avgHr);
 
-    final durationMin = duration / 60.0;
-    final avgPace = _distanceKm > 0 ? (durationMin / _distanceKm) : 0.0;
-    final stepsDelta = (widget.bleBridge.currentTelemetry.steps - _initialWatchSteps).clamp(0, 99999);
-    final cadence = durationMin > 0 ? (stepsDelta > 0 ? (stepsDelta / durationMin).round() : 162) : 162;
+      final durationMin = duration / 60.0;
+      final avgPace = (_selectedSport.hasDistance && _distanceKm > 0)
+          ? (durationMin / _distanceKm)
+          : 0.0;
 
-    // Расчет заработанного Strain
-    final double calculatedStrain = StrainEngine.calculateWorkoutStrain(
-      durationMinutes: duration / 60.0,
-      avgHeartRate: avgHr,
-      sportType: _selectedSport.id,
-    );
+      // Реальные шаги: для силовых и зальных не создаем искусственный каденс
+      final stepsDelta = (widget.bleBridge.currentTelemetry.steps - _initialWatchSteps).clamp(0, 99999);
+      final int finalSteps;
+      final int finalCadence;
+      if (_selectedSport.isIndoor) {
+        finalSteps = stepsDelta;
+        finalCadence = 0;
+      } else {
+        finalSteps = stepsDelta > 0 ? stepsDelta : (duration * 2.6).toInt();
+        finalCadence = durationMin > 0 ? (finalSteps / durationMin).round() : 160;
+      }
 
-    // Начисление опыта Барысу
-    final xp = AvatarManager.recordWorkout(calculatedStrain);
-
-    final List<List<double>> coords = _routePoints.isNotEmpty
-        ? _routePoints.map((p) => [p.latitude, p.longitude]).toList()
-        : [
-            [43.238949, 76.889709],
-            [43.239400, 76.890500],
-          ];
-
-    final completed = CompletedWorkout(
-      id: 'w_${DateTime.now().millisecondsSinceEpoch}',
-      sport: _selectedSport,
-      startedAt: DateTime.now().subtract(Duration(seconds: duration)),
-      durationSeconds: duration,
-      calories: cals,
-      distanceKm: double.parse((_distanceKm > 0 ? _distanceKm : 0.05).toStringAsFixed(2)),
-      avgHr: avgHr,
-      maxHr: maxHr,
-      strain: calculatedStrain,
-      xpEarned: xp,
-      routeCoordinates: coords,
-      avgPaceMinPerKm: avgPace,
-      steps: stepsDelta > 0 ? stepsDelta : (duration * 2.6).toInt(),
-      cadence: cadence,
-      hrZoneSeconds: _hrZoneSeconds,
-    );
-
-    final dayBefore = widget.bleBridge.currentTelemetry.currentDayStrain > 0
-        ? widget.bleBridge.currentTelemetry.currentDayStrain
-        : 0.0;
-    final zone = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry).zone;
-
-    LocalDayStrain.add(calculatedStrain);
-    final dayAfter = dayBefore + calculatedStrain;
-    final rec = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry);
-    try {
-      SystemNotificationService.notifyWorkoutEnd(
-        sessionStrain: calculatedStrain,
-        dayStrain: dayAfter,
-        targetMax: StrainEngine.evaluate(currentStrain: dayAfter, recoveryZone: rec.zone).targetStrainMax,
+      // Расчет заработанного Strain
+      final double calculatedStrain = StrainEngine.calculateWorkoutStrain(
+        durationMinutes: duration / 60.0,
+        avgHeartRate: avgHr,
+        sportType: _selectedSport.id,
       );
-    } catch (_) {}
 
-    try {
-      await WorkoutRepository.saveWorkout(completed);
-      await _loadHistory();
-    } catch (e) {
-      debugPrint('Workout save error: $e');
-    }
+      // Начисление опыта Барысу
+      final xp = AvatarManager.recordWorkout(calculatedStrain);
 
-    if (!mounted) return;
-    setState(() {
-      _isWorkoutActive = false;
-      _isWorkoutPaused = false;
-      _isFinishingWorkout = false;
-      _elapsedSeconds = 0;
-      _routePoints = [];
-      _currentGpsPosition = null;
-    });
+      // Координаты маршрута ТОЛЬКО для тренировок на улице!
+      // Для силовых и зала - пустой список, никаких фейковых точек!
+      final List<List<double>> coords = (_selectedSport.needsGps && _routePoints.isNotEmpty)
+          ? _routePoints.map((p) => [p.latitude, p.longitude]).toList()
+          : const [];
 
-    if (mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => WorkoutSummaryScreen(
-            workout: completed,
-            dayStrainBefore: dayBefore,
-            recoveryZone: zone,
+      final finalDistance = _selectedSport.hasDistance
+          ? double.parse(_distanceKm.toStringAsFixed(2))
+          : 0.0;
+
+      final completed = CompletedWorkout(
+        id: 'w_${DateTime.now().millisecondsSinceEpoch}',
+        sport: _selectedSport,
+        startedAt: DateTime.now().subtract(Duration(seconds: duration)),
+        durationSeconds: duration,
+        calories: cals,
+        distanceKm: finalDistance,
+        avgHr: avgHr,
+        maxHr: maxHr,
+        strain: calculatedStrain,
+        xpEarned: xp,
+        routeCoordinates: coords,
+        avgPaceMinPerKm: avgPace,
+        steps: finalSteps,
+        cadence: finalCadence,
+        hrZoneSeconds: _hrZoneSeconds,
+      );
+
+      final dayBefore = widget.bleBridge.currentTelemetry.currentDayStrain > 0
+          ? widget.bleBridge.currentTelemetry.currentDayStrain
+          : 0.0;
+      final zone = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry).zone;
+
+      LocalDayStrain.add(calculatedStrain);
+      final dayAfter = dayBefore + calculatedStrain;
+      final rec = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry);
+      try {
+        SystemNotificationService.notifyWorkoutEnd(
+          sessionStrain: calculatedStrain,
+          dayStrain: dayAfter,
+          targetMax: StrainEngine.evaluate(currentStrain: dayAfter, recoveryZone: rec.zone).targetStrainMax,
+        );
+      } catch (_) {}
+
+      try {
+        await WorkoutRepository.saveWorkout(completed);
+        await _loadHistory();
+      } catch (e) {
+        debugPrint('Workout save error: $e');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _isWorkoutActive = false;
+        _isWorkoutPaused = false;
+        _elapsedSeconds = 0;
+        _routePoints = [];
+        _currentGpsPosition = null;
+        _restSecondsRemaining = 0;
+      });
+
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => WorkoutSummaryScreen(
+              workout: completed,
+              dayStrainBefore: dayBefore,
+              recoveryZone: zone,
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isFinishingWorkout = false);
+      }
     }
   }
 
@@ -391,33 +469,86 @@ class _SportScreenState extends State<SportScreen> {
   }
 
   String _hrZoneTitle(int bpm, AppLanguage lang) {
+    final zoneIndex = _userProfile.getHeartRateZone(bpm);
     if (lang == AppLanguage.kyrgyz) {
-      if (bpm < 100) return '1-зона · Жылынуу';
-      if (bpm < 125) return '2-зона · Май күйгүзүү';
-      if (bpm < 150) return '3-зона · Аэробдук';
-      if (bpm < 170) return '4-зона · Босого';
-      return '5-зона · Чок';
+      switch (zoneIndex) {
+        case 0:
+          return '1-зона · Жылынуу';
+        case 1:
+          return '2-зона · Май күйгүзүү';
+        case 2:
+          return '3-зона · Аэробдук';
+        case 3:
+          return '4-зона · Босого';
+        default:
+          return '5-зона · Чок';
+      }
     }
     if (lang == AppLanguage.english) {
-      if (bpm < 100) return 'Z1 · Warm Up';
-      if (bpm < 125) return 'Z2 · Fat Burn';
-      if (bpm < 150) return 'Z3 · Aerobic';
-      if (bpm < 170) return 'Z4 · Threshold';
-      return 'Z5 · Peak';
+      switch (zoneIndex) {
+        case 0:
+          return 'Z1 · Warm Up';
+        case 1:
+          return 'Z2 · Fat Burn';
+        case 2:
+          return 'Z3 · Aerobic';
+        case 3:
+          return 'Z4 · Threshold';
+        default:
+          return 'Z5 · Peak';
+      }
     }
-    if (bpm < 100) return 'З1 · Разминка';
-    if (bpm < 125) return 'З2 · Жиросжигание';
-    if (bpm < 150) return 'З3 · Аэробная';
-    if (bpm < 170) return 'З4 · Порог';
-    return 'З5 · Пик';
+    switch (zoneIndex) {
+      case 0:
+        return 'З1 · Разминка';
+      case 1:
+        return 'З2 · Жиросжигание';
+      case 2:
+        return 'З3 · Аэробная';
+      case 3:
+        return 'З4 · Порог';
+      default:
+        return 'З5 · Пик';
+    }
   }
 
   Color _hrZoneColor(int bpm) {
-    if (bpm < 100) return const Color(0xFF6B7280);
-    if (bpm < 125) return const Color(0xFF10B981);
-    if (bpm < 150) return const Color(0xFF3B82F6);
-    if (bpm < 170) return const Color(0xFFF59E0B);
-    return const Color(0xFFEF4444);
+    final zi = _userProfile.getHeartRateZone(bpm);
+    switch (zi) {
+      case 0:
+        return const Color(0xFF6B7280);
+      case 1:
+        return const Color(0xFF10B981);
+      case 2:
+        return const Color(0xFF3B82F6);
+      case 3:
+        return const Color(0xFFF59E0B);
+      default:
+        return const Color(0xFFEF4444);
+    }
+  }
+
+  String _sportSubtitle(SportType sport, AppLanguage lang) {
+    switch (sport) {
+      case SportType.runOutdoor:
+        return AppLocaleNotifier.pick('GPS · темп · каденс', 'GPS · темп', 'GPS · pace');
+      case SportType.cycling:
+        return AppLocaleNotifier.pick('Скорость · GPS · трек', 'Ылдамдык · GPS', 'Speed · GPS · track');
+      case SportType.walkOutdoor:
+        return AppLocaleNotifier.pick('Маршрут · шаги · темп', 'Маршрут · кадамдар', 'Route · steps · pace');
+      case SportType.strength:
+        return AppLocaleNotifier.pick('Пульс · подходы · отдых', 'Пульс · эс алуу', 'Heart rate · sets · rest');
+      case SportType.hiit:
+        return AppLocaleNotifier.pick('Интервалы · зоны · пик', 'Интервалдар · зоналар', 'Intervals · zones · peak');
+      case SportType.combat:
+        return AppLocaleNotifier.pick('Выносливость · спарринг', 'Чыдамкайлык · бокс', 'Endurance · sparring');
+      case SportType.yoga:
+        return AppLocaleNotifier.pick('Восстановление · дыхание', 'Калыбына келүү · дем', 'Recovery · breathwork');
+      case SportType.swimming:
+        return AppLocaleNotifier.pick('Бассейн · аэробная нагрузка', 'Бассейн · кардио', 'Pool · cardio load');
+      case SportType.runIndoor:
+        return AppLocaleNotifier.pick('Беговая дорожка · пульс', 'Тренажер · пульс', 'Treadmill · heart rate');
+    }
   }
 
   @override
@@ -495,68 +626,126 @@ class _SportScreenState extends State<SportScreen> {
               children: [
                 // 1. Выбор вида спорта (скрывается во время активной сессии для чистоты)
                 if (!_isWorkoutActive) ...[
-                  CircaEdgeFade(
-                    child: SingleChildScrollView(
+                  // Категории: Все / На улице / В зале
+                  Row(
+                    children: [
+                      _categoryFilterChip(SportCategoryFilter.all, AppLocaleNotifier.pick('Все', 'Баары', 'All'), palette),
+                      const SizedBox(width: 8),
+                      _categoryFilterChip(SportCategoryFilter.outdoor, AppLocaleNotifier.pick('📍 На улице', '📍 Тышта', '📍 Outdoor'), palette),
+                      const SizedBox(width: 8),
+                      _categoryFilterChip(SportCategoryFilter.indoor, AppLocaleNotifier.pick('⚡ В зале / Дома', '⚡ Залда / Үйдө', '⚡ Gym / Home'), palette),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Карточки видов спорта с полным названием, бейджем GPS/ЗАЛ и подсказкой
+                  SizedBox(
+                    height: 96,
+                    child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
-                      child: Row(
-                        children: SportType.values.map((sport) {
-                          final isSelected = _selectedSport == sport;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: InkWell(
-                              onTap: () {
-                                if (!_isWorkoutActive) {
-                                  CircaHaptics.selectionClick();
-                                  setState(() => _selectedSport = sport);
-                                }
-                              },
-                              borderRadius: BorderRadius.circular(14),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? AppColors.amber : palette.surface,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: isSelected ? AppColors.amber : palette.hairline,
-                                    width: 1.0,
-                                  ),
-                                  boxShadow: isSelected
-                                      ? [BoxShadow(color: AppColors.amber.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
-                                      : (palette.shadow.a > 0 ? [BoxShadow(color: palette.shadow, blurRadius: 4)] : null),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                      itemCount: _filteredSports.length,
+                      separatorBuilder: (_, index) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final sport = _filteredSports[index];
+                        final isSelected = _selectedSport == sport;
+                        return InkWell(
+                          onTap: () {
+                            if (!_isWorkoutActive) {
+                              CircaHaptics.selectionClick();
+                              setState(() => _selectedSport = sport);
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            width: 172,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.amber.withValues(alpha: 0.12) : palette.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected ? AppColors.amber : palette.hairline,
+                                width: isSelected ? 1.5 : 1.0,
+                              ),
+                              boxShadow: isSelected
+                                  ? [BoxShadow(color: AppColors.amber.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 2))]
+                                  : (palette.shadow.a > 0 ? [BoxShadow(color: palette.shadow, blurRadius: 4)] : null),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Icon(
-                                      sport.icon,
-                                      size: 16,
-                                      color: isSelected ? Colors.white : palette.secondary,
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? AppColors.amber : palette.raised,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        sport.icon,
+                                        size: 16,
+                                        color: isSelected ? Colors.white : palette.secondary,
+                                      ),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      sport.localizedTitle(language.code),
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white : palette.fg,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: (sport.needsGps ? AppColors.sage : AppColors.amber).withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        sport.needsGps ? 'GPS' : (sport == SportType.strength ? 'СИЛА' : 'ЗАЛ'),
+                                        style: TextStyle(
+                                          color: sport.needsGps ? AppColors.sage : AppColors.amber,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.5,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      sport.localizedTitle(language.code),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: palette.fg,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _sportSubtitle(sport, language),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: palette.secondary,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          );
-                        }).toList(),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 16),
                 ],
 
-                // 2. LIVE-КАРТА (при беге на улице во время активной тренировки)
-                if (_isWorkoutActive && _selectedSport.hasDistance) ...[
+                // 2. LIVE-КАРТА (ТОЛЬКО при тренировках на улице с GPS)
+                if (_isWorkoutActive && _selectedSport.needsGps) ...[
                   Container(
                     height: 250,
                     decoration: BoxDecoration(
@@ -740,20 +929,82 @@ class _SportScreenState extends State<SportScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Метрики в реальном времени: Дистанция, Темп, Шаги, Калории
+                        // Метрики в реальном времени: Дистанция/темп (для уличных) или Пульсовая зона/калории (для зала)
                         Row(
                           children: [
-                            if (_selectedSport.hasDistance) ...[
+                            if (_selectedSport.needsGps) ...[
                               _metricBox(palette, AppLocaleNotifier.pick('ДИСТАНЦИЯ', 'АРАЛЫК', 'DISTANCE'), '${_distanceKm.toStringAsFixed(2)} км'),
                               const SizedBox(width: 8),
                               _metricBox(palette, AppLocaleNotifier.pick('ТЕМП', 'ТЕМП', 'PACE'), _currentPaceFormatted),
+                              const SizedBox(width: 8),
+                            ] else if (_selectedSport.hasDistance) ...[
+                              _metricBox(palette, AppLocaleNotifier.pick('ДИСТАНЦИЯ', 'АРАЛЫК', 'DISTANCE'), '${_distanceKm.toStringAsFixed(2)} км'),
                               const SizedBox(width: 8),
                             ],
                             _metricBox(palette, AppLocaleNotifier.pick('КАЛОРИИ', 'ККАЛ', 'CALORIES'), '$_caloriesBurned'),
                             const SizedBox(width: 8),
                             _metricBox(palette, AppLocaleNotifier.pick('ПИК HR', 'ПИК HR', 'PEAK HR'), '$_peakHr bpm'),
+                            if (_selectedSport.isIndoor) ...[
+                              const SizedBox(width: 8),
+                              _metricBox(palette, AppLocaleNotifier.pick('ЗОНА', 'ЗОНА', 'ZONE'), 'Z${_userProfile.getHeartRateZone(currentBpm) + 1}'),
+                            ],
                           ],
                         ),
+
+                        // Таймер отдыха между подходами (для силовых тренировок и зала)
+                        if (_selectedSport.isIndoor) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: palette.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _restSecondsRemaining > 0 ? AppColors.amber : palette.hairline,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _restSecondsRemaining > 0 ? Icons.timer : Icons.timer_outlined,
+                                  size: 16,
+                                  color: _restSecondsRemaining > 0 ? AppColors.amber : palette.secondary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _restSecondsRemaining > 0
+                                        ? '${AppLocaleNotifier.pick('Отдых', 'Эс алуу', 'Rest')}: ${_formatTimer(_restSecondsRemaining)}'
+                                        : AppLocaleNotifier.pick('Отдых между подходами:', 'Эс алуу убактысы:', 'Rest between sets:'),
+                                    style: TextStyle(
+                                      color: _restSecondsRemaining > 0 ? AppColors.amber : palette.fg,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                _restButton('+30с', 30, palette),
+                                const SizedBox(width: 6),
+                                _restButton('+60с', 60, palette),
+                                const SizedBox(width: 6),
+                                _restButton('+90с', 90, palette),
+                                if (_restSecondsRemaining > 0) ...[
+                                  const SizedBox(width: 6),
+                                  InkWell(
+                                    onTap: () {
+                                      _restTimer?.cancel();
+                                      setState(() => _restSecondsRemaining = 0);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(3),
+                                      child: Icon(Icons.close, size: 14, color: palette.muted),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
 
                         // Кнопки управления тренировкой
@@ -1044,6 +1295,60 @@ class _SportScreenState extends State<SportScreen> {
               overflow: TextOverflow.ellipsis,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _categoryFilterChip(SportCategoryFilter category, String title, KalkanColors palette) {
+    final isSelected = _categoryFilter == category;
+    return InkWell(
+      onTap: () {
+        CircaHaptics.selectionClick();
+        setState(() => _categoryFilter = category);
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.amber : palette.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AppColors.amber : palette.hairline,
+            width: 1.0,
+          ),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : palette.fg,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _restButton(String label, int seconds, KalkanColors palette) {
+    return InkWell(
+      onTap: () => _startRestTimer(seconds),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: palette.raised,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: palette.hairline),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: palette.fg,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

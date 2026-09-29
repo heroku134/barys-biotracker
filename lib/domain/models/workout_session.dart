@@ -1,21 +1,34 @@
 import 'package:flutter/material.dart';
 
 enum SportType {
-  runOutdoor('run_outdoor', 'Бег на улице', Icons.directions_run, true, false),
-  runIndoor('run_indoor', 'Беговая дорожка', Icons.directions_walk, true, false),
-  strength('strength', 'Силовая сессия', Icons.fitness_center, false, false),
-  hiit('hiit', 'Интервалы HIIT', Icons.flash_on, false, false),
-  cycling('cycling', 'Велоспорт', Icons.directions_bike, true, false),
-  swimming('swimming', 'Плавание в бассейне', Icons.pool, false, true),
-  yoga('yoga', 'Йога и стретчинг', Icons.self_improvement, false, false);
+  runOutdoor('run_outdoor', 'Бег на улице', Icons.directions_run, true, false, true),
+  cycling('cycling', 'Велоспорт', Icons.directions_bike, true, false, true),
+  walkOutdoor('walk_outdoor', 'Ходьба на улице', Icons.directions_walk, true, false, true),
+  runIndoor('run_indoor', 'Беговая дорожка', Icons.directions_run, true, false, false),
+  strength('strength', 'Силовая тренировка', Icons.fitness_center, false, false, false),
+  hiit('hiit', 'Интервалы HIIT', Icons.flash_on, false, false, false),
+  combat('combat', 'Единоборства / Бокс', Icons.sports_mma, false, false, false),
+  yoga('yoga', 'Йога и стретчинг', Icons.self_improvement, false, false, false),
+  swimming('swimming', 'Плавание в бассейне', Icons.pool, false, true, false);
 
   final String id;
   final String title;
   final IconData icon;
   final bool hasDistance;
   final bool hasPoolLaps;
+  final bool needsGps;
 
-  const SportType(this.id, this.title, this.icon, this.hasDistance, this.hasPoolLaps);
+  const SportType(
+    this.id,
+    this.title,
+    this.icon,
+    this.hasDistance,
+    this.hasPoolLaps,
+    this.needsGps,
+  );
+
+  bool get isOutdoor => needsGps;
+  bool get isIndoor => !needsGps;
 
   static SportType fromId(String id) {
     return SportType.values.firstWhere(
@@ -29,18 +42,22 @@ enum SportType {
       switch (this) {
         case SportType.runOutdoor:
           return 'Тышта чуркоо';
+        case SportType.cycling:
+          return 'Велоспорт';
+        case SportType.walkOutdoor:
+          return 'Тышта басуу';
         case SportType.runIndoor:
           return 'Чуркоо тренажеру';
         case SportType.strength:
           return 'Күч машыгуусу';
         case SportType.hiit:
           return 'Интервалдык HIIT';
-        case SportType.cycling:
-          return 'Велоспорт';
-        case SportType.swimming:
-          return 'Бассейнде сүзүү';
+        case SportType.combat:
+          return 'Мушташ / Бокс';
         case SportType.yoga:
           return 'Йога жана чоюлуу';
+        case SportType.swimming:
+          return 'Бассейнде сүзүү';
       }
     }
     return title;

@@ -9,7 +9,6 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/demo_mode_store.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
-import '../../domain/models/user_profile.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
 import 'account_setup_screen.dart';
@@ -29,7 +28,6 @@ class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
-  Gender _selectedGender = Gender.male;
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _errorMessage;
@@ -37,13 +35,6 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void initState() {
     super.initState();
-    UserProfileRepository.loadProfile().then((p) {
-      if (mounted) {
-        setState(() {
-          _selectedGender = p.gender;
-        });
-      }
-    });
   }
 
   @override
@@ -123,16 +114,13 @@ class _AuthScreenState extends State<AuthScreen> {
         firebaseDisplayName = name.isNotEmpty ? name : email.split('@').first;
       }
 
-      // Сохраняем профиль локально (автономная база данных SharedPreferences)
+      // Сохраняем профиль локально
       final currentProfile = await UserProfileRepository.loadProfile();
       final updatedProfile = currentProfile.copyWith(
         email: email,
-        name: firebaseDisplayName ?? (_isSignUp ? name : (currentProfile.name.isNotEmpty ? currentProfile.name : 'Искандер')),
-        gender: _selectedGender,
-        cycleDay: _selectedGender == Gender.female ? (currentProfile.cycleDay ?? 14) : null,
-        lastPeriodStartDate: _selectedGender == Gender.female
-            ? (currentProfile.lastPeriodStartDate ?? DateTime.now().subtract(const Duration(days: 14)))
-            : null,
+        name: firebaseDisplayName?.isNotEmpty == true
+            ? firebaseDisplayName!
+            : (_isSignUp ? name : (currentProfile.name.isNotEmpty ? currentProfile.name : '')),
         isAuthenticated: true,
       );
       await UserProfileRepository.saveProfile(updatedProfile);
@@ -145,9 +133,9 @@ class _AuthScreenState extends State<AuthScreen> {
       navigated = true;
       if (!mounted) return;
 
-      // Если это вход в существующий аккаунт или анкета уже была заполнена — сразу в MainShell
-      final hasCompletedBodySetup = currentProfile.heightCm > 0 && currentProfile.weightKg > 0;
-      if (!_isSignUp || hasCompletedBodySetup) {
+      // Если это вход в существующий аккаунт с уже заполненным профилем — сразу в MainShell
+      // Если это регистрация ИЛИ профиль ещё не заполнен — обязательно в AccountSetupScreen
+      if (!_isSignUp && updatedProfile.hasCompletedProfile && updatedProfile.name.isNotEmpty) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => MainShell(bleBridge: widget.bleBridge),
@@ -188,11 +176,19 @@ class _AuthScreenState extends State<AuthScreen> {
 
       navigated = true;
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => MainShell(bleBridge: widget.bleBridge),
-        ),
-      );
+      if (updatedProfile.hasCompletedProfile) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MainShell(bleBridge: widget.bleBridge),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => AccountSetupScreen(bleBridge: widget.bleBridge),
+          ),
+        );
+      }
     } finally {
       if (!navigated && mounted) {
         setState(() => _isLoading = false);

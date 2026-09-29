@@ -28,6 +28,7 @@ class UserProfile {
   final bool is24HourFormat;
   final bool isMetric;
   final bool isAuthenticated;
+  final bool hasCompletedProfile;
   final HormonalCyclePhase? cyclePhase;
   final int? cycleDay;
   final int cycleLengthDays;
@@ -40,11 +41,11 @@ class UserProfile {
 
   const UserProfile({
     this.id = 'circa_user_01',
-    this.name = 'Алихан',
-    this.email = 'alikhan@circa.health',
-    this.heightCm = 178.0,
-    this.weightKg = 74.5,
-    this.birthYear = 1992,
+    this.name = '',
+    this.email = '',
+    this.heightCm = 175.0,
+    this.weightKg = 72.0,
+    this.birthYear = 1996,
     this.gender = Gender.male,
     this.stepGoal = 10000,
     this.calorieGoal = 650,
@@ -52,6 +53,7 @@ class UserProfile {
     this.is24HourFormat = true,
     this.isMetric = true,
     this.isAuthenticated = false,
+    this.hasCompletedProfile = false,
     this.cyclePhase,
     this.cycleDay,
     this.cycleLengthDays = 28,
@@ -63,7 +65,36 @@ class UserProfile {
     this.pregnancyLmpDate,
   });
 
-  int get age => DateTime.now().year - birthYear;
+  int get age => (DateTime.now().year - birthYear).clamp(12, 100);
+
+  int get maxHeartRate => (220 - age).clamp(140, 220);
+
+  int getHeartRateZone(int currentBpm) {
+    final maxHr = maxHeartRate;
+    final pct = currentBpm / maxHr;
+    if (pct < 0.60) return 0; // Зона 1: Восстановление (<60%)
+    if (pct < 0.70) return 1; // Зона 2: Жиросжигание (60-70%)
+    if (pct < 0.80) return 2; // Зона 3: Аэробная выносливость (70-80%)
+    if (pct < 0.90) return 3; // Зона 4: Анаэробный порог (80-90%)
+    return 4; // Зона 5: Пиковая нагрузка (>90%)
+  }
+
+  int calculateCaloriesBurned({required int durationSeconds, required int avgHr}) {
+    if (durationSeconds <= 0) return 0;
+    final minutes = durationSeconds / 60.0;
+    final hr = avgHr > 40 ? avgHr : 115;
+    final w = weightKg > 30 ? weightKg : 70.0;
+    final a = age > 10 ? age : 25;
+
+    // Формула Keytel et al. (2005) для расчёта расхода ккал по ЧСС, весу, возрасту и полу
+    final double caloriesPerMin;
+    if (gender == Gender.female) {
+      caloriesPerMin = ((-20.4022 + (0.4472 * hr) - (0.1263 * w) + (0.074 * a)) / 4.184).clamp(3.0, 25.0);
+    } else {
+      caloriesPerMin = ((-55.0969 + (0.6309 * hr) + (0.1988 * w) + (0.2017 * a)) / 4.184).clamp(3.5, 30.0);
+    }
+    return (caloriesPerMin * minutes).round();
+  }
 
   double get bmi => weightKg / ((heightCm / 100) * (heightCm / 100));
 
@@ -81,6 +112,7 @@ class UserProfile {
     bool? is24HourFormat,
     bool? isMetric,
     bool? isAuthenticated,
+    bool? hasCompletedProfile,
     HormonalCyclePhase? cyclePhase,
     int? cycleDay,
     int? cycleLengthDays,
@@ -105,6 +137,7 @@ class UserProfile {
       is24HourFormat: is24HourFormat ?? this.is24HourFormat,
       isMetric: isMetric ?? this.isMetric,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      hasCompletedProfile: hasCompletedProfile ?? this.hasCompletedProfile,
       cyclePhase: cyclePhase ?? this.cyclePhase,
       cycleDay: cycleDay ?? this.cycleDay,
       cycleLengthDays: cycleLengthDays ?? this.cycleLengthDays,
@@ -131,6 +164,7 @@ class UserProfile {
     'is24HourFormat': is24HourFormat,
     'isMetric': isMetric,
     'isAuthenticated': isAuthenticated,
+    'hasCompletedProfile': hasCompletedProfile,
     'cyclePhase': cyclePhase?.name,
     'cycleDay': cycleDay,
     'cycleLengthDays': cycleLengthDays,
@@ -143,13 +177,17 @@ class UserProfile {
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final rawName = json['name'] as String? ?? '';
+    final hasCompleted = json['hasCompletedProfile'] as bool? ??
+        (rawName.isNotEmpty && rawName != 'Алихан' && json['heightCm'] != null);
+
     return UserProfile(
       id: json['id'] as String? ?? 'circa_user_01',
-      name: json['name'] as String? ?? 'Алихан',
-      email: json['email'] as String? ?? 'alikhan@circa.health',
-      heightCm: (json['heightCm'] as num?)?.toDouble() ?? 178.0,
-      weightKg: (json['weightKg'] as num?)?.toDouble() ?? 74.5,
-      birthYear: json['birthYear'] as int? ?? 1992,
+      name: rawName.isNotEmpty ? rawName : (hasCompleted ? '' : 'Гость'),
+      email: json['email'] as String? ?? '',
+      heightCm: (json['heightCm'] as num?)?.toDouble() ?? 175.0,
+      weightKg: (json['weightKg'] as num?)?.toDouble() ?? 72.0,
+      birthYear: json['birthYear'] as int? ?? 1996,
       gender: Gender.values.firstWhere(
         (g) => g.name == json['gender'],
         orElse: () => Gender.male,
@@ -160,6 +198,7 @@ class UserProfile {
       is24HourFormat: json['is24HourFormat'] as bool? ?? true,
       isMetric: json['isMetric'] as bool? ?? true,
       isAuthenticated: json['isAuthenticated'] as bool? ?? true,
+      hasCompletedProfile: hasCompleted,
       cyclePhase: json['cyclePhase'] != null
           ? HormonalCyclePhase.values.firstWhere(
               (p) => p.name == json['cyclePhase'],
