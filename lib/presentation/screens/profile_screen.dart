@@ -16,8 +16,11 @@ import '../widgets/circa_avatar_picker_dialog.dart';
 import '../widgets/circa_partner_cycle_sheet.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/kalkan_chrome.dart';
 import 'auth_screen.dart';
 import 'device_settings_screen.dart';
+import 'menstrual_cycle_screen.dart';
+import 'pregnancy_screen.dart';
 import 'private_league_screen.dart';
 import 'settings_screen.dart';
 
@@ -80,19 +83,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, language, _) {
         return Scaffold(
           backgroundColor: palette.bg,
-          appBar: AppBar(
-            backgroundColor: palette.bg,
-            elevation: 0,
-            title: Text(
-              _tr('Профиль и СААТ-1', 'Профиль жана СААТ-1', 'Profile & SAAT-1'),
-              style: AppTypography.screenTitle(palette.fg),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.logout, color: palette.secondary),
-                onPressed: _logout,
-              ),
-            ],
+          appBar: KalkanAppBar(
+            eyebrow: _tr('АККАУНТ', 'АККАУНТ', 'ACCOUNT'),
+            title: _tr('Профиль и СААТ-1', 'Профиль жана СААТ-1', 'Profile & SAAT-1'),
           ),
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -112,6 +105,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   MaterialPageRoute(builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge)),
                 ),
               ),
+              if (_profile.gender == Gender.female) ...[
+                const SizedBox(height: 12),
+                _linkTile(
+                  palette,
+                  icon: _profile.isPregnant ? Icons.favorite_outline : Icons.water_drop_outlined,
+                  title: _profile.isPregnant
+                      ? _tr('Беременность', 'Кош бойлуулук', 'Pregnancy')
+                      : _tr('Женское здоровье и цикл', 'Аялдардын ден соолугу жана цикл', "Women's Health & Cycle"),
+                  subtitle: _profile.isPregnant
+                      ? _tr('Триместр, недели и пульс', 'Триместр, жума жана пульс', 'Trimester, weeks & HR')
+                      : _tr('Фазы, симптомы, прогноз', 'Фазалар, белгилер, болжол', 'Phases, symptoms, forecast'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => _profile.isPregnant
+                          ? PregnancyScreen(bleBridge: widget.bleBridge)
+                          : MenstrualCycleScreen(bleBridge: widget.bleBridge),
+                    ),
+                  ),
+                ),
+              ],
               if (_profile.gender != Gender.female) ...[
                 const SizedBox(height: 12),
                 _partnerCard(palette, language),
@@ -126,6 +139,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: AppLocaleNotifier.pick('Тема, регион, правила, копия', 'Тема, аймак, эреже, көчүрмө', 'Theme, region, terms, backup'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => SettingsScreen(bleBridge: widget.bleBridge)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              KalkanCard(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                onTap: _logout,
+                borderColor: AppColors.rose.withValues(alpha: 0.35),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.logout, color: AppColors.rose, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      _tr('Выйти из аккаунта', 'Аккаунттан чыгуу', 'Sign Out of Account'),
+                      style: AppTypography.bodySemibold(AppColors.rose),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),

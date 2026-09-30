@@ -18,8 +18,6 @@ import 'analytics_screen.dart';
 import 'bio_avatar_screen.dart';
 import 'dashboard_screen.dart';
 import 'device_settings_screen.dart';
-import 'menstrual_cycle_screen.dart';
-import 'pregnancy_screen.dart';
 import 'profile_screen.dart';
 import 'sport_screen.dart';
 
@@ -90,7 +88,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     return ValueListenableBuilder<UserProfile>(
       valueListenable: UserProfileRepository.profileNotifier,
       builder: (context, userProfile, _) {
-        final isFemale = userProfile.gender == Gender.female;
         return ValueListenableBuilder<AppLanguage>(
           valueListenable: AppLocaleNotifier.instance,
           builder: (context, language, _) {
@@ -98,23 +95,12 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               DashboardScreen(
                 bleBridge: widget.bleBridge,
                 onOpenAvatar: () {
-                  if (isFemale) {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => BioAvatarScreen(bleBridge: widget.bleBridge),
-                    ));
-                  } else {
-                    setState(() => _currentIndex = 2);
-                  }
+                  setState(() => _currentIndex = 2);
                 },
                 onOpenDeviceSettings: _openDeviceSettings,
               ),
               AnalyticsScreen(bleBridge: widget.bleBridge),
-              if (isFemale)
-                userProfile.isPregnant
-                    ? PregnancyScreen(bleBridge: widget.bleBridge)
-                    : MenstrualCycleScreen(bleBridge: widget.bleBridge)
-              else
-                BioAvatarScreen(bleBridge: widget.bleBridge, embedded: true),
+              BioAvatarScreen(bleBridge: widget.bleBridge, embedded: true),
               SportScreen(bleBridge: widget.bleBridge),
               ProfileScreen(bleBridge: widget.bleBridge),
             ];
@@ -136,10 +122,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                       children: [
                         _nav(palette, 0, Icons.circle_outlined, AppStrings.tr('nav_today', language)),
                         _nav(palette, 1, Icons.insights_outlined, AppStrings.tr('nav_analysis', language)),
-                        if (isFemale)
-                          _nav(palette, 2, userProfile.isPregnant ? Icons.favorite_outline : Icons.water_drop_outlined, AppStrings.tr(userProfile.isPregnant ? 'nav_pregnancy' : 'nav_cycle', language))
-                        else
-                          _mascotNav(palette, zone.color, avatar.state.assetFor(userProfile.gender), 2, AppStrings.tr('nav_barys', language)),
+                        _mascotNav(palette, zone.color, avatar.state.assetFor(userProfile.gender), 2, AppStrings.tr('nav_barys', language)),
                         _nav(palette, 3, Icons.directions_run, AppStrings.tr('nav_sport', language)),
                         _nav(palette, 4, Icons.person_outline, AppStrings.tr('nav_profile', language)),
                       ],

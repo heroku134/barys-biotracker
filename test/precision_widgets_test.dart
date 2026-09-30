@@ -7,6 +7,7 @@ import 'package:barys_biotracker/domain/intelligence/readiness_engine.dart';
 import 'package:barys_biotracker/domain/models/telemetry.dart';
 import 'package:barys_biotracker/presentation/widgets/circa_mascot_hero_card.dart';
 import 'package:barys_biotracker/presentation/widgets/kalkan_ui.dart';
+import 'package:barys_biotracker/presentation/widgets/kalkan_chrome.dart';
 import 'package:barys_biotracker/presentation/widgets/metric_dial.dart';
 
 void main() {
@@ -145,6 +146,23 @@ void main() {
       await KalkanHaptics.selectionClick();
       await KalkanHaptics.success();
       await KalkanHaptics.ringZoneTick();
+    });
+
+    testWidgets('9. KalkanAppBar renders eyebrow and title with consistent hierarchy', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            appBar: KalkanAppBar(
+              eyebrow: 'СЕГОДНЯ',
+              title: 'Данияр',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('СЕГОДНЯ'), findsOneWidget);
+      expect(find.text('Данияр'), findsOneWidget);
+      expect(find.byType(KalkanAppBar), findsOneWidget);
     });
   });
 }

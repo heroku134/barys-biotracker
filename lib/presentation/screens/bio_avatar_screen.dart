@@ -19,6 +19,7 @@ import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/kalkan_chrome.dart';
 
 class BioAvatarScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -433,28 +434,15 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
       builder: (context, language, _) {
         return Scaffold(
           backgroundColor: palette.bg,
-          appBar: AppBar(
-            backgroundColor: palette.bg,
-            elevation: 0,
-            scrolledUnderElevation: 0,
+          appBar: KalkanAppBar(
+            eyebrow: AppStrings.tr('nav_barys', language),
+            title: AppStrings.tr('mascot_title', language),
             leading: canPop
                 ? IconButton(
                     icon: Icon(Icons.arrow_back_ios, color: palette.secondary, size: 18),
                     onPressed: () => Navigator.of(context).pop(),
                   )
                 : null,
-            automaticallyImplyLeading: false,
-            title: Text(
-              AppStrings.tr('mascot_title', language),
-              style: TextStyle(
-                color: palette.fg,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
-                fontFamily: 'Manrope',
-              ),
-            ),
-
           ),
           body: SafeArea(
             child: SingleChildScrollView(

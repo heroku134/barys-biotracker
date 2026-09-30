@@ -6,6 +6,7 @@ import '../../core/app_language.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/kalkan_chrome.dart';
 import 'device_pair_screen.dart';
 import 'firmware_update_screen.dart';
 
@@ -170,35 +171,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     final palette = KalkanColors.of(context);
     return Scaffold(
       backgroundColor: palette.bg,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: palette.fg),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              tr('Часы', 'Саат'),
-              style: TextStyle(
-                color: palette.secondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.2,
-              ),
-            ),
-            Text(
-              tr('Часы КАЛКАН СААТ-1', 'КАЛКАН СААТ-1 сааты'),
-              style: TextStyle(
-                color: palette.fg,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+      appBar: KalkanAppBar(
+        eyebrow: tr('УСТРОЙСТВО', 'ТҮЗМӨК'),
+        title: tr('Часы КАЛКАН СААТ-1', 'КАЛКАН СААТ-1 сааты'),
+        implyLeading: true,
         actions: [
           IconButton(
             icon: Icon(Icons.bluetooth_searching, color: AppColors.amber),

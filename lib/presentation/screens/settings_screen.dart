@@ -11,6 +11,7 @@ import '../../data/services/app_icon_service.dart';
 import 'legal_screen.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/kalkan_chrome.dart';
 
 class SettingsScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -37,9 +38,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final dark = AppThemeNotifier.isDark;
     return Scaffold(
       backgroundColor: palette.bg,
-      appBar: AppBar(
-        backgroundColor: palette.bg,
-        title: Text(AppLocaleNotifier.pick('Настройки', 'Жөндөөлөр', 'Settings'), style: AppTypography.screenTitle(palette.fg)),
+      appBar: KalkanAppBar(
+        eyebrow: 'КАЛКАН',
+        title: AppLocaleNotifier.pick('Настройки', 'Жөндөөлөр', 'Settings'),
+        implyLeading: true,
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),

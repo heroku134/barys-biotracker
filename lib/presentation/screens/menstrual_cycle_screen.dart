@@ -15,6 +15,7 @@ import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/kalkan_chrome.dart';
 
 class MenstrualCycleScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -245,10 +246,9 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
 
         return Scaffold(
           backgroundColor: palette.bg,
-          appBar: AppBar(
-            backgroundColor: palette.bg,
-            elevation: 0,
-            title: Text(_tr('Цикл', 'Цикл', 'Cycle'), style: AppTypography.screenTitle(palette.fg)),
+          appBar: KalkanAppBar(
+            eyebrow: _tr('ЖЕНСКОЕ ЗДОРОВЬЕ', 'АЯЛДАРДЫН ДЕН СООЛУГУ', "WOMEN'S HEALTH"),
+            title: _tr('Цикл', 'Цикл', 'Cycle'),
             actions: [
               IconButton(
                 icon: Icon(_partnerLinked ? Icons.favorite : Icons.favorite_border, color: AppColors.rose, size: 20),

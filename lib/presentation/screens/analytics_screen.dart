@@ -17,6 +17,7 @@ import '../widgets/circa_sparkline.dart';
 import '../widgets/circa_stress_timeline.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/kalkan_chrome.dart';
 import '../widgets/metric_dial.dart';
 import '../widgets/weekly_metric_chart.dart';
 import '../../domain/intelligence/readiness_engine.dart';
@@ -107,17 +108,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         final palette = KalkanColors.of(context);
         return Scaffold(
           backgroundColor: palette.bg,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Text(
-              AppStrings.tr('analytics_title', language),
-              style: TextStyle(
-                color: palette.fg,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          appBar: KalkanAppBar(
+            eyebrow: AppStrings.tr('nav_analysis', language),
+            title: AppStrings.tr('analytics_title', language),
           ),
       body: SafeArea(
         child: ListView(

@@ -20,9 +20,9 @@ import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/workout_session.dart';
 import '../widgets/active_workout_panel.dart';
-import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/kalkan_chrome.dart';
 import '../widgets/sport_category_selector.dart';
 import '../widgets/workout_history_card.dart';
 import '../../data/services/live_activity_service.dart';
@@ -476,39 +476,11 @@ class _SportScreenState extends State<SportScreen> {
 
         return Scaffold(
           backgroundColor: palette.bg,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leadingWidth: 52,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: Center(
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: palette.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: palette.hairline, width: 1.0),
-                  ),
-                  child: CircaPulsingLogo(
-                    size: 26,
-                    animate: false,
-                    primaryColor: AppColors.amber,
-                    secondaryColor: palette.secondary,
-                  ),
-                ),
-              ),
-            ),
-            titleSpacing: 6,
-            title: Text(
-              AppStrings.tr('sport_title', language),
-              style: AppTypography.screenTitle(palette.fg),
-            ),
+          appBar: KalkanAppBar(
+            eyebrow: AppStrings.tr('nav_sport', language),
+            title: AppStrings.tr('sport_title', language),
             actions: [
               Container(
-                margin: const EdgeInsets.only(right: 16),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: palette.surface,
@@ -516,6 +488,7 @@ class _SportScreenState extends State<SportScreen> {
                   border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.bolt, color: AppColors.amber, size: 14),
                     const SizedBox(width: 4),

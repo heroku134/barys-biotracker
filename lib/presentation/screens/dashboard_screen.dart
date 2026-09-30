@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
-import '../../core/date_format.dart';
 import '../../core/app_typography.dart';
 import '../../core/avatar_image_provider.dart';
 import '../../core/circa_haptics.dart';
@@ -21,7 +20,11 @@ import '../widgets/circa_calibration_card.dart';
 import '../widgets/circa_mascot_hero_card.dart';
 import '../widgets/circa_recovery_breakdown_sheet.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/kalkan_chrome.dart';
 import '../widgets/metric_dial.dart';
+import '../widgets/circa_cycle_card.dart';
+import 'menstrual_cycle_screen.dart';
+import 'pregnancy_screen.dart';
 import 'private_league_screen.dart';
 import 'day_journal_screen.dart';
 import '../../domain/intelligence/day_copy.dart';
@@ -218,84 +221,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: palette.bg,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        CircaHaptics.selectionClick();
-                        CircaAvatarPickerDialog.show(context, _userProfile);
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: palette.hairline),
-                        ),
-                        child: ClipOval(
-                          child: AvatarImageProvider.buildAvatarWidget(path: _userProfile.avatarPath),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(name, style: AppTypography.bodySemibold(palette.fg)),
-                          Text(
-                            AppDates.formatLong(DateTime.now(), language),
-                            style: AppTypography.caption(palette.secondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        CircaHaptics.selectionClick();
-                        widget.onOpenDeviceSettings?.call();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: palette.surface,
-                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                          border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: isConnected ? AppColors.sage : AppColors.rose,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              isConnected
-                                  ? AppStrings.tr('home_synced', language)
-                                  : AppStrings.tr('home_offline', language),
-                              style: AppTypography.caption(
-                                isConnected ? AppColors.sage : AppColors.rose,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+      appBar: KalkanAppBar(
+        eyebrow: AppStrings.tr('nav_today', language),
+        title: name,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: GestureDetector(
+              onTap: () {
+                CircaHaptics.selectionClick();
+                CircaAvatarPickerDialog.show(context, _userProfile);
+              },
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
+                ),
+                child: ClipOval(
+                  child: AvatarImageProvider.buildAvatarWidget(path: _userProfile.avatarPath),
                 ),
               ),
             ),
+          ),
+        ),
+        actions: [
+          GestureDetector(
+            onTap: () {
+              CircaHaptics.selectionClick();
+              widget.onOpenDeviceSettings?.call();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: palette.surface,
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: isConnected ? AppColors.sage : AppColors.rose,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    isConnected
+                        ? AppStrings.tr('home_synced', language)
+                        : AppStrings.tr('home_offline', language),
+                    style: AppTypography.caption(
+                      isConnected ? AppColors.sage : AppColors.rose,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        top: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
             if (_banner != null)
               SliverToBoxAdapter(
                 child: Padding(
@@ -514,6 +508,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: CircaCalibrationCard(
                     currentDay: _calDays,
                     totalDays: 14,
+                  ),
+                ),
+              ),
+
+            if (_userProfile.gender == Gender.female)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  child: CircaCycleCard(
+                    telemetry: _telemetry,
+                    profile: _userProfile,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => _userProfile.isPregnant
+                            ? PregnancyScreen(bleBridge: widget.bleBridge)
+                            : MenstrualCycleScreen(bleBridge: widget.bleBridge),
+                      ),
+                    ),
                   ),
                 ),
               ),
