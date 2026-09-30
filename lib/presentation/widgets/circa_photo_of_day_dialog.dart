@@ -256,7 +256,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                         Container(width: 1, height: 22, color: AppColors.hairline),
                         _buildOverlayMetric(
                           'HEART RATE',
-                          '${widget.telemetry.heartRate > 0 ? widget.telemetry.heartRate : 72} BPM',
+                          widget.telemetry.heartRate > 0 ? '${widget.telemetry.heartRate} BPM' : '— BPM',
                           AppColors.rose,
                         ),
                       ],

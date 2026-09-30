@@ -179,7 +179,8 @@ class _SportScreenState extends State<SportScreen> {
   void _startWorkout() {
     PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.start);
     CircaHaptics.workoutStart();
-    final initialHr = widget.bleBridge.currentTelemetry.heartRate > 0 ? widget.bleBridge.currentTelemetry.heartRate : 72;
+    final rawHr = widget.bleBridge.currentTelemetry.heartRate;
+    final initialHr = rawHr > 0 ? rawHr : 0;
 
     setState(() {
       _isWorkoutActive = true;
@@ -206,7 +207,7 @@ class _SportScreenState extends State<SportScreen> {
       workoutName: _selectedSport.title,
       workoutType: _selectedSport.id,
       initialHeartRate: initialHr,
-      heartRateZone: 2,
+      heartRateZone: initialHr > 0 ? _userProfile.getHeartRateZone(initialHr) + 1 : 0,
       currentStrain: 0.0,
       activeCalories: 0,
     );

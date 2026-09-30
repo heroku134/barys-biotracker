@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 
-/// Высокоточная тактильная система KALKAN SPORT (Haptic & Acoustic Architecture).
-/// Создает ощущение премиального физического устройства стоимостью $300–$500/год
-/// (аналогично тактильным калибрам Leica, Bang & Olufsen и Apple Watch Ultra).
+/// Тактильная система KALKAN SPORT.
+///
+/// Канонические правила тактильности:
+/// - Обычный выбор элемента (таб, чип, язык, свитч): ровно один `HapticFeedback.selectionClick()`, без звука.
+/// - Подтверждение / сохранение: лёгкий `HapticFeedback.lightImpact()`.
+/// - Тяжёлые тактильные события (старт/финиш тренировки, закрытие кольца Recovery): выделенные составные импульсы.
 class KalkanHaptics {
   /// Закрытие / дозаполнение кольца Recovery (фиксация показателя дня)
   static Future<void> ringClosure() async {
@@ -11,13 +14,14 @@ class KalkanHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 65));
       await HapticFeedback.heavyImpact();
-      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
-  /// Успешное сохранение или подтверждение действия
+  /// Успешное сохранение настроек или подтверждение действия (лёгкий отклик без сотрясения)
   static Future<void> success() async {
-    await ringClosure();
+    try {
+      await HapticFeedback.lightImpact();
+    } catch (_) {}
   }
 
   /// Прохождение промежуточной зоны кольца (33% Rose, 66% Amber)
@@ -27,11 +31,10 @@ class KalkanHaptics {
     } catch (_) {}
   }
 
-  /// Выбор / переключение элемента
+  /// Выбор / переключение элемента (чип, таб, язык) — ровно один selectionClick без звука
   static Future<void> selectionClick() async {
     try {
       await HapticFeedback.selectionClick();
-      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -41,7 +44,6 @@ class KalkanHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 80));
       await HapticFeedback.heavyImpact();
-      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -53,7 +55,6 @@ class KalkanHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 130));
       await HapticFeedback.heavyImpact();
-      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -65,7 +66,6 @@ class KalkanHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 110));
       await HapticFeedback.heavyImpact();
-      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -75,15 +75,13 @@ class KalkanHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 70));
       await HapticFeedback.selectionClick();
-      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
-  /// Экспорт шеринг-карточки (имитация затвора швейцарского/немецкого фотоаппарата)
+  /// Экспорт шеринг-карточки
   static Future<void> cardExport() async {
     try {
-      await HapticFeedback.heavyImpact();
-      KalkanAcoustics.playMechanicalClick();
+      await HapticFeedback.mediumImpact();
     } catch (_) {}
   }
 
@@ -98,18 +96,18 @@ class KalkanHaptics {
   /// Открытие всплывающего модального окна / шита
   static Future<void> sheetOpen() async {
     try {
-      await HapticFeedback.mediumImpact();
-      KalkanAcoustics.playMechanicalClick();
+      await HapticFeedback.selectionClick();
     } catch (_) {}
   }
 }
 
 /// Акустический слой тактильной обратной связи.
-/// Воспроизводит мягкий механический щелчок через нативный системный аудиоканал Apple/Android.
+/// По умолчанию отключён (soundEnabled = false), чтобы не создавать назойливых
+/// системных щелчков на Android/iOS при повседневном взаимодействии с интерфейсом.
 class KalkanAcoustics {
-  static bool soundEnabled = true;
+  static bool soundEnabled = false;
 
-  /// Мягкий механический клик (Leica Shutter / Watch Bezel Click)
+  /// Системный механический клик
   static void playMechanicalClick() {
     if (!soundEnabled) return;
     try {

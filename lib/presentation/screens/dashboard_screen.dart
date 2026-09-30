@@ -24,7 +24,6 @@ import '../widgets/kalkan_ui.dart';
 import '../widgets/metric_dial.dart';
 import 'private_league_screen.dart';
 import 'day_journal_screen.dart';
-import '../widgets/mascot_face.dart';
 import '../../domain/intelligence/day_copy.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../data/storage/calibration_store.dart';
@@ -425,13 +424,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          MascotFace(
-                            state: AvatarManager.calculateState(_telemetry, baseline: _baseline),
-                            size: 56,
-                            climate: _climate,
-                            onTap: widget.onOpenAvatar,
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: palette.raised,
+                              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                              border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
+                            ),
+                            child: const Icon(
+                              Icons.tips_and_updates_outlined,
+                              color: AppColors.amber,
+                              size: 16,
+                            ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               DayCopy.morning(

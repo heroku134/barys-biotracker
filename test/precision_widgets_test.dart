@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:barys_biotracker/core/app_colors.dart';
+import 'package:barys_biotracker/core/circa_haptics.dart';
 import 'package:barys_biotracker/domain/avatar/avatar_manager.dart';
 import 'package:barys_biotracker/domain/intelligence/readiness_engine.dart';
 import 'package:barys_biotracker/domain/models/telemetry.dart';
@@ -136,6 +137,14 @@ void main() {
 
       expect(find.text('СААТ-1'), findsOneWidget);
       expect(find.byType(CircaMascotHeroCard), findsOneWidget);
+    });
+
+    test('8. KalkanHaptics and KalkanAcoustics enforce quiet tactile rules', () async {
+      expect(KalkanAcoustics.soundEnabled, isFalse);
+      // Ensure haptic calls complete without unhandled exceptions
+      await KalkanHaptics.selectionClick();
+      await KalkanHaptics.success();
+      await KalkanHaptics.ringZoneTick();
     });
   });
 }
