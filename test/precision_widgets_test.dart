@@ -9,6 +9,11 @@ import 'package:barys_biotracker/presentation/widgets/circa_mascot_hero_card.dar
 import 'package:barys_biotracker/presentation/widgets/kalkan_ui.dart';
 import 'package:barys_biotracker/presentation/widgets/kalkan_chrome.dart';
 import 'package:barys_biotracker/presentation/widgets/metric_dial.dart';
+import 'package:barys_biotracker/domain/intelligence/sleep_engine.dart';
+import 'package:barys_biotracker/domain/models/personal_baseline.dart';
+import 'package:barys_biotracker/data/storage/private_league_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:barys_biotracker/presentation/widgets/circa_hypnogram.dart';
 
 void main() {
   group('KALKAN Athletic Surface & UI Components Test Suite', () {
@@ -163,6 +168,40 @@ void main() {
       expect(find.text('СЕГОДНЯ'), findsOneWidget);
       expect(find.text('Данияр'), findsOneWidget);
       expect(find.byType(KalkanAppBar), findsOneWidget);
+    });
+
+    testWidgets('10. CircaHypnogram displays honest empty state when sensor provides no sleep epochs', (tester) async {
+      final sleepResult = SleepEngine.calculate(
+        telemetry: BleTelemetry.empty().copyWith(sleepMinutes: 420),
+        baseline: const PersonalBaseline(),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CircaHypnogram(sleepResult: sleepResult),
+          ),
+        ),
+      );
+
+      // Must display honest empty state message
+      expect(find.text('Ночь без фаз — часы не отдали гипнограмму'), findsOneWidget);
+      // Must NOT display fabricated phase breakdown
+      expect(find.text('REM (быстрый): '), findsNothing);
+      expect(find.text('Глубокий: '), findsNothing);
+    });
+
+    test('11. PrivateLeagueRepository adds friends in honest pending state without fake scores', () async {
+      SharedPreferences.setMockInitialValues({});
+      await PrivateLeagueRepository.resetToDefaultLeague();
+      final ok = await PrivateLeagueRepository.addFriend(name: 'Арман Б.');
+      expect(ok, isTrue);
+
+      final league = await PrivateLeagueRepository.loadLeague();
+      final arman = league.members.firstWhere((m) => m.name == 'Арман Б.');
+      expect(arman.recoveryScore, 0); // No fabricated 78% score
+      expect(arman.lastSyncText, 'Ожидание данных'); // No fake 'Live'
+      expect(arman.isCurrentUser, isFalse);
     });
   });
 }

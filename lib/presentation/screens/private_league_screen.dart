@@ -8,8 +8,9 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/private_league_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/private_league.dart';
-import '../widgets/glass_card.dart';
+import '../widgets/kalkan_chrome.dart';
 import '../widgets/kalkan_ui.dart';
+import '../widgets/circa_friend_detail_sheet.dart';
 
 class PrivateLeagueScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -65,10 +66,9 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
     if (_loading && _league == null) {
       return Scaffold(
         backgroundColor: palette.bg,
-        appBar: AppBar(
-          backgroundColor: palette.bg,
-          elevation: 0,
-          title: Text(_t('Круг друзей', 'Достор', 'Circle of friends'), style: AppTypography.screenTitle(palette.fg)),
+        appBar: KalkanAppBar(
+          eyebrow: _t('СООБЩЕСТВО', 'КООМ', 'COMMUNITY'),
+          title: _t('Круг друзей', 'Достор', 'Circle of friends'),
         ),
         body: Center(
           child: CircularProgressIndicator(color: AppColors.sage),
@@ -87,10 +87,9 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
 
     return Scaffold(
       backgroundColor: palette.bg,
-      appBar: AppBar(
-        backgroundColor: palette.bg,
-        elevation: 0,
-        title: Text(_t('Круг друзей', 'Достор', 'Circle of friends'), style: AppTypography.screenTitle(palette.fg)),
+      appBar: KalkanAppBar(
+        eyebrow: _t('СООБЩЕСТВО', 'КООМ', 'COMMUNITY'),
+        title: _t('Круг друзей', 'Достор', 'Circle of friends'),
         actions: [
           IconButton(
             tooltip: _t('Скопировать код', 'Кодду көчүрүү', 'Copy code'),
@@ -115,7 +114,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
         padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 8, KalkanUi.pagePadding, 32),
         children: [
           // Карточка инвайт-кода
-          GlassCard(
+          KalkanCard(
             padding: const EdgeInsets.all(KalkanUi.cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,8 +124,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   children: [
                     Text(
                       _t('ПРИВАТНАЯ ЛИГА (ДАНБАР 3-5)', 'ЖЕКЕ ЛИГА', 'PRIVATE LEAGUE (DUNBAR 3-5)'),
-                      style: TextStyle(
-                        color: palette.secondary,
+                      style: AppTypography.monoLabel(palette.secondary).copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
@@ -203,9 +201,57 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
           ),
           const SizedBox(height: 10),
 
+          // Честное пустое состояние, если в круге пока только текущий пользователь
+          if (members.length <= 1)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: KalkanCard(
+                padding: const EdgeInsets.all(KalkanUi.cardPadding),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: palette.raised,
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                        border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.group_outlined, size: 22, color: palette.secondary),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _t('В вашем круге пока нет друзей', 'Кругуңузда азырынча достор жок', 'No friends in your circle yet'),
+                            style: AppTypography.bodySemibold(palette.fg),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _t(
+                              'Приватная лига KALKAN рассчитана на 3–5 реальных атлетов. Поделитесь кодом-приглашением выше, чтобы обмениваться достоверной готовностью без ботов и фиктивной телеметрии.',
+                              'KALKAN жеке лигасы 3–5 чыныгы спортчуга арналган. Ботторсуз жана жалган маалыматсыз чыныгы даярдык менен бөлүшүү үчүн жогорудагы кодду жөнөтүңүз.',
+                              'KALKAN private league is built for 3–5 real athletes. Share your invite code above to exchange authentic readiness without bots or fabricated telemetry.',
+                            ),
+                            style: AppTypography.caption(palette.secondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           ...members.map((m) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: GlassCard(
+                child: KalkanCard(
+                  onTap: m.isCurrentUser ? null : () => CircaFriendDetailSheet.show(context, m, onFriendRemoved: _load),
                   padding: const EdgeInsets.all(14),
                   child: Row(
                     children: [
@@ -240,12 +286,16 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                                     decoration: BoxDecoration(
-                                      color: AppColors.sage.withValues(alpha: 0.15),
+                                      color: (widget.bleBridge.currentTelemetry.isConnected ? AppColors.sage : palette.secondary).withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
-                                      'LIVE',
-                                      style: TextStyle(color: AppColors.sage, fontSize: 9, fontWeight: FontWeight.w800),
+                                      widget.bleBridge.currentTelemetry.isConnected ? 'LIVE' : _t('ОФЛАЙН', 'ОФЛАЙН', 'OFFLINE'),
+                                      style: TextStyle(
+                                        color: widget.bleBridge.currentTelemetry.isConnected ? AppColors.sage : palette.secondary,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -253,11 +303,23 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              _t(
-                                'Готовность: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · сон ${m.sleepHours.toStringAsFixed(1)} ч',
-                                'Даярдык: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · уйку ${m.sleepHours.toStringAsFixed(1)} с',
-                                'Readiness: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · sleep ${m.sleepHours.toStringAsFixed(1)} h',
-                              ),
+                              m.isCurrentUser
+                                  ? _t(
+                                      'Готовность: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · сон ${m.sleepHours.toStringAsFixed(1)} ч',
+                                      'Даярдык: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · уйку ${m.sleepHours.toStringAsFixed(1)} с',
+                                      'Readiness: ${m.recoveryScore}% · HRV ${m.hrv.toStringAsFixed(0)} · sleep ${m.sleepHours.toStringAsFixed(1)} h',
+                                    )
+                                  : (m.recoveryScore > 0
+                                      ? _t(
+                                          'Синхронизировано: ${m.lastSyncText} · сон ${m.sleepHours.toStringAsFixed(1)} ч',
+                                          'Синхрондоштурулду: ${m.lastSyncText} · уйку ${m.sleepHours.toStringAsFixed(1)} с',
+                                          'Synced: ${m.lastSyncText} · sleep ${m.sleepHours.toStringAsFixed(1)} h',
+                                        )
+                                      : _t(
+                                          'Ожидание первой синхронизации',
+                                          'Биринчи синхрондоштурууну күтүү',
+                                          'Awaiting initial sync',
+                                        )),
                               style: AppTypography.caption(palette.secondary),
                             ),
                           ],
@@ -268,17 +330,17 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '${m.recoveryScore}%',
+                            m.recoveryScore > 0 ? '${m.recoveryScore}%' : '—',
                             style: TextStyle(
-                              color: m.recoveryZone.color,
+                              color: m.recoveryScore > 0 ? m.recoveryZone.color : palette.secondary,
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           Text(
-                            m.recoveryZone.name.toUpperCase(),
+                            m.recoveryScore > 0 ? m.recoveryZone.name.toUpperCase() : _t('ОЖИДАНИЕ', 'КҮТҮҮ', 'PENDING'),
                             style: TextStyle(
-                              color: m.recoveryZone.color.withValues(alpha: 0.8),
+                              color: m.recoveryScore > 0 ? m.recoveryZone.color.withValues(alpha: 0.8) : palette.secondary,
                               fontSize: 9,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.8,
@@ -288,7 +350,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                       ),
                       if (!m.isCurrentUser) ...[
                         PopupMenuButton<String>(
-                          icon: Icon(Icons.more_vert, size: 18, color: palette.muted),
+                          icon: Icon(Icons.more_vert, size: 18, color: palette.secondary),
                           color: palette.surface,
                           onSelected: (val) async {
                             if (val == 'remove') {

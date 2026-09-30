@@ -6,7 +6,7 @@ import '../../core/circa_haptics.dart';
 import '../../data/storage/private_league_repository.dart';
 import '../../domain/models/private_league.dart';
 import '../../domain/models/readiness.dart';
-import 'glass_card.dart';
+import '../../core/app_typography.dart';
 import 'kalkan_ui.dart';
 
 class CircaFriendDetailSheet extends StatelessWidget {
@@ -161,8 +161,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
           SizedBox(height: 16),
 
           // Recovery Card Hero
-          GlassCard(
-            borderRadius: KalkanUi.cardRadius,
+          KalkanCard(
             padding: const EdgeInsets.all(KalkanUi.cardPadding),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -172,36 +171,37 @@ class CircaFriendDetailSheet extends StatelessWidget {
                   children: [
                     Text(
                       AppStrings.tr('friend_detail_recovery', language),
-                      style: TextStyle(
-                        color: AppColors.muted,
+                      style: AppTypography.monoLabel(AppColors.muted).copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
-                          '${member.recoveryScore}%',
+                          member.recoveryScore > 0 ? '${member.recoveryScore}%' : '—',
                           style: TextStyle(
-                            color: zoneColor,
+                            color: member.recoveryScore > 0 ? zoneColor : AppColors.muted,
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -1.0,
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          member.recoveryZone == RecoveryZone.optimal
-                              ? AppLocaleNotifier.pick('Зеленый коридор', 'Жашыл коридор', 'Optimal corridor')
-                              : (member.recoveryZone == RecoveryZone.moderate
-                                  ? AppLocaleNotifier.pick('Адаптивный коридор', 'Адаптивдүү коридор', 'Adaptive corridor')
-                                  : AppLocaleNotifier.pick('Зона отдыха', 'Эс алуу зонасы', 'Rest zone')),
+                          member.recoveryScore > 0
+                              ? (member.recoveryZone == RecoveryZone.optimal
+                                  ? AppLocaleNotifier.pick('Зеленый коридор', 'Жашыл коридор', 'Optimal corridor')
+                                  : (member.recoveryZone == RecoveryZone.moderate
+                                      ? AppLocaleNotifier.pick('Адаптивный коридор', 'Адаптивдүү коридор', 'Adaptive corridor')
+                                      : AppLocaleNotifier.pick('Зона отдыха', 'Эс алуу зонасы', 'Rest zone')))
+                              : AppLocaleNotifier.pick('Ожидание данных', 'Маалымат күтүлүүдө', 'Awaiting data'),
                           style: TextStyle(
-                            color: zoneColor,
+                            color: member.recoveryScore > 0 ? zoneColor : AppColors.muted,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -215,10 +215,10 @@ class CircaFriendDetailSheet extends StatelessWidget {
                   height: 44,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: zoneColor.withValues(alpha: 0.15),
+                    color: (member.recoveryScore > 0 ? zoneColor : AppColors.muted).withValues(alpha: 0.15),
                   ),
                   child: Center(
-                    child: Icon(Icons.favorite, color: zoneColor, size: 22),
+                    child: Icon(Icons.favorite, color: member.recoveryScore > 0 ? zoneColor : AppColors.muted, size: 22),
                   ),
                 ),
               ],

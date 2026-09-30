@@ -15,7 +15,6 @@ import '../widgets/circa_healthspan_card.dart';
 import '../widgets/circa_hypnogram.dart';
 import '../widgets/circa_sparkline.dart';
 import '../widgets/circa_stress_timeline.dart';
-import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/kalkan_chrome.dart';
 import '../widgets/metric_dial.dart';
@@ -160,8 +159,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 16),
-            GlassCard(
+            const SizedBox(height: 16),
+            KalkanCard(
+              padding: const EdgeInsets.all(KalkanUi.cardPadding),
               child: Row(
                 children: [
                   Expanded(
@@ -215,7 +215,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             const SizedBox(height: 16),
             // 1. Профиль пульса (ЧСС) по периодам
-            GlassCard(
+            KalkanCard(
+              padding: const EdgeInsets.all(KalkanUi.cardPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -237,7 +238,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   SizedBox(
                     height: 90,
                     child: CircaSparkline(
@@ -246,27 +247,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       height: 90,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   _buildAxisLabels(_selectedPeriod),
                 ],
               ),
             ),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
 
             // 2. Архитектура сна и гипнограмма
             CircaHypnogram(sleepResult: sleepAnalysis),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
 
             // 3. Дневной монитор стресса (лента дня)
             CircaStressTimeline(stressSummary: stressSummary),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
 
             // 4. Биологический возраст CIRCA (Healthspan)
             CircaHealthspanCard(healthspan: healthspan),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
 
             // 5. Гормональный цикл и адаптация нагрузки
-            GlassCard(
+            KalkanCard(
+              padding: const EdgeInsets.all(KalkanUi.cardPadding),
               onTap: () => _showCycleDetailsModal(context),
               child: Row(
                 children: [

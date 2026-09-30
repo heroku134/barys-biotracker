@@ -278,27 +278,27 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                         children: [
                           Row(
                             children: [
-                              Text(tr('Прошивка: v1.2.4', 'Прошивка: v1.2.4'), style: TextStyle(color: AppColors.muted, fontSize: 11)),
-                              SizedBox(width: 8),
+                              Text(tr('Прошивка: v1.2.4', 'Прошивка: v1.2.4'), style: TextStyle(color: palette.secondary, fontSize: 11)),
+                              const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.amber.withValues(alpha: 0.15),
+                                  color: AppColors.sage.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
-                                  border: Border.all(color: AppColors.amber.withValues(alpha: 0.4), width: KalkanUi.hairline),
+                                  border: Border.all(color: AppColors.sage.withValues(alpha: 0.4), width: KalkanUi.hairline),
                                 ),
                                 child: Text(
-                                  'v1.3.0 OTA',
-                                  style: TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w600),
+                                  tr('Актуальна', 'Акыркы'),
+                                  style: const TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w600),
                                 ),
                               ),
                             ],
                           ),
                           Row(
                             children: [
-                              Text(tr('Обновить', 'Жаңыртуу'), style: const TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w500)),
+                              Text(tr('Сведения', 'Маалымат'), style: TextStyle(color: palette.secondary, fontSize: 12, fontWeight: FontWeight.w500)),
                               const SizedBox(width: 4),
-                              const Icon(Icons.arrow_forward_ios, size: 9, color: AppColors.amber),
+                              Icon(Icons.arrow_forward_ios, size: 9, color: palette.secondary),
                             ],
                           ),
                         ],

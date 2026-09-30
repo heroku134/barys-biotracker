@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
+import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
 import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/models/telemetry.dart';
-import 'glass_card.dart';
 import 'kalkan_ui.dart';
 
-/// Лаконичная карточка потребности во сне с возможностью раскрыть подробности в модальном окне
+/// Карточка потребности во сне с честным отображением гипнограммы (без генерации фейковых фаз)
 class CircaHypnogram extends StatelessWidget {
   final SleepAnalysisResult sleepResult;
 
@@ -21,20 +22,22 @@ class CircaHypnogram extends StatelessWidget {
 
   void _showDetailsModal(BuildContext context) {
     CircaHaptics.selectionClick();
+    final palette = KalkanColors.of(context);
     final needHours = sleepResult.sleepNeedMinutes ~/ 60;
     final needMinutes = sleepResult.sleepNeedMinutes % 60;
     final actualHours = sleepResult.actualSleepMinutes ~/ 60;
     final actualMinutes = sleepResult.actualSleepMinutes % 60;
+    final coveragePercent = (sleepResult.sleepPerformanceScore).clamp(0, 100);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
-          border: Border(top: BorderSide(color: AppColors.line, width: 1.5)),
+        decoration: BoxDecoration(
+          color: palette.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
+          border: Border(top: BorderSide(color: palette.hairline, width: KalkanUi.hairline)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         child: SafeArea(
@@ -50,12 +53,12 @@ class CircaHypnogram extends StatelessWidget {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.faint,
+                      color: palette.secondary.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Заголовок модального окна с кнопкой закрытия
                 Row(
@@ -65,106 +68,114 @@ class CircaHypnogram extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'АРХИТЕКТУРА И ФАЗЫ СНА',
-                          style: TextStyle(
-                            color: AppColors.amber,
+                          AppLocaleNotifier.pick(
+                            'АРХИТЕКТУРА И ПОТРЕБНОСТЬ ВО СНЕ',
+                            'УЙКУ АРХИТЕКТУРАСЫ ЖАНА МУКТАЖДЫК',
+                            'SLEEP ARCHITECTURE & NEED',
+                          ),
+                          style: AppTypography.monoLabel(AppColors.amber).copyWith(
                             fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.8,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.5,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          'Фактический сон: $actualHoursч $actualMinutesм из $needHoursч $needMinutesм',
-                          style: TextStyle(
-                            color: AppColors.fg,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          '${AppLocaleNotifier.pick('Сон', 'Уйку', 'Sleep')}: $actualHoursч $actualMinutesм / $needHoursч $needMinutesм',
+                          style: AppTypography.bodySemibold(palette.fg),
                         ),
                       ],
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: AppColors.muted, size: 22),
+                      icon: Icon(Icons.close, color: palette.secondary, size: 22),
                       onPressed: () => Navigator.of(ctx).pop(),
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Декомпозиция Sleep Need: База + Долг + За Strain = Итого
                 Text(
-                  'РАСЧЁТ ПОТРЕБНОСТИ ВО СНЕ (SLEEP NEED)',
-                  style: TextStyle(
-                    color: AppColors.muted,
+                  AppLocaleNotifier.pick(
+                    'РАСЧЁТ ПОТРЕБНОСТИ ВО СНЕ (SLEEP NEED)',
+                    'УЙКУГА МУКТАЖДЫКТЫ ЭСЕПТӨӨ',
+                    'SLEEP NEED BREAKDOWN',
+                  ),
+                  style: AppTypography.monoLabel(palette.secondary).copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 1.4,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: AppColors.raised,
+                    color: palette.raised,
                     borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                    border: Border.all(color: AppColors.line),
+                    border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildNeedItem('База', '${sleepResult.baselineNeedMinutes ~/ 60}ч'),
-                      Text('+', style: TextStyle(color: AppColors.faint, fontSize: 13)),
-                      _buildNeedItem('Долг 14д', '+${sleepResult.sleepDebtPortionMinutes}м'),
-                      Text('+', style: TextStyle(color: AppColors.faint, fontSize: 13)),
-                      _buildNeedItem('За нагрузку', '+${sleepResult.strainSurchargeMinutes}м'),
-                      Text('=', style: TextStyle(color: AppColors.faint, fontSize: 13)),
-                      _buildNeedItem('Итого нужно', '$needHoursч $needMinutesм', isHighlight: true),
+                      _buildNeedItem(palette, AppLocaleNotifier.pick('База', 'База', 'Base'), '${sleepResult.baselineNeedMinutes ~/ 60}ч'),
+                      Text('+', style: TextStyle(color: palette.secondary, fontSize: 13)),
+                      _buildNeedItem(palette, AppLocaleNotifier.pick('Долг 14д', 'Карыз 14к', 'Debt 14d'), '+${sleepResult.sleepDebtPortionMinutes}м'),
+                      Text('+', style: TextStyle(color: palette.secondary, fontSize: 13)),
+                      _buildNeedItem(palette, AppLocaleNotifier.pick('За Strain', 'Strain үчүн', 'For Strain'), '+${sleepResult.strainSurchargeMinutes}м'),
+                      Text('=', style: TextStyle(color: palette.secondary, fontSize: 13)),
+                      _buildNeedItem(palette, AppLocaleNotifier.pick('Итого', 'Жыйынтык', 'Total'), '$needHoursч $needMinutesм', isHighlight: true),
                     ],
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-                // 4 вклада Sleep Performance
+                // 4 фактора восстановления сном
                 Text(
-                  'ФАКТОРЫ ВОССТАНОВЛЕНИЯ СНОМ',
-                  style: TextStyle(
-                    color: AppColors.muted,
+                  AppLocaleNotifier.pick(
+                    'ФАКТОРЫ ВОССТАНОВЛЕНИЯ СНОМ',
+                    'УЙКУ МЕНЕН КАЛЫБЫНА КЕЛҮҮ ФАКТОРЛОРУ',
+                    'SLEEP RESTORATION FACTORS',
+                  ),
+                  style: AppTypography.monoLabel(palette.secondary).copyWith(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 1.4,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   children: [
-                    _buildFactorPill('Длительность', '${sleepResult.durationFactor}%'),
-                    SizedBox(width: 8),
-                    _buildFactorPill('Эффективность', '${sleepResult.efficiencyFactor}%'),
-                    SizedBox(width: 8),
-                    _buildFactorPill('Режим дня', '${sleepResult.consistencyFactor}%'),
-                    SizedBox(width: 8),
-                    _buildFactorPill('Релаксация', '${sleepResult.restorativeFactor}%'),
+                    _buildFactorPill(palette, AppLocaleNotifier.pick('Длительность', 'Узактык', 'Duration'), '${sleepResult.durationFactor}%'),
+                    const SizedBox(width: 8),
+                    _buildFactorPill(palette, AppLocaleNotifier.pick('Эффективность', 'Натыйжалуулук', 'Efficiency'), '${sleepResult.efficiencyFactor}%'),
+                    const SizedBox(width: 8),
+                    _buildFactorPill(palette, AppLocaleNotifier.pick('Режим', 'Режим', 'Consistency'), '${sleepResult.consistencyFactor}%'),
+                    const SizedBox(width: 8),
+                    _buildFactorPill(palette, AppLocaleNotifier.pick('Релаксация', 'Релаксация', 'Restorative'), '${sleepResult.restorativeFactor}%'),
                   ],
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-                // Векторная гипнограмма фаз сна
+                // Секция гипнограммы
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'ГИПНОГРАММА НОЧИ (ПО СЕНСОРУ)',
-                      style: TextStyle(
-                        color: AppColors.muted,
+                      AppLocaleNotifier.pick(
+                        'ГИПНОГРАММА НОЧИ (ПО СЕНСОРУ)',
+                        'ТҮНКҮ ГИПНОГРАММА (СЕНСОР БОЮНЧА)',
+                        'NIGHT HYPNOGRAM (SENSOR)',
+                      ),
+                      style: AppTypography.monoLabel(palette.secondary).copyWith(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: 1.4,
+                        letterSpacing: 1.2,
                       ),
                     ),
                     Text(
-                      'Отбой: ${sleepResult.optimalBedtime}',
-                      style: TextStyle(
+                      '${AppLocaleNotifier.pick('Отбой', 'Жатуу', 'Bedtime')}: ${sleepResult.optimalBedtime}',
+                      style: const TextStyle(
                         color: AppColors.amber,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -172,29 +183,59 @@ class CircaHypnogram extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
 
+                // Контейнер гипнограммы: честный empty при отсутствии эпох
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.raised,
+                    color: palette.raised,
                     borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
-                    border: Border.all(color: AppColors.line),
+                    border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                   ),
                   child: sleepResult.hypnogram.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 20),
-                            child: Text(
-                              'Гипнограмма формируется во время ночного отдыха с подключенным браслетом KALKAN',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppColors.muted,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Серая полоса сна без фаз
+                            Container(
+                              width: double.infinity,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: palette.surface,
+                                borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
+                                border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
+                              ),
+                              child: FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: (coveragePercent / 100).clamp(0.08, 1.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: palette.secondary.withValues(alpha: 0.35),
+                                    borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 14),
+                            Text(
+                              AppLocaleNotifier.pick(
+                                'Ночь без фаз — часы не отдали гипнограмму',
+                                'Фазаларсыз түн — саат гипнограмманы берген жок',
+                                'Night without sleep stages — watch did not provide hypnogram',
+                              ),
+                              style: AppTypography.bodySemibold(palette.fg),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppLocaleNotifier.pick(
+                                'Оптический датчик СААТ-1 зафиксировал общее время отдыха ($actualHoursч $actualMinutesм), но не передал непрерывную разбивку на фазы (глубокий / REM). Серая полоса честно отображает несегментированный сон. Приложение намеренно не генерирует искусственный 90-минутный цикл.',
+                                'СААТ-1 оптикалык сенсору жалпы эс алуу убактысын ($actualHoursс $actualMinutesм) жазды, бирок фазаларга (терең / REM) бөлүнүүнү берген жок. Боз тилке бөлүштүрүлбөгөн уйкуну ачык көрсөтөт. Тиркеме жасалма 90 мүнөттүк циклди жаратпайт.',
+                                'The SAAT-1 optical sensor recorded total rest duration ($actualHours h $actualMinutes m), but continuous phase epochs (Deep / REM) were not received. The gray bar displays unsegmented sleep authentically. The app deliberately avoids generating an artificial 90-minute cycle.',
+                              ),
+                              style: AppTypography.caption(palette.secondary),
+                            ),
+                          ],
                         )
                       : Column(
                           children: [
@@ -205,40 +246,41 @@ class CircaHypnogram extends StatelessWidget {
                                 painter: _HypnogramPainter(epochs: sleepResult.hypnogram),
                               ),
                             ),
-                            SizedBox(height: 12),
+                            const SizedBox(height: 12),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _buildLegendItem('Глубокий', AppColors.sage),
-                                _buildLegendItem('REM (быстрый)', AppColors.amber),
-                                _buildLegendItem('Легкий', AppColors.muted),
-                                _buildLegendItem('Пробуждения', AppColors.rose),
+                                _buildLegendItem('Глубокий', AppColors.sage, palette),
+                                _buildLegendItem('REM (быстрый)', AppColors.amber, palette),
+                                _buildLegendItem('Легкий', palette.secondary, palette),
+                                _buildLegendItem('Пробуждения', AppColors.rose, palette),
                               ],
                             ),
                           ],
                         ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 // Кнопка закрытия
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.raised,
-                      foregroundColor: AppColors.fg,
+                      backgroundColor: palette.raised,
+                      foregroundColor: palette.fg,
                       minimumSize: const Size(0, KalkanUi.minTapTarget),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                        side: BorderSide(color: AppColors.line),
+                        side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
                     ),
                     onPressed: () => Navigator.of(ctx).pop(),
                     child: Text(
-                      'ЗАКРЫТЬ',
-                      style: TextStyle(
-                        fontSize: 13,
+                      AppLocaleNotifier.pick('ЗАКРЫТЬ', 'ЖАБУУ', 'CLOSE'),
+                      style: AppTypography.monoLabel(palette.fg).copyWith(
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2,
                       ),
@@ -255,18 +297,20 @@ class CircaHypnogram extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KalkanColors.of(context);
     final needHours = sleepResult.sleepNeedMinutes ~/ 60;
     final needMinutes = sleepResult.sleepNeedMinutes % 60;
     final actualHours = sleepResult.actualSleepMinutes ~/ 60;
     final actualMinutes = sleepResult.actualSleepMinutes % 60;
     final coveragePercent = (sleepResult.sleepPerformanceScore).clamp(0, 100);
 
-    return GlassCard(
+    return KalkanCard(
+      padding: const EdgeInsets.all(KalkanUi.cardPadding),
       onTap: () => _showDetailsModal(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Заголовок
+          // Заголовок карточки
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -277,17 +321,16 @@ class CircaHypnogram extends StatelessWidget {
                     height: 7,
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.sage,
+                      color: AppColors.sleepBlue,
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    'ПОТРЕБНОСТЬ ВО СНЕ',
-                    style: TextStyle(
-                      color: AppColors.muted,
+                    AppLocaleNotifier.pick('ПОТРЕБНОСТЬ ВО СНЕ', 'УЙКУГА МУКТАЖДЫК', 'SLEEP NEED'),
+                    style: AppTypography.monoLabel(palette.secondary).copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 2.0,
+                      letterSpacing: 1.5,
                     ),
                   ),
                 ],
@@ -295,18 +338,19 @@ class CircaHypnogram extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.raised,
+                  color: palette.raised,
                   borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                  border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.bedtime_outlined, size: 12, color: AppColors.amber),
-                    SizedBox(width: 4),
+                    const Icon(Icons.bedtime_outlined, size: 12, color: AppColors.amber),
+                    const SizedBox(width: 4),
                     Text(
-                      'Отбой: ${sleepResult.optimalBedtime}',
+                      '${AppLocaleNotifier.pick('Отбой', 'Жатуу', 'Bedtime')}: ${sleepResult.optimalBedtime}',
                       style: TextStyle(
-                        color: AppColors.fg,
+                        color: palette.fg,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
@@ -316,7 +360,7 @@ class CircaHypnogram extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           // Фактический сон vs Потребность
           Row(
@@ -326,7 +370,7 @@ class CircaHypnogram extends StatelessWidget {
               Text(
                 '$actualHoursч $actualMinutesм',
                 style: TextStyle(
-                  color: AppColors.fg,
+                  color: palette.fg,
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.8,
@@ -336,27 +380,24 @@ class CircaHypnogram extends StatelessWidget {
               Text(
                 ' / $needHoursч $needMinutesм',
                 style: TextStyle(
-                  color: AppColors.muted,
+                  color: palette.secondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: coveragePercent >= 80
-                      ? AppColors.sage.withValues(alpha: 0.16)
-                      : AppColors.amber.withValues(alpha: 0.16),
+                  color: (coveragePercent >= 80 ? AppColors.sage : AppColors.amber).withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   border: Border.all(
-                    color: coveragePercent >= 80
-                        ? AppColors.sage.withValues(alpha: 0.5)
-                        : AppColors.amber.withValues(alpha: 0.5),
+                    color: (coveragePercent >= 80 ? AppColors.sage : AppColors.amber).withValues(alpha: 0.5),
+                    width: KalkanUi.hairline,
                   ),
                 ),
                 child: Text(
-                  '$coveragePercent% ПОКРЫТИЯ',
+                  '$coveragePercent% ${AppLocaleNotifier.pick('ПОКРЫТИЯ', 'КАМСЫЗДОО', 'COVERAGE')}',
                   style: TextStyle(
                     color: coveragePercent >= 80 ? AppColors.sage : AppColors.amber,
                     fontSize: 10.5,
@@ -367,58 +408,113 @@ class CircaHypnogram extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // Прогресс-бар покрытия
-          ClipRRect(
-            borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
-            child: LinearProgressIndicator(
-              value: (coveragePercent / 100).clamp(0.0, 1.0),
-              minHeight: 6,
-              backgroundColor: AppColors.raised,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                coveragePercent >= 80 ? AppColors.sage : AppColors.amber,
+          // Честное отображение: серая полоса сна при отсутствии детальных фаз
+          if (sleepResult.hypnogram.isEmpty) ...[
+            Container(
+              width: double.infinity,
+              height: 8,
+              decoration: BoxDecoration(
+                color: palette.raised,
+                borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
+                border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: (coveragePercent / 100).clamp(0.08, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: palette.secondary.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
+                  ),
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 10),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 14, color: palette.secondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    AppLocaleNotifier.pick(
+                      'Ночь без фаз — часы не отдали гипнограмму',
+                      'Фазаларсыз түн — саат гипнограмманы берген жок',
+                      'Night without sleep stages — watch did not provide hypnogram',
+                    ),
+                    style: AppTypography.caption(palette.secondary),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            // Реальные фазы только при наличии фактических эпох от сенсора
+            Builder(builder: (_) {
+              final deepMinutes = sleepResult.hypnogram
+                  .where((e) => e.stage == SleepStageType.deep)
+                  .fold<int>(0, (sum, e) => sum + e.durationMinutes);
+              final remMinutes = sleepResult.hypnogram
+                  .where((e) => e.stage == SleepStageType.rem)
+                  .fold<int>(0, (sum, e) => sum + e.durationMinutes);
+              final lightMinutes = sleepResult.hypnogram
+                  .where((e) => e.stage == SleepStageType.light)
+                  .fold<int>(0, (sum, e) => sum + e.durationMinutes);
 
-          // Сводка основных фаз
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildPhaseSummary('Глубокий', '${(sleepResult.actualSleepMinutes * 0.22 / 60).toStringAsFixed(1)}ч', AppColors.sage),
-              _buildPhaseSummary('REM (быстрый)', '${(sleepResult.actualSleepMinutes * 0.24 / 60).toStringAsFixed(1)}ч', AppColors.amber),
-              _buildPhaseSummary('Легкий', '${(sleepResult.actualSleepMinutes * 0.54 / 60).toStringAsFixed(1)}ч', AppColors.muted),
-            ],
-          ),
-          SizedBox(height: 10),
+              return Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
+                    child: LinearProgressIndicator(
+                      value: (coveragePercent / 100).clamp(0.0, 1.0),
+                      minHeight: 6,
+                      backgroundColor: palette.raised,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        coveragePercent >= 80 ? AppColors.sage : AppColors.amber,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildPhaseSummary('Глубокий', '${(deepMinutes / 60).toStringAsFixed(1)}ч', AppColors.sage, palette),
+                      _buildPhaseSummary('REM (быстрый)', '${(remMinutes / 60).toStringAsFixed(1)}ч', AppColors.amber, palette),
+                      _buildPhaseSummary('Легкий', '${(lightMinutes / 60).toStringAsFixed(1)}ч', palette.secondary, palette),
+                    ],
+                  ),
+                ],
+              );
+            }),
+          ],
+          const SizedBox(height: 12),
 
-          // Подсказка нажать для подробного разбора
+          // Ссылка на подробный разбор
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.raised.withValues(alpha: 0.6),
+              color: palette.raised,
               borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+              border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.query_stats, size: 14, color: AppColors.amber),
-                    SizedBox(width: 6),
+                    const Icon(Icons.query_stats, size: 14, color: AppColors.amber),
+                    const SizedBox(width: 6),
                     Text(
-                      'Подробный разбор фаз и долга сна',
+                      AppLocaleNotifier.pick('Подробный разбор факторов сна', 'Уйку факторлорун кеңири талдоо', 'Detailed sleep factors analysis'),
                       style: TextStyle(
-                        color: AppColors.fg,
-                        fontSize: 10.5,
+                        color: palette.fg,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                Icon(Icons.chevron_right, size: 16, color: AppColors.amber),
+                Icon(Icons.chevron_right, size: 16, color: palette.secondary),
               ],
             ),
           ),
@@ -427,7 +523,7 @@ class CircaHypnogram extends StatelessWidget {
     );
   }
 
-  static Widget _buildPhaseSummary(String label, String value, Color dotColor) {
+  static Widget _buildPhaseSummary(String label, String value, Color dotColor, KalkanColors palette) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -439,29 +535,29 @@ class CircaHypnogram extends StatelessWidget {
             color: dotColor,
           ),
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(
           '$label: ',
-          style: TextStyle(color: AppColors.muted, fontSize: 10),
+          style: TextStyle(color: palette.secondary, fontSize: 10),
         ),
         Text(
           value,
-          style: TextStyle(color: AppColors.fg, fontSize: 10, fontWeight: FontWeight.w700),
+          style: TextStyle(color: palette.fg, fontSize: 10, fontWeight: FontWeight.w700),
         ),
       ],
     );
   }
 
-  static Widget _buildNeedItem(String label, String val, {bool isHighlight = false}) {
+  static Widget _buildNeedItem(KalkanColors palette, String label, String val, {bool isHighlight = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: AppColors.faint, fontSize: 9)),
-        SizedBox(height: 2),
+        Text(label, style: TextStyle(color: palette.secondary, fontSize: 9)),
+        const SizedBox(height: 2),
         Text(
           val,
           style: TextStyle(
-            color: isHighlight ? AppColors.amber : AppColors.fg,
+            color: isHighlight ? AppColors.amber : palette.fg,
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
@@ -470,24 +566,24 @@ class CircaHypnogram extends StatelessWidget {
     );
   }
 
-  static Widget _buildFactorPill(String title, String val) {
+  static Widget _buildFactorPill(KalkanColors palette, String title, String val) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.raised,
+          color: palette.surface,
           borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-          border: Border.all(color: AppColors.line),
+          border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
         ),
         child: Column(
           children: [
-            Text(val, style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w700)),
-            SizedBox(height: 2),
+            Text(val, style: TextStyle(color: palette.fg, fontSize: 12, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 2),
             Text(
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppColors.muted, fontSize: 8.5),
+              style: TextStyle(color: palette.secondary, fontSize: 8.5),
             ),
           ],
         ),
@@ -495,7 +591,7 @@ class CircaHypnogram extends StatelessWidget {
     );
   }
 
-  static Widget _buildLegendItem(String label, Color color) {
+  static Widget _buildLegendItem(String label, Color color, KalkanColors palette) {
     return Row(
       children: [
         Container(
@@ -503,8 +599,8 @@ class CircaHypnogram extends StatelessWidget {
           height: 7,
           decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
-        SizedBox(width: 4),
-        Text(label, style: TextStyle(color: AppColors.muted, fontSize: 9)),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(color: palette.secondary, fontSize: 9)),
       ],
     );
   }
