@@ -8,6 +8,7 @@ import 'package:barys_biotracker/presentation/widgets/precision_strain_bar.dart'
 import 'package:barys_biotracker/presentation/widgets/precision_sleep_card.dart';
 import 'package:barys_biotracker/presentation/widgets/precision_pulse_wave.dart';
 import 'package:barys_biotracker/presentation/widgets/precision_coach_card.dart';
+import 'package:barys_biotracker/presentation/widgets/kalkan_ui.dart';
 
 void main() {
   group('Precision Athletic UI Components Test Suite', () {
@@ -163,6 +164,18 @@ void main() {
       expect(find.text('REST HR'), findsOneWidget);
       expect(find.text('SKIN TEMP'), findsOneWidget);
       expect(find.text('—'), findsNWidgets(3)); // HRV, REST HR, and SKIN TEMP are unmeasured
+    });
+
+    test('8. KalkanUi enforces canonical design grid, radii, and tap target laws', () {
+      expect(KalkanUi.cardRadius, equals(14.0));
+      expect(KalkanUi.controlRadius, equals(8.0));
+      expect(KalkanUi.progressRadius, equals(4.0));
+      expect(KalkanUi.pagePadding, equals(20.0));
+      expect(KalkanUi.pageHorizontal, equals(20.0));
+      expect(KalkanUi.cardStackSpacing, equals(12.0));
+      expect(KalkanUi.cardPadding, equals(16.0));
+      expect(KalkanUi.minTapTarget, equals(44.0));
+      expect(KalkanUi.hairline, equals(1.0));
     });
   });
 }

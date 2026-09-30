@@ -9,6 +9,7 @@ import 'account_setup_screen.dart';
 import 'auth_screen.dart';
 import 'device_pair_screen.dart';
 import 'main_shell.dart';
+import '../widgets/kalkan_ui.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -82,7 +83,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           backgroundColor: palette.bg,
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+              padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 20, KalkanUi.pagePadding, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -94,8 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         onPressed: () => AppLocaleNotifier.toggleLanguage(),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          minimumSize: const Size(44, KalkanUi.minTapTarget),
                         ),
                         child: Text(
                           '${language.flag} ${language.shortTitle}',
@@ -111,7 +111,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: 20),
                   Expanded(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
                       child: Image.asset(photos[_step], fit: BoxFit.cover, width: double.infinity),
                     ),
                   ),
@@ -124,7 +124,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     height: 6,
                     decoration: BoxDecoration(
                       color: i == _step ? AppColors.sage : palette.hairline,
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                     ),
                   );
                 }),
@@ -150,12 +150,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _finish(calibrate: true);
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.sage, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 14)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.sage,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size(44, KalkanUi.minTapTarget),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                  ),
                   child: Text(_step < 3 ? (AppLocaleNotifier.pick('Дальше', 'Кийинки', 'Next')) : (AppLocaleNotifier.pick('Начать 14 дней', '14 күндү баштоо', 'Start 14 days'))),
                 ),
               ),
               TextButton(
                 onPressed: () => _finish(calibrate: false),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(44, KalkanUi.minTapTarget),
+                ),
                 child: Text(AppLocaleNotifier.pick('Пропустить', 'Өткөрүп жиберүү', 'Skip'), style: TextStyle(color: palette.secondary)),
               ),
             ],

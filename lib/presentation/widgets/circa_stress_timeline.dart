@@ -105,7 +105,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
           ),
           decoration: const BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             border: Border(top: BorderSide(color: AppColors.lineStrong, width: 1)),
           ),
           child: Column(
@@ -118,7 +118,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.faint,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
@@ -139,7 +139,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: slot.level.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: slot.level.color.withValues(alpha: 0.4)),
                     ),
                     child: Text(
@@ -202,15 +202,15 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                         fillColor: AppColors.raised,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: AppColors.line),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: AppColors.line),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                           borderSide: const BorderSide(color: AppColors.sage),
                         ),
                       ),
@@ -224,7 +224,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.sage,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
                     child: Text(
@@ -306,7 +306,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.raised,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,7 +338,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.raised,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,7 +370,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
 
           // 3. Каталог дня: Интерактивный Story-формат «День в 5 событиях»
           InkWell(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             onTap: () {
               final updatedSummary = StressDaySummary(
                 currentStressScore: summary.currentStressScore,
@@ -396,7 +396,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: AppColors.amber.withValues(alpha: 0.35),
                   width: 1,
@@ -487,7 +487,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: InkWell(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 onTap: () => _openTagPicker(slot),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -495,7 +495,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
                     color: slot.userTag != null
                         ? AppColors.raised.withValues(alpha: 0.7)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                     border: slot.userTag != null
                         ? Border.all(color: slot.level.color.withValues(alpha: 0.3))
                         : null,
@@ -578,7 +578,7 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
 
                             // Микро-шкала прогресса стресса (строго Sage/Amber/Rose)
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(2),
+                              borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: slot.stressScore / 100.0,
                                 minHeight: 3,

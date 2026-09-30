@@ -10,6 +10,7 @@ import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/app_icon_service.dart';
 import 'legal_screen.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 
 class SettingsScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -120,14 +121,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         await AppIconService.setIcon(id);
       },
       child: Container(
+        constraints: const BoxConstraints(minHeight: KalkanUi.minTapTarget),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: on ? AppColors.sage.withValues(alpha: 0.14) : palette.raised,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: Border.all(color: on ? AppColors.sage : palette.hairline),
         ),
         child: Row(children: [
-          Container(width: 28, height: 28, decoration: BoxDecoration(color: swatch, borderRadius: BorderRadius.circular(8), border: Border.all(color: palette.hairline))),
+          Container(width: 28, height: 28, decoration: BoxDecoration(color: swatch, borderRadius: BorderRadius.circular(KalkanUi.controlRadius), border: Border.all(color: palette.hairline))),
           const SizedBox(width: 8),
           Expanded(child: Text(title, style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w600))),
         ]),
@@ -139,10 +141,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        constraints: const BoxConstraints(minHeight: KalkanUi.minTapTarget),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: active ? AppColors.sage.withValues(alpha: 0.14) : palette.raised,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: Border.all(color: active ? AppColors.sage : palette.hairline),
         ),
         alignment: Alignment.center,
@@ -172,11 +175,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
         title: Text(AppLocaleNotifier.pick('JSON копии', 'JSON', 'Backup JSON'), style: TextStyle(color: AppColors.fg)),
         content: TextField(controller: controller, maxLines: 6),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocaleNotifier.pick('Отмена', 'Жок', 'Cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, controller.text), child: Text(AppLocaleNotifier.pick('Ок', 'Макул', 'OK'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(minimumSize: const Size(44, KalkanUi.minTapTarget)),
+            child: Text(AppLocaleNotifier.pick('Отмена', 'Жок', 'Cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            style: TextButton.styleFrom(minimumSize: const Size(44, KalkanUi.minTapTarget)),
+            child: Text(AppLocaleNotifier.pick('Ок', 'Макул', 'OK')),
+          ),
         ],
       ),
     );

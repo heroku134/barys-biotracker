@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_colors.dart';
 import 'circa_haptics.dart';
+import '../presentation/widgets/kalkan_ui.dart';
 
 class AppThemeNotifier extends ValueNotifier<ThemeMode> {
   static const String _prefKey = 'kalkan_app_theme_mode';
@@ -105,16 +106,16 @@ class AppThemeNotifier extends ValueNotifier<ThemeMode> {
         hintStyle: TextStyle(color: palette.muted, fontFamily: 'Manrope'),
         labelStyle: TextStyle(color: palette.secondary, fontFamily: 'Manrope'),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: palette.hairline),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+          borderSide: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: palette.hairline),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+          borderSide: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.sage),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+          borderSide: const BorderSide(color: AppColors.sage, width: KalkanUi.hairline),
         ),
       ),
       shadowColor: palette.shadow,
@@ -123,13 +124,17 @@ class AppThemeNotifier extends ValueNotifier<ThemeMode> {
         elevation: brightness == Brightness.light ? 2 : 0,
         shadowColor: palette.shadow,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: palette.hairline),
+          borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+          side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: palette.surface,
         shadowColor: palette.shadow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+          side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
+        ),
         titleTextStyle: TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600, fontSize: 18, color: palette.fg),
         contentTextStyle: TextStyle(fontFamily: 'Manrope', fontSize: 14, height: 1.45, color: palette.secondary),
       ),
@@ -137,21 +142,29 @@ class AppThemeNotifier extends ValueNotifier<ThemeMode> {
         backgroundColor: palette.surface,
         shadowColor: palette.shadow,
         modalBackgroundColor: palette.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
+          side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
+        ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: palette.raised,
         selectedColor: AppColors.sage,
         labelStyle: TextStyle(color: palette.fg, fontFamily: 'Manrope', fontSize: 12),
         secondaryLabelStyle: TextStyle(color: Colors.white, fontFamily: 'Manrope', fontSize: 12),
-        side: BorderSide(color: palette.hairline),
+        side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.sage,
           foregroundColor: Colors.white,
           elevation: 0,
+          minimumSize: const Size(44, KalkanUi.minTapTarget),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
           textStyle: const TextStyle(
             fontFamily: 'Manrope',
             fontSize: 14,
@@ -162,9 +175,10 @@ class AppThemeNotifier extends ValueNotifier<ThemeMode> {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: palette.fg,
-          side: BorderSide(color: palette.hairline),
+          minimumSize: const Size(44, KalkanUi.minTapTarget),
+          side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
           textStyle: const TextStyle(
             fontFamily: 'Manrope',
             fontSize: 14,
@@ -175,6 +189,7 @@ class AppThemeNotifier extends ValueNotifier<ThemeMode> {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: palette.secondary,
+          minimumSize: const Size(44, KalkanUi.minTapTarget),
           textStyle: const TextStyle(
             fontFamily: 'Manrope',
             fontSize: 13,

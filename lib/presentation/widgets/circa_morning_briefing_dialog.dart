@@ -6,6 +6,7 @@ import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
+import 'kalkan_ui.dart';
 
 class CircaMorningBriefingDialog extends StatelessWidget {
   final BleTelemetry telemetry;
@@ -42,7 +43,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.stage,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
           border: Border.all(color: AppColors.lineStrong, width: 1.2),
           boxShadow: [
             BoxShadow(
@@ -86,7 +87,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: readiness.zone.color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   ),
                   child: Text(
                     readiness.zone.badgeText,
@@ -134,7 +135,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
                 border: Border.all(color: AppColors.line),
               ),
               child: Row(
@@ -196,8 +197,9 @@ class CircaMorningBriefingDialog extends StatelessWidget {
                   backgroundColor: AppColors.amber,
                   foregroundColor: AppColors.stage,
                   elevation: 0,
+                  minimumSize: const Size(0, KalkanUi.minTapTarget),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   ),
                 ),
                 onPressed: () => Navigator.pop(context),
@@ -228,7 +230,7 @@ class CircaMorningBriefingDialog extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: Border.all(color: AppColors.line),
         ),
         child: Column(

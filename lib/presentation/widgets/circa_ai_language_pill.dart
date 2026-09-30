@@ -22,10 +22,10 @@ class CircaAiLanguagePill extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: palette.surface.withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: AppColors.sage.withValues(alpha: 0.55),
-                width: 1.2,
+                width: 1.0,
               ),
               boxShadow: [
                 BoxShadow(

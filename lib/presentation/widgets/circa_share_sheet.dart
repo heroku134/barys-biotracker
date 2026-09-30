@@ -9,6 +9,7 @@ import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import 'circa_share_card_widget.dart';
+import 'kalkan_ui.dart';
 
 class CircaShareSheet extends StatefulWidget {
   final BleTelemetry telemetry;
@@ -130,7 +131,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
           backgroundColor: AppColors.surface,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
             side: const BorderSide(color: AppColors.amber, width: 1.0),
           ),
           content: Row(
@@ -172,7 +173,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.stage,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
         border: Border(top: BorderSide(color: AppColors.line, width: 1.5)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
@@ -187,7 +188,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.faint,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                 ),
               ),
             ),
@@ -234,7 +235,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                 border: Border.all(color: AppColors.line),
               ),
               child: Row(
@@ -246,7 +247,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         decoration: BoxDecoration(
                           color: !_isMotionMode ? AppColors.raised : Colors.transparent,
-                          borderRadius: BorderRadius.circular(9),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                         ),
                         child: Center(
                           child: Row(
@@ -280,7 +281,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         decoration: BoxDecoration(
                           color: _isMotionMode ? AppColors.amber.withValues(alpha: 0.2) : Colors.transparent,
-                          borderRadius: BorderRadius.circular(9),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           border: _isMotionMode
                               ? Border.all(color: AppColors.amber.withValues(alpha: 0.5))
                               : null,
@@ -321,7 +322,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                 border: Border.all(color: AppColors.line),
               ),
               child: Row(
@@ -337,7 +338,7 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
                           color: isSelected ? AppColors.raised : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           border: Border.all(
                             color: isSelected ? AppColors.line : Colors.transparent,
                           ),
@@ -403,8 +404,9 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                       backgroundColor: AppColors.amber,
                       foregroundColor: AppColors.stage,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      minimumSize: const Size(0, KalkanUi.minTapTarget),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       ),
                       elevation: 0,
                     ),
@@ -447,8 +449,9 @@ KALKAN BIOTRACKER · ДЕНЬ 14
                       foregroundColor: AppColors.fg,
                       side: BorderSide(color: AppColors.line, width: 1.2),
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      minimumSize: const Size(0, KalkanUi.minTapTarget),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       ),
                     ),
                     onPressed: _isExporting

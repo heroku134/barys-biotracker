@@ -5,6 +5,7 @@ import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/readiness.dart';
 import '../../domain/models/telemetry.dart';
+import 'kalkan_ui.dart';
 
 enum ShareCardTheme {
   recovery('Восстановление', 'RECOVERY'),
@@ -75,7 +76,7 @@ class CircaShareCardWidget extends StatelessWidget {
           color: isRareGold ? AppColors.amber : AppColors.line,
           width: isRareGold ? 1.6 : 1.0,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
         boxShadow: isRareGold
             ? [
                 BoxShadow(
@@ -119,7 +120,7 @@ class CircaShareCardWidget extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: AppColors.amber.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                                 border: Border.all(color: AppColors.amber.withValues(alpha: 0.6)),
                               ),
                               child: Text(
@@ -166,7 +167,7 @@ class CircaShareCardWidget extends StatelessWidget {
                   color: isRareGold
                       ? AppColors.amber.withValues(alpha: 0.15)
                       : AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   border: Border.all(
                     color: isRareGold
                         ? AppColors.amber
@@ -382,7 +383,7 @@ class CircaShareCardWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
             border: Border.all(
               color: isRareGold ? AppColors.amber.withValues(alpha: 0.4) : AppColors.line,
             ),
@@ -495,7 +496,7 @@ class CircaShareCardWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
             border: Border.all(color: AppColors.line),
           ),
           child: Row(
@@ -519,7 +520,7 @@ class CircaShareCardWidget extends StatelessWidget {
 
         // Полоса прогресса
         ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
           child: LinearProgressIndicator(
             value: (animatedStrain / 21.0).clamp(0.0, 1.0),
             backgroundColor: AppColors.raised,
@@ -604,7 +605,7 @@ class CircaShareCardWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
             border: Border.all(color: AppColors.line),
           ),
           child: Row(
@@ -625,7 +626,7 @@ class CircaShareCardWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: AppColors.raised,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
             border: Border.all(color: AppColors.line),
           ),
           child: Row(

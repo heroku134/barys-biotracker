@@ -5,6 +5,7 @@ import '../../core/circa_haptics.dart';
 import '../../data/storage/partner_cycle_repository.dart';
 import '../../domain/models/partner_cycle_data.dart';
 import 'glass_card.dart';
+import 'kalkan_ui.dart';
 
 /// Модальный экран глубокого анализа биоритма партнёрши и советов для партнёра
 class CircaPartnerCycleSheet extends StatelessWidget {
@@ -29,7 +30,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.stage,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
         border: Border(top: BorderSide(color: AppColors.lineStrong, width: 1.2)),
       ),
       padding: EdgeInsets.only(
@@ -49,7 +50,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.lineStrong,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                 ),
               ),
             ),
@@ -101,8 +102,8 @@ class CircaPartnerCycleSheet extends StatelessWidget {
 
             // Главная карточка фазы и статуса
             GlassCard(
-              borderRadius: 20,
-              padding: const EdgeInsets.all(16),
+              borderRadius: KalkanUi.cardRadius,
+              padding: const EdgeInsets.all(KalkanUi.cardPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -113,7 +114,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: pColor.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           border: Border.all(color: pColor.withValues(alpha: 0.4)),
                         ),
                         child: Text(
@@ -163,8 +164,8 @@ class CircaPartnerCycleSheet extends StatelessWidget {
 
             // Совет для партнёра на сегодня
             GlassCard(
-              borderRadius: 20,
-              padding: const EdgeInsets.all(16),
+              borderRadius: KalkanUi.cardRadius,
+              padding: const EdgeInsets.all(KalkanUi.cardPadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -201,8 +202,8 @@ class CircaPartnerCycleSheet extends StatelessWidget {
             // Отмеченные симптомы (если есть)
             if (data.symptoms.isNotEmpty) ...[
               GlassCard(
-                borderRadius: 18,
-                padding: const EdgeInsets.all(14),
+                borderRadius: KalkanUi.cardRadius,
+                padding: const EdgeInsets.all(KalkanUi.cardPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -224,7 +225,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: AppColors.raised,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                             border: Border.all(color: AppColors.line),
                           ),
                           child: Text(
@@ -269,7 +270,8 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColors.line),
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      minimumSize: const Size(0, KalkanUi.minTapTarget),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                     ),
                   ),
                 ),
@@ -281,6 +283,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                         context: context,
                         builder: (ctx) => AlertDialog(
                           backgroundColor: AppColors.surface,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
                           title: Text('Отвязать партнёра?', style: TextStyle(color: AppColors.fg, fontSize: 16)),
                           content: Text(
                             'Карточка партнёра будет скрыта с главного экрана.',
@@ -289,6 +292,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(ctx).pop(false),
+                              style: TextButton.styleFrom(minimumSize: const Size(44, KalkanUi.minTapTarget)),
                               child: Text('ОТМЕНА', style: TextStyle(color: AppColors.muted)),
                             ),
                             ElevatedButton(
@@ -296,6 +300,8 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.rose,
                                 foregroundColor: Colors.white,
+                                minimumSize: const Size(44, KalkanUi.minTapTarget),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                               ),
                               child: Text('ОТВЯЗАТЬ'),
                             ),
@@ -314,6 +320,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
                     ),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
+                      minimumSize: const Size(0, KalkanUi.minTapTarget),
                     ),
                   ),
                 ),
@@ -330,7 +337,7 @@ class CircaPartnerCycleSheet extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.raised,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
         border: Border.all(color: AppColors.line),
       ),
       child: Column(

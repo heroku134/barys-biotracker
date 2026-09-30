@@ -7,6 +7,7 @@ import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import 'glass_card.dart';
+import 'kalkan_ui.dart';
 
 /// Виджет-карточка менструального цикла на главном экране (активна строго для женского пола)
 class CircaCycleCard extends StatelessWidget {
@@ -66,8 +67,8 @@ class CircaCycleCard extends StatelessWidget {
             onTap();
           },
           child: GlassCard(
-            borderRadius: 20,
-            padding: const EdgeInsets.all(18),
+            borderRadius: KalkanUi.cardRadius,
+            padding: const EdgeInsets.all(KalkanUi.cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -147,7 +148,7 @@ class CircaCycleCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: pColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                         border: Border.all(color: pColor.withValues(alpha: 0.35), width: 1.0),
                       ),
                       child: Row(
@@ -187,7 +188,7 @@ class CircaCycleCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: AppColors.raised,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                     border: Border.all(color: AppColors.line.withValues(alpha: 0.8)),
                   ),
                   child: Row(
@@ -248,7 +249,7 @@ class CircaCycleCard extends StatelessWidget {
               height: isCurrent ? 14 : 6,
               decoration: BoxDecoration(
                 color: isCurrent ? activeColor : tickColor,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                 boxShadow: isCurrent
                     ? [
                         BoxShadow(

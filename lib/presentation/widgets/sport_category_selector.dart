@@ -42,13 +42,13 @@ class SportCategoryFilterBar extends StatelessWidget {
         KalkanHaptics.selectionClick();
         onFilterChanged(category);
       },
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.amber : palette.surface,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? AppColors.amber : palette.hairline,
             width: 1.0,
@@ -123,14 +123,14 @@ class SportHorizontalCarousel extends StatelessWidget {
               KalkanHaptics.selectionClick();
               onSportSelected(sport);
             },
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               width: 172,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.amber.withValues(alpha: 0.12) : palette.surface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isSelected ? AppColors.amber : palette.hairline,
                   width: isSelected ? 1.5 : 1.0,
@@ -162,7 +162,7 @@ class SportHorizontalCarousel extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: (sport.needsGps ? AppColors.sage : AppColors.amber).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           sport.needsGps ? 'GPS' : (sport == SportType.strength ? 'СИЛА' : 'ЗАЛ'),

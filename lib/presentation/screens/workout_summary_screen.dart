@@ -10,6 +10,7 @@ import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/readiness.dart';
 import '../../domain/models/workout_session.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 import '../widgets/run_route_map_widget.dart';
 
 class WorkoutSummaryScreen extends StatelessWidget {
@@ -72,15 +73,15 @@ class WorkoutSummaryScreen extends StatelessWidget {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 8, KalkanUi.pagePadding, 32),
         children: [
           // 1. Карта маршрута (ТОЛЬКО для уличных видов спорта с реальным GPS-треком)
           if (workout.sport.needsGps && routePoints.isNotEmpty) ...[
             Container(
               height: 220,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: palette.hairline),
+                borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
               ),
               child: RunRouteMapWidget(
                 points: routePoints,
@@ -88,7 +89,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                 initialZoom: 14.5,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: KalkanUi.cardStackSpacing),
           ],
 
           // 2. Хедер тренировки
@@ -291,8 +292,9 @@ class WorkoutSummaryScreen extends StatelessWidget {
                 backgroundColor: AppColors.sage,
                 foregroundColor: Colors.white,
                 elevation: 0,
+                minimumSize: const Size(44, KalkanUi.minTapTarget),
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
               ),
               label: Text(
                 AppLocaleNotifier.pick('Записать в дневник и закрыть', 'Күндөлүккө жазып жабуу', 'Save to Journal & Close'),
@@ -304,6 +306,9 @@ class WorkoutSummaryScreen extends StatelessWidget {
           Center(
             child: TextButton(
               onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(44, KalkanUi.minTapTarget),
+              ),
               child: Text(
                 AppLocaleNotifier.pick('Закрыть без записи', 'Жазуусуз жабуу', 'Close without saving'),
                 style: AppTypography.body(palette.secondary),
@@ -337,8 +342,8 @@ class WorkoutSummaryScreen extends StatelessWidget {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: palette.raised,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: palette.hairline),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+          border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
         ),
         child: Row(
           children: [
@@ -346,7 +351,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
               ),
               child: Icon(icon, size: 16, color: color),
             ),
@@ -381,7 +386,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
     return Column(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
           child: Row(
             children: List.generate(5, (i) {
               final zSec = (i < zones.length && zones[i] > 0) ? zones[i] : (total * (0.1 + (i == 1 ? 0.3 : 0.15))).toInt();

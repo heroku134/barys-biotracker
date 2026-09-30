@@ -3,6 +3,7 @@ import '../../core/app_colors.dart';
 import '../../core/circa_haptics.dart';
 import '../../domain/intelligence/healthspan_engine.dart';
 import 'glass_card.dart';
+import 'kalkan_ui.dart';
 
 class CircaHealthspanCard extends StatelessWidget {
   final HealthspanResult healthspan;
@@ -44,7 +45,7 @@ class CircaHealthspanCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: AppColors.raised.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
               border: Border.all(color: AppColors.line),
             ),
             child: Row(
@@ -76,7 +77,7 @@ class CircaHealthspanCard extends StatelessWidget {
       context: context,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -90,7 +91,7 @@ class CircaHealthspanCard extends StatelessWidget {
                 height: 4,
                 decoration: BoxDecoration(
                   color: AppColors.line,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                 ),
               ),
             ),
@@ -117,7 +118,7 @@ class CircaHealthspanCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.sage.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   ),
                   child: Text(
                     'VO2max: ${healthspan.estimatedVo2Max}',
@@ -147,7 +148,7 @@ class CircaHealthspanCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.raised,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                 border: Border.all(color: AppColors.line),
               ),
               child: Text(
@@ -171,7 +172,7 @@ class CircaHealthspanCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         decoration: BoxDecoration(
           color: AppColors.raised,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: Border.all(color: AppColors.line),
         ),
         child: Column(

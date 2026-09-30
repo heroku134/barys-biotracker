@@ -8,6 +8,7 @@ import '../../data/storage/user_profile_repository.dart';
 import '../../domain/intelligence/pregnancy_engine.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 
 class PregnancyScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -85,7 +86,7 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 8, KalkanUi.pagePadding, 32),
         children: [
           GlassCard(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -185,7 +186,7 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
   Widget _metric(KalkanColors palette, String l, String v) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: palette.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: palette.hairline)),
+      decoration: BoxDecoration(color: palette.surface, borderRadius: BorderRadius.circular(KalkanUi.cardRadius), border: Border.all(color: palette.hairline, width: KalkanUi.hairline)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(l, style: AppTypography.caption(palette.secondary)),
         const SizedBox(height: 4),
@@ -200,6 +201,7 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
         title: Text(_t('Срок', 'Мөөнөт', 'Term'), style: TextStyle(color: AppColors.fg)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           TextButton(
@@ -207,6 +209,7 @@ class _PregnancyScreenState extends State<PregnancyScreen> {
               final picked = await showDatePicker(context: context, initialDate: due, firstDate: DateTime.now().subtract(const Duration(days: 30)), lastDate: DateTime.now().add(const Duration(days: 300)));
               if (picked != null) due = picked;
             },
+            style: TextButton.styleFrom(minimumSize: const Size(44, KalkanUi.minTapTarget)),
             child: Text(_t('Предполагаемые роды', 'Божомолдонгон төрөт', 'Estimated due date')),
           ),
           TextButton(

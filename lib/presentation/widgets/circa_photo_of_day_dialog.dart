@@ -9,6 +9,7 @@ import '../../core/circa_haptics.dart';
 import '../../domain/models/readiness.dart';
 import '../../domain/models/telemetry.dart';
 import 'stories_preview_dialog.dart';
+import 'kalkan_ui.dart';
 
 /// Диалог выгрузки и создания «Фото Дня» с биометрическим оверлеем (Whoop / Strava athletic style)
 class CircaPhotoOfDayDialog extends StatefulWidget {
@@ -113,7 +114,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
         border: Border(top: BorderSide(color: AppColors.hairline, width: 1.0)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
@@ -128,7 +129,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
               height: 4,
               decoration: BoxDecoration(
                 color: AppColors.faint,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
               ),
             ),
           ),
@@ -173,7 +174,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
             width: double.infinity,
             decoration: BoxDecoration(
               color: AppColors.raised,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
               border: Border.all(color: AppColors.hairline, width: 1.0),
             ),
             clipBehavior: Clip.antiAlias,
@@ -243,7 +244,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       border: Border.all(color: AppColors.hairline, width: 1.0),
                     ),
                     child: Row(
@@ -280,7 +281,8 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                     backgroundColor: AppColors.raised,
                     side: BorderSide(color: AppColors.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    minimumSize: const Size(0, KalkanUi.minTapTarget),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                   ),
                 ),
               ),
@@ -294,7 +296,8 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                     backgroundColor: AppColors.raised,
                     side: BorderSide(color: AppColors.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    minimumSize: const Size(0, KalkanUi.minTapTarget),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                   ),
                 ),
               ),
@@ -330,7 +333,8 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                 backgroundColor: AppColors.surface,
                 side: const BorderSide(color: AppColors.amber, width: 1.2),
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: const Size(0, KalkanUi.minTapTarget),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
               ),
             ),
           ),
@@ -347,6 +351,7 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: AppColors.surface,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
                     content: Text('Фото дня сохранено в профиле атлета!', style: TextStyle(color: AppColors.sage)),
                   ),
                 );
@@ -355,7 +360,8 @@ class _CircaPhotoOfDayDialogState extends State<CircaPhotoOfDayDialog> {
                 backgroundColor: AppColors.sage,
                 foregroundColor: AppColors.stage,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: const Size(0, KalkanUi.minTapTarget),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                 elevation: 0,
               ),
               child: Text(

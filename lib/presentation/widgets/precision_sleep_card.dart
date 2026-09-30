@@ -113,7 +113,7 @@ class PrecisionSleepCard extends StatelessWidget {
 
           // 3. Segmented Flat Sleep Bar (Zero glow, exact color coding)
           ClipRRect(
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(4),
             child: Container(
               height: 8,
               decoration: BoxDecoration(

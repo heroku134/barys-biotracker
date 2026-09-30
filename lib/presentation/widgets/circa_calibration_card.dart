@@ -84,7 +84,7 @@ class CircaCalibrationCard extends StatelessWidget {
                       color: isDone
                           ? (isCurrent ? AppColors.amber : AppColors.sage)
                           : palette.hairline,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 );
@@ -133,7 +133,7 @@ class CircaCalibrationCard extends StatelessWidget {
       context: context,
       backgroundColor: palette.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -151,7 +151,7 @@ class CircaCalibrationCard extends StatelessWidget {
                         height: 4,
                         decoration: BoxDecoration(
                           color: palette.hairline,
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),
@@ -179,7 +179,7 @@ class CircaCalibrationCard extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: palette.raised,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: palette.hairline),
                       ),
                       child: Text(
@@ -198,7 +198,7 @@ class CircaCalibrationCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: palette.raised,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: palette.hairline),
                       ),
                       child: Row(
@@ -240,7 +240,7 @@ class CircaCalibrationCard extends StatelessWidget {
                               foregroundColor: palette.fg,
                               side: BorderSide(color: palette.hairline),
                               padding: const EdgeInsets.symmetric(vertical: 13),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             child: const Text('+1 ДЕНЬ (ТЕСТ)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                           ),
@@ -254,7 +254,7 @@ class CircaCalibrationCard extends StatelessWidget {
                               foregroundColor: AppColors.stage,
                               padding: const EdgeInsets.symmetric(vertical: 13),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               elevation: 0,
                             ),

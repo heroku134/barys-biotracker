@@ -205,7 +205,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                                   value = _progressController.value;
                                 }
                                 return ClipRRect(
-                                  borderRadius: BorderRadius.circular(2),
+                                  borderRadius: BorderRadius.circular(4),
                                   child: LinearProgressIndicator(
                                     value: value,
                                     backgroundColor: AppColors.lineStrong,
@@ -280,10 +280,10 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: slot.level.color.withValues(alpha: 0.35),
-                            width: 1.2,
+                            width: 1.0,
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -430,7 +430,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                                                 ),
                                                 decoration: BoxDecoration(
                                                   color: AppColors.amber.withValues(alpha: 0.15),
-                                                  borderRadius: BorderRadius.circular(6),
+                                                  borderRadius: BorderRadius.circular(8),
                                                   border: Border.all(
                                                     color: AppColors.amber.withValues(alpha: 0.4),
                                                   ),
@@ -463,7 +463,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
                                         color: AppColors.raised,
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(8),
                                         border: Border.all(color: AppColors.line),
                                       ),
                                       child: Row(
@@ -537,7 +537,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                                               side: BorderSide(color: AppColors.line),
                                               padding: const EdgeInsets.symmetric(vertical: 10),
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
+                                                borderRadius: BorderRadius.circular(8),
                                               ),
                                             ),
                                           ),
@@ -563,7 +563,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                                               backgroundColor: slot.level.color,
                                               padding: const EdgeInsets.symmetric(vertical: 10),
                                               shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
+                                                borderRadius: BorderRadius.circular(8),
                                               ),
                                             ),
                                           ),
@@ -652,7 +652,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
           ),
           decoration: const BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
             border: Border(top: BorderSide(color: AppColors.lineStrong, width: 1)),
           ),
           child: Column(
@@ -665,7 +665,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.faint,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
@@ -741,15 +741,15 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                         fillColor: AppColors.raised,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: AppColors.line),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: AppColors.line),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                           borderSide: const BorderSide(color: AppColors.sage),
                         ),
                       ),
@@ -763,7 +763,7 @@ class _CircaDayStoryDialogState extends State<CircaDayStoryDialog>
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.sage,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
                     child: Text(

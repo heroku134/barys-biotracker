@@ -407,7 +407,7 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.stage.withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: tier.auraColor,
                         width: 1.0,
@@ -452,10 +452,10 @@ class _BioAvatarWidgetState extends State<BioAvatarWidget>
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: AppColors.bgDark.withValues(alpha: 0.88),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: widget.state.badgeColor,
-                        width: 1.2,
+                        width: 1.0,
                       ),
                       boxShadow: [
                         BoxShadow(

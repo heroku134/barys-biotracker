@@ -16,6 +16,7 @@ import '../widgets/circa_hypnogram.dart';
 import '../widgets/circa_sparkline.dart';
 import '../widgets/circa_stress_timeline.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 import '../widgets/metric_dial.dart';
 import '../widgets/weekly_metric_chart.dart';
 import '../../domain/intelligence/readiness_engine.dart';
@@ -154,8 +155,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: palette.raised,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: palette.hairline),
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
               ),
               child: Row(
                 children: [
@@ -342,11 +343,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   void _showCycleDetailsModal(BuildContext context) {
     CircaHaptics.selectionClick();
+    final palette = KalkanColors.of(context);
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: palette.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -359,33 +361,33 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.line,
-                  borderRadius: BorderRadius.circular(2),
+                  color: palette.hairline,
+                  borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
-                Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
-                SizedBox(width: 8),
+                const Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
+                const SizedBox(width: 8),
                 Text(
                   AppLocaleNotifier.pick(
                     'ФИЗИОЛОГИЧЕСКИЙ ЦИКЛ И ВАРИАТИВНОСТЬ',
                     'ФИЗИОЛОГИЯЛЫК ЦИКЛ ЖАНА ВАРИАТИВДҮҮЛҮК',
                     'PHYSIOLOGICAL CYCLE & VARIABILITY',
                   ),
-                  style: TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: -0.1),
+                  style: const TextStyle(color: AppColors.amber, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: -0.1),
                 ),
               ],
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.raised,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.line),
+                color: palette.raised,
+                borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
               ),
               child: Text(
                 AppLocaleNotifier.pick(
@@ -393,25 +395,25 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   'Лютеиндик же фолликулярдык фазадагы ЖЖВ менен пульстун өзгөрүшү — бул табигый физиологиялык процесс, спорттук форманын түшүшү эмес.',
                   'Fluctuations in HRV and resting HR across cycle phases are natural physiological adaptations, not a loss of fitness.',
                 ),
-                style: TextStyle(color: AppColors.fg, fontSize: 13, height: 1.4),
+                style: TextStyle(color: palette.fg, fontSize: 13, height: 1.4),
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               AppLocaleNotifier.pick(
                 'СААТ-1 автоматически учитывает фазу цикла и калибрует целевой бюджет суточной нагрузки, защищая нервную систему и сердце от перетренированности.',
                 'СААТ-1 цикл фазасын автоматтык түрдө эске алып, суткалык жүктөм бюджетин калибрлеп, нерв системасын ашыкча чарчоодон коргойт.',
                 'SAAT-1 automatically factors in your cycle phase and calibrates your daily strain budget, guarding against overtraining.',
               ),
-              style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
+              style: TextStyle(color: palette.muted, fontSize: 12, height: 1.35),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: AppColors.amber.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                border: Border.all(color: AppColors.amber.withValues(alpha: 0.3), width: KalkanUi.hairline),
               ),
               child: Row(
                 children: [

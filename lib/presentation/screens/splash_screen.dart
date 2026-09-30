@@ -9,6 +9,7 @@ import 'account_setup_screen.dart';
 import 'auth_screen.dart';
 import 'main_shell.dart';
 import 'onboarding_screen.dart';
+import '../widgets/kalkan_ui.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../data/services/cloud_sync_service.dart';
@@ -118,7 +119,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(28, 16, 28, 28),
+                  padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 16, KalkanUi.pagePadding, 24),
                   child: Column(
                     children: [
                       Align(

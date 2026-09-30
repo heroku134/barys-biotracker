@@ -301,7 +301,7 @@ class CircaStrainCard extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           color: zoneColors[i],
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),

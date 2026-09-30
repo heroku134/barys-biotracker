@@ -60,7 +60,7 @@ class WeeklyMetricChart extends StatelessWidget {
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: color.withValues(alpha: 0.85),
-                                    borderRadius: BorderRadius.circular(5),
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
                                 ),
                               ),

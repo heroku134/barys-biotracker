@@ -6,9 +6,14 @@ import '../../core/app_typography.dart';
 /// Keep product UI quiet, measurable and useful: no decorative glow or glass.
 class KalkanUi {
   static const double pageHorizontal = 20;
-  static const double cardRadius = 12;
+  static const double pagePadding = 20;
+  static const double cardStackSpacing = 12;
+  static const double cardPadding = 16;
+  static const double cardRadius = 14;
   static const double controlRadius = 8;
-  static const double hairline = 1;
+  static const double progressRadius = 4;
+  static const double minTapTarget = 44;
+  static const double hairline = 1.0;
 }
 
 class KalkanSurface extends StatelessWidget {
@@ -23,7 +28,7 @@ class KalkanSurface extends StatelessWidget {
   const KalkanSurface({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(KalkanUi.cardPadding),
     this.margin,
     this.onTap,
     this.color,
@@ -35,7 +40,7 @@ class KalkanSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radius),
-      side: BorderSide(color: borderColor ?? AppColors.hairline),
+      side: BorderSide(color: borderColor ?? AppColors.hairline, width: KalkanUi.hairline),
     );
     final content = Container(
       margin: margin,
@@ -157,7 +162,7 @@ class KalkanMark extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.amber, width: 2),
-        borderRadius: BorderRadius.circular(size * 0.22),
+        borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
       ),
       child: Text(
         'K',

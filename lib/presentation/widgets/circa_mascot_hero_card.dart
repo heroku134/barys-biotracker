@@ -5,6 +5,7 @@ import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/models/readiness.dart';
+import 'kalkan_ui.dart';
 
 /// Виджет-витрина двух маскотов KALKAN на главной лицевой панели
 /// Отображает вырезанную пару маскотов (Барыс в ак-калпаке и Барыса-атлетка) без фона
@@ -35,7 +36,7 @@ class CircaMascotHeroCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         decoration: BoxDecoration(
           color: palette.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
           border: Border.all(
             color: accentColor.withValues(alpha: 0.35),
             width: 1.0,
@@ -100,7 +101,7 @@ class CircaMascotHeroCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: accentColor.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           border: Border.all(
                             color: accentColor.withValues(alpha: 0.6),
                             width: 0.8,

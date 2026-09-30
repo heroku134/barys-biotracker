@@ -4,6 +4,7 @@ import '../../core/circa_haptics.dart';
 import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/models/telemetry.dart';
 import 'glass_card.dart';
+import 'kalkan_ui.dart';
 
 /// Лаконичная карточка потребности во сне с возможностью раскрыть подробности в модальном окне
 class CircaHypnogram extends StatelessWidget {
@@ -32,7 +33,7 @@ class CircaHypnogram extends StatelessWidget {
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
           border: Border(top: BorderSide(color: AppColors.line, width: 1.5)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
@@ -50,7 +51,7 @@ class CircaHypnogram extends StatelessWidget {
                     height: 4,
                     decoration: BoxDecoration(
                       color: AppColors.faint,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                     ),
                   ),
                 ),
@@ -106,7 +107,7 @@ class CircaHypnogram extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.raised,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                     border: Border.all(color: AppColors.line),
                   ),
                   child: Row(
@@ -177,7 +178,7 @@ class CircaHypnogram extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.raised,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
                     border: Border.all(color: AppColors.line),
                   ),
                   child: sleepResult.hypnogram.isEmpty
@@ -226,8 +227,9 @@ class CircaHypnogram extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.raised,
                       foregroundColor: AppColors.fg,
+                      minimumSize: const Size(0, KalkanUi.minTapTarget),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                         side: BorderSide(color: AppColors.line),
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -294,7 +296,7 @@ class CircaHypnogram extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.raised,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -346,7 +348,7 @@ class CircaHypnogram extends StatelessWidget {
                   color: coveragePercent >= 80
                       ? AppColors.sage.withValues(alpha: 0.16)
                       : AppColors.amber.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   border: Border.all(
                     color: coveragePercent >= 80
                         ? AppColors.sage.withValues(alpha: 0.5)
@@ -369,7 +371,7 @@ class CircaHypnogram extends StatelessWidget {
 
           // Прогресс-бар покрытия
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
             child: LinearProgressIndicator(
               value: (coveragePercent / 100).clamp(0.0, 1.0),
               minHeight: 6,
@@ -397,7 +399,7 @@ class CircaHypnogram extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
               color: AppColors.raised.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -474,7 +476,7 @@ class CircaHypnogram extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.raised,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: Border.all(color: AppColors.line),
         ),
         child: Column(

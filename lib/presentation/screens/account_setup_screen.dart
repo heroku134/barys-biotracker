@@ -9,6 +9,7 @@ import '../../data/services/health_sync_service.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 import 'device_pair_screen.dart';
 import 'main_shell.dart';
 
@@ -243,7 +244,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 8, KalkanUi.pagePadding, 32),
           children: [
             // Индикатор шагов (1/3, 2/3, 3/3)
             Row(
@@ -254,14 +255,14 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                   child: Container(
                     height: 4,
                     margin: EdgeInsets.only(
-                      left: index == 0 ? 0 : 4,
-                      right: index == 2 ? 0 : 4,
+                       left: index == 0 ? 0 : 4,
+                       right: index == 2 ? 0 : 4,
                     ),
                     decoration: BoxDecoration(
                       color: isCurrent
                           ? AppColors.sage
                           : (isActive ? AppColors.sage.withValues(alpha: 0.5) : palette.hairline),
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                     ),
                   ),
                 );
@@ -282,7 +283,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
 
               // 1. Имя пользователя
               GlassCard(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(KalkanUi.cardPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -300,16 +301,16 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                         prefixIcon: Icon(Icons.person_outline, color: palette.secondary, size: 20),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: palette.hairline),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          borderSide: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: palette.hairline),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          borderSide: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.sage),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          borderSide: const BorderSide(color: AppColors.sage, width: KalkanUi.hairline),
                         ),
                       ),
                     ),
@@ -317,11 +318,11 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: KalkanUi.cardStackSpacing),
 
               // 2. Выбор пола
               GlassCard(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(KalkanUi.cardPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -383,7 +384,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: AppColors.amber.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           ),
                           child: Text(
                             '$_calculatedAge лет · Max HR: $_calculatedMaxHr bpm',
@@ -399,13 +400,13 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     const SizedBox(height: 10),
                     InkWell(
                       onTap: _pickBirthDate,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
                           color: palette.raised,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: palette.hairline),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -429,11 +430,11 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: KalkanUi.cardStackSpacing),
 
               // 4. Рост, вес и ИМТ
               GlassCard(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(KalkanUi.cardPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -448,7 +449,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: _bmiColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           ),
                           child: Text(
                             'ИМТ: ${_calculatedBmi.toStringAsFixed(1)} · $_bmiInterpretation',
@@ -475,10 +476,13 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                               labelStyle: TextStyle(color: palette.secondary),
                               suffixText: 'см',
                               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                                borderSide: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
+                              ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: palette.hairline),
+                                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                                borderSide: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
                               ),
                             ),
                           ),
@@ -495,10 +499,13 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                               labelStyle: TextStyle(color: palette.secondary),
                               suffixText: 'кг',
                               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                                borderSide: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
+                              ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: palette.hairline),
+                                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                                borderSide: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
                               ),
                             ),
                           ),
@@ -509,11 +516,11 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: KalkanUi.cardStackSpacing),
 
               // 5. Цель тренировок
               GlassCard(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(KalkanUi.cardPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -547,8 +554,9 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     backgroundColor: AppColors.sage,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    minimumSize: const Size(44, KalkanUi.minTapTarget),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                   ),
                   child: Text(
                     AppLocaleNotifier.pick('Сохранить и продолжить', 'Сактоо жана улантуу', 'Save & Continue'),
@@ -606,8 +614,9 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     backgroundColor: AppColors.sage,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    minimumSize: const Size(44, KalkanUi.minTapTarget),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                   ),
                 ),
               ),
@@ -620,9 +629,10 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                   onPressed: () => _proceedToHealthSync(pair: false),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: palette.fg,
-                    side: BorderSide(color: palette.hairline),
+                    minimumSize: const Size(44, KalkanUi.minTapTarget),
+                    side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                   ),
                   child: Text(
                     AppLocaleNotifier.pick('Пропустить подключение часов', 'Саатты кийинчерээк туташтыруу', 'Skip Watch Pairing'),
@@ -814,8 +824,9 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     backgroundColor: AppColors.sage,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    minimumSize: const Size(44, KalkanUi.minTapTarget),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                   ),
                 ),
               ),
@@ -829,9 +840,10 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                   onPressed: _isSyncingHealth ? null : _skipHealthSync,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: palette.fg,
-                    side: BorderSide(color: palette.hairline),
+                    minimumSize: const Size(44, KalkanUi.minTapTarget),
+                    side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                   ),
                   child: Text(
                     AppLocaleNotifier.pick('Пропустить', 'Өткөрүп жиберүү', 'Skip for Now'),
@@ -857,10 +869,10 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.sage.withValues(alpha: 0.16) : palette.raised,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: Border.all(
             color: isSelected ? AppColors.sage : palette.hairline,
-            width: isSelected ? 1.5 : 1.0,
+            width: isSelected ? 1.5 : KalkanUi.hairline,
           ),
         ),
         child: Row(
@@ -894,10 +906,10 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.sage.withValues(alpha: 0.18) : palette.raised,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: Border.all(
             color: isSelected ? AppColors.sage : palette.hairline,
-            width: isSelected ? 1.4 : 1.0,
+            width: isSelected ? 1.4 : KalkanUi.hairline,
           ),
         ),
         child: Text(
@@ -921,8 +933,8 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: KalkanUi.hairline),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

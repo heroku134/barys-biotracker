@@ -14,6 +14,7 @@ import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 
 class MenstrualCycleScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -421,7 +422,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: AppColors.rose.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       ),
                       child: const Icon(Icons.favorite, color: AppColors.rose, size: 20),
                     ),
@@ -481,7 +482,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
             : _tr('${-days} дн. назад', '${-days} күн мурун', '${-days} d. ago');
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: palette.raised, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: palette.raised, borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: AppTypography.caption(palette.secondary)),
         const SizedBox(height: 4),
@@ -598,8 +599,8 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
           color: on ? AppColors.sage.withValues(alpha: 0.16) : palette.raised,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: on ? AppColors.sage : palette.hairline),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+          border: Border.all(color: on ? AppColors.sage : palette.hairline, width: KalkanUi.hairline),
         ),
         child: Text(label, style: AppTypography.bodyMuted(palette.fg).copyWith(fontWeight: on ? FontWeight.w600 : FontWeight.w400)),
       ),
@@ -616,7 +617,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
       context: context,
       backgroundColor: AppColors.surface,
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 16, KalkanUi.pagePadding, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,8 +637,8 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.raised,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.line),
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                border: Border.all(color: AppColors.hairline, width: KalkanUi.hairline),
               ),
               child: Row(
                 children: [

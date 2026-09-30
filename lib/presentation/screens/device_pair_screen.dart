@@ -4,6 +4,7 @@ import '../../core/app_colors.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../widgets/circa_band_radar.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 
 class DevicePairScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -172,7 +173,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: KalkanUi.pagePadding, vertical: 12),
           child: Column(
             children: [
               if (!_isBluetoothEnabled)
@@ -181,8 +182,8 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.rose.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.rose.withValues(alpha: 0.4)),
+                    borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                    border: Border.all(color: AppColors.rose.withValues(alpha: 0.4), width: KalkanUi.hairline),
                   ),
                   child: Row(
                     children: [
@@ -251,8 +252,8 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                                   height: 44,
                                   decoration: BoxDecoration(
                                     color: AppColors.sage.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColors.sage.withValues(alpha: 0.3)),
+                                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                                    border: Border.all(color: AppColors.sage.withValues(alpha: 0.3), width: KalkanUi.hairline),
                                   ),
                                   child: Icon(
                                     _getRssiIcon(dev.rssi),
@@ -334,9 +335,10 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.surface,
                         foregroundColor: AppColors.fg,
-                        side: BorderSide(color: AppColors.line),
+                        minimumSize: const Size(44, KalkanUi.minTapTarget),
+                        side: BorderSide(color: AppColors.line, width: KalkanUi.hairline),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                       ),
                     ),
                   ),

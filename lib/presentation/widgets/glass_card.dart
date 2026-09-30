@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import 'kalkan_ui.dart';
 
 class GlassCard extends StatelessWidget {
   final Widget child;
@@ -13,9 +14,9 @@ class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(18),
+    this.padding = const EdgeInsets.all(KalkanUi.cardPadding),
     this.margin,
-    this.borderRadius = 16.0,
+    this.borderRadius = KalkanUi.cardRadius,
     this.borderColor,
     this.backgroundColor,
     this.onTap,

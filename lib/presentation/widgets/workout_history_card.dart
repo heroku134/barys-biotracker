@@ -28,7 +28,7 @@ class WorkoutHistoryCard extends StatelessWidget {
             padding: const EdgeInsets.all(9),
             decoration: BoxDecoration(
               color: AppColors.amber.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.amber.withValues(alpha: 0.25), width: 1.0),
             ),
             child: Icon(w.sport.icon, color: AppColors.amber, size: 20),
@@ -50,8 +50,8 @@ class WorkoutHistoryCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: w.sourceColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(5),
-                          border: Border.all(color: w.sourceColor.withValues(alpha: 0.4), width: 0.8),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: w.sourceColor.withValues(alpha: 0.4), width: 1.0),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,

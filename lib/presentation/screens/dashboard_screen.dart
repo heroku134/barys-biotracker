@@ -20,6 +20,7 @@ import '../widgets/circa_avatar_picker_dialog.dart';
 import '../widgets/circa_calibration_card.dart';
 import '../widgets/circa_mascot_hero_card.dart';
 import '../widgets/circa_recovery_breakdown_sheet.dart';
+import '../widgets/kalkan_ui.dart';
 import '../widgets/metric_dial.dart';
 import 'private_league_screen.dart';
 import 'day_journal_screen.dart';
@@ -266,8 +267,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: palette.surface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: palette.hairline),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                         ),
                         child: Row(
                           children: [
@@ -299,13 +300,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (_banner != null)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 12, KalkanUi.pagePadding, 0),
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
                     decoration: BoxDecoration(
                       color: palette.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: palette.hairline),
+                      borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                      border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                     ),
                     child: Row(
                       children: [
@@ -624,8 +625,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: palette.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: palette.hairline),
+        borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+        border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -659,9 +660,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       style: OutlinedButton.styleFrom(
         foregroundColor: palette.fg,
         backgroundColor: palette.surface,
-        side: BorderSide(color: palette.hairline),
+        minimumSize: const Size(44, KalkanUi.minTapTarget),
+        side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
         padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
       ),
       child: Column(
         children: [

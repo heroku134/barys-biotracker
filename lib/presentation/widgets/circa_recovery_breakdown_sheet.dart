@@ -4,6 +4,7 @@ import '../../core/app_colors.dart';
 import '../../domain/models/readiness.dart';
 
 import 'circa_share_sheet.dart';
+import 'kalkan_ui.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 
@@ -46,7 +47,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.stage,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
         border: Border(top: BorderSide(color: AppColors.line, width: 1.5)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
@@ -64,7 +65,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.faint,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                   ),
                 ),
               ),
@@ -125,7 +126,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: readiness.zone.color.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           border: Border.all(color: readiness.zone.color.withValues(alpha: 0.5)),
                         ),
                         child: Text(
@@ -158,7 +159,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.amber.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                     border: Border.all(color: AppColors.amber.withValues(alpha: 0.35)),
                   ),
                   child: Row(
@@ -268,7 +269,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.raised,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   border: Border.all(color: AppColors.line),
                 ),
                 child: Text(
@@ -293,8 +294,9 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.amber,
                       foregroundColor: AppColors.stage,
+                      minimumSize: const Size(0, KalkanUi.minTapTarget),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       ),
                       elevation: 0,
                     ),
@@ -332,8 +334,9 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.raised,
                     foregroundColor: AppColors.fg,
+                    minimumSize: const Size(0, KalkanUi.minTapTarget),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       side: BorderSide(color: AppColors.line),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -369,7 +372,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
         border: Border.all(color: AppColors.line),
       ),
       child: Column(
@@ -393,7 +396,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                     decoration: BoxDecoration(
                       color: AppColors.raised,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                     ),
                     child: Text(
                       weight,
@@ -439,7 +442,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
           ),
           SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(2),
+            borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
             child: LinearProgressIndicator(
               value: score / 100.0,
               backgroundColor: AppColors.raised,
@@ -491,7 +494,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
         border: Border.all(color: accentColor.withValues(alpha: 0.4), width: 1.2),
         boxShadow: [
           BoxShadow(
@@ -532,7 +535,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                 ),
                 child: Text(
                   impactText,
@@ -581,7 +584,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
         border: Border.all(color: AppColors.sage.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
@@ -614,7 +617,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
                   color: AppColors.sage.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                 ),
                 child: Text(
                   'ИНСТРУМЕНТ ВЕЧЕРА',
@@ -643,7 +646,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: AppColors.raised,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
               border: Border.all(color: AppColors.sage.withValues(alpha: 0.4)),
             ),
             child: Row(
@@ -688,7 +691,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.sage,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   ),
                   child: Text(
                     '$greenProbabilityEarly%',
@@ -708,7 +711,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: AppColors.raised.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
               border: Border.all(color: AppColors.line),
             ),
             child: Row(
@@ -737,7 +740,8 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                 foregroundColor: AppColors.sage,
                 side: const BorderSide(color: AppColors.sage, width: 1.0),
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                minimumSize: const Size(0, KalkanUi.minTapTarget),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
               ),
               icon: Icon(Icons.notifications_active_outlined, size: 15),
               label: Text(
@@ -755,7 +759,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                     backgroundColor: AppColors.surface,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
                       side: const BorderSide(color: AppColors.sage),
                     ),
                     content: Row(

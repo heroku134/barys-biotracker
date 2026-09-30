@@ -12,6 +12,7 @@ import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
+import '../widgets/kalkan_ui.dart';
 import 'account_setup_screen.dart';
 import 'main_shell.dart';
 
@@ -229,7 +230,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 children: [
                   Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: KalkanUi.pagePadding, vertical: 20),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -299,7 +300,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
                                 color: AppColors.rose.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                                 border: Border.all(color: AppColors.rose.withValues(alpha: 0.3)),
                               ),
                               child: Row(
@@ -325,8 +326,9 @@ class _AuthScreenState extends State<AuthScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.sage,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              minimumSize: const Size(44, KalkanUi.minTapTarget),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                               elevation: 0,
                             ),
                             child: _isLoading
@@ -353,6 +355,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                 _errorMessage = null;
                               });
                             },
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(44, KalkanUi.minTapTarget),
+                            ),
                             child: Text(
                               _isSignUp
                                   ? AppStrings.tr('auth_to_login', language)
@@ -371,6 +376,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     right: 16,
                     child: TextButton(
                       onPressed: () => AppLocaleNotifier.toggleLanguage(),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(44, KalkanUi.minTapTarget),
+                      ),
                       child: Text(
                         '${language.flag} ${language.shortTitle}',
                         style: AppTypography.monoLabel(palette.secondary),

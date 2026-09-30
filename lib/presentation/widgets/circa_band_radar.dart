@@ -106,20 +106,20 @@ class _CircaBandRadarPainter extends CustomPainter {
     final glowPaint = Paint()
       ..color = (isConnected ? AppColors.sage : AppColors.amber).withValues(alpha: 0.2)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
-    canvas.drawRRect(RRect.fromRectAndRadius(bandRect, const Radius.circular(20)), glowPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(bandRect, const Radius.circular(14)), glowPaint);
 
     // Заливка корпуса (Титановый обсидиан)
     final bodyPaint = Paint()
       ..color = AppColors.surface
       ..style = PaintingStyle.fill;
-    canvas.drawRRect(RRect.fromRectAndRadius(bandRect, const Radius.circular(20)), bodyPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(bandRect, const Radius.circular(14)), bodyPaint);
 
     // Окантовка корпуса
     final strokePaint = Paint()
       ..color = isConnected ? AppColors.sage : AppColors.line
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8;
-    canvas.drawRRect(RRect.fromRectAndRadius(bandRect, const Radius.circular(20)), strokePaint);
+      ..strokeWidth = 1.0;
+    canvas.drawRRect(RRect.fromRectAndRadius(bandRect, const Radius.circular(14)), strokePaint);
 
     // Золотая акцентная насечка (Nordic Gold)
     final goldPaint = Paint()

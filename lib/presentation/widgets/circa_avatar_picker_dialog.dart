@@ -73,7 +73,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
           backgroundColor: AppColors.surface,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(14),
             side: const BorderSide(color: AppColors.sage),
           ),
           content: Text(
@@ -112,7 +112,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               backgroundColor: AppColors.surface,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
                 side: const BorderSide(color: AppColors.sage),
               ),
               content: Text(
@@ -141,7 +141,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
         border: Border(top: BorderSide(color: AppColors.hairline, width: 1.0)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
@@ -156,7 +156,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
               height: 4,
               decoration: BoxDecoration(
                 color: AppColors.faint,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
           ),
@@ -264,7 +264,7 @@ class CircaAvatarPickerDialog extends StatelessWidget {
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: isSelected ? AppColors.amber.withValues(alpha: 0.15) : AppColors.raised,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: isSelected ? AppColors.amber : AppColors.hairline,
                         width: isSelected ? 1.5 : 1.0,

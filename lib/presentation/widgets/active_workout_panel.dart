@@ -197,12 +197,12 @@ class ActiveWorkoutPanel extends StatelessWidget {
             // Интерактивная карта маршрута в реальном времени для уличных видов спорта
             if (selectedSport.needsGps) ...[
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 child: Container(
                   height: 180,
                   decoration: BoxDecoration(
                     border: Border.all(color: palette.hairline),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Stack(
                     children: [
@@ -256,7 +256,7 @@ class ActiveWorkoutPanel extends StatelessWidget {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: palette.surface.withValues(alpha: 0.92),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: palette.hairline),
                             ),
                             child: Icon(Icons.my_location, size: 16, color: palette.fg),
@@ -309,7 +309,7 @@ class ActiveWorkoutPanel extends StatelessWidget {
                         color: currentBpm > 0
                             ? AppColors.rose.withValues(alpha: 0.15)
                             : palette.surface,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: currentBpm > 0
                               ? AppColors.rose.withValues(alpha: 0.4)
@@ -342,7 +342,7 @@ class ActiveWorkoutPanel extends StatelessWidget {
                         color: currentBpm > 0
                             ? _hrZoneColor(currentBpm).withValues(alpha: 0.15)
                             : palette.surface,
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         currentBpm > 0
@@ -394,7 +394,7 @@ class ActiveWorkoutPanel extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: palette.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: restSecondsRemaining > 0 ? AppColors.amber : palette.hairline,
                   ),
@@ -452,7 +452,7 @@ class ActiveWorkoutPanel extends StatelessWidget {
                       foregroundColor: palette.fg,
                       side: BorderSide(color: palette.hairline),
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
@@ -474,7 +474,7 @@ class ActiveWorkoutPanel extends StatelessWidget {
                       backgroundColor: AppColors.rose,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
                     ),
                   ),
@@ -504,7 +504,7 @@ class ActiveWorkoutPanel extends StatelessWidget {
                   backgroundColor: AppColors.amber,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   elevation: 0,
                 ),
               ),
@@ -521,7 +521,7 @@ class ActiveWorkoutPanel extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: palette.surface,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: palette.hairline),
         ),
         child: Column(

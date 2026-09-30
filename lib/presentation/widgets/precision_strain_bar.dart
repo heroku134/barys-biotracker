@@ -134,7 +134,7 @@ class PrecisionStrainBar extends StatelessWidget {
                       height: 10,
                       decoration: BoxDecoration(
                         color: AppColors.raised,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: AppColors.hairline, width: 1.0),
                       ),
                     ),
@@ -166,7 +166,7 @@ class PrecisionStrainBar extends StatelessWidget {
                         child: Container(
                           decoration: BoxDecoration(
                             color: AppColors.amber,
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),

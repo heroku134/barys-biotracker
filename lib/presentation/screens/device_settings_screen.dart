@@ -5,6 +5,7 @@ import '../../data/services/paired_pulse.dart';
 import '../../core/app_language.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 import 'device_pair_screen.dart';
 import 'firmware_update_screen.dart';
 
@@ -99,7 +100,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
         title: Text(tr('Сброс до заводских настроек?', 'Баштапкы абалга кайтаруу?'), style: TextStyle(color: AppColors.fg, fontSize: 16)),
         content: Text(
           'Все несохраненные кэшированные данные на браслете будут очищены, а связь разорвана.',
@@ -268,8 +269,8 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: AppColors.sage.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.sage.withValues(alpha: 0.4)),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          border: Border.all(color: AppColors.sage.withValues(alpha: 0.4), width: KalkanUi.hairline),
                         ),
                         child: Row(
                           children: [
@@ -293,7 +294,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   SizedBox(height: 12),
                   InkWell(
                     onTap: () => FirmwareUpdateScreen.open(context, watchBattery: telemetry.batteryLevel),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
@@ -307,8 +308,8 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: AppColors.amber.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: AppColors.amber.withValues(alpha: 0.4)),
+                                  borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
+                                  border: Border.all(color: AppColors.amber.withValues(alpha: 0.4), width: KalkanUi.hairline),
                                 ),
                                 child: Text(
                                   'v1.3.0 OTA',
@@ -346,8 +347,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.amber,
                   foregroundColor: AppColors.stage,
+                  minimumSize: const Size(44, KalkanUi.minTapTarget),
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                   elevation: 0,
                 ),
               ),
@@ -509,9 +511,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.line),
+                      minimumSize: const Size(44, KalkanUi.minTapTarget),
+                      side: BorderSide(color: AppColors.line, width: KalkanUi.hairline),
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                     ),
                   ),
                 ),
@@ -525,9 +528,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       style: TextStyle(color: AppColors.fg, fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.line),
+                      minimumSize: const Size(44, KalkanUi.minTapTarget),
+                      side: BorderSide(color: AppColors.line, width: KalkanUi.hairline),
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                     ),
                   ),
                 ),
@@ -540,6 +544,9 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
               child: TextButton.icon(
                 onPressed: _confirmReset,
                 icon: Icon(Icons.restore, color: AppColors.rose, size: 16),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(44, KalkanUi.minTapTarget),
+                ),
                 label: Text(
                   tr('Сбросить браслет', 'Билерикти баштапкы абалга'),
                   style: TextStyle(color: AppColors.rose, fontSize: 12, fontWeight: FontWeight.w600),

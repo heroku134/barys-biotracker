@@ -15,6 +15,7 @@ import '../../domain/models/user_profile.dart';
 import '../widgets/circa_avatar_picker_dialog.dart';
 import '../widgets/circa_partner_cycle_sheet.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 import 'auth_screen.dart';
 import 'device_settings_screen.dart';
 import 'private_league_screen.dart';
@@ -259,7 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: palette.raised,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,10 +359,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        constraints: const BoxConstraints(minHeight: KalkanUi.minTapTarget),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: active ? AppColors.sage.withValues(alpha: 0.14) : palette.raised,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: Border.all(color: active ? AppColors.sage : palette.hairline),
         ),
         alignment: Alignment.center,
@@ -483,7 +485,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius))),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
           return Padding(
@@ -523,7 +525,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         setState(() => _profile = updated);
                         if (ctx.mounted) Navigator.pop(ctx);
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.sage, foregroundColor: Colors.white, elevation: 0),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.sage,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: const Size(0, KalkanUi.minTapTarget),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                      ),
                       child: Text(_ru ? 'Сохранить' : 'Сактоо'),
                     ),
                   ),

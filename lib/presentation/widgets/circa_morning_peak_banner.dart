@@ -4,6 +4,7 @@ import '../../core/app_colors.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import 'circa_morning_briefing_dialog.dart';
+import 'kalkan_ui.dart';
 
 /// Анимированный утренний «пик» (Morning Peak Reveal)
 /// При первом входе за день дарит пользователю яркий дофаминовый триггер:
@@ -85,7 +86,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          margin: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 8, KalkanUi.pagePadding, KalkanUi.cardStackSpacing),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -95,7 +96,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
             border: Border.all(
               color: AppColors.sage.withValues(alpha: 0.4),
               width: 1.2,
@@ -111,7 +112,7 @@ class _CircaMorningPeakBannerState extends State<CircaMorningPeakBanner>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
               onTap: () {
                 HapticFeedback.selectionClick();
                 CircaMorningBriefingDialog.show(context, widget.telemetry, widget.baseline);

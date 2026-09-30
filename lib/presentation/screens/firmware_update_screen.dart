@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
+import '../widgets/kalkan_ui.dart';
 
 /// Экран беспроводного обновления прошивки часов СААТ-1 по воздуху (BLE OTA / DFU)
 class FirmwareUpdateScreen extends StatefulWidget {
@@ -74,7 +75,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: KalkanUi.pagePadding, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -83,8 +84,8 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.hairline, width: 1.0),
+                  borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                  border: Border.all(color: AppColors.hairline, width: KalkanUi.hairline),
                 ),
                 child: Row(
                   children: [
@@ -214,8 +215,8 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.amber.withValues(alpha: 0.5), width: 1.0),
+                    borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                    border: Border.all(color: AppColors.amber.withValues(alpha: 0.5), width: KalkanUi.hairline),
                   ),
                   child: Row(
                     children: [
@@ -243,8 +244,8 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.sage, width: 1.0),
+                    borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                    border: Border.all(color: AppColors.sage, width: KalkanUi.hairline),
                   ),
                   child: Row(
                     children: [

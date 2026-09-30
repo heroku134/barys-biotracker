@@ -9,6 +9,7 @@ import '../../data/storage/private_league_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/private_league.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 
 class PrivateLeagueScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -111,11 +112,11 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 8, KalkanUi.pagePadding, 32),
         children: [
           // Карточка инвайт-кода
           GlassCard(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(KalkanUi.cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -135,7 +136,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: AppColors.sage.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       ),
                       child: Text(
                         '${members.length} / 5',
@@ -165,13 +166,13 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                       ),
                     );
                   },
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: palette.raised,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: palette.hairline),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                      border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -323,7 +324,8 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                   foregroundColor: palette.fg,
                   side: BorderSide(color: palette.hairline),
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  minimumSize: const Size(0, KalkanUi.minTapTarget),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                 ),
               ),
             ),
@@ -340,7 +342,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: palette.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
         title: Text(
           _t('Добавить друга', 'Дос кошуу', 'Add friend'),
           style: TextStyle(color: palette.fg, fontWeight: FontWeight.w700, fontSize: 18),
@@ -369,9 +371,9 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
                 hintText: 'KALKAN-XXXX',
                 hintStyle: TextStyle(color: palette.muted),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: palette.hairline)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: palette.hairline)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.sage)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius), borderSide: BorderSide(color: palette.hairline)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius), borderSide: BorderSide(color: palette.hairline)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius), borderSide: const BorderSide(color: AppColors.sage)),
               ),
             ),
           ],
@@ -379,6 +381,7 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(minimumSize: const Size(44, KalkanUi.minTapTarget)),
             child: Text(_t('Отмена', 'Жок', 'Cancel'), style: TextStyle(color: palette.secondary)),
           ),
           ElevatedButton(
@@ -398,7 +401,8 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
               backgroundColor: AppColors.sage,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              minimumSize: const Size(44, KalkanUi.minTapTarget),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
             ),
             child: Text(_t('Добавить', 'Кошуу', 'Add')),
           ),

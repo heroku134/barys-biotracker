@@ -18,6 +18,7 @@ import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 
 class BioAvatarScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -124,7 +125,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
           backgroundColor: AppColors.surface,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
             side: const BorderSide(color: AppColors.sage, width: 1.2),
           ),
           content: Row(
@@ -154,10 +155,10 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
       isScrollControlled: true,
       builder: (ctx) {
         return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          decoration: const BoxDecoration(
+          padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 16, KalkanUi.pagePadding, 32),
+          decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
             border: Border(top: BorderSide(color: AppColors.amber, width: 1.2)),
           ),
           child: SingleChildScrollView(
@@ -171,7 +172,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                     height: 4,
                     decoration: BoxDecoration(
                       color: AppColors.faint,
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                     ),
                   ),
                 ),
@@ -262,7 +263,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                   color: isCurrent
                       ? tier.auraColor.withValues(alpha: 0.2)
                       : AppColors.stage,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                 ),
                 child: Text(
                   isCurrent
@@ -317,7 +318,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.amber.withValues(alpha: 0.18) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
           border: isSelected ? Border.all(color: AppColors.amber, width: 1.0) : null,
         ),
         child: Text(
@@ -467,8 +468,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       color: palette.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: palette.hairline),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                      border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                     ),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -514,8 +515,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: palette.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.amber.withValues(alpha: 0.45)),
+                        borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                        border: Border.all(color: AppColors.amber.withValues(alpha: 0.45), width: KalkanUi.hairline),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,8 +543,9 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                                 backgroundColor: AppColors.amber,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
+                                minimumSize: const Size(44, KalkanUi.minTapTarget),
                                 padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                               ),
                               child: Text(AppLocaleNotifier.pick('Отметить утро  +50 XP', 'Таңды белгилөө  +50 XP', 'Log morning  +50 XP')),
                             ),
@@ -584,7 +586,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         ),
                         const SizedBox(height: 10),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                           child: LinearProgressIndicator(
                             value: _profile.progressRatio,
                             backgroundColor: palette.raised,
@@ -674,7 +676,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                       height: 3.5,
                       decoration: BoxDecoration(
                         color: isFilled ? AppColors.sage : AppColors.line,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                       ),
                     );
                   }),
@@ -683,14 +685,14 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
             ),
           ],
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
 
         // Полноэкранный чек-лист микро-квестов
         ..._profile.quests.map((quest) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: InkWell(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
               onTap: () => _handleQuestTap(quest),
               child: GlassCard(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -718,7 +720,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
                     // Текст квеста и статус
                     Expanded(
@@ -733,7 +735,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                               fontSize: 12.5,
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             quest.subtitle.isNotEmpty
                                 ? quest.subtitle
@@ -747,7 +749,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
 
                     // Индикатор XP / статуса выполнения сенсором
                     Container(
@@ -756,9 +758,9 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                         color: quest.isCompleted
                             ? AppColors.sage.withValues(alpha: 0.12)
                             : AppColors.raised,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                         border: quest.isCompleted
-                            ? Border.all(color: AppColors.sage.withValues(alpha: 0.4))
+                            ? Border.all(color: AppColors.sage.withValues(alpha: 0.4), width: KalkanUi.hairline)
                             : null,
                       ),
                       child: Text(
@@ -784,8 +786,8 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.amber.withValues(alpha: 0.5), width: 1.0),
+              borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+              border: Border.all(color: AppColors.amber.withValues(alpha: 0.5), width: KalkanUi.hairline),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.amber.withValues(alpha: 0.05),
@@ -837,7 +839,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
         backgroundColor: AppColors.surface,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
           side: BorderSide(color: AppColors.line),
         ),
         content: Row(

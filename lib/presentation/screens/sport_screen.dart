@@ -22,6 +22,7 @@ import '../../domain/models/workout_session.dart';
 import '../widgets/active_workout_panel.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 import '../widgets/sport_category_selector.dart';
 import '../widgets/workout_history_card.dart';
 import '../../data/services/live_activity_service.dart';
@@ -101,7 +102,7 @@ class _SportScreenState extends State<SportScreen> {
         SnackBar(
           backgroundColor: AppColors.surface,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
           content: Row(
             children: [
               const Icon(Icons.cloud_done_outlined, color: AppColors.sage, size: 20),
@@ -510,8 +511,8 @@ class _SportScreenState extends State<SportScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: palette.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: palette.hairline),
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                  border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
                 ),
                 child: Row(
                   children: [
@@ -686,7 +687,7 @@ class _SportScreenState extends State<SportScreen> {
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFC4C02).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                         ),
                         child: const Icon(Icons.sync_alt, color: Color(0xFFFC4C02), size: 20),
                       ),
@@ -706,7 +707,7 @@ class _SportScreenState extends State<SportScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                   decoration: BoxDecoration(
                                     color: AppColors.sage.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(5),
+                                    borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
                                   ),
                                   child: Text(
                                     'AUTO SYNC',
@@ -734,10 +735,11 @@ class _SportScreenState extends State<SportScreen> {
                           backgroundColor: palette.raised,
                           foregroundColor: palette.fg,
                           elevation: 0,
+                          minimumSize: const Size(44, KalkanUi.minTapTarget),
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: palette.hairline),
+                            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                            side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
                           ),
                         ),
                         child: _isHealthSyncing

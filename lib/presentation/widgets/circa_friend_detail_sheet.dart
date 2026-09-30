@@ -7,6 +7,7 @@ import '../../data/storage/private_league_repository.dart';
 import '../../domain/models/private_league.dart';
 import '../../domain/models/readiness.dart';
 import 'glass_card.dart';
+import 'kalkan_ui.dart';
 
 class CircaFriendDetailSheet extends StatelessWidget {
   final FriendMember member;
@@ -45,7 +46,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
         return Container(
           decoration: const BoxDecoration(
             color: AppColors.stage,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
             border: Border(top: BorderSide(color: AppColors.line, width: 1.0)),
           ),
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 32),
@@ -60,7 +61,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
               height: 4,
               decoration: BoxDecoration(
                 color: AppColors.faint,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
               ),
             ),
           ),
@@ -112,7 +113,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
                             color: AppColors.amber.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           ),
                           child: Text(
                             '${member.rankTitle} · LVL ${member.level}',
@@ -144,7 +145,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
               border: Border.all(color: AppColors.line),
             ),
             child: Text(
@@ -161,8 +162,8 @@ class CircaFriendDetailSheet extends StatelessWidget {
 
           // Recovery Card Hero
           GlassCard(
-            borderRadius: 16,
-            padding: const EdgeInsets.all(16),
+            borderRadius: KalkanUi.cardRadius,
+            padding: const EdgeInsets.all(KalkanUi.cardPadding),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -285,7 +286,8 @@ class CircaFriendDetailSheet extends StatelessWidget {
                   backgroundColor: AppColors.amber,
                   foregroundColor: AppColors.stage,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  minimumSize: const Size(0, KalkanUi.minTapTarget),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
                 ),
                 onPressed: () {
                   Navigator.pop(context);
@@ -296,7 +298,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                       backgroundColor: AppColors.surface,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
                         side: const BorderSide(color: AppColors.amber),
                       ),
                       content: Row(
@@ -346,6 +348,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           backgroundColor: AppColors.surface,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
                           content: Text(
                             '${member.name} удален(а) из закрытого круга.',
                             style: TextStyle(color: AppColors.rose, fontSize: 12),
@@ -380,7 +383,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
         border: Border.all(color: AppColors.line),
       ),
       child: Column(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import 'kalkan_ui.dart';
 
 class CircaTextField extends StatelessWidget {
   final String label;
@@ -44,8 +45,8 @@ class CircaTextField extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: palette.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: palette.hairline),
+            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+            border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
           ),
           child: TextFormField(
             controller: controller,

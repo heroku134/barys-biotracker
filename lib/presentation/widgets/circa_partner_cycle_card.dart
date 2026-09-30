@@ -3,6 +3,7 @@ import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../domain/models/partner_cycle_data.dart';
 import 'glass_card.dart';
+import 'kalkan_ui.dart';
 
 /// Карточка «Партнёр» на главном экране (отображение данных и советов по биоритму партнёрши)
 class CircaPartnerCycleCard extends StatelessWidget {
@@ -23,8 +24,8 @@ class CircaPartnerCycleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: GlassCard(
-        borderRadius: 22,
-        padding: const EdgeInsets.all(16),
+        borderRadius: KalkanUi.cardRadius,
+        padding: const EdgeInsets.all(KalkanUi.cardPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -73,7 +74,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
                     color: pColor.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                     border: Border.all(color: pColor.withValues(alpha: 0.45)),
                   ),
                   child: Text(
@@ -91,7 +92,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
 
             // 2. Индикатор прогресса цикла (28-дневная дорожка с отметкой текущего дня)
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
               child: SizedBox(
                 height: 5,
                 child: Row(
@@ -133,7 +134,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
                       color: c.raised,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       border: Border.all(color: c.hairline),
                     ),
                     child: Column(
@@ -158,7 +159,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
                       color: c.raised,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       border: Border.all(color: c.hairline),
                     ),
                     child: Column(
@@ -183,7 +184,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
                       color: c.raised,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                       border: Border.all(color: c.hairline),
                     ),
                     child: Column(
@@ -211,7 +212,7 @@ class CircaPartnerCycleCard extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: c.raised.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                 border: Border.all(color: c.hairline),
               ),
               child: Row(

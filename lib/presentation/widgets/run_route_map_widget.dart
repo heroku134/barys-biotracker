@@ -79,7 +79,7 @@ class _RunRouteMapWidgetState extends State<RunRouteMapWidget> with SingleTicker
         : (widget.currentPosition != null ? [widget.currentPosition!] : <LatLng>[]);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       child: Stack(
         children: [
           FlutterMap(
@@ -237,8 +237,8 @@ class _RunRouteMapWidgetState extends State<RunRouteMapWidget> with SingleTicker
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: palette.hairline, width: 1.2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: palette.hairline, width: 1.0),
                 ),
               ),
             ),

@@ -4,6 +4,7 @@ import '../../core/app_language.dart';
 import '../../core/app_typography.dart';
 import '../../data/storage/day_journal_repository.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/kalkan_ui.dart';
 
 class DayJournalScreen extends StatefulWidget {
   const DayJournalScreen({super.key});
@@ -86,7 +87,7 @@ class _DayJournalScreenState extends State<DayJournalScreen> {
         title: Text(AppLocaleNotifier.pick('Дневник дня', 'Күндөлүк', 'Day journal'), style: AppTypography.screenTitle(palette.fg)),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 8, KalkanUi.pagePadding, 32),
         children: [
           Text(AppLocaleNotifier.pick('Что было сегодня', 'Бүгүн эмне болду', 'What happened today'), style: AppTypography.bodySemibold(palette.fg)),
           const SizedBox(height: 12),
@@ -164,7 +165,7 @@ class _DayJournalScreenState extends State<DayJournalScreen> {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: palette.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: palette.hairline)),
+              decoration: BoxDecoration(color: palette.surface, borderRadius: BorderRadius.circular(KalkanUi.cardRadius), border: Border.all(color: palette.hairline, width: KalkanUi.hairline)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(e.dateKey, style: AppTypography.caption(palette.secondary)),
                 const SizedBox(height: 4),
@@ -185,8 +186,8 @@ class _DayJournalScreenState extends State<DayJournalScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: on ? AppColors.sage.withValues(alpha: 0.16) : palette.raised,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: on ? AppColors.sage : palette.hairline),
+          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+          border: Border.all(color: on ? AppColors.sage : palette.hairline, width: KalkanUi.hairline),
         ),
         child: Text(label, style: TextStyle(color: palette.fg, fontWeight: on ? FontWeight.w600 : FontWeight.w400)),
       ),
