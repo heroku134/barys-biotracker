@@ -124,7 +124,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       }
     }
     if let model = targetUte {
-      mgr.connectDevice(model)
+      mgr.connect(model)
       result(true)
       return
     }
@@ -451,14 +451,15 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       self.pushTelemetry()
     }
 
-    device.onNotifyHRVDataBlock { [weak self] _, hrv, rhr, _, _ in
+    device.onNotifyMeasurementBlock { [weak self] _, type, value in
       guard let self = self else { return }
-      if hrv > 0 { self.currentHrv = Double(hrv) }
-      if rhr > 0 { self.currentRhr = Int(rhr) }
-      self.pushTelemetry()
+      if type == .HRV && value > 0 {
+        self.currentHrv = Double(value)
+        self.pushTelemetry()
+      }
     }
 
-    device.click(UTEMeasurementType.HRV) { _ in }
+    device.clickMeasurementType(.HRV) { _ in }
   }
   #else
   private func stopTelemetryPoll() {
