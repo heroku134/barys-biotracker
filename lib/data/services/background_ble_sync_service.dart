@@ -10,7 +10,13 @@ import 'ios_widget_service.dart';
 import '../storage/calibration_store.dart';
 import '../storage/day_snapshot_repository.dart';
 
-/// Сервис периодической фоновой синхронизации BLE-пакетов с часами СААТ-1
+/// Сервис периодической синхронизации BLE-пакетов с часами СААТ-1.
+///
+/// Архитектурное разделение:
+/// - Во время активности приложения (foreground): работает Dart [Timer.periodic] (раз в 15 минут).
+/// - В фоне ОС (background): на iOS управление передается нативному [BGAppRefreshTaskRequest]
+///   (зарегистрированному под 'sport.kalkan.bio.refresh'), а на Android — Foreground Service
+///   [KalkanBleService] (тип connectedDevice) и [KalkanAlarmReceiver].
 class BackgroundBleSyncService {
   static const String _prefKeyLastBackgroundSync = 'kalkan_bg_sync_last_timestamp';
   static const Duration _syncInterval = Duration(minutes: 15);
@@ -19,7 +25,7 @@ class BackgroundBleSyncService {
   static bool _isRunning = false;
   static bool get isRunning => _isRunning;
 
-  /// Инициализирует и запускает цикл фоновой синхронизации
+  /// Инициализирует и запускает цикл периодической синхронизации в приложении
   static void start(UteBleBridge bridge) {
     if (_isRunning) return;
     _isRunning = true;

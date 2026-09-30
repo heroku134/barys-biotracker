@@ -307,7 +307,14 @@ class _SportScreenState extends State<SportScreen> {
 
   void _togglePause() {
     CircaHaptics.selectionClick();
-    setState(() => _isWorkoutPaused = !_isWorkoutPaused);
+    setState(() {
+      _isWorkoutPaused = !_isWorkoutPaused;
+      if (_isWorkoutPaused) {
+        _gpsSub?.pause();
+      } else {
+        _gpsSub?.resume();
+      }
+    });
   }
 
   Future<void> _stopWorkout() async {

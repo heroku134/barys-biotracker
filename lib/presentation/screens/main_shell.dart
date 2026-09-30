@@ -65,13 +65,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.resumed) {
       BackgroundBleSyncService.performSync(widget.bleBridge);
-    }
-    if (state == AppLifecycleState.paused) {
+    } else if (state == AppLifecycleState.paused) {
+      BackgroundBleSyncService.performSync(widget.bleBridge);
       BackgroundBleSyncService.requestNativeRefresh();
     }
   }

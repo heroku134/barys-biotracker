@@ -8,16 +8,6 @@ import CoreBluetooth
 import ActivityKit
 #endif
 
-#if canImport(Darwin)
-import Darwin
-#endif
-
-@_cdecl("swift_coroFrameAlloc")
-public func _kalkan_swift_coroFrameAlloc(_ size: Int, _ typeId: UInt64) -> UnsafeMutableRawPointer? {
-  let allocSize = size == 0 ? 1 : size
-  return malloc(allocSize)
-}
-
 #if canImport(UTEBluetoothRYApi)
 import UTEBluetoothRYApi
 #endif
@@ -42,7 +32,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   #endif
 
   private var isConnected = false
-  private var currentDeviceName = "СААТ-1"
+  private var currentDeviceName = ""
   private var pollTimer: Timer?
 
   private var currentBpm: Int = 0
@@ -167,9 +157,13 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     isConnected = false
     stopTelemetryPoll()
     currentBpm = 0
+    currentBattery = 0
+    currentSteps = 0
+    currentCalories = 0
     currentHrv = 0
     currentRhr = 0
     currentSleepMinutes = 0
+    currentDeviceName = ""
     pushTelemetry()
     result(true)
   }
@@ -278,6 +272,13 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     isConnected = false
     connectedPeripheral = nil
     currentBpm = 0
+    currentBattery = 0
+    currentSteps = 0
+    currentCalories = 0
+    currentHrv = 0
+    currentRhr = 0
+    currentSleepMinutes = 0
+    currentDeviceName = ""
     pushTelemetry()
   }
 
@@ -336,7 +337,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         "calories": self.currentCalories,
         "batteryLevel": self.currentBattery,
         "isConnected": self.isConnected,
-        "deviceName": self.isConnected ? self.currentDeviceName : "СААТ-1",
+        "deviceName": self.isConnected ? self.currentDeviceName : "",
         "hrv": self.currentHrv,
         "restingHeartRate": self.currentRhr,
         "sleepMinutes": self.currentSleepMinutes,
@@ -500,6 +501,13 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       connectedModel = nil
       stopTelemetryPoll()
       currentBpm = 0
+      currentBattery = 0
+      currentSteps = 0
+      currentCalories = 0
+      currentHrv = 0
+      currentRhr = 0
+      currentSleepMinutes = 0
+      currentDeviceName = ""
       pushTelemetry()
     }
   }

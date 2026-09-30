@@ -43,7 +43,7 @@ class MainActivity : FlutterActivity() {
     private var currentSteps: Int = 0
     private var currentCalories: Int = 0
     private var currentBattery: Int = 0
-    private var currentDeviceName: String = "СААТ-1"
+    private var currentDeviceName: String = ""
     private var isConnected: Boolean = false
 
     private val telemetryPollRunnable = object : Runnable {
@@ -123,6 +123,15 @@ class MainActivity : FlutterActivity() {
                 }
             }
 
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "sport.kalkan.biotracker/background")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "scheduleRefresh") {
+                    result.success(true)
+                } else {
+                    result.notImplemented()
+                }
+            }
+
         // 1. MethodChannel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, METHOD_CHANNEL)
             .setMethodCallHandler { call: MethodCall, result: MethodChannel.Result ->
@@ -168,7 +177,17 @@ class MainActivity : FlutterActivity() {
                     "disconnect" -> {
                         uteBleClient?.disconnect()
                         isConnected = false
+                        currentBpm = 0
+                        currentBattery = 0
+                        currentSteps = 0
+                        currentCalories = 0
+                        currentDeviceName = ""
                         mainHandler.removeCallbacks(telemetryPollRunnable)
+                        try {
+                            KalkanBleService.stop(applicationContext)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                         pushTelemetry()
                         result.success(true)
                     }
@@ -236,8 +255,7 @@ class MainActivity : FlutterActivity() {
     private fun hasRequiredPermissions(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
         } else {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         }
@@ -247,8 +265,7 @@ class MainActivity : FlutterActivity() {
         val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
                 Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.BLUETOOTH_CONNECT
             )
         } else {
             arrayOf(
@@ -319,12 +336,18 @@ class MainActivity : FlutterActivity() {
                 when (state) {
                     BleConnectStateListener.STATE_CONNECTED -> {
                         isConnected = true
-                        currentDeviceName = uteBleClient?.deviceName ?: "UTE Barys Watch"
+                        currentDeviceName = uteBleClient?.deviceName ?: "СААТ-1"
                         
                         try {
                             uteBleConnection?.setContinuousHeartRate(true)
                             uteBleConnection?.setAutoHeartRate(true)
                             uteBleConnection?.setAutoStress(true)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        try {
+                            KalkanBleService.start(applicationContext)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
@@ -337,7 +360,16 @@ class MainActivity : FlutterActivity() {
                     BleConnectStateListener.STATE_DISCONNECTED -> {
                         isConnected = false
                         currentBpm = 0
+                        currentBattery = 0
+                        currentSteps = 0
+                        currentCalories = 0
+                        currentDeviceName = ""
                         mainHandler.removeCallbacks(telemetryPollRunnable)
+                        try {
+                            KalkanBleService.stop(applicationContext)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                         pushTelemetry()
                     }
                 }
@@ -364,7 +396,7 @@ class MainActivity : FlutterActivity() {
                 "calories" to currentCalories,
                 "batteryLevel" to currentBattery,
                 "isConnected" to isConnected,
-                "deviceName" to currentDeviceName
+                "deviceName" to (if (isConnected) currentDeviceName else "")
             )
             telemetryEventSink?.success(telemetry)
         }
