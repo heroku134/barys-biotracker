@@ -459,7 +459,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       }
     }
 
-    device.clickMeasurementType(.HRV) { _ in }
+    device.click(.HRV, block: { _ in })
   }
   #else
   private func stopTelemetryPoll() {
