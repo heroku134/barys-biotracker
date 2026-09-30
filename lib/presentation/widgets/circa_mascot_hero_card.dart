@@ -26,87 +26,52 @@ class CircaMascotHeroCard extends StatelessWidget {
     final palette = KalkanColors.of(context);
     final accentColor = readiness.zone.color;
 
-    return GestureDetector(
+    return KalkanCard(
       onTap: () {
         CircaHaptics.selectionClick();
         onTap?.call();
       },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(
-          color: palette.surface,
-          borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
-          border: Border.all(
-            color: accentColor.withValues(alpha: 0.35),
-            width: 1.0,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      borderColor: accentColor.withValues(alpha: 0.35),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 1. Пара маскотов KALKAN без фона
+          Image.asset(
+            'assets/images/mascots_pair_transparent.png',
+            height: 104,
+            width: 92,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => Image.asset(
+              state.assetFor(),
+              height: 84,
+              width: 84,
+              fit: BoxFit.cover,
+            ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: accentColor.withValues(alpha: 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 1. Вырезанная пара маскотов без фона со световой аурой
-            Stack(
-              alignment: Alignment.center,
+
+          const SizedBox(width: 14),
+
+          // 2. Информационный блок маскотов и статус готовности
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Мягкое радиальное свечение за маскотами
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        accentColor.withValues(alpha: 0.28),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-                // Изображение маскотов без фона (PNG RGBA)
-                Image.asset(
-                  'assets/images/mascots_pair_transparent.png',
-                  height: 112,
-                  width: 98,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => Image.asset(
-                    state.assetFor(),
-                    height: 90,
-                    width: 90,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(width: 14),
-
-            // 2. Информационный блок маскотов и статус готовности
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Надзаголовок бренда и статусный бейдж
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                          border: Border.all(
-                            color: accentColor.withValues(alpha: 0.6),
-                            width: 0.8,
-                          ),
+                // Надзаголовок бренда и статусный бейдж
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                        border: Border.all(
+                          color: accentColor.withValues(alpha: 0.6),
+                          width: KalkanUi.hairline,
                         ),
+                      ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -202,7 +167,6 @@ class CircaMascotHeroCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }

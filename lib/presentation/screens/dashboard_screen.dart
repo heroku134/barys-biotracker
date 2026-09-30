@@ -301,13 +301,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 12, KalkanUi.pagePadding, 0),
-                  child: Container(
+                  child: KalkanCard(
                     padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-                    decoration: BoxDecoration(
-                      color: palette.surface,
-                      borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
-                      border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
-                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -391,14 +386,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                child: Container(
+                child: KalkanCard(
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                  decoration: BoxDecoration(
-                    color: palette.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: palette.hairline),
-                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -621,13 +611,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _stat(KalkanColors palette, String label, String value, String unit) {
-    return Container(
+    return KalkanCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: palette.surface,
-        borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
-        border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

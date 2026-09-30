@@ -16,54 +16,60 @@ class KalkanUi {
   static const double hairline = 1.0;
 }
 
-class KalkanSurface extends StatelessWidget {
+/// Canonical athletic card surface for KALKAN SPORT.
+/// - Flat surface (#0E1015 Obsidian in dark / #FFFFFF Porcelain in light)
+/// - 1px hairline border (#1C2029 / #E2E2DE)
+/// - Strictly NO blur, NO glassmorphism, NO decorative neon glow
+/// - In dark mode: completely flat (0 shadow)
+/// - In light mode: quiet soft elevation shadow
+class KalkanCard extends StatelessWidget {
   final Widget child;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
-  final VoidCallback? onTap;
-  final Color? color;
+  final double borderRadius;
   final Color? borderColor;
-  final double radius;
+  final Color? backgroundColor;
+  final VoidCallback? onTap;
+  final double? width;
 
-  const KalkanSurface({
+  const KalkanCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(KalkanUi.cardPadding),
     this.margin,
-    this.onTap,
-    this.color,
+    this.borderRadius = KalkanUi.cardRadius,
     this.borderColor,
-    this.radius = KalkanUi.cardRadius,
+    this.backgroundColor,
+    this.onTap,
+    this.width,
   });
 
   @override
   Widget build(BuildContext context) {
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(radius),
-      side: BorderSide(color: borderColor ?? AppColors.hairline, width: KalkanUi.hairline),
-    );
+    final palette = KalkanColors.of(context);
     final content = Container(
+      width: width,
       margin: margin,
       padding: padding,
-      decoration: ShapeDecoration(
-        color: color ?? AppColors.surface,
-        shape: shape,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? palette.surface,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: borderColor ?? palette.hairline, width: KalkanUi.hairline),
+        boxShadow: palette.shadow.a == 0
+            ? null
+            : [BoxShadow(color: palette.shadow, blurRadius: 18, offset: const Offset(0, 8))],
       ),
       child: child,
     );
-    if (onTap == null) return content;
-    return Material(
-      color: Colors.transparent,
-      shape: shape,
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        overlayColor: WidgetStatePropertyAll(AppColors.raised.withValues(alpha: 0.55)),
-        child: content,
-      ),
-    );
+    if (onTap != null) {
+      return GestureDetector(onTap: onTap, child: content);
+    }
+    return content;
   }
 }
+
+/// Backwards compatibility alias
+typedef KalkanSurface = KalkanCard;
 
 class KalkanSectionLabel extends StatelessWidget {
   final String text;

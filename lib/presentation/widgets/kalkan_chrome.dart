@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_typography.dart';
+export 'kalkan_ui.dart' show KalkanCard;
 
 class KalkanAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -44,32 +45,3 @@ class KalkanAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-class KalkanCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-  final VoidCallback? onTap;
-
-  const KalkanCard({
-    super.key,
-    required this.child,
-    this.padding = const EdgeInsets.all(16),
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = KalkanColors.of(context);
-    final box = Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: palette.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: palette.hairline),
-      ),
-      child: child,
-    );
-    if (onTap == null) return box;
-    return GestureDetector(onTap: onTap, child: box);
-  }
-}
