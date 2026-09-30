@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/circa_haptics.dart';
+import '../../core/secure_invite_generator.dart';
 import '../../domain/intelligence/readiness_engine.dart';
 import '../../domain/models/private_league.dart';
 import '../../domain/models/readiness.dart';
@@ -80,10 +81,15 @@ class PrivateLeagueRepository {
           updatedMembers.insert(0, userMember);
         }
 
+        var code = savedLeague.inviteCode.replaceAll('CIRCA', 'KALKAN');
+        if (code.length < 12 || !code.startsWith('KLK-')) {
+          code = SecureInviteGenerator.generateFriendCode();
+        }
+
         return PrivateLeague(
           id: savedLeague.id,
           title: savedLeague.title.replaceAll('CIRCA', 'KALKAN'),
-          inviteCode: savedLeague.inviteCode.replaceAll('CIRCA', 'KALKAN'),
+          inviteCode: code,
           maxMembers: savedLeague.maxMembers,
           members: updatedMembers,
         );
@@ -95,7 +101,7 @@ class PrivateLeagueRepository {
     final league = PrivateLeague(
       id: 'league_kalkan_01',
       title: 'Круг доверия',
-      inviteCode: 'KALKAN-${userProfile.name.hashCode.abs().toString().padLeft(4, '0').substring(0, 4)}',
+      inviteCode: SecureInviteGenerator.generateFriendCode(),
       maxMembers: 5,
       members: [userMember],
     );

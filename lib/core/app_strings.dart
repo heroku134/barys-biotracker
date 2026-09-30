@@ -106,6 +106,51 @@ class AppStrings {
       AppLanguage.kyrgyz: 'Сырсөз кеминде 6 белгиден турушу керек',
       AppLanguage.english: 'Password must contain at least 6 characters',
     },
+    'auth_forgot_password': {
+      AppLanguage.russian: 'Забыли пароль?',
+      AppLanguage.kyrgyz: 'Сырсөздү унуттуңузбу?',
+      AppLanguage.english: 'Forgot password?',
+    },
+    'auth_reset_dialog_title': {
+      AppLanguage.russian: 'Сброс пароля',
+      AppLanguage.kyrgyz: 'Сырсөздү калыбына келтирүү',
+      AppLanguage.english: 'Reset Password',
+    },
+    'auth_reset_dialog_desc': {
+      AppLanguage.russian: 'Введите ваш email адрес, и мы отправим ссылку для сброса пароля:',
+      AppLanguage.kyrgyz: 'Email дарегиңизди киргизиңиз, биз сырсөздү калыбына келтирүү шилтемесин жөнөтөбүз:',
+      AppLanguage.english: 'Enter your email address and we will send a password reset link:',
+    },
+    'auth_reset_send': {
+      AppLanguage.russian: 'ОТПРАВИТЬ ССЫЛКУ',
+      AppLanguage.kyrgyz: 'ШИЛТЕМЕНИ ЖӨНӨТҮҮ',
+      AppLanguage.english: 'SEND LINK',
+    },
+    'auth_reset_success': {
+      AppLanguage.russian: 'Ссылка для сброса пароля отправлена на почту',
+      AppLanguage.kyrgyz: 'Сырсөздү калыбына келтирүү шилтемеси почтаңызга жөнөтүлдү',
+      AppLanguage.english: 'Password reset link sent to your email',
+    },
+    'account_delete_title': {
+      AppLanguage.russian: 'Удаление аккаунта',
+      AppLanguage.kyrgyz: 'Аккаунтту жок кылуу',
+      AppLanguage.english: 'Delete Account',
+    },
+    'account_delete_button': {
+      AppLanguage.russian: 'Удалить аккаунт и данные',
+      AppLanguage.kyrgyz: 'Аккаунтту жана дайындарды өчүрүү',
+      AppLanguage.english: 'Delete Account & Data',
+    },
+    'account_delete_confirm_msg': {
+      AppLanguage.russian: 'Все ваши данные в облаке (профиль, журнал, дни, цикл, связка с партнёром) и на устройстве будут удалены безвозвратно. Это действие нельзя отменить.',
+      AppLanguage.kyrgyz: 'Бардык булуттагы жана түзмөктөгү дайындарыңыз биротоло өчүрүлөт. Бул аракетти артка кайтарууга болбойт.',
+      AppLanguage.english: 'All your cloud and local data (profile, journal, days, cycle, partner links) will be permanently deleted. This action cannot be undone.',
+    },
+    'account_delete_action': {
+      AppLanguage.russian: 'УДАЛИТЬ НАВСЕГДА',
+      AppLanguage.kyrgyz: 'БИРОТОЛО ӨЧҮРҮҮ',
+      AppLanguage.english: 'DELETE FOREVER',
+    },
 
     // Спорт и кнопки
     'sport_history': {

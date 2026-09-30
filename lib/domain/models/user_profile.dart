@@ -201,7 +201,7 @@ class UserProfile {
       sleepGoalHours: (json['sleepGoalHours'] as num?)?.toDouble() ?? 8.0,
       is24HourFormat: json['is24HourFormat'] as bool? ?? true,
       isMetric: json['isMetric'] as bool? ?? true,
-      isAuthenticated: json['isAuthenticated'] as bool? ?? true,
+      isAuthenticated: json['isAuthenticated'] as bool? ?? false,
       hasCompletedProfile: hasCompleted,
       cyclePhase: json['cyclePhase'] != null
           ? HormonalCyclePhase.values.firstWhere(

@@ -33,9 +33,9 @@ class LegalScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             AppLocaleNotifier.pick(
-              'На устройстве хранятся профиль, дневник и снимки дней. Если вы вошли в аккаунт, копия уходит в Firestore проекта watch-ba720: профиль, дни, код друга, цикл. Фото в облако не грузим. Выход из аккаунта не стирает локальные файлы. Удаление аккаунта в Firebase Console делает владелец проекта.',
-              'Профиль жана күндөр түзмөктө жана Firestoreдо. Сүрөт булутка чыкпайт.',
-              'Profile, journal and day snapshots stay on device. Signed-in copies go to Firestore project watch-ba720. Photos are not uploaded. Account deletion is done by the project owner in Firebase Console.',
+              'На устройстве хранятся профиль, дневник и снимки дней. Если вы вошли в аккаунт, копия уходит в Firestore проекта watch-ba720: профиль, дни, код друга, цикл. Фото в облако не грузим. Выход из аккаунта не стирает локальные файлы. Полное удаление аккаунта и всех облачных данных доступно прямо в приложении (экран «Профиль» → «Удалить аккаунт и данные»).',
+              'Профиль жана күндөр түзмөктө жана Firestoreдо. Сүрөт булутка чыкпайт. Аккаунтту жана бардык дайындарды толук өчүрүү колдонмонун өзүндө жеткиликтүү (Профиль → Аккаунтту жана дайындарды өчүрүү).',
+              'Profile, journal and day snapshots stay on device. Signed-in copies go to Firestore project watch-ba720. Photos are not uploaded. Complete account and data deletion is available directly in-app (Profile → Delete Account & Data).',
             ),
             style: AppTypography.body(palette.fg).copyWith(height: 1.45),
           ),

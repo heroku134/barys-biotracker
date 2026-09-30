@@ -19,6 +19,11 @@ import 'package:barys_biotracker/presentation/widgets/circa_calibration_card.dar
 import 'package:barys_biotracker/domain/models/user_profile.dart';
 import 'package:barys_biotracker/domain/intelligence/menstrual_cycle_engine.dart';
 
+import 'package:barys_biotracker/core/secure_invite_generator.dart';
+import 'package:barys_biotracker/domain/models/private_league.dart';
+import 'package:barys_biotracker/presentation/screens/auth_screen.dart';
+import 'package:barys_biotracker/data/ble/ute_ble_bridge.dart';
+
 void main() {
   group('KALKAN Athletic Surface & UI Components Test Suite', () {
     testWidgets('1. KalkanCard renders flat surface with hairline border and zero dark-mode shadow', (tester) async {
@@ -254,6 +259,63 @@ void main() {
 
       expect(MenstrualCycleEngine.isConfigured(unconfigured), isFalse);
       expect(MenstrualCycleEngine.isConfigured(configured), isTrue);
+    });
+
+    test('15. UserProfile.fromJson defaults isAuthenticated to false when omitted or null', () {
+      final jsonWithoutAuth = {
+        'name': 'Batyr',
+        'gender': 'male',
+      };
+      final profile = UserProfile.fromJson(jsonWithoutAuth);
+      expect(profile.isAuthenticated, isFalse, reason: 'Unauthenticated profiles must never default to true');
+
+      final jsonWithAuthTrue = {
+        'name': 'Batyr',
+        'gender': 'male',
+        'isAuthenticated': true,
+      };
+      final authProfile = UserProfile.fromJson(jsonWithAuthTrue);
+      expect(authProfile.isAuthenticated, isTrue);
+    });
+
+    test('16. SecureInviteGenerator produces high-entropy non-colliding codes with KLK prefix', () {
+      final friendCode1 = SecureInviteGenerator.generateFriendCode();
+      final friendCode2 = SecureInviteGenerator.generateFriendCode();
+      final cycleCode = SecureInviteGenerator.generateCycleCode();
+
+      expect(friendCode1, startsWith('KLK-FRN-'));
+      expect(friendCode2, startsWith('KLK-FRN-'));
+      expect(cycleCode, startsWith('KLK-CYC-'));
+      expect(friendCode1, isNot(equals(friendCode2)));
+      expect(friendCode1.length, greaterThanOrEqualTo(16));
+      expect(SecureInviteGenerator.isValidCode(friendCode1), isTrue);
+      expect(SecureInviteGenerator.isValidCode(cycleCode), isTrue);
+      expect(SecureInviteGenerator.isValidCode('KALKAN-1234'), isTrue);
+      expect(SecureInviteGenerator.isValidCode('INVALID'), isFalse);
+    });
+
+    test('17. PrivateLeague.copyWith updates inviteCode and retains existing members', () {
+      const original = PrivateLeague(
+        id: 'league_01',
+        title: 'Тест',
+        inviteCode: 'OLD-CODE',
+        members: [],
+      );
+      final updated = original.copyWith(inviteCode: 'KLK-FRN-ABCD-1234');
+      expect(updated.inviteCode, 'KLK-FRN-ABCD-1234');
+      expect(updated.id, 'league_01');
+    });
+
+    testWidgets('18. AuthScreen renders Forgot Password button in login mode', (tester) async {
+      final bridge = UteBleBridge();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AuthScreen(bleBridge: bridge),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Забыли пароль?'), findsOneWidget);
     });
   });
 }

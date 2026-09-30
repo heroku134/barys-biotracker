@@ -2,7 +2,93 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Вспомогательная функция проверки авторизации
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: /users/{userId}
+    // Document ID: Firebase Auth UID
+    // Fields:
+    //   - profileRaw: string (optional, max 20000 chars) - Serialized UserProfile JSON
+    //   - name: string (optional, max 100 chars) - User display name
+    //   - email: string (optional, max 150 chars) - User email address (PII)
+    //   - gender: string (optional, max 30 chars) - 'female', 'male', etc.
+    //   - hasCompletedProfile: bool (optional) - Onboarding completion flag
+    //   - heightCm: number (optional, 30..300) - Height in cm
+    //   - weightKg: number (optional, 10..500) - Weight in kg
+    //   - birthYear: number (optional, 1900..2100) - Year of birth
+    //   - stepGoal: number (optional, 0..500000) - Daily step goal
+    //   - calorieGoal: number (optional, 0..50000) - Daily calorie goal
+    //   - sleepGoalHours: number (optional, 0..24) - Sleep target in hours
+    //   - isPregnant: bool (optional) - Pregnancy status (sensitive health data)
+    //   - updatedAt: timestamp (optional) - Profile modification timestamp
+    //   - recovery: number (optional, 0..100) - Recovery score percentage
+    //   - hrv: number (optional, 0..500) - Heart Rate Variability (ms)
+    //   - rhr: number (optional, 0..250) - Resting Heart Rate (bpm)
+    //   - recoveryAt: timestamp (optional) - Telemetry timestamp
+    //   - fcmToken: string (optional, max 500 chars) - Cloud Messaging token
+    //   - fcmUpdatedAt: timestamp (optional) - Token refresh timestamp
+    //   - restingHeartRate: number (optional, 0..250) - Telemetry resting heart rate
+    //   - currentStrain: number (optional, 0..50) - Daily strain score
+    //   - targetStrainMax: number (optional, 0..50) - Recommended strain maximum
+    //   - calibrationDay: number (optional, 0..365) - SAAT-1 calibration day counter
+    //   - heartRate: number (optional, 0..300) - Current heart rate
+    //
+    // Collection: /cycle/{userId}
+    // Document ID: Firebase Auth UID of the female user
+    // Fields:
+    //   - cycleDay: number (optional, 1..100) - Current day in menstrual cycle
+    //   - cycleLength: number (optional, 10..100) - Cycle length in days
+    //   - phase: string (optional, max 50 chars) - Hormonal phase name
+    //   - partnerName: string (optional, max 100 chars) - Shared partner label
+    //   - mood: string (optional, max 100 chars) - Logged mood
+    //   - flow: string (optional, max 100 chars) - Logged flow
+    //   - energyScore: number (optional, 0..100) - Energy level score
+    //   - symptoms: list (optional, max 50 items) - Selected symptoms list
+    //   - note: string (optional, max 2000 chars) - Private cycle note
+    //   - updatedAt: timestamp (optional) - Last sync timestamp
+    //
+    // Subcollection: /days/{userId}/snapshots/{dateKey}
+    // Document ID: ISO Date string (YYYY-MM-DD)
+    // Fields:
+    //   - dateKey: string (required, max 20 chars, matches document ID)
+    //   - recovery: number (required, 0..100) - Recovery score
+    //   - strain: number (required, 0..30) - Strain score
+    //   - sleep: number (required, 0..1440) - Sleep duration
+    //   - hrv: number (required, 0..500) - HRV in ms
+    //   - rhr: number (required, 0..250) - Resting Heart Rate
+    //   - preview: bool (optional) - Preview mode indicator
+    //
+    // Subcollection: /friends/{userId}/members/{memberId}
+    // Document ID: Firebase Auth UID of the member/friend
+    // Fields:
+    //   - uid: string (optional, must match memberId) - Friend UID
+    //   - name: string (optional, max 100 chars) - Friend display name
+    //   - recovery: number (optional, 0..100) - Recovery score for Dunbar league
+    //   - hrv: number (optional, 0..500) - Friend HRV
+    //   - rhr: number (optional, 0..250) - Friend RHR
+    //   - updatedAt: timestamp (optional) - Telemetry update timestamp
+    //
+    // Collection: /invites/{code}
+    // Document ID: Formatted invite code (e.g. KALKAN-XXXX)
+    // Fields:
+    //   - ownerUid: string (required, 1..128 chars) - Creator UID (immutable)
+    //   - type: string (required, 'friend' or 'cycle') - Invite purpose
+    //   - name: string (optional, max 100 chars) - Owner display name
+    //   - createdAt: timestamp (optional) - Creation timestamp
+    //
+    // Collection: /partners/{userId}
+    // Document ID: Firebase Auth UID of the linked partner
+    // Fields:
+    //   - partnerUid: string (required, 1..128 chars) - Target user UID
+    //   - code: string (required, 1..64 chars) - Secret invite code used for link
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Core Helper Functions
+    // ===============================================================
+
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -11,47 +97,243 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // 1. Профиль пользователя и телеметрия
-    match /users/{userId} {
-      // Читать могут авторизованные пользователи (для поиска друзей по ID/имени)
-      allow read: if isAuthenticated();
-      // Писать может только сам владелец
-      allow write: if isOwner(userId);
+    function isValidOptionalString(data, field, minLen, maxLen) {
+      return !(field in data) ||
+        (data[field] is string && data[field].size() >= minLen && data[field].size() <= maxLen);
     }
 
-    // 2. Женский цикл (приватные данные здоровья)
-    match /cycle/{userId} {
-      // Владелица может читать и писать
-      allow write: if isOwner(userId);
-      // Читать может владелица ИЛИ явно привязанный партнёр
-      allow read: if isOwner(userId) || (
-        isAuthenticated() &&
+    function isValidOptionalNumber(data, field, minVal, maxVal) {
+      return !(field in data) ||
+        (data[field] is number && data[field] >= minVal && data[field] <= maxVal);
+    }
+
+    function isValidOptionalBool(data, field) {
+      return !(field in data) || (data[field] is bool);
+    }
+
+    function isValidOptionalTimestamp(data, field) {
+      return !(field in data) || (data[field] is timestamp);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // --- 1. User Profile Validator ---
+    function isValidUser(data) {
+      return data.keys().hasOnly([
+        'profileRaw', 'name', 'email', 'gender', 'hasCompletedProfile',
+        'heightCm', 'weightKg', 'birthYear', 'stepGoal', 'calorieGoal',
+        'sleepGoalHours', 'isPregnant', 'updatedAt', 'recovery', 'hrv',
+        'rhr', 'recoveryAt', 'fcmToken', 'fcmUpdatedAt', 'restingHeartRate',
+        'currentStrain', 'targetStrainMax', 'calibrationDay', 'heartRate'
+      ]) &&
+      isValidOptionalString(data, 'profileRaw', 0, 20000) &&
+      isValidOptionalString(data, 'name', 0, 100) &&
+      isValidOptionalString(data, 'email', 0, 150) &&
+      isValidOptionalString(data, 'gender', 0, 30) &&
+      isValidOptionalBool(data, 'hasCompletedProfile') &&
+      isValidOptionalNumber(data, 'heightCm', 30, 300) &&
+      isValidOptionalNumber(data, 'weightKg', 10, 500) &&
+      isValidOptionalNumber(data, 'birthYear', 1900, 2100) &&
+      isValidOptionalNumber(data, 'stepGoal', 0, 500000) &&
+      isValidOptionalNumber(data, 'calorieGoal', 0, 50000) &&
+      isValidOptionalNumber(data, 'sleepGoalHours', 0, 24) &&
+      isValidOptionalBool(data, 'isPregnant') &&
+      isValidOptionalTimestamp(data, 'updatedAt') &&
+      isValidOptionalNumber(data, 'recovery', 0, 100) &&
+      isValidOptionalNumber(data, 'hrv', 0, 500) &&
+      isValidOptionalNumber(data, 'rhr', 0, 250) &&
+      isValidOptionalTimestamp(data, 'recoveryAt') &&
+      isValidOptionalString(data, 'fcmToken', 0, 500) &&
+      isValidOptionalTimestamp(data, 'fcmUpdatedAt') &&
+      isValidOptionalNumber(data, 'restingHeartRate', 0, 250) &&
+      isValidOptionalNumber(data, 'currentStrain', 0, 50) &&
+      isValidOptionalNumber(data, 'targetStrainMax', 0, 50) &&
+      isValidOptionalNumber(data, 'calibrationDay', 0, 365) &&
+      isValidOptionalNumber(data, 'heartRate', 0, 300);
+    }
+
+    // --- 2. Cycle Data Validator ---
+    function isValidCycleData(data) {
+      return data.keys().hasOnly([
+        'cycleDay', 'cycleLength', 'phase', 'partnerName',
+        'mood', 'flow', 'energyScore', 'symptoms', 'note', 'updatedAt'
+      ]) &&
+      isValidOptionalNumber(data, 'cycleDay', 1, 100) &&
+      isValidOptionalNumber(data, 'cycleLength', 10, 100) &&
+      isValidOptionalString(data, 'phase', 0, 50) &&
+      isValidOptionalString(data, 'partnerName', 0, 100) &&
+      isValidOptionalString(data, 'mood', 0, 100) &&
+      isValidOptionalString(data, 'flow', 0, 100) &&
+      isValidOptionalNumber(data, 'energyScore', 0, 100) &&
+      (!( 'symptoms' in data ) || (data.symptoms is list && data.symptoms.size() <= 50)) &&
+      isValidOptionalString(data, 'note', 0, 2000) &&
+      isValidOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // --- 3. Day Snapshot Validator ---
+    function isValidDaySnapshot(data, dateKey) {
+      return data.keys().hasOnly(['dateKey', 'recovery', 'strain', 'sleep', 'hrv', 'rhr', 'preview']) &&
+        data.keys().hasAll(['dateKey', 'recovery', 'strain', 'sleep', 'hrv', 'rhr']) &&
+        data.dateKey is string &&
+        data.dateKey == dateKey &&
+        data.dateKey.size() <= 20 &&
+        data.recovery is number && data.recovery >= 0 && data.recovery <= 100 &&
+        data.strain is number && data.strain >= 0 && data.strain <= 30 &&
+        data.sleep is number && data.sleep >= 0 && data.sleep <= 1440 &&
+        data.hrv is number && data.hrv >= 0 && data.hrv <= 500 &&
+        data.rhr is number && data.rhr >= 0 && data.rhr <= 250 &&
+        isValidOptionalBool(data, 'preview');
+    }
+
+    // --- 4. Friend Circle Member Validator ---
+    function isValidFriendMember(data, memberId) {
+      return data.keys().hasOnly(['uid', 'name', 'recovery', 'hrv', 'rhr', 'updatedAt']) &&
+        (!( 'uid' in data ) || (data.uid is string && data.uid == memberId)) &&
+        isValidOptionalString(data, 'name', 0, 100) &&
+        isValidOptionalNumber(data, 'recovery', 0, 100) &&
+        isValidOptionalNumber(data, 'hrv', 0, 500) &&
+        isValidOptionalNumber(data, 'rhr', 0, 250) &&
+        isValidOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // --- 5. Invite Code Validator ---
+    function isValidInvite(data) {
+      return data.keys().hasOnly(['ownerUid', 'type', 'name', 'createdAt']) &&
+        data.keys().hasAll(['ownerUid', 'type']) &&
+        data.ownerUid is string &&
+        data.ownerUid.size() > 0 &&
+        data.ownerUid.size() <= 128 &&
+        (data.type == 'friend' || data.type == 'cycle') &&
+        isValidOptionalString(data, 'name', 0, 100) &&
+        isValidOptionalTimestamp(data, 'createdAt');
+    }
+
+    // --- 6. Partner Record Validator ---
+    function isValidPartnerRecord(data) {
+      return data.keys().hasOnly(['partnerUid', 'code']) &&
+        data.keys().hasAll(['partnerUid', 'code']) &&
+        data.partnerUid is string &&
+        data.partnerUid.size() > 0 &&
+        data.partnerUid.size() <= 128 &&
+        data.code is string &&
+        data.code.size() > 0 &&
+        data.code.size() <= 64;
+    }
+
+    // --- Partner Cycle Authorization Chain ---
+    // Strictly verifies that the reader has a partner record pointing to userId,
+    // AND that the partner record contains a code pointing to a valid invite
+    // created by userId with type == 'cycle'.
+    function isAuthorizedCyclePartner(userId) {
+      return isAuthenticated() &&
         exists(/databases/$(database)/documents/partners/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/partners/$(request.auth.uid)).data.partnerUid == userId
-      );
+        isCyclePartnerRecordValid(userId, get(/databases/$(database)/documents/partners/$(request.auth.uid)).data);
     }
 
-    // 3. Снимки суточных биометрических данных
-    match /days/{userId}/snapshots/{dateKey} {
-      allow read, write: if isOwner(userId);
+    function isCyclePartnerRecordValid(userId, partnerData) {
+      return ('partnerUid' in partnerData) &&
+        partnerData.partnerUid == userId &&
+        ('code' in partnerData) &&
+        partnerData.code is string &&
+        partnerData.code.size() > 0 &&
+        exists(/databases/$(database)/documents/invites/$(partnerData.code)) &&
+        isCycleInviteValid(userId, get(/databases/$(database)/documents/invites/$(partnerData.code)).data);
     }
 
-    // 4. Лига Данбара (круг друзей)
-    match /friends/{userId}/members/{memberId} {
+    function isCycleInviteValid(userId, inviteData) {
+      return ('type' in inviteData) &&
+        inviteData.type == 'cycle' &&
+        ('ownerUid' in inviteData) &&
+        inviteData.ownerUid == userId;
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // 1. User Profile & Biometrics (PII Protected)
+    match /users/{userId} {
+      // Strictly owner-only read. Solves privacy vulnerability where any
+      // authenticated user could dump raw profile, pregnancy status, biometric metrics.
       allow read: if isOwner(userId);
-      allow write: if isAuthenticated() && (request.auth.uid == userId || request.auth.uid == memberId);
+
+      // Writes are strictly restricted to the owner with domain schema validation.
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow delete: if isOwner(userId);
     }
 
-    // 5. Одноразовые инвайт-коды связки (партнёр и друзья)
+    // 2. Reproductive Health Cycle Data
+    match /cycle/{userId} {
+      // Owner can write/update their cycle data with domain validation.
+      allow create: if isOwner(userId) && isValidCycleData(request.resource.data);
+      allow update: if isOwner(userId) && isValidCycleData(request.resource.data);
+      allow delete: if isOwner(userId);
+
+      // Reader must be the owner OR an authorized partner who possesses
+      // a valid invite created by the cycle owner.
+      allow read: if isOwner(userId) || isAuthorizedCyclePartner(userId);
+    }
+
+    // 3. Daily Biometric Snapshots
+    match /days/{userId}/snapshots/{dateKey} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidDaySnapshot(request.resource.data, dateKey);
+      allow update: if isOwner(userId) &&
+        request.resource.data.dateKey == resource.data.dateKey &&
+        isValidDaySnapshot(request.resource.data, dateKey);
+      allow delete: if isOwner(userId);
+    }
+
+    // 4. Dunbar Friends Circle
+    match /friends/{userId}/members/{memberId} {
+      // Owner can read their circle
+      allow read: if isOwner(userId);
+
+      // Allowed if owner managing their circle OR friend updating their own card/accepting invite
+      allow create: if isAuthenticated() &&
+        (request.auth.uid == userId || request.auth.uid == memberId) &&
+        isValidFriendMember(request.resource.data, memberId);
+
+      allow update: if isAuthenticated() &&
+        (request.auth.uid == userId || request.auth.uid == memberId) &&
+        isValidFriendMember(request.resource.data, memberId);
+
+      allow delete: if isAuthenticated() &&
+        (request.auth.uid == userId || request.auth.uid == memberId);
+    }
+
+    // 5. Single-use and Multi-use Invite Codes
     match /invites/{code} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated();
-      allow delete: if isAuthenticated();
+      // Strictly prevent listing/enumeration attacks
+      allow list: if false;
+
+      // Allow single get by exact code for authenticated users accepting links
+      allow get: if isAuthenticated();
+
+      // Only creator can create invites with their own UID
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        isValidInvite(request.resource.data);
+
+      // Only owner can update invite; ownerUid is immutable
+      allow update: if isAuthenticated() &&
+        resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        isValidInvite(request.resource.data);
+
+      // Only owner can delete invite
+      allow delete: if isAuthenticated() &&
+        resource.data.ownerUid == request.auth.uid;
     }
 
-    // 6. Записи привязки партнёров
+    // 6. Partner Link Records
     match /partners/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read, delete: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidPartnerRecord(request.resource.data);
+      allow update: if isOwner(userId) && isValidPartnerRecord(request.resource.data);
     }
   }
 }

@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
+import '../../core/app_strings.dart';
 import '../../core/app_typography.dart';
 import '../../core/avatar_image_provider.dart';
 import '../../data/ble/ute_ble_bridge.dart';
@@ -146,20 +147,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
               KalkanCard(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 onTap: _logout,
-                borderColor: AppColors.rose.withValues(alpha: 0.35),
+                borderColor: palette.hairline,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.logout, color: AppColors.rose, size: 18),
+                    Icon(Icons.logout, color: palette.secondary, size: 18),
                     const SizedBox(width: 8),
                     Text(
                       _tr('Выйти из аккаунта', 'Аккаунттан чыгуу', 'Sign Out of Account'),
-                      style: AppTypography.bodySemibold(AppColors.rose),
+                      style: AppTypography.bodySemibold(palette.secondary),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _deleteAccount,
+                  icon: const Icon(Icons.delete_forever_outlined, color: AppColors.rose, size: 16),
+                  label: Text(
+                    AppStrings.tr('account_delete_button', language),
+                    style: AppTypography.caption(AppColors.rose),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               Center(
                 child: Text(
                   'КАЛКАН · СААТ-1  v1.4.2',
@@ -426,6 +438,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
             child: Text(_tr('Выйти', 'Чыгуу', 'Sign out'), style: TextStyle(color: AppColors.rose)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteAccount() {
+    final navigator = Navigator.of(context);
+    final language = AppLocaleNotifier.current;
+    final palette = KalkanColors.of(context);
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: palette.raised,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
+        title: Text(
+          AppStrings.tr('account_delete_title', language),
+          style: AppTypography.screenTitle(AppColors.rose),
+        ),
+        content: Text(
+          AppStrings.tr('account_delete_confirm_msg', language),
+          style: AppTypography.bodyMuted(palette.secondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: Text(
+              AppStrings.tr('common_cancel', language),
+              style: AppTypography.bodyMuted(palette.muted),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.rose,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+              elevation: 0,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogCtx);
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(
+                  child: CircularProgressIndicator(color: AppColors.rose),
+                ),
+              );
+              try {
+                await CloudSyncService.deleteAccountAndData();
+              } catch (e) {
+                debugPrint('deleteAccount error: $e');
+              }
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => AuthScreen(bleBridge: widget.bleBridge)),
+                (_) => false,
+              );
+            },
+            child: Text(
+              AppStrings.tr('account_delete_action', language),
+              style: AppTypography.buttonLabel.copyWith(color: Colors.white),
+            ),
           ),
         ],
       ),

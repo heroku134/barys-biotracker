@@ -101,6 +101,22 @@ class PrivateLeague {
     required this.members,
   });
 
+  PrivateLeague copyWith({
+    String? id,
+    String? title,
+    String? inviteCode,
+    int? maxMembers,
+    List<FriendMember>? members,
+  }) {
+    return PrivateLeague(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      inviteCode: inviteCode ?? this.inviteCode,
+      maxMembers: maxMembers ?? this.maxMembers,
+      members: members ?? this.members,
+    );
+  }
+
   bool get isFull => members.length >= maxMembers;
   int get availableSlots => (maxMembers - members.length).clamp(0, maxMembers);
 

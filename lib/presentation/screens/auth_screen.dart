@@ -49,7 +49,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _submit() async {
     final email = _emailController.text.trim();
-    final pass = _passwordController.text.trim();
+    final pass = _passwordController.text;
     final name = _nameController.text.trim();
 
     if (email.isEmpty || pass.isEmpty || (_isSignUp && name.isEmpty)) {
@@ -215,6 +215,129 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final emailCtrl = TextEditingController(text: _emailController.text.trim());
+    String? dialogError;
+    bool sending = false;
+    final palette = KalkanColors.of(context);
+    final language = AppLocaleNotifier.current;
+
+    await showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: palette.raised,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.cardRadius)),
+          title: Text(
+            AppStrings.tr('auth_reset_dialog_title', language),
+            style: AppTypography.screenTitle(palette.fg),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                AppStrings.tr('auth_reset_dialog_desc', language),
+                style: AppTypography.bodyMuted(palette.secondary),
+              ),
+              const SizedBox(height: 12),
+              CircaTextField(
+                label: AppStrings.tr('auth_email_label', language),
+                hint: 'name@example.com',
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                prefixIcon: Icon(Icons.alternate_email, color: palette.muted, size: 20),
+              ),
+              if (dialogError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  dialogError!,
+                  style: AppTypography.caption(AppColors.rose),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.of(dialogCtx).pop(),
+              child: Text(
+                AppStrings.tr('common_cancel', language),
+                style: AppTypography.bodyMuted(palette.muted),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      final targetEmail = emailCtrl.text.trim();
+                      if (targetEmail.isEmpty || !targetEmail.contains('@')) {
+                        setDialogState(() => dialogError = AppStrings.tr('auth_err_email', language));
+                        return;
+                      }
+                      final messenger = ScaffoldMessenger.of(context);
+                      final nav = Navigator.of(dialogCtx);
+                      setDialogState(() {
+                        sending = true;
+                        dialogError = null;
+                      });
+                      try {
+                        if (Firebase.apps.isEmpty) {
+                          setDialogState(() {
+                            sending = false;
+                            dialogError = 'Сервис недоступен';
+                          });
+                          return;
+                        }
+                        await FirebaseAuth.instance.sendPasswordResetEmail(email: targetEmail).timeout(const Duration(seconds: 8));
+                        nav.pop();
+                        messenger.showSnackBar(
+                          SnackBar(
+                            backgroundColor: AppColors.sage,
+                            content: Text(
+                              AppStrings.tr('auth_reset_success', language),
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        );
+                      } on FirebaseAuthException catch (e) {
+                        setDialogState(() {
+                          sending = false;
+                          if (e.code == 'user-not-found') {
+                            dialogError = 'Пользователь с таким email не найден.';
+                          } else {
+                            dialogError = e.message ?? e.code;
+                          }
+                        });
+                      } catch (e) {
+                        setDialogState(() {
+                          sending = false;
+                          dialogError = 'Ошибка отправки: $e';
+                        });
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.sage,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                elevation: 0,
+              ),
+              child: sending
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(
+                      AppStrings.tr('auth_reset_send', language),
+                      style: AppTypography.buttonLabel.copyWith(color: Colors.white),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
 
   @override
@@ -292,6 +415,23 @@ class _AuthScreenState extends State<AuthScreen> {
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
+                          if (!_isSignUp) ...[
+                            const SizedBox(height: 6),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _isLoading ? null : _showForgotPasswordDialog,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                                  minimumSize: const Size(44, 32),
+                                ),
+                                child: Text(
+                                  AppStrings.tr('auth_forgot_password', language),
+                                  style: AppTypography.caption(palette.secondary),
+                                ),
+                              ),
+                            ),
+                          ],
 
                           // Ошибка
                           if (_errorMessage != null) ...[

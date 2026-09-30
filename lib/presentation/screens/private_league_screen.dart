@@ -50,8 +50,8 @@ class _PrivateLeagueScreenState extends State<PrivateLeagueScreen> {
 
     // 2. Фоново обновляем инвайт код через Firestore без блокировки пользователя
     try {
-      final cloudCode = await CloudSyncService.publishCycleInvite()
-          .timeout(const Duration(seconds: 2), onTimeout: () => _league?.inviteCode ?? 'KALKAN-0000');
+      final cloudCode = await CloudSyncService.publishFriendInvite()
+          .timeout(const Duration(seconds: 2), onTimeout: () => _league?.inviteCode ?? '');
       if (mounted && cloudCode.isNotEmpty) {
         setState(() => _cloudCode = cloudCode);
       }

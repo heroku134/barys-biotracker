@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/secure_invite_generator.dart';
 import '../../domain/models/partner_cycle_data.dart';
 import '../../domain/models/user_profile.dart';
 import '../storage/day_snapshot_repository.dart';
@@ -178,10 +180,17 @@ class CloudSyncService {
     }
   }
 
+  static const String _keyCycleInviteCode = 'kalkan_cycle_partner_invite_code_v1';
+
   static Future<String> publishFriendInvite() async {
     final db = _db;
     final id = uid;
-    final code = 'KALKAN-${(id ?? 'LOCAL').hashCode.abs().toString().padLeft(4, '0').substring(0, 4)}';
+    final league = await PrivateLeagueRepository.loadLeague();
+    var code = league.inviteCode;
+    if (code.length < 12 || !code.startsWith('KLK-')) {
+      code = SecureInviteGenerator.generateFriendCode();
+      await PrivateLeagueRepository.saveLeague(league.copyWith(inviteCode: code));
+    }
     if (db == null || id == null) return code;
     try {
       final profile = UserProfileRepository.profileNotifier.value;
@@ -205,6 +214,8 @@ class CloudSyncService {
     try {
       final inv = await db.collection('invites').doc(raw).get().timeout(const Duration(seconds: 4));
       if (!inv.exists) return false;
+      final type = inv.data()?['type'] as String?;
+      if (type != null && type != 'friend') return false; // Prevent cycle invite reuse
       final owner = inv.data()?['ownerUid'] as String?;
       final name = inv.data()?['name'] as String? ?? raw;
       if (owner == null || owner == id) return false;
@@ -228,11 +239,15 @@ class CloudSyncService {
   static Future<String> publishCycleInvite() async {
     final db = _db;
     final id = uid;
-    final profile = UserProfileRepository.profileNotifier.value;
-    final nameSeed = profile.name.isNotEmpty ? profile.name : '0000';
-    final code = 'KALKAN-${(id ?? nameSeed).hashCode.abs().toString().padLeft(4, '0').substring(0, 4)}';
+    final prefs = await SharedPreferences.getInstance();
+    var code = prefs.getString(_keyCycleInviteCode);
+    if (code == null || code.length < 12 || !code.startsWith('KLK-')) {
+      code = SecureInviteGenerator.generateCycleCode();
+      await prefs.setString(_keyCycleInviteCode, code);
+    }
     if (db == null || id == null) return code;
     try {
+      final profile = UserProfileRepository.profileNotifier.value;
       await db.collection('invites').doc(code).set({
         'ownerUid': id,
         'type': 'cycle',
@@ -280,21 +295,24 @@ class CloudSyncService {
       if (db != null && id != null) {
         final inv = await db.collection('invites').doc(raw).get().timeout(const Duration(seconds: 4));
         if (inv.exists) {
+          final type = inv.data()?['type'] as String?;
+          if (type != null && type != 'cycle') {
+            return false; // Prevent using non-cycle invite codes
+          }
           final owner = inv.data()?['ownerUid'] as String?;
           final inviteName = inv.data()?['name'] as String?;
           if (resolvedName.isEmpty && inviteName != null && inviteName.isNotEmpty) {
             resolvedName = inviteName;
           }
           if (owner != null) {
-            await db.collection('partners').doc(id).set({'partnerUid': owner, 'code': raw}).timeout(const Duration(seconds: 4));
-            try {
-              final userDoc = await db.collection('users').doc(owner).get().timeout(const Duration(seconds: 3));
-              final userName = userDoc.data()?['name'] as String?;
-              if (userName != null && userName.isNotEmpty) {
-                resolvedName = userName;
-              }
-            } catch (_) {}
+            await db.collection('partners').doc(id).set({
+              'partnerUid': owner,
+              'code': raw,
+              'linkedAt': FieldValue.serverTimestamp(),
+            }).timeout(const Duration(seconds: 4));
           }
+        } else {
+          return false;
         }
       }
     } catch (e) {
@@ -337,5 +355,69 @@ class CloudSyncService {
     } catch (e) {
       debugPrint('CloudSync.pullPartnerCycle: $e');
     }
+  }
+
+  /// Полное удаление аккаунта и связанных данных (App Store Guideline 5.1.1(v)):
+  /// 1. Удаление данных пользователя в Firestore (users, cycle, partners, days, friends, invites).
+  /// 2. Удаление учетной записи в Firebase Auth.
+  /// 3. Очистка локального хранилища (SharedPreferences).
+  static Future<void> deleteAccountAndData() async {
+    final db = _db;
+    final id = uid;
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (db != null && id != null) {
+      try {
+        // Удаляем документы пользователя
+        await db.collection('users').doc(id).delete().timeout(const Duration(seconds: 4));
+        await db.collection('cycle').doc(id).delete().timeout(const Duration(seconds: 4));
+        await db.collection('partners').doc(id).delete().timeout(const Duration(seconds: 4));
+
+        // Удаляем снимки дней
+        final daysSnap = await db.collection('days').doc(id).collection('snapshots').get().timeout(const Duration(seconds: 4));
+        for (final doc in daysSnap.docs) {
+          await doc.reference.delete().timeout(const Duration(seconds: 2));
+        }
+
+        // Удаляем записи участников круга
+        final friendsSnap = await db.collection('friends').doc(id).collection('members').get().timeout(const Duration(seconds: 4));
+        for (final doc in friendsSnap.docs) {
+          await doc.reference.delete().timeout(const Duration(seconds: 2));
+        }
+
+        // Удаляем свои инвайты
+        final prefs = await SharedPreferences.getInstance();
+        final cycleCode = prefs.getString(_keyCycleInviteCode);
+        if (cycleCode != null && cycleCode.isNotEmpty) {
+          await db.collection('invites').doc(cycleCode).delete().timeout(const Duration(seconds: 2));
+        }
+        final league = await PrivateLeagueRepository.loadLeague();
+        if (league.inviteCode.isNotEmpty) {
+          await db.collection('invites').doc(league.inviteCode).delete().timeout(const Duration(seconds: 2));
+        }
+      } catch (e) {
+        debugPrint('CloudSync.deleteAccountAndData firestore: $e');
+      }
+    }
+
+    // Удаляем Firebase Auth пользователя
+    if (user != null) {
+      try {
+        await user.delete().timeout(const Duration(seconds: 6));
+      } catch (e) {
+        debugPrint('CloudSync.deleteAccountAndData auth delete note: $e');
+        try {
+          await FirebaseAuth.instance.signOut();
+        } catch (_) {}
+      }
+    }
+
+    // Очищаем локальные хранилища
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+    } catch (_) {}
+
+    await UserProfileRepository.saveProfile(const UserProfile(isAuthenticated: false));
   }
 }
