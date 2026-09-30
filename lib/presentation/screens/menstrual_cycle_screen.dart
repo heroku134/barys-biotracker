@@ -41,7 +41,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
   bool _partnerLinked = false;
   String _partnerInviteCode = 'KLK-CYC-9281';
 
-  bool get _ru => AppLocaleNotifier.current != AppLanguage.kyrgyz;
+  String _tr(String ru, String ky, String en) => AppLocaleNotifier.t(ru, ky, en);
 
   int get _length => _profile.cycleLengthDays > 0 ? _profile.cycleLengthDays : 28;
   int get _periodLen => _profile.periodDurationDays > 0 ? _profile.periodDurationDays : 5;
@@ -151,7 +151,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     if (toast && mounted) {
       CircaHaptics.success();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_ru ? 'День сохранён' : 'Күн сакталды')),
+        SnackBar(content: Text(_tr('День сохранён', 'Күн сакталды', 'Day saved'))),
       );
     }
   }
@@ -172,11 +172,11 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     if (!mounted) return;
     String msg;
     if (shift >= 2) {
-      msg = _ru ? 'Пришли на $shift дн. раньше. Календарь сдвинут.' : '$shift күн эрте келди. Календарь жылды.';
+      msg = _tr('Пришли на $shift дн. раньше. Календарь сдвинут.', '$shift күн эрте келди. Календарь жылды.', 'Started $shift days early. Calendar updated.');
     } else if (shift <= -2) {
-      msg = _ru ? 'Пришли на ${-shift} дн. позже. Календарь сдвинут.' : '${-shift} күн кеч келди. Календарь жылды.';
+      msg = _tr('Пришли на ${-shift} дн. позже. Календарь сдвинут.', '${-shift} күн кеч келди. Календарь жылды.', 'Started ${-shift} days late. Calendar updated.');
     } else {
-      msg = _ru ? 'Новый цикл. Календарь от этой даты.' : 'Жаңы цикл ушул күндөн.';
+      msg = _tr('Новый цикл. Календарь от этой даты.', 'Жаңы цикл ушул күндөн.', 'New cycle started. Calendar updated.');
     }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
@@ -197,26 +197,26 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
   String _phaseName(HormonalCyclePhase phase) {
     switch (phase) {
       case HormonalCyclePhase.menstrual:
-        return _ru ? 'Месячные' : 'Этек кир';
+        return _tr('Месячные', 'Этек кир', 'Menstrual');
       case HormonalCyclePhase.follicular:
-        return _ru ? 'Фолликулярная' : 'Фолликулярдык';
+        return _tr('Фолликулярная', 'Фолликулярдык', 'Follicular');
       case HormonalCyclePhase.ovulatory:
-        return _ru ? 'Овуляция' : 'Овуляция';
+        return _tr('Овуляция', 'Овуляция', 'Ovulatory');
       case HormonalCyclePhase.luteal:
-        return _ru ? 'Лютеиновая' : 'Лютеиндик';
+        return _tr('Лютеиновая', 'Лютеиндик', 'Luteal');
     }
   }
 
   String _moodLabel(String id) {
     switch (id) {
       case 'irritable':
-        return _ru ? 'Раздражение' : 'Ачуулануу';
+        return _tr('Раздражение', 'Ачуулануу', 'Irritable');
       case 'anxious':
-        return _ru ? 'Тревога' : 'Тынчсыздануу';
+        return _tr('Тревога', 'Тынчсыздануу', 'Anxious');
       case 'energy':
-        return _ru ? 'Энергия' : 'Энергия';
+        return _tr('Энергия', 'Энергия', 'Energetic');
       default:
-        return _ru ? 'Спокойно' : 'Тынч';
+        return _tr('Спокойно', 'Тынч', 'Calm');
     }
   }
 
@@ -247,7 +247,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           appBar: AppBar(
             backgroundColor: palette.bg,
             elevation: 0,
-            title: Text(_ru ? 'Цикл' : 'Цикл', style: AppTypography.screenTitle(palette.fg)),
+            title: Text(_tr('Цикл', 'Цикл', 'Cycle'), style: AppTypography.screenTitle(palette.fg)),
             actions: [
               IconButton(
                 icon: Icon(_partnerLinked ? Icons.favorite : Icons.favorite_border, color: AppColors.rose, size: 20),
@@ -266,21 +266,21 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_phaseName(phase), style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w600)),
+                    Text(_phaseName(phase), style: AppTypography.screenTitle(color)),
                     const SizedBox(height: 4),
                     Text(
-                      _ru ? 'День $_selectedDay из $_length' : '$_selectedDay-күн / $_length',
+                      _tr('День $_selectedDay из $_length', '$_selectedDay-күн / $_length', 'Day $_selectedDay of $_length'),
                       style: AppTypography.caption(palette.secondary),
                     ),
                     const SizedBox(height: 12),
                     Row(children: [
-                      Expanded(child: _forecast(palette, _ru ? 'Следующие месячные' : 'Кийинки этек кир', untilNext)),
+                      Expanded(child: _forecast(palette, _tr('Следующие месячные', 'Кийинки этек кир', 'Next Period'), untilNext)),
                       const SizedBox(width: 8),
-                      Expanded(child: _forecast(palette, _ru ? 'Овуляция' : 'Овуляция', untilOvu)),
+                      Expanded(child: _forecast(palette, _tr('Овуляция', 'Овуляция', 'Ovulation'), untilOvu)),
                     ]),
                     const SizedBox(height: 12),
                     Text(
-                      '${_ru ? 'Нагрузка сегодня' : 'Бүгүнкү жүктөм'}  ${analysis.targetStrainMin.toStringAsFixed(0)}–${analysis.targetStrainMax.toStringAsFixed(1)}',
+                      '${_tr('Нагрузка сегодня', 'Бүгүнкү жүктөм', 'Today Strain')}  ${analysis.targetStrainMin.toStringAsFixed(0)}–${analysis.targetStrainMax.toStringAsFixed(1)}',
                       style: AppTypography.bodySemibold(palette.fg),
                     ),
                     const SizedBox(height: 4),
@@ -298,7 +298,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                       side: const BorderSide(color: AppColors.rose),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    child: Text(_ru ? 'Начались' : 'Башталды'),
+                    child: Text(_tr('Начались', 'Башталды', 'Started')),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -309,7 +309,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                       await _saveDay(toast: true);
                     },
                     style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-                    child: Text(_ru ? 'Закончились' : 'Бүттү'),
+                    child: Text(_tr('Закончились', 'Бүттү', 'Ended')),
                   ),
                 ),
               ]),
@@ -323,8 +323,8 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   },
                   icon: Icon(_sexToday ? Icons.favorite : Icons.favorite_border, color: AppColors.rose, size: 18),
                   label: Text(_sexToday
-                      ? (_ru ? 'Акт записан' : 'Акт жазылды')
-                      : (_ru ? 'Половой акт' : 'Жыныстык акт')),
+                      ? _tr('Акт записан', 'Акт жазылды', 'Intercourse logged')
+                      : _tr('Половой акт', 'Жыныстык акт', 'Intercourse')),
                 ),
               ),
               const SizedBox(height: 16),
@@ -337,23 +337,21 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _ru
-                          ? 'Дневник  ${_selectedDate.day}.${_selectedDate.month}'
-                          : 'Күндөлүк  ${_selectedDate.day}.${_selectedDate.month}',
+                      '${_tr('Дневник', 'Күндөлүк', 'Diary')}  ${_selectedDate.day}.${_selectedDate.month}',
                       style: AppTypography.bodySemibold(palette.fg),
                     ),
                     const SizedBox(height: 12),
-                    Text(_ru ? 'Выделения' : 'Агым', style: AppTypography.caption(palette.secondary)),
+                    Text(_tr('Выделения', 'Агым', 'Flow'), style: AppTypography.caption(palette.secondary)),
                     const SizedBox(height: 6),
                     Wrap(spacing: 6, runSpacing: 6, children: [
-                      _chip('none', _ru ? 'Нет' : 'Жок', _flow == 'none', () => _setFlow('none')),
-                      _chip('spotting', _ru ? 'Мажущие' : 'Маз', _flow == 'spotting', () => _setFlow('spotting')),
-                      _chip('light', _ru ? 'Скудные' : 'Аз', _flow == 'light', () => _setFlow('light')),
-                      _chip('medium', _ru ? 'Средние' : 'Орто', _flow == 'medium', () => _setFlow('medium')),
-                      _chip('heavy', _ru ? 'Обильные' : 'Көп', _flow == 'heavy', () => _setFlow('heavy')),
+                      _chip('none', _tr('Нет', 'Жок', 'None'), _flow == 'none', () => _setFlow('none')),
+                      _chip('spotting', _tr('Мажущие', 'Маз', 'Spotting'), _flow == 'spotting', () => _setFlow('spotting')),
+                      _chip('light', _tr('Скудные', 'Аз', 'Light'), _flow == 'light', () => _setFlow('light')),
+                      _chip('medium', _tr('Средние', 'Орто', 'Medium'), _flow == 'medium', () => _setFlow('medium')),
+                      _chip('heavy', _tr('Обильные', 'Көп', 'Heavy'), _flow == 'heavy', () => _setFlow('heavy')),
                     ]),
                     const SizedBox(height: 14),
-                    Text('${_ru ? 'Энергия' : 'Энергия'}  $_energyScore/5', style: AppTypography.caption(palette.secondary)),
+                    Text('${_tr('Энергия', 'Энергия', 'Energy')}  $_energyScore/5', style: AppTypography.caption(palette.secondary)),
                     Slider(
                       value: _energyScore.toDouble(),
                       min: 1, max: 5, divisions: 4,
@@ -361,7 +359,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                       onChanged: (v) => setState(() => _energyScore = v.round()),
                       onChangeEnd: (_) => _saveDay(),
                     ),
-                    Text('${_ru ? 'Спазмы' : 'Спазм'}  $_crampLevel/3', style: AppTypography.caption(palette.secondary)),
+                    Text('${_tr('Спазмы', 'Спазм', 'Cramps')}  $_crampLevel/3', style: AppTypography.caption(palette.secondary)),
                     Slider(
                       value: _crampLevel.toDouble(),
                       min: 0, max: 3, divisions: 3,
@@ -369,7 +367,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                       onChanged: (v) => setState(() => _crampLevel = v.round()),
                       onChangeEnd: (_) => _saveDay(),
                     ),
-                    Text(_ru ? 'Настроение' : 'Маанай', style: AppTypography.caption(palette.secondary)),
+                    Text(_tr('Настроение', 'Маанай', 'Mood'), style: AppTypography.caption(palette.secondary)),
                     const SizedBox(height: 6),
                     Wrap(spacing: 6, runSpacing: 6, children: [
                       for (final id in ['calm', 'irritable', 'anxious', 'energy'])
@@ -379,7 +377,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                         }),
                     ]),
                     const SizedBox(height: 12),
-                    Text(_ru ? 'Симптомы' : 'Белгилер', style: AppTypography.caption(palette.secondary)),
+                    Text(_tr('Симптомы', 'Белгилер', 'Symptoms'), style: AppTypography.caption(palette.secondary)),
                     const SizedBox(height: 6),
                     Wrap(spacing: 6, runSpacing: 6, children: [
                       for (final s in _symptomList())
@@ -398,7 +396,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                     TextField(
                       controller: _noteController,
                       maxLines: 2,
-                      decoration: InputDecoration(hintText: _ru ? 'Заметка' : 'Белги'),
+                      decoration: InputDecoration(hintText: _tr('Заметка', 'Белги', 'Note')),
                       onEditingComplete: () => _saveDay(),
                     ),
                     const SizedBox(height: 12),
@@ -407,7 +405,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                       child: ElevatedButton(
                         onPressed: () => _saveDay(toast: true),
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.sage, foregroundColor: Colors.white, elevation: 0),
-                        child: Text(_ru ? 'Сохранить' : 'Сактоо'),
+                        child: Text(_tr('Сохранить', 'Сактоо', 'Save')),
                       ),
                     ),
                   ],
@@ -433,14 +431,16 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _ru ? 'Режим беременности' : 'Кош бойлуулук режими',
+                            _tr('Режим беременности', 'Кош бойлуулук режими', 'Pregnancy Mode'),
                             style: AppTypography.bodySemibold(palette.fg),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _ru
-                                ? 'Включить трекинг триместров и адаптацию нагрузки'
-                                : 'Триместрлерди жана жүктөмдү көзөмөлдөө',
+                            _tr(
+                              'Включить трекинг триместров и адаптацию нагрузки',
+                              'Триместрлерди жана жүктөмдү көзөмөлдөө',
+                              'Enable trimester tracking and load adaptation',
+                            ),
                             style: AppTypography.caption(palette.secondary),
                           ),
                         ],
@@ -457,9 +457,16 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     );
   }
 
-  List<String> _symptomList() => _ru
-      ? ['Спазмы', 'Головная боль', 'Отёк', 'Бессонница', 'Тяга к еде', 'Боль в груди']
-      : ['Спазм', 'Баш оору', 'Шишик', 'Уйкусуздук', 'Тамакка умтулуу', 'Көкүрөк оорусу'];
+  List<String> _symptomList() {
+    switch (AppLocaleNotifier.current) {
+      case AppLanguage.kyrgyz:
+        return const ['Спазм', 'Баш оору', 'Шишик', 'Уйкусуздук', 'Тамакка умтулуу', 'Көкүрөк оорусу'];
+      case AppLanguage.english:
+        return const ['Cramps', 'Headache', 'Bloating', 'Insomnia', 'Cravings', 'Breast tenderness'];
+      case AppLanguage.russian:
+        return const ['Спазмы', 'Головная боль', 'Отёк', 'Бессонница', 'Тяга к еде', 'Боль в груди'];
+    }
+  }
 
   Future<void> _setFlow(String v) async {
     setState(() => _flow = v);
@@ -468,10 +475,10 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
 
   Widget _forecast(KalkanColors palette, String label, int days) {
     final text = days == 0
-        ? (_ru ? 'сегодня' : 'бүгүн')
+        ? _tr('сегодня', 'бүгүн', 'today')
         : days > 0
-            ? (_ru ? 'через $days дн.' : '$days күндон кийин')
-            : (_ru ? '${-days} дн. назад' : '${-days} күн мурун');
+            ? _tr('через $days дн.', '$days күндон кийин', 'in $days d.')
+            : _tr('${-days} дн. назад', '${-days} күн мурун', '${-days} d. ago');
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(color: palette.raised, borderRadius: BorderRadius.circular(10)),
@@ -485,10 +492,10 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
 
   Widget _legend(KalkanColors palette) {
     return Wrap(spacing: 12, runSpacing: 6, children: [
-      _dot(AppColors.rose, _ru ? 'Месячные' : 'Этек кир'),
-      _dot(AppColors.sage, _ru ? 'Фолликулярная' : 'Фолликулярдык'),
-      _dot(AppColors.amber, _ru ? 'Овуляция' : 'Овуляция'),
-      _dot(AppColors.strainBlue, _ru ? 'Лютеиновая' : 'Лютеиндик'),
+      _dot(AppColors.rose, _tr('Месячные', 'Этек кир', 'Period')),
+      _dot(AppColors.sage, _tr('Фолликулярная', 'Фолликулярдык', 'Follicular')),
+      _dot(AppColors.amber, _tr('Овуляция', 'Овуляция', 'Ovulation')),
+      _dot(AppColors.strainBlue, _tr('Лютеиновая', 'Лютеиндик', 'Luteal')),
     ]);
   }
 
@@ -496,7 +503,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
       const SizedBox(width: 6),
-      Text(t, style: TextStyle(color: KalkanColors.of(context).secondary, fontSize: 12)),
+      Text(t, style: AppTypography.caption(KalkanColors.of(context).secondary)),
     ]);
   }
 
@@ -504,10 +511,16 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     final first = DateTime(_visibleMonth.year, _visibleMonth.month, 1);
     final daysInMonth = DateTime(_visibleMonth.year, _visibleMonth.month + 1, 0).day;
     final lead = (first.weekday + 6) % 7; // Monday first
-    final months = _ru
-        ? ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
-        : ['Үчтүн айы','Бирдин айы','Жалган куран','Чын куран','Бугу','Кулжа','Теке','Баш оона','Аяк оона','Тогуздун айы','Жетинин айы','Бештин айы'];
-    final week = _ru ? ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'] : ['Дш','Шш','Шр','Бш','Жм','Иш','Жк'];
+    final months = AppLocaleNotifier.pick(
+      const ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+      const ['Үчтүн айы','Бирдин айы','Жалган куран','Чын куран','Бугу','Кулжа','Теке','Баш оона','Аяк оона','Тогуздун айы','Жетинин айы','Бештин айы'],
+      const ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    );
+    final week = AppLocaleNotifier.pick(
+      const ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
+      const ['Дш','Шш','Шр','Бш','Жм','Иш','Жк'],
+      const ['Mo','Tu','We','Th','Fr','Sa','Su'],
+    );
 
     return GlassCard(
       child: Column(
@@ -558,7 +571,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('$day', style: TextStyle(color: palette.fg, fontSize: 12, fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
+                      Text('$day', style: AppTypography.bodyMuted(palette.fg).copyWith(fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
                       const SizedBox(height: 2),
                       if (_sexDates.contains(_dateKey(date)))
                         Icon(Icons.favorite, size: 9, color: AppColors.rose)
@@ -588,7 +601,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: on ? AppColors.sage : palette.hairline),
         ),
-        child: Text(label, style: TextStyle(color: palette.fg, fontSize: 12, fontWeight: on ? FontWeight.w600 : FontWeight.w400)),
+        child: Text(label, style: AppTypography.bodyMuted(palette.fg).copyWith(fontWeight: on ? FontWeight.w600 : FontWeight.w400)),
       ),
     );
   }
@@ -608,13 +621,15 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_ru ? 'Пригласить партнёра' : 'Өнөктөштү чакыруу', style: TextStyle(color: AppColors.fg, fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(_tr('Пригласить партнёра', 'Өнөктөштү чакыруу', 'Invite Partner'), style: AppTypography.screenTitle(AppColors.fg)),
             const SizedBox(height: 8),
             Text(
-              _ru
-                  ? 'Передайте этот код партнёру. В его приложении ваши имя и фаза определятся автоматически.'
-                  : 'Бул кодду өнөктөшүңүзгө бериңиз. Анын колдонмосунда атыңыз жана фазаңыз автоматтык түрдө чыгат.',
-              style: TextStyle(color: AppColors.secondary, fontSize: 13, height: 1.35),
+              _tr(
+                'Передайте этот код партнёру. В его приложении ваши имя и фаза определятся автоматически.',
+                'Бул кодду өнөктөшүңүзгө бериңиз. Анын колдонмосунда атыңыз жана фазаңыз автоматтык түрдө чыгат.',
+                'Share this code with your partner. Your name and phase will be detected automatically.',
+              ),
+              style: AppTypography.bodyMuted(AppColors.secondary),
             ),
             const SizedBox(height: 14),
             Container(
@@ -629,7 +644,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   Expanded(
                     child: Text(
                       _partnerInviteCode,
-                      style: TextStyle(color: AppColors.fg, fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+                      style: AppTypography.metric(AppColors.fg).copyWith(letterSpacing: 1.2),
                     ),
                   ),
                   IconButton(
@@ -638,7 +653,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                       Clipboard.setData(ClipboardData(text: _partnerInviteCode));
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(_ru ? 'Код скопирован: $_partnerInviteCode' : 'Код көчүрүлдү: $_partnerInviteCode'),
+                          content: Text(_tr('Код скопирован: $_partnerInviteCode', 'Код көчүрүлдү: $_partnerInviteCode', 'Code copied: $_partnerInviteCode')),
                           backgroundColor: AppColors.surface,
                         ),
                       );
@@ -656,14 +671,14 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(_ru ? 'Код скопирован: $_partnerInviteCode' : 'Код көчүрүлдү: $_partnerInviteCode'),
+                        content: Text(_tr('Код скопирован: $_partnerInviteCode', 'Код көчүрүлдү: $_partnerInviteCode', 'Code copied: $_partnerInviteCode')),
                         backgroundColor: AppColors.surface,
                       ),
                     );
                   },
                   icon: const Icon(Icons.copy, size: 16),
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.sage, foregroundColor: Colors.white, elevation: 0),
-                  label: Text(_ru ? 'Скопировать код' : 'Кодду көчүрүү'),
+                  label: Text(_tr('Скопировать код', 'Кодду көчүрүү', 'Copy Code')),
                 ),
               ),
             ]),
@@ -682,13 +697,13 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialog) => AlertDialog(
           backgroundColor: AppColors.surface,
-          title: Text(_ru ? 'Настройки цикла' : 'Цикл жөндөөлөрү', style: TextStyle(color: AppColors.fg)),
+          title: Text(_tr('Настройки цикла', 'Цикл жөндөөлөрү', 'Cycle Settings'), style: AppTypography.screenTitle(AppColors.fg)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${_ru ? 'Длина цикла' : 'Цикл узундугу'}: $length', style: TextStyle(color: AppColors.secondary)),
+              Text('${_tr('Длина цикла', 'Цикл узундугу', 'Cycle Length')}: $length', style: AppTypography.body(AppColors.secondary)),
               Slider(value: length.toDouble(), min: 21, max: 40, divisions: 19, activeColor: AppColors.sage, onChanged: (v) => setDialog(() => length = v.round())),
-              Text('${_ru ? 'Длительность месячных' : 'Этек кирдин узактыгы'}: $periodLen', style: TextStyle(color: AppColors.secondary)),
+              Text('${_tr('Длительность месячных', 'Этек кирдин узактыгы', 'Period Duration')}: $periodLen', style: AppTypography.body(AppColors.secondary)),
               Slider(value: periodLen.toDouble(), min: 2, max: 10, divisions: 8, activeColor: AppColors.rose, onChanged: (v) => setDialog(() => periodLen = v.round())),
               TextButton(
                 onPressed: () async {
@@ -700,12 +715,12 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                   );
                   if (picked != null) setDialog(() => startDate = picked);
                 },
-                child: Text(_ru ? 'Последние начались ${startDate.day}.${startDate.month}' : 'Акыркы башталышы ${startDate.day}.${startDate.month}'),
+                child: Text('${_tr('Последние начались', 'Акыркы башталышы', 'Last started')} ${startDate.day}.${startDate.month}'),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: Text(_ru ? 'Отмена' : 'Жок')),
+            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: Text(_tr('Отмена', 'Жок', 'Cancel'))),
             TextButton(
               onPressed: () async {
                 Navigator.pop(dialogCtx);
@@ -713,7 +728,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
                 await UserProfileRepository.saveProfile(updated);
                 setState(() => _profile = updated);
               },
-              child: Text(_ru ? 'Сохранить' : 'Сактоо'),
+              child: Text(_tr('Сохранить', 'Сактоо', 'Save')),
             ),
           ],
         ),
@@ -728,7 +743,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
       initialDate: lmp,
       firstDate: DateTime.now().subtract(const Duration(days: 300)),
       lastDate: DateTime.now(),
-      helpText: _ru ? 'Первый день последних месячных (LMP)' : 'Акыркы этек кирдин биринчи күнү',
+      helpText: _tr('Первый день последних месячных (LMP)', 'Акыркы этек кирдин биринчи күнү', 'First day of last menstrual period (LMP)'),
     );
     if (picked != null) {
       final due = picked.add(const Duration(days: 280));
@@ -744,8 +759,8 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           SnackBar(
             backgroundColor: AppColors.surface,
             content: Text(
-              _ru ? 'Режим беременности включён' : 'Кош бойлуулук режими күйгүзүлдү',
-              style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+              _tr('Режим беременности включён', 'Кош бойлуулук режими күйгүзүлдү', 'Pregnancy mode enabled'),
+              style: AppTypography.bodySemibold(AppColors.fg),
             ),
           ),
         );

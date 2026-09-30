@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
 
 enum RecoveryZone {
   optimal('Оптимально', AppColors.sage, 'Готово'),
@@ -11,6 +12,46 @@ enum RecoveryZone {
   final String badgeText;
 
   const RecoveryZone(this.label, this.color, this.badgeText);
+
+  /// Реактивная локализованная подпись зоны, учитывающая текущий язык интерфейса
+  String get localizedLabel {
+    switch (this) {
+      case RecoveryZone.optimal:
+        return AppLocaleNotifier.t('Оптимально', 'Оптималдуу', 'Optimal');
+      case RecoveryZone.moderate:
+        return AppLocaleNotifier.t('Умеренно', 'Орточо', 'Moderate');
+      case RecoveryZone.recovery:
+        return AppLocaleNotifier.t('Восстановление', 'Калыбына келүү', 'Recovery');
+    }
+  }
+
+  /// Реактивный локализованный бейдж готовности
+  String get localizedBadge {
+    switch (this) {
+      case RecoveryZone.optimal:
+        return AppLocaleNotifier.t('Готово', 'Даяр', 'Ready');
+      case RecoveryZone.moderate:
+        return AppLocaleNotifier.t('Норма', 'Кадыресе', 'Adequate');
+      case RecoveryZone.recovery:
+        return AppLocaleNotifier.t('Отдых', 'Эс алуу', 'Rest');
+    }
+  }
+
+  /// Название зоны для заданного языка
+  String localizedName([AppLanguage? language]) {
+    final lang = language ?? AppLocaleNotifier.current;
+    switch (this) {
+      case RecoveryZone.optimal:
+        return lang == AppLanguage.kyrgyz ? 'Оптималдуу' : (lang == AppLanguage.english ? 'Optimal' : 'Оптимально');
+      case RecoveryZone.moderate:
+        return lang == AppLanguage.kyrgyz ? 'Орточо' : (lang == AppLanguage.english ? 'Moderate' : 'Умеренно');
+      case RecoveryZone.recovery:
+        return lang == AppLanguage.kyrgyz ? 'Калыбына келүү' : (lang == AppLanguage.english ? 'Recovery' : 'Восстановление');
+    }
+  }
+
+  /// Разрешение цвета зоны
+  Color resolveColor([BuildContext? context]) => color;
 }
 
 class ReadinessResult {

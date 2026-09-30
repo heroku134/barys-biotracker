@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_typography.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
@@ -251,12 +252,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ? AppStrings.tr('auth_signup_title', language)
                                 : AppStrings.tr('auth_login_title', language),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: palette.fg,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.5,
-                            ),
+                            style: AppTypography.metricMedium(palette.fg),
                           ),
                           const SizedBox(height: 24),
 
@@ -313,7 +309,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: const TextStyle(color: AppColors.rose, fontSize: 12),
+                                      style: AppTypography.bodyMuted(AppColors.rose),
                                     ),
                                   ),
                                 ],
@@ -343,11 +339,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                     _isSignUp
                                         ? AppStrings.tr('auth_button_signup', language)
                                         : AppStrings.tr('auth_button_login', language),
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 1.5,
-                                    ),
+                                    style: AppTypography.buttonLabel.copyWith(color: Colors.white, letterSpacing: 1.0),
                                   ),
                           ),
 
@@ -365,11 +357,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               _isSignUp
                                   ? AppStrings.tr('auth_to_login', language)
                                   : AppStrings.tr('auth_to_signup', language),
-                              style: TextStyle(
-                                color: palette.secondary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: AppTypography.bodySemibold(palette.secondary),
                             ),
                           ),
 
@@ -385,7 +373,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       onPressed: () => AppLocaleNotifier.toggleLanguage(),
                       child: Text(
                         '${language.flag} ${language.shortTitle}',
-                        style: TextStyle(color: palette.secondary, fontSize: 13, fontWeight: FontWeight.w700),
+                        style: AppTypography.monoLabel(palette.secondary),
                       ),
                     ),
                   ),

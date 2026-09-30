@@ -40,6 +40,13 @@ flutter:
     - family: Manrope
       fonts:
         - asset: assets/fonts/Manrope-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Manrope-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope-Bold.ttf
+          weight: 700
     - family: IBM Plex Mono
       fonts:
         - asset: assets/fonts/IBMPlexMono-Regular.ttf
@@ -48,3 +55,4 @@ flutter:
           weight: 500
         - asset: assets/fonts/IBMPlexMono-SemiBold.ttf
           weight: 600
+

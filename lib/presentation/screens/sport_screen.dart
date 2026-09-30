@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/services/paired_pulse.dart';
 import '../../data/ble/ute_ble_bridge.dart';
@@ -110,7 +111,7 @@ class _SportScreenState extends State<SportScreen> {
                   report.importedWorkoutsCount > 0
                       ? '${AppLocaleNotifier.pick("Импортировано", "Импорттолду", "Imported")}: +${report.importedWorkoutsCount} (${report.importedWorkouts.map((w) => w.sourceDisplayName).toSet().join(', ')}) · +${report.addedStrain.toStringAsFixed(1)} Strain'
                       : AppLocaleNotifier.pick('Все внешние тренировки синхронизированы', 'Бардык машыгуулар синхрондоштурулду', 'All external workouts are up to date'),
-                  style: TextStyle(color: KalkanColors.of(context).fg, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: AppTypography.bodyMuted(KalkanColors.of(context).fg).copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -501,12 +502,7 @@ class _SportScreenState extends State<SportScreen> {
             titleSpacing: 6,
             title: Text(
               AppStrings.tr('sport_title', language),
-              style: TextStyle(
-                color: palette.fg,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.3,
-              ),
+              style: AppTypography.screenTitle(palette.fg),
             ),
             actions: [
               Container(
@@ -523,7 +519,7 @@ class _SportScreenState extends State<SportScreen> {
                     const SizedBox(width: 4),
                     Text(
                       '${telemetry.currentDayStrain.toStringAsFixed(1)} / 21',
-                      style: TextStyle(color: palette.fg, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: AppTypography.caption(palette.fg).copyWith(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -598,7 +594,7 @@ class _SportScreenState extends State<SportScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   AppLocaleNotifier.pick('Автораспознавание движений IMU', 'IMU кыймылды автоматтык таануу', 'IMU Auto Movement Detection'),
-                                  style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: AppTypography.bodySemibold(palette.fg),
                                 ),
                               ],
                             ),
@@ -609,7 +605,7 @@ class _SportScreenState extends State<SportScreen> {
                                 'v4.2 алгоритми чуркоодо автоматтык түрдө баштайт',
                                 'v4.2 algorithm auto-starts sessions on run or walking',
                               ),
-                              style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
+                              style: AppTypography.caption(palette.secondary).copyWith(height: 1.3),
                             ),
                           ],
                         ),
@@ -627,7 +623,7 @@ class _SportScreenState extends State<SportScreen> {
                                 val
                                     ? AppLocaleNotifier.pick('IMU автодетект активен', 'IMU автодетект активдүү', 'IMU auto-detect active')
                                     : AppLocaleNotifier.pick('IMU автодетект выключен', 'IMU автодетект өчүрүлдү', 'IMU auto-detect disabled'),
-                                style: TextStyle(color: palette.fg),
+                                style: AppTypography.body(palette.fg),
                               ),
                             ),
                           );
@@ -649,20 +645,11 @@ class _SportScreenState extends State<SportScreen> {
                         children: [
                           Text(
                             AppLocaleNotifier.pick('НЕДЕЛЬНОЕ КАРДИО (ЗОНЫ 2 И 5)', 'АПТАЛЫК КАРДИО (2 ЖАНА 5-ЗОНА)', 'WEEKLY CARDIO (ZONES 2 & 5)'),
-                            style: TextStyle(
-                              color: palette.secondary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.0,
-                            ),
+                            style: AppTypography.monoLabel(palette.secondary),
                           ),
                           Text(
                             '$_weekMinutes / 200 мин (${((_weekMinutes / 200) * 100).clamp(0, 100).round()}%)',
-                            style: const TextStyle(
-                              color: AppColors.sage,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTypography.bodyMuted(AppColors.sage).copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -683,7 +670,7 @@ class _SportScreenState extends State<SportScreen> {
                           'Аэробдук 2-зонадагы 128 мүнөт + 5-зонадагы 24 мүнөт интервалдар жүрөктү жашартат.',
                           '128 min in Aerobic Zone 2 + 24 min Zone 5 intervals optimize heart rejuvenation.',
                         ),
-                        style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.35),
+                        style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
                       ),
                     ],
                   ),
@@ -712,7 +699,7 @@ class _SportScreenState extends State<SportScreen> {
                               children: [
                                 Text(
                                   AppLocaleNotifier.pick('Apple Health & Strava', 'Apple Health жана Strava', 'Apple Health & Strava'),
-                                  style: TextStyle(color: palette.fg, fontWeight: FontWeight.w700, fontSize: 13),
+                                  style: AppTypography.bodySemibold(palette.fg),
                                 ),
                                 const SizedBox(width: 6),
                                 Container(
@@ -721,9 +708,9 @@ class _SportScreenState extends State<SportScreen> {
                                     color: AppColors.sage.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(5),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'AUTO SYNC',
-                                    style: TextStyle(color: AppColors.sage, fontSize: 8.5, fontWeight: FontWeight.w800),
+                                    style: AppTypography.monoBadge.copyWith(color: AppColors.sage),
                                   ),
                                 ),
                               ],
@@ -735,7 +722,7 @@ class _SportScreenState extends State<SportScreen> {
                                 'Strava / Garmin машыгууларын күндүк Strainге кошуу',
                                 'Auto-import rides, swims & runs into daily Strain',
                               ),
-                              style: TextStyle(color: palette.secondary, fontSize: 11),
+                              style: AppTypography.caption(palette.secondary),
                             ),
                           ],
                         ),
@@ -766,7 +753,7 @@ class _SportScreenState extends State<SportScreen> {
                                   const SizedBox(width: 4),
                                   Text(
                                     AppLocaleNotifier.pick('Синхр.', 'Синхр.', 'Sync'),
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                    style: AppTypography.caption(palette.fg).copyWith(fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -779,7 +766,7 @@ class _SportScreenState extends State<SportScreen> {
                 // 6. История тренировок
                 Text(
                   AppLocaleNotifier.pick('История тренировок', 'Машыгуу тарыхы', 'Workout History'),
-                  style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w700),
+                  style: AppTypography.bodySemibold(palette.fg),
                 ),
                 const SizedBox(height: 8),
 
@@ -789,7 +776,7 @@ class _SportScreenState extends State<SportScreen> {
                     child: Center(
                       child: Text(
                         AppLocaleNotifier.pick('Пока нет сохранённых тренировок.', 'Машыгуулар жок.', 'No saved workouts yet.'),
-                        style: TextStyle(color: palette.secondary, fontSize: 13),
+                        style: AppTypography.bodyMuted(palette.secondary),
                       ),
                     ),
                   )

@@ -115,7 +115,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                       ),
                       child: Text(
                         '+${workout.strain.toStringAsFixed(1)} STRAIN',
-                        style: const TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w700),
+                        style: AppTypography.monoBadge.copyWith(color: AppColors.sage),
                       ),
                     ),
                   ],
@@ -162,7 +162,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                       children: [
                         Text(
                           '${AppLocaleNotifier.pick("Импортировано из", "Импорттолгон булак:", "Imported from")} ${workout.sourceDisplayName}',
-                          style: TextStyle(color: workout.sourceColor, fontSize: 13, fontWeight: FontWeight.w700),
+                          style: AppTypography.bodySemibold(workout.sourceColor),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -171,7 +171,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                             'Машыгуу тышкы трекерден жүктөлдү. Жүрөк жүктөмү KALKAN алгоритми менен эсептелди.',
                             'Workout imported from external tracker. Cardiovascular Strain calculated by KALKAN engine and added to daily budget.',
                           ),
-                          style: TextStyle(color: palette.fg.withValues(alpha: 0.85), fontSize: 11, height: 1.3),
+                          style: AppTypography.caption(palette.fg.withValues(alpha: 0.85)).copyWith(height: 1.3),
                         ),
                       ],
                     ),
@@ -187,12 +187,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
             workout.isExternal
                 ? AppLocaleNotifier.pick('БИОМЕТРИЯ СЕССИИ (${workout.sourceDisplayName.toUpperCase()})', 'МАШЫГУУ БИОМЕТРИЯСЫ', 'SESSION BIOMETRICS')
                 : AppLocaleNotifier.pick('БИОМЕТРИЯ С ЧАСОВ СААТ-1', 'СААТ-1 БИОМЕТРИЯСЫ', 'СААТ-1 WATCH BIOMETRICS'),
-            style: TextStyle(
-              color: palette.secondary,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-            ),
+            style: AppTypography.monoLabel(palette.secondary),
           ),
           const SizedBox(height: 8),
 
@@ -228,7 +223,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                 // Пульсовые зоны
                 Text(
                   AppLocaleNotifier.pick('Пульсовые зоны интенсивности', 'Жүрөк кагышынын зоналары', 'Heart Rate Intensity Zones'),
-                  style: TextStyle(color: palette.secondary, fontSize: 11, fontWeight: FontWeight.w600),
+                  style: AppTypography.caption(palette.secondary).copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 _zonesBar(workout.hrZoneSeconds, workout.durationSeconds, isDark),
@@ -249,7 +244,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                     Text(AppLocaleNotifier.pick('Суточный Strain', 'Күндүк Strain', 'Daily Strain'), style: AppTypography.caption(palette.secondary)),
                     Text(
                       '${dayStrainBefore.toStringAsFixed(1)} → ${after.toStringAsFixed(1)} / 21.0',
-                      style: TextStyle(color: palette.fg, fontWeight: FontWeight.w700, fontSize: 12),
+                      style: AppTypography.bodyMuted(palette.fg).copyWith(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -301,7 +296,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
               ),
               label: Text(
                 AppLocaleNotifier.pick('Записать в дневник и закрыть', 'Күндөлүккө жазып жабуу', 'Save to Journal & Close'),
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: AppTypography.buttonLabel.copyWith(color: Colors.white),
               ),
             ),
           ),
@@ -311,7 +306,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 AppLocaleNotifier.pick('Закрыть без записи', 'Жазуусуз жабуу', 'Close without saving'),
-                style: TextStyle(color: palette.secondary),
+                style: AppTypography.body(palette.secondary),
               ),
             ),
           ),
@@ -325,11 +320,11 @@ class WorkoutSummaryScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: palette.secondary, fontSize: 10, fontWeight: FontWeight.w600)),
+          Text(label, style: AppTypography.caption(palette.secondary)),
           const SizedBox(height: 3),
           Text(
             value,
-            style: TextStyle(color: palette.fg, fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+            style: AppTypography.metric(palette.fg),
           ),
         ],
       ),
@@ -360,9 +355,9 @@ class WorkoutSummaryScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: TextStyle(color: palette.secondary, fontSize: 9, fontWeight: FontWeight.w600)),
+                  Text(label, style: AppTypography.monoBadge.copyWith(color: palette.secondary)),
                   const SizedBox(height: 2),
-                  Text(value, style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w700)),
+                  Text(value, style: AppTypography.bodySemibold(palette.fg)),
                 ],
               ),
             ),
@@ -410,7 +405,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
               children: [
                 Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: colors[i])),
                 const SizedBox(width: 4),
-                Text(labels[i], style: TextStyle(color: colors[i], fontSize: 9, fontWeight: FontWeight.w700)),
+                Text(labels[i], style: AppTypography.monoBadge.copyWith(color: colors[i])),
               ],
             );
           }),
@@ -419,3 +414,4 @@ class WorkoutSummaryScreen extends StatelessWidget {
     );
   }
 }
+
