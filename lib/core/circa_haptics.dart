@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 
-/// Высокоточная тактильная система CIRCA (Haptic & Acoustic Architecture).
+/// Высокоточная тактильная система KALKAN SPORT (Haptic & Acoustic Architecture).
 /// Создает ощущение премиального физического устройства стоимостью $300–$500/год
 /// (аналогично тактильным калибрам Leica, Bang & Olufsen и Apple Watch Ultra).
-class CircaHaptics {
+class KalkanHaptics {
   /// Закрытие / дозаполнение кольца Recovery (фиксация показателя дня)
   static Future<void> ringClosure() async {
     try {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 65));
       await HapticFeedback.heavyImpact();
-      CircaAcoustics.playMechanicalClick();
+      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -31,7 +31,7 @@ class CircaHaptics {
   static Future<void> selectionClick() async {
     try {
       await HapticFeedback.selectionClick();
-      CircaAcoustics.playMechanicalClick();
+      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -41,7 +41,7 @@ class CircaHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 80));
       await HapticFeedback.heavyImpact();
-      CircaAcoustics.playMechanicalClick();
+      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -53,7 +53,7 @@ class CircaHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 130));
       await HapticFeedback.heavyImpact();
-      CircaAcoustics.playMechanicalClick();
+      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -65,7 +65,7 @@ class CircaHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 110));
       await HapticFeedback.heavyImpact();
-      CircaAcoustics.playMechanicalClick();
+      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -75,7 +75,7 @@ class CircaHaptics {
       await HapticFeedback.mediumImpact();
       await Future.delayed(const Duration(milliseconds: 70));
       await HapticFeedback.selectionClick();
-      CircaAcoustics.playMechanicalClick();
+      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -83,7 +83,7 @@ class CircaHaptics {
   static Future<void> cardExport() async {
     try {
       await HapticFeedback.heavyImpact();
-      CircaAcoustics.playMechanicalClick();
+      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 
@@ -91,7 +91,7 @@ class CircaHaptics {
   static Future<void> heavyAlert() async {
     try {
       await HapticFeedback.heavyImpact();
-      CircaAcoustics.playAlertSound();
+      KalkanAcoustics.playAlertSound();
     } catch (_) {}
   }
 
@@ -99,14 +99,14 @@ class CircaHaptics {
   static Future<void> sheetOpen() async {
     try {
       await HapticFeedback.mediumImpact();
-      CircaAcoustics.playMechanicalClick();
+      KalkanAcoustics.playMechanicalClick();
     } catch (_) {}
   }
 }
 
 /// Акустический слой тактильной обратной связи.
 /// Воспроизводит мягкий механический щелчок через нативный системный аудиоканал Apple/Android.
-class CircaAcoustics {
+class KalkanAcoustics {
   static bool soundEnabled = true;
 
   /// Мягкий механический клик (Leica Shutter / Watch Bezel Click)
@@ -125,3 +125,7 @@ class CircaAcoustics {
     } catch (_) {}
   }
 }
+
+/// Алиасы для обратной совместимости
+typedef CircaHaptics = KalkanHaptics;
+typedef CircaAcoustics = KalkanAcoustics;

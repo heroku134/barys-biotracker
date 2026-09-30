@@ -29,7 +29,8 @@ enum AppLanguage {
 
 /// Глобальный реактивный менеджер языка приложения
 class AppLocaleNotifier extends ValueNotifier<AppLanguage> {
-  static const String _prefKey = 'circa_app_language_code';
+  static const String _prefKey = 'kalkan_app_language_code';
+  static const String _legacyPrefKey = 'circa_app_language_code';
 
   AppLocaleNotifier._() : super(AppLanguage.russian);
 
@@ -66,7 +67,7 @@ class AppLocaleNotifier extends ValueNotifier<AppLanguage> {
   static Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final code = prefs.getString(_prefKey);
+      final code = prefs.getString(_prefKey) ?? prefs.getString(_legacyPrefKey);
       if (code != null) {
         instance.value = AppLanguage.fromCode(code);
       }

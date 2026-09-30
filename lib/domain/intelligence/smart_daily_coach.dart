@@ -1,6 +1,7 @@
 import '../models/personal_baseline.dart';
 import '../models/readiness.dart';
 import '../models/telemetry.dart';
+import '../models/user_profile.dart';
 import 'readiness_engine.dart';
 import 'strain_engine.dart';
 
@@ -74,7 +75,7 @@ class SmartDailyCoach {
     }
 
     // 3. Учет гормонального цикла (если указана лютеиновая фаза)
-    if (base.cyclePhase == HormoneCyclePhase.luteal) {
+    if (base.cyclePhase == HormonalCyclePhase.luteal) {
       return CoachAdvice(
         title: 'Лютеиновая фаза цикла',
         recommendation:

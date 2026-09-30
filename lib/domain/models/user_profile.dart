@@ -40,7 +40,7 @@ class UserProfile {
   final DateTime? pregnancyLmpDate;
 
   const UserProfile({
-    this.id = 'circa_user_01',
+    this.id = 'kalkan_user_01',
     this.name = '',
     this.email = '',
     this.heightCm = 175.0,
@@ -186,7 +186,7 @@ class UserProfile {
         (rawName.isNotEmpty && rawName != 'Алихан' && json['heightCm'] != null);
 
     return UserProfile(
-      id: json['id'] as String? ?? 'circa_user_01',
+      id: json['id'] as String? ?? 'kalkan_user_01',
       name: rawName.isNotEmpty ? rawName : (hasCompleted ? '' : 'Гость'),
       email: json['email'] as String? ?? '',
       heightCm: (json['heightCm'] as num?)?.toDouble() ?? 175.0,

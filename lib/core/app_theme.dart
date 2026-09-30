@@ -5,7 +5,8 @@ import 'app_colors.dart';
 import 'circa_haptics.dart';
 
 class AppThemeNotifier extends ValueNotifier<ThemeMode> {
-  static const String _prefKey = 'circa_app_theme_mode';
+  static const String _prefKey = 'kalkan_app_theme_mode';
+  static const String _legacyPrefKey = 'circa_app_theme_mode';
 
   AppThemeNotifier._() : super(ThemeMode.dark);
 
@@ -18,7 +19,7 @@ class AppThemeNotifier extends ValueNotifier<ThemeMode> {
   static Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final modeStr = prefs.getString(_prefKey);
+      final modeStr = prefs.getString(_prefKey) ?? prefs.getString(_legacyPrefKey);
       instance.value = modeStr == 'light' ? ThemeMode.light : ThemeMode.dark;
       AppColors.light = instance.value == ThemeMode.light;
       applySystemUi(instance.value);

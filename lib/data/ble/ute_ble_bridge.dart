@@ -92,7 +92,9 @@ class UteBleBridge {
           debugPrint('UteBleBridge telemetry stream error: $err');
         },
       );
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge init stream error: $e');
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -100,7 +102,9 @@ class UteBleBridge {
       if (lastMac != null && lastMac.isNotEmpty) {
         connect(lastMac);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge auto-connect error: $e');
+    }
   }
 
   // --- Проверка Bluetooth и разрешений ---
@@ -109,8 +113,9 @@ class UteBleBridge {
     try {
       final res = await _methodChannel.invokeMethod<bool>('isBluetoothEnabled');
       return res ?? false;
-    } catch (_) {
-      return true; // в симуляторе
+    } catch (e) {
+      debugPrint('UteBleBridge isBluetoothEnabled error: $e');
+      return false;
     }
   }
 
@@ -118,8 +123,9 @@ class UteBleBridge {
     try {
       final res = await _methodChannel.invokeMethod<bool>('checkPermissions');
       return res ?? false;
-    } catch (_) {
-      return true;
+    } catch (e) {
+      debugPrint('UteBleBridge checkPermissions error: $e');
+      return false;
     }
   }
 
@@ -127,8 +133,9 @@ class UteBleBridge {
     try {
       final res = await _methodChannel.invokeMethod<bool>('requestPermissions');
       return res ?? false;
-    } catch (_) {
-      return true;
+    } catch (e) {
+      debugPrint('UteBleBridge requestPermissions error: $e');
+      return false;
     }
   }
 
@@ -163,13 +170,17 @@ class UteBleBridge {
       });
 
       await _methodChannel.invokeMethod('startScan');
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge startScan error: $e');
+    }
   }
 
   Future<void> stopScan() async {
     try {
       await _methodChannel.invokeMethod('stopScan');
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge stopScan error: $e');
+    }
     _scanSub?.cancel();
   }
 
@@ -180,7 +191,9 @@ class UteBleBridge {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('kalkan_last_device_mac', macAddress);
       await _methodChannel.invokeMethod('connect', {'address': macAddress});
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge connect error: $e');
+    }
   }
 
   Future<void> disconnect({bool forget = false}) async {
@@ -190,7 +203,9 @@ class UteBleBridge {
         await prefs.remove('kalkan_last_device_mac');
       }
       await _methodChannel.invokeMethod('disconnect');
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge disconnect error: $e');
+    }
     if (_realTelemetry != null) {
       _realTelemetry = _realTelemetry!.copyWith(isConnected: false);
       _telemetryController.add(_realTelemetry!);
@@ -201,7 +216,8 @@ class UteBleBridge {
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString('kalkan_last_device_mac');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('UteBleBridge getLastPairedAddress error: $e');
       return null;
     }
   }
@@ -211,19 +227,25 @@ class UteBleBridge {
   Future<void> findWatch() async {
     try {
       await _methodChannel.invokeMethod('findDevice');
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge findWatch error: $e');
+    }
   }
 
   Future<void> syncTime() async {
     try {
       await _methodChannel.invokeMethod('syncTime');
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge syncTime error: $e');
+    }
   }
 
   Future<void> triggerHeartRateMeasurement() async {
     try {
       await _methodChannel.invokeMethod('measureHeartRate');
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('UteBleBridge triggerHeartRateMeasurement error: $e');
+    }
   }
   static List<int>? _parseZoneMinutes(dynamic raw) {
     if (raw is! List) return null;

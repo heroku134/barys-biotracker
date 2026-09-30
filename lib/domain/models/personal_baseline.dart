@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'user_profile.dart';
 
 /// Персональный 60-дневный базовый профиль пользователя (Whoop / Oura Baseline)
 /// Все ночные маркеры сравниваются не с усредненными таблицами, а с личной нормой.
@@ -34,7 +35,7 @@ class PersonalBaseline {
   final List<int> recentRecoveryScores;
 
   /// Фаза гормонального цикла (если включен)
-  final HormoneCyclePhase? cyclePhase;
+  final HormonalCyclePhase? cyclePhase;
 
   const PersonalBaseline({
     this.meanHrv = 64.0,
@@ -73,7 +74,7 @@ class PersonalBaseline {
     int? sleepDebtMinutes,
     double? yesterdayStrain,
     List<int>? recentRecoveryScores,
-    HormoneCyclePhase? cyclePhase,
+    HormonalCyclePhase? cyclePhase,
   }) {
     return PersonalBaseline(
       meanHrv: meanHrv ?? this.meanHrv,
@@ -89,16 +90,4 @@ class PersonalBaseline {
       cyclePhase: cyclePhase ?? this.cyclePhase,
     );
   }
-}
-
-enum HormoneCyclePhase {
-  follicular('Фолликулярная фаза', 'Пик энергии и анаболизма. Оптимально для тяжелых нагрузок.'),
-  ovulatory('Овуляция', 'Высокий тонус, пиковые силовые показатели.'),
-  luteal('Лютеиновая фаза', 'Естественный рост температуры (+0.3..+0.5°C) и снижение ВСР. Это физиологическая норма, не паникуйте.'),
-  menstrual('Менструальная фаза', 'Фаза регенерации. Рекомендуется умеренный Strain.');
-
-  final String title;
-  final String note;
-
-  const HormoneCyclePhase(this.title, this.note);
 }

@@ -10,6 +10,7 @@ import '../widgets/mascot_face.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/readiness_engine.dart';
+import '../../data/storage/calibration_store.dart';
 import '../../data/storage/climate_mode_store.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
@@ -35,7 +36,7 @@ class BioAvatarScreen extends StatefulWidget {
 class _BioAvatarScreenState extends State<BioAvatarScreen> {
   late BleTelemetry _telemetry;
   late AvatarProfile _profile;
-  final PersonalBaseline _baseline = const PersonalBaseline();
+  PersonalBaseline _baseline = CalibrationStore.baselineNotifier.value;
   bool _isMorningWoken = false;
   int _mascotDisplayMode = 0;
   StreamSubscription<BleTelemetry>? _sub;
@@ -43,6 +44,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
   @override
   void initState() {
     super.initState();
+    CalibrationStore.baselineNotifier.addListener(_onBaselineChanged);
     _telemetry = widget.bleBridge.currentTelemetry;
     _profile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
 
@@ -60,6 +62,15 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     });
   }
 
+  void _onBaselineChanged() {
+    if (mounted) {
+      setState(() {
+        _baseline = CalibrationStore.baselineNotifier.value;
+        _profile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
+      });
+    }
+  }
+
   void _onXpChanged() {
     if (mounted) {
       setState(() {
@@ -70,6 +81,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
 
   @override
   void dispose() {
+    CalibrationStore.baselineNotifier.removeListener(_onBaselineChanged);
     _sub?.cancel();
     AvatarManager.xpNotifier.removeListener(_onXpChanged);
     super.dispose();

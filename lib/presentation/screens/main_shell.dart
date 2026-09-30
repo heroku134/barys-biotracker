@@ -7,6 +7,7 @@ import '../../core/app_strings.dart';
 import '../../core/app_typography.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/services/background_ble_sync_service.dart';
+import '../../data/storage/calibration_store.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/readiness_engine.dart';
@@ -34,7 +35,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
   late BleTelemetry _telemetry;
-  final PersonalBaseline _baseline = const PersonalBaseline();
+  PersonalBaseline _baseline = CalibrationStore.baselineNotifier.value;
   StreamSubscription<BleTelemetry>? _sub;
 
   @override
@@ -42,15 +43,22 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     UserProfileRepository.loadProfile();
+    CalibrationStore.loadBaseline();
+    CalibrationStore.baselineNotifier.addListener(_onBaselineChanged);
     _telemetry = widget.bleBridge.currentTelemetry;
     _sub = widget.bleBridge.telemetryStream.listen((data) {
       if (mounted) setState(() => _telemetry = data);
     });
   }
 
+  void _onBaselineChanged() {
+    if (mounted) setState(() => _baseline = CalibrationStore.baselineNotifier.value);
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    CalibrationStore.baselineNotifier.removeListener(_onBaselineChanged);
     _sub?.cancel();
     super.dispose();
   }

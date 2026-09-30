@@ -9,6 +9,7 @@ import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/stress_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../data/history/biometrics_history_repository.dart';
+import '../../data/storage/calibration_store.dart';
 import '../../data/storage/day_snapshot_repository.dart';
 import '../widgets/circa_healthspan_card.dart';
 import '../widgets/circa_hypnogram.dart';
@@ -30,13 +31,26 @@ class AnalyticsScreen extends StatefulWidget {
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int _selectedPeriod = 1; // 0: 24ч, 1: 7д, 2: 30д, 3: 6мес
-  final _baseline = const PersonalBaseline();
+  PersonalBaseline _baseline = CalibrationStore.baselineNotifier.value;
   List<DaySnapshot> _week = const [];
 
   @override
   void initState() {
     super.initState();
+    CalibrationStore.baselineNotifier.addListener(_onBaselineChanged);
     _loadWeek();
+  }
+
+  void _onBaselineChanged() {
+    if (mounted) {
+      setState(() => _baseline = CalibrationStore.baselineNotifier.value);
+    }
+  }
+
+  @override
+  void dispose() {
+    CalibrationStore.baselineNotifier.removeListener(_onBaselineChanged);
+    super.dispose();
   }
 
   Future<void> _loadWeek() async {

@@ -7,7 +7,8 @@ import '../services/cloud_sync_service.dart';
 
 /// Репозиторий синхронизации цикла партнёрши (чтение, запись, реактивные обновления)
 class PartnerCycleRepository {
-  static const String _storageKey = 'circa_partner_cycle_data';
+  static const String _storageKey = 'kalkan_partner_cycle_data';
+  static const String _legacyStorageKey = 'circa_partner_cycle_data';
 
   static final ValueNotifier<PartnerCycleData> notifier = ValueNotifier<PartnerCycleData>(
     PartnerCycleData(lastSyncTime: DateTime.now()),
@@ -18,7 +19,7 @@ class PartnerCycleRepository {
   /// Инициализация при запуске приложения
   static Future<PartnerCycleData> loadPartnerCycle() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_storageKey);
+    final raw = prefs.getString(_storageKey) ?? prefs.getString(_legacyStorageKey);
     final loaded = PartnerCycleData.deserialize(raw);
 
     final data = loaded ?? PartnerCycleData(lastSyncTime: DateTime.now());

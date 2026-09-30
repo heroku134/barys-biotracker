@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/workout_session.dart';
 class WorkoutRepository {
-  static const String _keyWorkouts = 'circa_workouts_history_v1';
+  static const String _keyWorkouts = 'kalkan_workouts_history_v1';
+  static const String _legacyKeyWorkouts = 'circa_workouts_history_v1';
 
   static Future<List<CompletedWorkout>> loadWorkouts() async {
     final prefs = await SharedPreferences.getInstance();
-    final listJson = prefs.getStringList(_keyWorkouts);
+    final listJson = prefs.getStringList(_keyWorkouts) ?? prefs.getStringList(_legacyKeyWorkouts);
     if (listJson != null && listJson.isNotEmpty) {
       try {
         return listJson

@@ -1,15 +1,16 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/circa_haptics.dart';
 import '../../domain/intelligence/readiness_engine.dart';
-import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/private_league.dart';
 import '../../domain/models/readiness.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
+import 'calibration_store.dart';
 import 'user_profile_repository.dart';
 
 class PrivateLeagueRepository {
-  static const String _keyLeague = 'circa_private_league_v1';
+  static const String _keyLeague = 'kalkan_private_league_v1';
+  static const String _legacyKeyLeague = 'circa_private_league_v1';
 
   static FriendMember _buildCurrentUserMember({
     required BleTelemetry telemetry,
@@ -45,11 +46,14 @@ class PrivateLeagueRepository {
     UserProfile? profile,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonStr = prefs.getString(_keyLeague);
+    final jsonStr = prefs.getString(_keyLeague) ?? prefs.getString(_legacyKeyLeague);
 
     final userProfile = profile ?? await UserProfileRepository.loadProfile();
     final userTelemetry = telemetry ?? BleTelemetry.empty();
-    final readiness = ReadinessEngine.calculate(userTelemetry, baseline: const PersonalBaseline());
+    final readiness = ReadinessEngine.calculate(
+      userTelemetry,
+      baseline: CalibrationStore.baselineNotifier.value,
+    );
 
     final userMember = _buildCurrentUserMember(
       telemetry: userTelemetry,

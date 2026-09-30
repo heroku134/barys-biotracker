@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:barys_biotracker/domain/models/workout_session.dart';
 import 'package:barys_biotracker/data/storage/calibration_store.dart';
 import 'package:barys_biotracker/data/storage/private_league_repository.dart';
-
+import 'package:barys_biotracker/data/storage/workout_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:barys_biotracker/data/storage/partner_cycle_repository.dart';
 
 void main() {
@@ -97,6 +97,33 @@ void main() {
       expect(unlinked.isLinked, isFalse);
       expect(unlinked.partnerName, isEmpty);
       expect(unlinked.partnerCode, isEmpty);
+    });
+
+    test('WorkoutRepository loads from legacy circa key when kalkan key is not present', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final legacyWorkout = CompletedWorkout(
+        id: 'legacy_01',
+        sport: SportType.cycling,
+        startedAt: DateTime.now(),
+        durationSeconds: 1200,
+        calories: 200,
+        distanceKm: 8.5,
+        avgHr: 140,
+        maxHr: 165,
+        strain: 9.8,
+        xpEarned: 98,
+        routeCoordinates: const [],
+        avgPaceMinPerKm: 2.35,
+        steps: 0,
+        cadence: 0,
+        hrZoneSeconds: const [0, 0, 0, 0, 0],
+      );
+      await prefs.setStringList('circa_workouts_history_v1', [jsonEncode(legacyWorkout.toJson())]);
+
+      final loaded = await WorkoutRepository.loadWorkouts();
+      expect(loaded.length, 1);
+      expect(loaded.first.id, 'legacy_01');
+      expect(loaded.first.sport, SportType.cycling);
     });
   });
 }

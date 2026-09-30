@@ -23,7 +23,7 @@ class AccountBackupService {
         'kalkan_calibration_days_v1': prefs.getInt('kalkan_calibration_days_v1'),
         'kalkan_cal_mean_hrv_v1': prefs.getDouble('kalkan_cal_mean_hrv_v1'),
         'kalkan_cal_mean_rhr_v1': prefs.getInt('kalkan_cal_mean_rhr_v1'),
-        'circa_app_language_code': prefs.getString('circa_app_language_code'),
+        'kalkan_app_language_code': prefs.getString('kalkan_app_language_code') ?? prefs.getString('circa_app_language_code'),
         'kalkan_climate_mode_v1': prefs.getString('kalkan_climate_mode_v1'),
       },
     };
@@ -63,8 +63,9 @@ class AccountBackupService {
       if (p['kalkan_cal_mean_rhr_v1'] is int) {
         await prefs.setInt('kalkan_cal_mean_rhr_v1', p['kalkan_cal_mean_rhr_v1'] as int);
       }
-      if (p['circa_app_language_code'] is String) {
-        await prefs.setString('circa_app_language_code', p['circa_app_language_code'] as String);
+      final lang = p['kalkan_app_language_code'] ?? p['circa_app_language_code'];
+      if (lang is String) {
+        await prefs.setString('kalkan_app_language_code', lang);
       }
       if (p['kalkan_climate_mode_v1'] is String) {
         await prefs.setString('kalkan_climate_mode_v1', p['kalkan_climate_mode_v1'] as String);

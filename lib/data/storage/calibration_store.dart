@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/personal_baseline.dart';
 import 'onboarding_repository.dart';
@@ -26,6 +27,10 @@ class CalibrationStore {
   static const _nKey = 'kalkan_cal_samples_v1';
   static const _lastKey = 'kalkan_cal_last_morning_v1';
 
+  /// Реактивный источник истины персонального бейзлайна для всех экранов UI
+  static final ValueNotifier<PersonalBaseline> baselineNotifier =
+      ValueNotifier<PersonalBaseline>(const PersonalBaseline());
+
   static String _todayKey([DateTime? d]) {
     final n = d ?? DateTime.now();
     return '${n.year}-${n.month.toString().padLeft(2, '0')}-${n.day.toString().padLeft(2, '0')}';
@@ -44,11 +49,13 @@ class CalibrationStore {
 
   static Future<PersonalBaseline> loadBaseline({PersonalBaseline seed = const PersonalBaseline()}) async {
     final snap = await load();
-    return seed.copyWith(
+    final updated = seed.copyWith(
       calibrationDaysDone: snap.daysDone,
       meanHrv: snap.meanHrv,
       meanRhr: snap.meanRhr,
     );
+    baselineNotifier.value = updated;
+    return updated;
   }
 
   /// One increment per calendar day when night HRV/RHR exists.
@@ -76,6 +83,7 @@ class CalibrationStore {
     await prefs.setDouble(_hrvKey, nextHrv);
     await prefs.setInt(_rhrKey, nextRhr);
     await OnboardingRepository.setCalibrationDays(days);
+    await loadBaseline();
     return true;
   }
 
@@ -84,6 +92,7 @@ class CalibrationStore {
     final clamped = days.clamp(0, 14);
     await prefs.setInt('kalkan_calibration_days_v1', clamped);
     await OnboardingRepository.setCalibrationDays(clamped);
+    await loadBaseline();
   }
 
   static Future<void> resetCalibration() async {
@@ -92,5 +101,6 @@ class CalibrationStore {
     await prefs.remove(_lastKey);
     await prefs.setInt(_nKey, 0);
     await OnboardingRepository.setCalibrationDays(0);
+    await loadBaseline();
   }
 }
