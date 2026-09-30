@@ -112,15 +112,15 @@ class ActiveWorkoutPanel extends StatelessWidget {
     final zi = userProfile.getHeartRateZone(bpm);
     switch (zi) {
       case 0:
-        return const Color(0xFF6B7280);
+        return AppColors.sleepBlue;
       case 1:
-        return const Color(0xFF10B981);
+        return AppColors.sage;
       case 2:
-        return const Color(0xFF3B82F6);
+        return AppColors.strainBlue;
       case 3:
-        return const Color(0xFFF59E0B);
+        return AppColors.amber;
       default:
-        return const Color(0xFFEF4444);
+        return AppColors.rose;
     }
   }
 

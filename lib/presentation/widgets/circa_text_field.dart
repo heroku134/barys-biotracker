@@ -27,41 +27,42 @@ class CircaTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KalkanColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyle(
-            color: AppColors.muted,
+            color: palette.secondary,
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
           ),
         ),
-        SizedBox(height: 6),
+        const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: palette.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.line),
+            border: Border.all(color: palette.hairline),
           ),
           child: TextFormField(
             controller: controller,
             obscureText: obscureText,
             keyboardType: keyboardType,
             style: TextStyle(
-              color: AppColors.fg,
+              color: palette.fg,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
-            cursorColor: AppColors.amber,
+            cursorColor: AppColors.sage,
             onChanged: onChanged,
             validator: validator,
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(
-                color: AppColors.faint,
+                color: palette.muted,
                 fontSize: 14,
               ),
               prefixIcon: prefixIcon,

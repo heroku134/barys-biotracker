@@ -457,11 +457,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        AppLocaleNotifier.pick(
-                          'HRV ночи ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · ваша норма ${_baseline.meanHrv.toStringAsFixed(0)}',
-                          'Түнкү HRV ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · норма ${_baseline.meanHrv.toStringAsFixed(0)}',
-                          'Night HRV ${_telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64'} · your baseline ${_baseline.meanHrv.toStringAsFixed(0)}',
-                        ),
+                        _telemetry.hrv > 0
+                            ? AppLocaleNotifier.pick(
+                                'HRV ночи ${_telemetry.hrv.toStringAsFixed(0)} · норма ${_baseline.calibrationDaysDone >= 14 ? _baseline.meanHrv.toStringAsFixed(0) : "калибровка ${_baseline.calibrationDaysDone}/14"}',
+                                'Түнкү HRV ${_telemetry.hrv.toStringAsFixed(0)} · норма ${_baseline.calibrationDaysDone >= 14 ? _baseline.meanHrv.toStringAsFixed(0) : "калибрлөө ${_baseline.calibrationDaysDone}/14"}',
+                                'Night HRV ${_telemetry.hrv.toStringAsFixed(0)} · baseline ${_baseline.calibrationDaysDone >= 14 ? _baseline.meanHrv.toStringAsFixed(0) : "calibrating ${_baseline.calibrationDaysDone}/14"}',
+                              )
+                            : AppLocaleNotifier.pick(
+                                'HRV ночи: нет данных · калибровка ${_baseline.calibrationDaysDone}/14 дней',
+                                'Түнкү HRV: маалымат жок · калибрлөө ${_baseline.calibrationDaysDone}/14 күн',
+                                'Night HRV: no data yet · calibrating ${_baseline.calibrationDaysDone}/14 days',
+                              ),
                         style: AppTypography.bodySemibold(palette.fg),
                       ),
                       if (_miss != null) ...[
@@ -530,18 +536,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: _stat(palette, AppLocaleNotifier.pick('ЧСС', 'ЖС', 'HR'),
-                          '${_telemetry.heartRate > 0 ? _telemetry.heartRate : 72}', 'bpm'),
+                      child: _stat(
+                        palette,
+                        AppLocaleNotifier.pick('ЧСС', 'ЖС', 'HR'),
+                        _telemetry.heartRate > 0 ? '${_telemetry.heartRate}' : '—',
+                        _telemetry.heartRate > 0 ? 'bpm' : '',
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _stat(palette, 'HRV',
-                          _telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '64', 'мс'),
+                      child: _stat(
+                        palette,
+                        'HRV',
+                        _telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '—',
+                        _telemetry.hrv > 0 ? 'мс' : '',
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _stat(palette, AppLocaleNotifier.pick('Покой', 'Тынч', 'Resting'),
-                          '${_telemetry.restingHeartRate > 0 ? _telemetry.restingHeartRate : 52}', 'bpm'),
+                      child: _stat(
+                        palette,
+                        AppLocaleNotifier.pick('Покой', 'Тынч', 'Resting'),
+                        _telemetry.restingHeartRate > 0 ? '${_telemetry.restingHeartRate}' : '—',
+                        _telemetry.restingHeartRate > 0 ? 'bpm' : '',
+                      ),
                     ),
                   ],
                 ),
@@ -618,11 +636,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(value, style: AppTypography.metricValue(palette.fg)),
-              const SizedBox(width: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 1),
-                child: Text(unit, style: AppTypography.caption(palette.muted)),
-              ),
+              if (unit.isNotEmpty) ...[
+                const SizedBox(width: 4),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 1),
+                  child: Text(unit, style: AppTypography.caption(palette.muted)),
+                ),
+              ],
             ],
           ),
         ],

@@ -374,11 +374,11 @@ class WorkoutSummaryScreen extends StatelessWidget {
 
   Widget _zonesBar(List<int> zones, int totalSeconds, bool isDark) {
     final colors = [
-      const Color(0xFF6B7280), // Z1 Разминка
-      const Color(0xFF10B981), // Z2 Жиросжигание
-      const Color(0xFF3B82F6), // Z3 Аэробная
-      const Color(0xFFF59E0B), // Z4 Порог
-      const Color(0xFFEF4444), // Z5 Пик
+      AppColors.sleepBlue,  // Z1 Разминка (#6E86A8)
+      AppColors.sage,       // Z2 Жиросжигание (#3D9B74)
+      AppColors.strainBlue, // Z3 Аэробная (#3D73C4)
+      AppColors.amber,      // Z4 Порог (#C57A2A)
+      AppColors.rose,       // Z5 Пик (#C45C5C)
     ];
     final labels = ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'];
     final total = totalSeconds > 0 ? totalSeconds : 1;

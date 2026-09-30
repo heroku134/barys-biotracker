@@ -138,5 +138,32 @@ void main() {
       expect(find.text('Autonomic recovery is optimal.'), findsOneWidget);
       expect(find.text('PRIMED FOR LOAD'), findsOneWidget);
     });
+
+    testWidgets('7. PrecisionRecoveryRing renders honest em-dash when hrv/rhr are 0', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: PrecisionRecoveryRing(
+              score: 0,
+              zone: RecoveryZone.recovery,
+              hrv: 0.0,
+              restingHeartRate: 0,
+              skinTempDeviation: 0.0,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump(const Duration(milliseconds: 1000));
+
+      expect(find.text('RECOVERY'), findsOneWidget);
+      expect(find.text('0'), findsOneWidget);
+      expect(find.text('REDUCED'), findsOneWidget);
+      expect(find.text('HRV'), findsOneWidget);
+      expect(find.text('REST HR'), findsOneWidget);
+      expect(find.text('SKIN TEMP'), findsOneWidget);
+      expect(find.text('—'), findsNWidgets(3)); // HRV, REST HR, and SKIN TEMP are unmeasured
+    });
   });
 }
+

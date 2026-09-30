@@ -217,11 +217,12 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final palette = KalkanColors.of(context);
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
         return Scaffold(
-          backgroundColor: AppColors.stage,
+          backgroundColor: palette.bg,
           body: SafeArea(
               child: Stack(
                 children: [
@@ -232,17 +233,17 @@ class _AuthScreenState extends State<AuthScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
                           // Богатое пульсирующее лого КАЛКАН
-                          Center(
+                          const Center(
                             child: CircaPulsingLogo(
                               size: 110,
-                              primaryColor: AppColors.amber,
-                              secondaryColor: AppColors.sage,
+                              primaryColor: AppColors.sage,
+                              secondaryColor: AppColors.amber,
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
 
                           // Заголовок экрана входа
                           Text(
@@ -251,13 +252,13 @@ class _AuthScreenState extends State<AuthScreen> {
                                 : AppStrings.tr('auth_login_title', language),
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: AppColors.fg,
+                              color: palette.fg,
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.5,
                             ),
                           ),
-                          SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
                           // Форма ввода
                           if (_isSignUp) ...[
@@ -265,9 +266,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               label: AppStrings.tr('auth_name_label', language),
                               hint: AppStrings.tr('auth_name_hint', language),
                               controller: _nameController,
-                              prefixIcon: Icon(Icons.person_outline, color: AppColors.muted, size: 20),
+                              prefixIcon: Icon(Icons.person_outline, color: palette.muted, size: 20),
                             ),
-                            SizedBox(height: 14),
+                            const SizedBox(height: 14),
                           ],
 
                           CircaTextField(
@@ -275,20 +276,20 @@ class _AuthScreenState extends State<AuthScreen> {
                             hint: 'name@example.com',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            prefixIcon: Icon(Icons.alternate_email, color: AppColors.muted, size: 20),
+                            prefixIcon: Icon(Icons.alternate_email, color: palette.muted, size: 20),
                           ),
-                          SizedBox(height: 14),
+                          const SizedBox(height: 14),
 
                           CircaTextField(
                             label: AppStrings.tr('auth_password_label', language),
                             hint: '••••••••',
                             controller: _passwordController,
                             obscureText: _obscurePassword,
-                            prefixIcon: Icon(Icons.lock_outline, color: AppColors.muted, size: 20),
+                            prefixIcon: Icon(Icons.lock_outline, color: palette.muted, size: 20),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                color: AppColors.muted,
+                                color: palette.muted,
                                 size: 20,
                               ),
                               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -297,7 +298,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
                           // Ошибка
                           if (_errorMessage != null) ...[
-                            SizedBox(height: 12),
+                            const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
@@ -307,12 +308,12 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: AppColors.rose, size: 18),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.error_outline, color: AppColors.rose, size: 18),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: TextStyle(color: AppColors.rose, fontSize: 12),
+                                      style: const TextStyle(color: AppColors.rose, fontSize: 12),
                                     ),
                                   ),
                                 ],
@@ -320,29 +321,29 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ],
 
-                          SizedBox(height: 22),
+                          const SizedBox(height: 22),
 
                           // Кнопка входа
                           ElevatedButton(
                             onPressed: _isLoading ? null : _submit,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.amber,
-                              foregroundColor: AppColors.stage,
+                              backgroundColor: AppColors.sage,
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               elevation: 0,
                             ),
                             child: _isLoading
-                                ? SizedBox(
+                                ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.stage),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                   )
                                 : Text(
                                     _isSignUp
                                         ? AppStrings.tr('auth_button_signup', language)
                                         : AppStrings.tr('auth_button_login', language),
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 1.5,
@@ -350,7 +351,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ),
                           ),
 
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
 
                           // Переключение Вход / Регистрация
                           TextButton(
@@ -365,13 +366,12 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ? AppStrings.tr('auth_to_login', language)
                                   : AppStrings.tr('auth_to_signup', language),
                               style: TextStyle(
-                                color: AppColors.muted,
+                                color: palette.secondary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-
 
                         ],
                       ),
@@ -385,7 +385,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       onPressed: () => AppLocaleNotifier.toggleLanguage(),
                       child: Text(
                         '${language.flag} ${language.shortTitle}',
-                        style: TextStyle(color: AppColors.secondary, fontSize: 13, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: palette.secondary, fontSize: 13, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),

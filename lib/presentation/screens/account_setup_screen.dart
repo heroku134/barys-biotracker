@@ -97,13 +97,14 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
         'Select Date of Birth',
       ),
       builder: (context, child) {
+        final palette = KalkanColors.of(context);
         return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.amber,
-              onPrimary: Colors.black,
-              surface: AppColors.surface,
-              onSurface: AppColors.fg,
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: AppColors.sage,
+              onPrimary: Colors.white,
+              surface: palette.surface,
+              onSurface: palette.fg,
             ),
           ),
           child: child ?? const SizedBox.shrink(),
@@ -258,8 +259,8 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: isCurrent
-                          ? AppColors.amber
-                          : (isActive ? AppColors.sage : palette.hairline),
+                          ? AppColors.sage
+                          : (isActive ? AppColors.sage.withValues(alpha: 0.5) : palette.hairline),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -296,7 +297,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                       decoration: InputDecoration(
                         hintText: AppLocaleNotifier.pick('Например, Дастан', 'Мисалы, Дастан', 'e.g. Alex'),
                         hintStyle: TextStyle(color: palette.muted),
-                        prefixIcon: Icon(Icons.person_outline, color: AppColors.amber, size: 20),
+                        prefixIcon: Icon(Icons.person_outline, color: palette.secondary, size: 20),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -308,7 +309,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.amber),
+                          borderSide: const BorderSide(color: AppColors.sage),
                         ),
                       ),
                     ),
@@ -573,11 +574,11 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                   height: 130,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.raised,
-                    border: Border.all(color: AppColors.amber.withValues(alpha: 0.5), width: 2),
+                    color: palette.raised,
+                    border: Border.all(color: AppColors.sage.withValues(alpha: 0.5), width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.amber.withValues(alpha: 0.15),
+                        color: AppColors.sage.withValues(alpha: 0.15),
                         blurRadius: 24,
                       ),
                     ],
@@ -585,7 +586,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                   child: const Icon(
                     Icons.watch_outlined,
                     size: 64,
-                    color: AppColors.amber,
+                    color: AppColors.sage,
                   ),
                 ),
               ),
@@ -602,8 +603,8 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.amber,
-                    foregroundColor: Colors.black,
+                    backgroundColor: AppColors.sage,
+                    foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -798,7 +799,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                            color: Colors.black,
+                            color: Colors.white,
                             strokeWidth: 2,
                           ),
                         )
@@ -811,7 +812,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.sage,
-                    foregroundColor: Colors.black,
+                    foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -855,22 +856,22 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.amber.withValues(alpha: 0.16) : palette.raised,
+          color: isSelected ? AppColors.sage.withValues(alpha: 0.16) : palette.raised,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.amber : palette.hairline,
+            color: isSelected ? AppColors.sage : palette.hairline,
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: isSelected ? AppColors.amber : palette.secondary, size: 18),
+            Icon(icon, color: isSelected ? AppColors.sage : palette.secondary, size: 18),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppColors.amber : palette.fg,
+                color: isSelected ? AppColors.sage : palette.fg,
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
@@ -882,6 +883,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
   }
 
   Widget _goalChip(String id, String label) {
+    final palette = KalkanColors.of(context);
     final isSelected = _selectedGoal == id;
     return GestureDetector(
       onTap: () {
@@ -891,17 +893,17 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.sage.withValues(alpha: 0.18) : AppColors.raised,
+          color: isSelected ? AppColors.sage.withValues(alpha: 0.18) : palette.raised,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.sage : AppColors.hairline,
+            color: isSelected ? AppColors.sage : palette.hairline,
             width: isSelected ? 1.4 : 1.0,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? AppColors.sage : AppColors.muted,
+            color: isSelected ? AppColors.sage : palette.secondary,
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),

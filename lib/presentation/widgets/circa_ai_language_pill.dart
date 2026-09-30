@@ -12,6 +12,7 @@ class CircaAiLanguagePill extends StatelessWidget {
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
+        final palette = KalkanColors.of(context);
         return GestureDetector(
           onTap: () {
             CircaHaptics.selectionClick();
@@ -20,15 +21,15 @@ class CircaAiLanguagePill extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: AppColors.surface.withValues(alpha: 0.85),
+              color: palette.surface.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: const Color(0xFF38BDF8).withValues(alpha: 0.55),
+                color: AppColors.sage.withValues(alpha: 0.55),
                 width: 1.2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF38BDF8).withValues(alpha: 0.22),
+                  color: AppColors.sage.withValues(alpha: 0.22),
                   blurRadius: 10,
                   spreadRadius: 1,
                 ),
@@ -46,40 +47,40 @@ class CircaAiLanguagePill extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF38BDF8), Color(0xFFF59E0B)],
+                      colors: [AppColors.sage, AppColors.amber],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF38BDF8).withValues(alpha: 0.4),
+                        color: AppColors.sage.withValues(alpha: 0.4),
                         blurRadius: 4,
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.auto_awesome,
                     size: 9,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
-                SizedBox(width: 6),
+                const SizedBox(width: 6),
                 Text(
                   language.flag,
-                  style: TextStyle(fontSize: 12),
+                  style: const TextStyle(fontSize: 12),
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Text(
                   language.shortTitle,
                   style: TextStyle(
-                    color: AppColors.fg,
+                    color: palette.fg,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.8,
                   ),
                 ),
-                SizedBox(width: 5),
+                const SizedBox(width: 5),
                 Icon(
                   Icons.sync_alt,
-                  color: AppColors.muted,
+                  color: palette.muted,
                   size: 11,
                 ),
               ],

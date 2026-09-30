@@ -21,9 +21,9 @@ class PrecisionRecoveryRing extends StatefulWidget {
     super.key,
     required this.score,
     required this.zone,
-    this.hrv = 64.0,
-    this.restingHeartRate = 52,
-    this.skinTempDeviation = 0.2,
+    this.hrv = 0.0,
+    this.restingHeartRate = 0,
+    this.skinTempDeviation = 0.0,
     this.size = 210,
     this.onTap,
   });
@@ -187,24 +187,26 @@ class _PrecisionRecoveryRingState extends State<PrecisionRecoveryRing>
               Expanded(
                 child: _buildSubMetric(
                   label: 'HRV',
-                  value: '${widget.hrv.round()}',
-                  unit: 'MS',
+                  value: widget.hrv > 0 ? '${widget.hrv.round()}' : '—',
+                  unit: widget.hrv > 0 ? 'MS' : '',
                 ),
               ),
               Container(width: 1, height: 28, color: AppColors.hairline),
               Expanded(
                 child: _buildSubMetric(
                   label: 'REST HR',
-                  value: '${widget.restingHeartRate}',
-                  unit: 'BPM',
+                  value: widget.restingHeartRate > 0 ? '${widget.restingHeartRate}' : '—',
+                  unit: widget.restingHeartRate > 0 ? 'BPM' : '',
                 ),
               ),
               Container(width: 1, height: 28, color: AppColors.hairline),
               Expanded(
                 child: _buildSubMetric(
                   label: 'SKIN TEMP',
-                  value: '${widget.skinTempDeviation >= 0 ? '+' : ''}${widget.skinTempDeviation.toStringAsFixed(1)}',
-                  unit: '°C',
+                  value: widget.skinTempDeviation != 0.0
+                      ? '${widget.skinTempDeviation >= 0 ? '+' : ''}${widget.skinTempDeviation.toStringAsFixed(1)}'
+                      : '—',
+                  unit: widget.skinTempDeviation != 0.0 ? '°C' : '',
                 ),
               ),
             ],
