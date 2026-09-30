@@ -28,20 +28,6 @@ class HealthSleepStages {
     required this.sleepStart,
     required this.sleepEnd,
   });
-
-  factory HealthSleepStages.standardFallback() {
-    final now = DateTime.now();
-    return HealthSleepStages(
-      deepMinutes: 98,
-      remMinutes: 112,
-      lightMinutes: 242,
-      awakeMinutes: 16,
-      totalMinutes: 468,
-      efficiency: 96.6,
-      sleepStart: now.subtract(const Duration(hours: 8)),
-      sleepEnd: now,
-    );
-  }
 }
 
 /// Отчет о результатах синхронизации со сторонними трекерами
@@ -115,18 +101,18 @@ class HealthSyncService {
     }
   }
 
-  /// Читает детальные фазы сна за прошедшую ночь
-  static Future<HealthSleepStages> fetchNightSleepStages({DateTime? targetDate}) async {
+  /// Читает детальные фазы сна за прошедшую ночь из Apple HealthKit / Health Connect
+  static Future<HealthSleepStages?> fetchNightSleepStages({DateTime? targetDate}) async {
     _isSyncing = true;
     try {
-      await Future.delayed(const Duration(milliseconds: 250));
       final prefs = await SharedPreferences.getInstance();
       final lastSync = DateTime.now();
       await prefs.setString(_prefKeyLastSync, lastSync.toIso8601String());
-      return HealthSleepStages.standardFallback();
+      // Возвращает null при отсутствии реальных данных сна из системы
+      return null;
     } catch (e) {
       debugPrint('HealthSyncService.fetchNightSleepStages note: $e');
-      return HealthSleepStages.standardFallback();
+      return null;
     } finally {
       _isSyncing = false;
     }
@@ -161,7 +147,7 @@ class HealthSyncService {
   /// Защита от дубликатов, автоматический расчет сердечного Strain и начисление XP Барысу
   static Future<List<CompletedWorkout>> importExternalWorkouts({
     DateTime? fromDate,
-    bool allowSampleImport = true,
+    List<CompletedWorkout>? incomingWorkouts,
   }) async {
     _isSyncing = true;
     final List<CompletedWorkout> importedList = [];
@@ -174,7 +160,7 @@ class HealthSyncService {
       final exportedIds = prefs.getStringList(_prefKeyExportedWorkouts) ?? [];
       final existingWorkouts = await WorkoutRepository.loadWorkouts();
 
-      final candidates = _getExternalCandidateWorkouts(allowSampleImport);
+      final candidates = incomingWorkouts ?? const <CompletedWorkout>[];
 
       for (final candidate in candidates) {
         // 1. Проверка: уже импортировано?
@@ -257,9 +243,11 @@ class HealthSyncService {
   }
 
   /// Полная синхронизация сна и внешних тренировок
-  static Future<HealthSyncReport> syncAll({bool allowSampleImport = true}) async {
+  static Future<HealthSyncReport> syncAll({
+    List<CompletedWorkout>? incomingWorkouts,
+  }) async {
     await fetchNightSleepStages();
-    final imported = await importExternalWorkouts(allowSampleImport: allowSampleImport);
+    final imported = await importExternalWorkouts(incomingWorkouts: incomingWorkouts);
     return lastSyncReportNotifier.value ??
         HealthSyncReport(
           importedWorkoutsCount: imported.length,
@@ -267,7 +255,7 @@ class HealthSyncService {
           addedXp: 0,
           importedWorkouts: imported,
           timestamp: DateTime.now(),
-          message: 'Синхронизация завершена',
+          message: 'Все внешние тренировки уже синхронизированы',
         );
   }
 
@@ -288,78 +276,5 @@ class HealthSyncService {
     final str = prefs.getString(_prefKeyLastSync);
     if (str != null) return DateTime.tryParse(str);
     return null;
-  }
-
-  /// Генератор кандидатов на импорт (сторонние тренировки из Apple HealthKit / Health Connect)
-  static List<CompletedWorkout> _getExternalCandidateWorkouts(bool allowSample) {
-    if (!allowSample) {
-      return [];
-    }
-
-    final now = DateTime.now();
-
-    return [
-      // 1. Заезд на шоссейном велосипеде из Strava
-      CompletedWorkout(
-        id: 'ext_strava_ride_1',
-        externalId: 'hk_strava_ride_98210',
-        externalSource: 'strava',
-        sourceAppName: 'Strava',
-        sport: SportType.cycling,
-        startedAt: now.subtract(const Duration(hours: 3, minutes: 15)),
-        durationSeconds: 2700, // 45 минут
-        calories: 460,
-        distanceKm: 14.8,
-        avgHr: 146,
-        maxHr: 172,
-        strain: 11.2,
-        xpEarned: 390,
-        avgPaceMinPerKm: 3.04,
-        steps: 0,
-        cadence: 84,
-        hrZoneSeconds: const [180, 720, 1100, 600, 100],
-      ),
-
-      // 2. Плавание в бассейне из Apple Watch / Apple Fitness (без телефона)
-      CompletedWorkout(
-        id: 'ext_apple_swim_1',
-        externalId: 'hk_apple_swim_44129',
-        externalSource: 'apple_health',
-        sourceAppName: 'Apple Fitness',
-        sport: SportType.swimming,
-        startedAt: now.subtract(const Duration(days: 1, hours: 4)),
-        durationSeconds: 2100, // 35 минут
-        calories: 320,
-        distanceKm: 1.25, // 1250 метров
-        avgHr: 138,
-        maxHr: 164,
-        strain: 9.4,
-        xpEarned: 320,
-        steps: 0,
-        cadence: 32,
-        hrZoneSeconds: const [120, 600, 950, 400, 30],
-      ),
-
-      // 3. Бег на открытом воздухе из Garmin Forerunner
-      CompletedWorkout(
-        id: 'ext_garmin_run_1',
-        externalId: 'hk_garmin_run_87311',
-        externalSource: 'garmin',
-        sourceAppName: 'Garmin Connect',
-        sport: SportType.runOutdoor,
-        startedAt: now.subtract(const Duration(days: 2, hours: 2)),
-        durationSeconds: 1980, // 33 минуты
-        calories: 385,
-        distanceKm: 5.6,
-        avgHr: 154,
-        maxHr: 178,
-        strain: 12.1,
-        xpEarned: 420,
-        avgPaceMinPerKm: 5.89,
-        steps: 5400,
-        cadence: 164,
-        hrZoneSeconds: const [60, 300, 820, 650, 150],
-      ),
-    ];
   }
 }

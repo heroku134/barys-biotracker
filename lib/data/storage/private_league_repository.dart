@@ -11,62 +11,6 @@ import 'user_profile_repository.dart';
 class PrivateLeagueRepository {
   static const String _keyLeague = 'circa_private_league_v1';
 
-  static List<FriendMember> _buildDefaultFriends() {
-    return [
-      const FriendMember(
-        id: 'friend_dauren',
-        name: 'Даурен С.',
-        city: 'Алматы',
-        avatarInitials: 'ДС',
-        rankTitle: '',
-        level: 4,
-        recoveryScore: 86,
-        recoveryZone: RecoveryZone.optimal,
-        currentDayStrain: 14.2,
-        sleepHours: 7.8,
-        sleepPerformance: 94,
-        hrv: 68.0,
-        restingHeartRate: 48,
-        lastSyncText: 'Live',
-        statusQuote: '«Закрыл 15 км по горному трейлу Медеу»',
-      ),
-      const FriendMember(
-        id: 'friend_alia',
-        name: 'Алия М.',
-        city: 'Алматы',
-        avatarInitials: 'АМ',
-        rankTitle: '',
-        level: 3,
-        recoveryScore: 68,
-        recoveryZone: RecoveryZone.moderate,
-        currentDayStrain: 9.5,
-        sleepHours: 6.7,
-        sleepPerformance: 82,
-        hrv: 52.0,
-        restingHeartRate: 54,
-        lastSyncText: '18 мин назад',
-        statusQuote: '«День активного восстановления и растяжки»',
-      ),
-      const FriendMember(
-        id: 'friend_timur',
-        name: 'Тимур К.',
-        city: 'Астана',
-        avatarInitials: 'ТК',
-        rankTitle: '',
-        level: 2,
-        recoveryScore: 92,
-        recoveryZone: RecoveryZone.optimal,
-        currentDayStrain: 12.0,
-        sleepHours: 8.2,
-        sleepPerformance: 96,
-        hrv: 74.0,
-        restingHeartRate: 46,
-        lastSyncText: '45 мин назад',
-        statusQuote: '«Пиковая форма, готов к вечернему заезду»',
-      ),
-    ];
-  }
-
   static FriendMember _buildCurrentUserMember({
     required BleTelemetry telemetry,
     required UserProfile profile,
@@ -116,11 +60,16 @@ class PrivateLeagueRepository {
     if (jsonStr != null && jsonStr.isNotEmpty) {
       try {
         final savedLeague = PrivateLeague.deserialize(jsonStr);
-        // Обновляем метрики текущего пользователя в списке, сохраняя всех друзей
-        final updatedMembers = savedLeague.members.map((m) {
-          if (m.isCurrentUser) return userMember;
-          return m;
-        }).toList();
+        // Очищаем старые демо-профили (friend_dauren, friend_alia, friend_timur), сохраняя реальных участников
+        final updatedMembers = savedLeague.members
+            .where((m) =>
+                m.id != 'friend_dauren' &&
+                m.id != 'friend_alia' &&
+                m.id != 'friend_timur')
+            .map((m) {
+              if (m.isCurrentUser) return userMember;
+              return m;
+            }).toList();
 
         // Если текущего пользователя почему-то нет в списке, добавляем его в начало
         if (!updatedMembers.any((m) => m.isCurrentUser)) {
@@ -135,7 +84,7 @@ class PrivateLeagueRepository {
           members: updatedMembers,
         );
       } catch (e) {
-        // Если данные повреждены, продолжим с дефолтным кругом
+        // Если данные повреждены, продолжим с пустым кругом
       }
     }
 
@@ -144,7 +93,7 @@ class PrivateLeagueRepository {
       title: 'Круг доверия',
       inviteCode: 'KALKAN-${userProfile.name.hashCode.abs().toString().padLeft(4, '0').substring(0, 4)}',
       maxMembers: 5,
-      members: [userMember, ..._buildDefaultFriends()],
+      members: [userMember],
     );
     await saveLeague(league);
     return league;

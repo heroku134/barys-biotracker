@@ -180,27 +180,42 @@ class CircaHypnogram extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppColors.line),
                   ),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 80,
-                        child: CustomPaint(
-                          size: Size.infinite,
-                          painter: _HypnogramPainter(epochs: sleepResult.hypnogram),
+                  child: sleepResult.hypnogram.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Text(
+                              'Гипнограмма формируется во время ночного отдыха с подключенным браслетом KALKAN',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Column(
+                          children: [
+                            SizedBox(
+                              height: 80,
+                              child: CustomPaint(
+                                size: Size.infinite,
+                                painter: _HypnogramPainter(epochs: sleepResult.hypnogram),
+                              ),
+                            ),
+                            SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildLegendItem('Глубокий', AppColors.sage),
+                                _buildLegendItem('REM (быстрый)', AppColors.amber),
+                                _buildLegendItem('Легкий', AppColors.muted),
+                                _buildLegendItem('Пробуждения', AppColors.rose),
+                              ],
+                            ),
+                          ],
                         ),
-                      ),
-                      SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildLegendItem('Глубокий', AppColors.sage),
-                          _buildLegendItem('REM (быстрый)', AppColors.amber),
-                          _buildLegendItem('Легкий', AppColors.muted),
-                          _buildLegendItem('Пробуждения', AppColors.rose),
-                        ],
-                      ),
-                    ],
-                  ),
                 ),
                 SizedBox(height: 20),
 

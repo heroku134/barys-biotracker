@@ -180,7 +180,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
     setState(() => _isSyncingHealth = true);
     try {
       await HealthSyncService.requestPermissions();
-      final report = await HealthSyncService.syncAll(allowSampleImport: true);
+      final report = await HealthSyncService.syncAll();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

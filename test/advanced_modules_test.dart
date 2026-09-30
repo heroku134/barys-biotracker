@@ -50,10 +50,7 @@ void main() {
       expect(await HealthSyncService.isAutoSyncEnabled(), false);
 
       final stages = await HealthSyncService.fetchNightSleepStages();
-      expect(stages.deepMinutes, 98);
-      expect(stages.remMinutes, 112);
-      expect(stages.totalMinutes, 468);
-      expect(stages.efficiency, 96.6);
+      expect(stages, isNull);
 
       final workout = CompletedWorkout(
         id: 'w_test_1',
@@ -80,10 +77,28 @@ void main() {
       expect(LiveActivityService.isLiveActivityActive, false);
     });
 
-    test('4. HealthSyncService imports external workouts from Strava / Garmin and adds Strain', () async {
+    test('4. HealthSyncService imports external workouts and adds Strain with deduplication', () async {
       final initialStrain = LocalDayStrain.current();
 
-      final imported = await HealthSyncService.importExternalWorkouts(allowSampleImport: true);
+      final sampleWorkout = CompletedWorkout(
+        id: 'ext_test_ride_1',
+        externalId: 'hk_strava_test_98210',
+        externalSource: 'strava',
+        sourceAppName: 'Strava',
+        sport: SportType.cycling,
+        startedAt: DateTime.now().subtract(const Duration(hours: 1)),
+        durationSeconds: 2400,
+        calories: 400,
+        distanceKm: 12.0,
+        avgHr: 145,
+        maxHr: 170,
+        strain: 0.0,
+        xpEarned: 0,
+      );
+
+      final imported = await HealthSyncService.importExternalWorkouts(
+        incomingWorkouts: [sampleWorkout],
+      );
       expect(imported.isNotEmpty, true);
       expect(imported.first.isExternal, true);
       expect(imported.first.strain > 0, true);
@@ -94,8 +109,14 @@ void main() {
       expect(currentStrain >= initialStrain, true);
 
       // Verify deduplication: re-import should yield 0 new workouts
-      final reImported = await HealthSyncService.importExternalWorkouts(allowSampleImport: true);
+      final reImported = await HealthSyncService.importExternalWorkouts(
+        incomingWorkouts: [sampleWorkout],
+      );
       expect(reImported.isEmpty, true);
+
+      // Verify empty incoming yields 0 workouts
+      final emptyImport = await HealthSyncService.importExternalWorkouts();
+      expect(emptyImport.isEmpty, true);
     });
   });
 }

@@ -151,20 +151,7 @@ class StrainEngine {
       );
     }
 
-    final defaultActivities = activities ??
-        [
-          WorkoutActivity(
-            id: 'act_1',
-            title: AppLocaleNotifier.pick('Аэробный кросс / Зона 2', 'Аэробдук кросс / 2-зона', 'Aerobic Cross / Zone 2'),
-            timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-            durationMinutes: 38,
-            avgHeartRate: 142,
-            maxHeartRate: 164,
-            activityStrain: 10.2,
-            caloriesBurned: 340,
-            isAutoDetected: true,
-          ),
-        ];
+    final recordedActivities = activities ?? const <WorkoutActivity>[];
 
     return StrainCalculationResult(
       currentStrain: currentStrain,
@@ -174,7 +161,7 @@ class StrainEngine {
       remainingToTarget: remaining,
       isInTargetZone: inTarget,
       zoneMinutes: zoneMinutes,
-      dailyActivities: defaultActivities,
+      dailyActivities: recordedActivities,
     );
   }
 }

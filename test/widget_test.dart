@@ -101,7 +101,31 @@ void main() {
       expect(analysis.sleepNeedMinutes, greaterThan(baseline.baselineSleepNeedMinutes));
       expect(analysis.strainSurchargeMinutes, greaterThan(0));
       expect(analysis.optimalBedtime, isNotEmpty);
-      expect(analysis.hypnogram, isNotEmpty);
+      // Без данных с часов гипнограмма не синтезируется
+      expect(analysis.hypnogram, isEmpty);
+
+      // При наличии данных с датчиков браслета гипнограмма сохраняется
+      final now = DateTime.now();
+      final telemetryWithWatch = telemetry.copyWith(
+        sleepHypnogram: [
+          SleepEpoch(
+            startTime: now.subtract(const Duration(minutes: 190)),
+            endTime: now.subtract(const Duration(minutes: 100)),
+            stage: SleepStageType.deep,
+          ),
+          SleepEpoch(
+            startTime: now.subtract(const Duration(minutes: 100)),
+            endTime: now,
+            stage: SleepStageType.rem,
+          ),
+        ],
+      );
+      final analysisWithWatch = SleepEngine.calculate(
+        telemetry: telemetryWithWatch,
+        baseline: baseline,
+      );
+      expect(analysisWithWatch.hypnogram, isNotEmpty);
+      expect(analysisWithWatch.hypnogram.length, 2);
     });
 
     test('6. Healthspan Engine: Calculates CIRCA biological age and VO2max', () {

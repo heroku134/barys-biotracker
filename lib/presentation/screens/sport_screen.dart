@@ -96,7 +96,7 @@ class _SportScreenState extends State<SportScreen> {
     CircaHaptics.selectionClick();
     setState(() => _isHealthSyncing = true);
     try {
-      final report = await HealthSyncService.syncAll(allowSampleImport: true);
+      final report = await HealthSyncService.syncAll();
       await _loadHistory();
       if (!mounted) return;
       CircaHaptics.success();

@@ -107,10 +107,8 @@ class SleepEngine {
     final bedMinuteStr = bedMinute.toString().padLeft(2, '0');
     final optimalBedtime = '$bedHourStr:$bedMinuteStr';
 
-    // Гипнограмма
-    final hypnogram = telemetry.sleepHypnogram.isNotEmpty
-        ? telemetry.sleepHypnogram
-        : _generateSampleHypnogram(telemetry.sleepMinutes);
+    // Гипнограмма: только реальные эпохи сна (без синтетической генерации)
+    final hypnogram = telemetry.sleepHypnogram;
 
     return SleepAnalysisResult(
       sleepNeedMinutes: totalSleepNeed,
@@ -126,70 +124,5 @@ class SleepEngine {
       optimalBedtime: optimalBedtime,
       hypnogram: hypnogram,
     );
-  }
-
-  /// Генерация реалистичной цикличной гипнограммы (90-минутные ультрадианные циклы)
-  static List<SleepEpoch> _generateSampleHypnogram(int totalMinutes) {
-    final epochs = <SleepEpoch>[];
-    final baseTime = DateTime.now().subtract(Duration(minutes: totalMinutes + 35));
-    var cursor = baseTime;
-
-    // Начальное засыпание (бодрствование -> легкий сон)
-    epochs.add(SleepEpoch(
-      startTime: cursor,
-      endTime: cursor.add(const Duration(minutes: 15)),
-      stage: SleepStageType.awake,
-    ));
-    cursor = cursor.add(const Duration(minutes: 15));
-
-    // Циклы (по 90-100 мин): Легкий -> Глубокий -> Легкий -> REM
-    final cycles = (totalMinutes / 95).ceil();
-    for (var i = 0; i < cycles; i++) {
-      // 1. Легкий сон (25-30 мин)
-      epochs.add(SleepEpoch(
-        startTime: cursor,
-        endTime: cursor.add(const Duration(minutes: 25)),
-        stage: SleepStageType.light,
-      ));
-      cursor = cursor.add(const Duration(minutes: 25));
-
-      // 2. Глубокий сон (в первой половине ночи длиннее, во второй короче)
-      final deepDuration = i < 2 ? 35 : 12;
-      epochs.add(SleepEpoch(
-        startTime: cursor,
-        endTime: cursor.add(Duration(minutes: deepDuration)),
-        stage: SleepStageType.deep,
-      ));
-      cursor = cursor.add(Duration(minutes: deepDuration));
-
-      // 3. Легкий сон переходной (15 мин)
-      epochs.add(SleepEpoch(
-        startTime: cursor,
-        endTime: cursor.add(const Duration(minutes: 15)),
-        stage: SleepStageType.light,
-      ));
-      cursor = cursor.add(const Duration(minutes: 15));
-
-      // 4. REM (быстрый сон: под утро длиннее)
-      final remDuration = i < 2 ? 18 : 32;
-      epochs.add(SleepEpoch(
-        startTime: cursor,
-        endTime: cursor.add(Duration(minutes: remDuration)),
-        stage: SleepStageType.rem,
-      ));
-      cursor = cursor.add(Duration(minutes: remDuration));
-
-      // Краткое микропробуждение WASO
-      if (i == 1 || i == 3) {
-        epochs.add(SleepEpoch(
-          startTime: cursor,
-          endTime: cursor.add(const Duration(minutes: 4)),
-          stage: SleepStageType.awake,
-        ));
-        cursor = cursor.add(const Duration(minutes: 4));
-      }
-    }
-
-    return epochs;
   }
 }
