@@ -14,7 +14,6 @@ import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_avatar_picker_dialog.dart';
 import '../widgets/circa_partner_cycle_sheet.dart';
-import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/kalkan_chrome.dart';
 import 'auth_screen.dart';
@@ -141,6 +140,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   MaterialPageRoute(builder: (_) => SettingsScreen(bleBridge: widget.bleBridge)),
                 ),
               ),
+              const SizedBox(height: 12),
+              _cloudSyncCard(palette, language),
               const SizedBox(height: 16),
               KalkanCard(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -183,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _identityCard(KalkanColors palette, BleTelemetry telemetry, AppLanguage language) {
     final name = _profile.name.isNotEmpty ? _profile.name : _tr('Гость', 'Конок', 'Guest');
-    return GlassCard(
+    return KalkanCard(
       child: Row(
         children: [
           GestureDetector(
@@ -222,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _deviceCard(KalkanColors palette, BleTelemetry telemetry, AppLanguage language) {
-    return GlassCard(
+    return KalkanCard(
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => DeviceSettingsScreen(bleBridge: widget.bleBridge)),
@@ -253,7 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _metricsCard(KalkanColors palette, AppLanguage language) {
-    return GlassCard(
+    return KalkanCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -305,7 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _linkTile(KalkanColors palette, {required IconData icon, required String title, required String subtitle, required VoidCallback onTap}) {
-    return GlassCard(
+    return KalkanCard(
       onTap: onTap,
       child: Row(
         children: [
@@ -325,7 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _partnerCard(KalkanColors palette, AppLanguage language) {
     final linked = _partnerCycle?.isLinked == true;
-    return GlassCard(
+    return KalkanCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -367,7 +368,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _languageCard(KalkanColors palette, AppLanguage current) {
-    return GlassCard(
+    return KalkanCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -574,6 +575,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _cloudSyncCard(KalkanColors palette, AppLanguage language) {
+    final ready = CloudSyncService.ready;
+    return KalkanCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: (ready ? AppColors.sage : AppColors.amber).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+            ),
+            child: Icon(
+              ready ? Icons.cloud_done_outlined : Icons.cloud_off_outlined,
+              color: ready ? AppColors.sage : AppColors.amber,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ready
+                      ? _tr('Облачная синхронизация', 'Булуттук синхрондоштуруу', 'Cloud Sync')
+                      : _tr('Автономный режим', 'Автономдуу режим', 'Offline Mode'),
+                  style: AppTypography.bodySemibold(palette.fg),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  ready
+                      ? _tr('Данные профиля и телеметрии защищены', 'Маалыматтар булутта сакталууда', 'Profile & telemetry backed up')
+                      : _tr('Данные сохранены локально на устройстве', 'Маалыматтар телефондо сакталууда', 'Data stored locally on device'),
+                  style: AppTypography.caption(palette.secondary),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: ready ? AppColors.sage : AppColors.amber,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _field(String label, TextEditingController c) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -584,5 +637,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
 }

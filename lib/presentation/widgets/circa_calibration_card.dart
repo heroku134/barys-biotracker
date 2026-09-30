@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/storage/calibration_store.dart';
-import 'glass_card.dart';
+import 'kalkan_ui.dart';
 
 /// Карточка первой 14-дневной калибровки физиологической базы KALKAN
 /// Лаконичный внешний вид с детальной модальной шторкой.
@@ -31,7 +31,7 @@ class CircaCalibrationCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap ?? () => _showCalibrationInfoSheet(context, displayDay, totalDays),
-      child: GlassCard(
+      child: KalkanCard(
         padding: const EdgeInsets.all(16),
         borderColor: AppColors.amber.withValues(alpha: 0.35),
         child: Column(

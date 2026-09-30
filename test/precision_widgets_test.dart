@@ -14,6 +14,10 @@ import 'package:barys_biotracker/domain/models/personal_baseline.dart';
 import 'package:barys_biotracker/data/storage/private_league_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:barys_biotracker/presentation/widgets/circa_hypnogram.dart';
+import 'package:barys_biotracker/presentation/widgets/circa_cycle_card.dart';
+import 'package:barys_biotracker/presentation/widgets/circa_calibration_card.dart';
+import 'package:barys_biotracker/domain/models/user_profile.dart';
+import 'package:barys_biotracker/domain/intelligence/menstrual_cycle_engine.dart';
 
 void main() {
   group('KALKAN Athletic Surface & UI Components Test Suite', () {
@@ -202,6 +206,54 @@ void main() {
       expect(arman.recoveryScore, 0); // No fabricated 78% score
       expect(arman.lastSyncText, 'Ожидание данных'); // No fake 'Live'
       expect(arman.isCurrentUser, isFalse);
+    });
+
+    testWidgets('12. CircaCycleCard displays honest setup state when lastPeriodStartDate is null', (tester) async {
+      const profile = UserProfile(gender: Gender.female, lastPeriodStartDate: null);
+      final telemetry = BleTelemetry.empty();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CircaCycleCard(
+              telemetry: telemetry,
+              profile: profile,
+              onTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      // Must display setup prompt and not fake day 14 or ovulation
+      expect(find.text('Цикл не настроен'), findsOneWidget);
+      expect(find.text('Указать дату начала'), findsOneWidget);
+      expect(find.text('ОВУЛЯЦИЯ'), findsNothing);
+      expect(find.text('14'), findsNothing);
+    });
+
+    testWidgets('13. CircaCalibrationCard renders KalkanCard with day indicator', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: CircaCalibrationCard(
+              currentDay: 3,
+              totalDays: 14,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('КАЛИБРОВКА БАЗЫ'), findsOneWidget);
+      expect(find.text('День 3 из 14'), findsOneWidget);
+      expect(find.byType(KalkanCard), findsOneWidget);
+    });
+
+    test('14. MenstrualCycleEngine.isConfigured checks for lastPeriodStartDate', () {
+      const unconfigured = UserProfile(gender: Gender.female, lastPeriodStartDate: null);
+      final configured = UserProfile(gender: Gender.female, lastPeriodStartDate: DateTime.now());
+
+      expect(MenstrualCycleEngine.isConfigured(unconfigured), isFalse);
+      expect(MenstrualCycleEngine.isConfigured(configured), isTrue);
     });
   });
 }

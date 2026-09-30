@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../data/services/paired_pulse.dart';
 import '../../core/app_language.dart';
+import '../../core/app_typography.dart';
+import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
-import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/kalkan_chrome.dart';
 import 'device_pair_screen.dart';
@@ -194,7 +195,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           children: [
             // Карточка статуса устройства
-            GlassCard(
+            KalkanCard(
               child: Column(
                 children: [
                   Row(
@@ -206,17 +207,17 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                           color: AppColors.raised,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: telemetry.isConnected ? AppColors.sage : AppColors.muted,
+                            color: telemetry.isConnected ? AppColors.sage : AppColors.rose,
                             width: 1.8,
                           ),
                         ),
                         child: Icon(
-                          Icons.watch,
-                          color: telemetry.isConnected ? AppColors.sage : AppColors.muted,
+                          telemetry.isConnected ? Icons.watch : Icons.watch_off_outlined,
+                          color: telemetry.isConnected ? AppColors.sage : AppColors.rose,
                           size: 26,
                         ),
                       ),
-                      SizedBox(width: 14),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,16 +225,16 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                             Text(
                               telemetry.deviceName,
                               style: TextStyle(
-                                color: AppColors.fg,
+                                color: palette.fg,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
                               telemetry.isConnected ? tr('На связи', 'Туташкан') : tr('Отключено', 'Өчүк'),
                               style: TextStyle(
-                                color: telemetry.isConnected ? AppColors.sage : AppColors.muted,
+                                color: telemetry.isConnected ? AppColors.sage : AppColors.rose,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -244,18 +245,25 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: AppColors.sage.withValues(alpha: 0.15),
+                          color: (telemetry.isConnected ? AppColors.sage : AppColors.rose).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                          border: Border.all(color: AppColors.sage.withValues(alpha: 0.4), width: KalkanUi.hairline),
+                          border: Border.all(
+                            color: (telemetry.isConnected ? AppColors.sage : AppColors.rose).withValues(alpha: 0.4),
+                            width: KalkanUi.hairline,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.battery_charging_full, color: AppColors.sage, size: 14),
-                            SizedBox(width: 4),
+                            Icon(
+                              telemetry.isConnected ? Icons.battery_charging_full : Icons.bluetooth_disabled,
+                              color: telemetry.isConnected ? AppColors.sage : AppColors.rose,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
                             Text(
-                              '${telemetry.batteryLevel}%',
+                              telemetry.isConnected ? '${telemetry.batteryLevel}%' : tr('Нет сигнала', 'Сигнал жок', 'No signal'),
                               style: TextStyle(
-                                color: AppColors.sage,
+                                color: telemetry.isConnected ? AppColors.sage : AppColors.rose,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -330,23 +338,120 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            if (!telemetry.isConnected)
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: KalkanCard(
+                  padding: const EdgeInsets.all(16),
+                  borderColor: AppColors.rose.withValues(alpha: 0.4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.rose.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                            ),
+                            child: const Icon(Icons.bluetooth_disabled, color: AppColors.rose, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  tr('СВЯЗЬ С СААТ-1 ПОТЕРЯНА', 'СААТ-1 МЕНЕН БАЙЛАНЫШ ҮЗҮЛДҮ', 'CONNECTION TO SAAT-1 LOST'),
+                                  style: AppTypography.eyebrow(AppColors.rose),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  tr('Ошибка подключения BLE', 'BLE туташуу катасы', 'BLE Connection Error'),
+                                  style: AppTypography.bodySemibold(palette.fg),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        tr(
+                          '• Убедитесь, что Bluetooth включён на телефоне.\n• Держите часы СААТ-1 рядом (в пределах 2 метров).\n• Если часы подключены к другому устройству — отключите их.',
+                          '• Телефондо Bluetooth күйгүзүлгөнүн текшериңиз.\n• Саатты жакын кармаңыз (2 метр аралыкта).\n• Башка түзмөккө туташкан болсо — өчүрүңүз.',
+                          '• Ensure Bluetooth is enabled on your phone.\n• Keep SAAT-1 watch close (within 2 meters).\n• If connected to another device, disconnect first.',
+                        ),
+                        style: AppTypography.caption(palette.secondary).copyWith(height: 1.5),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                CircaHaptics.selectionClick();
+                                final lastAddr = await widget.bleBridge.getLastPairedAddress();
+                                if (lastAddr != null && lastAddr.isNotEmpty) {
+                                  await widget.bleBridge.connect(lastAddr);
+                                } else {
+                                  await widget.bleBridge.startScan();
+                                }
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(tr('Повторная попытка подключения к СААТ-1…', 'СААТ-1ге кайра туташуу аракети…', 'Reconnecting to SAAT-1…')),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.sage,
+                                side: const BorderSide(color: AppColors.sage),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                              ),
+                              child: Text(tr('Повторить подключение', 'Кайра туташуу', 'Retry Connect')),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                CircaHaptics.selectionClick();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => DevicePairScreen(bleBridge: widget.bleBridge)),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                              ),
+                              child: Text(tr('Поиск другого', 'Башка издөө', 'Pair Another')),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
 
             Text(
               tr('Функции часов', 'Сааттын функциялары'),
               style: TextStyle(
-                color: AppColors.muted,
+                color: palette.secondary,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2,
               ),
             ),
-            SizedBox(height: 10),
-
-
+            const SizedBox(height: 10),
 
             // Антипотеря (Anti-loss)
-            GlassCard(
+            KalkanCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -356,12 +461,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       children: [
                         Text(
                           tr('Антипотеря', 'Жоготууга каршы'),
-                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           tr('Сигнал, если браслет дальше 10 метров', 'Билерик 10 метрден алыс болсо сигнал'),
-                          style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
+                          style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                         ),
                       ],
                     ),
@@ -374,10 +479,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
             // Оповещение об отключении BLE
-            GlassCard(
+            KalkanCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -387,12 +492,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       children: [
                         Text(
                           tr('Оповещение об отключении', 'Үзүлгөндө эскертме'),
-                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           tr('Пуш при разрыве Bluetooth', 'Bluetooth үзүлгөндө билдирме'),
-                          style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
+                          style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                         ),
                       ],
                     ),
@@ -405,10 +510,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
             // Умный будильник
-            GlassCard(
+            KalkanCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -418,12 +523,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       children: [
                         Text(
                           tr('Умный будильник', 'Акылдуу ойготкуч'),
-                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           tr('Вибрация в лёгкой фазе сна', 'Жеңил уйку фазасында титирөө'),
-                          style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
+                          style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                         ),
                       ],
                     ),
@@ -436,10 +541,10 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
             // Напоминание о воде
-            GlassCard(
+            KalkanCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -449,12 +554,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       children: [
                         Text(
                           tr('Напоминание пить воду', 'Суу ичүү эскертмеси'),
-                          style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           tr('Вибрация каждые 2 часа', 'Ар 2 саатта титирөө'),
-                          style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
+                          style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                         ),
                       ],
                     ),

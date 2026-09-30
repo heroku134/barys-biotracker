@@ -218,6 +218,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final sleepScore = sleepResult.sleepPerformanceScore;
     final name = _userProfile.name.isNotEmpty ? _userProfile.name : AppStrings.tr('home_guest', language);
     final isConnected = _telemetry.isConnected;
+    final hasNightData = _telemetry.sleepMinutes > 0 || _telemetry.hrv > 0;
+    final isCalibrating = _calDays < 14;
 
     return Scaffold(
       backgroundColor: palette.bg,
@@ -318,6 +320,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
+            if (!isConnected)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 10, KalkanUi.pagePadding, 0),
+                  child: KalkanCard(
+                    padding: const EdgeInsets.all(14),
+                    borderColor: AppColors.amber.withValues(alpha: 0.4),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          ),
+                          child: const Icon(Icons.watch_off_outlined, color: AppColors.amber, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppLocaleNotifier.pick('СААТ-1 НЕ НА СВЯЗИ', 'СААТ-1 ТУТАШКАН ЭМЕС', 'SAAT-1 DISCONNECTED'),
+                                style: AppTypography.eyebrow(AppColors.amber),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                AppLocaleNotifier.pick(
+                                  'Связь с часами отсутствует. Данные не обновляются.',
+                                  'Саат менен байланыш жок. Маалыматтар жаңыртылбайт.',
+                                  'Watch connection lost. Metrics not updating.',
+                                ),
+                                style: AppTypography.caption(palette.secondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {
+                            CircaHaptics.selectionClick();
+                            widget.onOpenDeviceSettings?.call();
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.amber,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          ),
+                          child: Text(
+                            AppLocaleNotifier.pick('Подключить', 'Туташтыруу', 'Connect'),
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
@@ -326,9 +386,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     MetricDial(
                       label: AppStrings.tr('home_sleep', language),
-                      value: '$sleepScore%',
-                      progress: sleepScore / 100,
-                      color: AppColors.sleepBlue,
+                      value: hasNightData ? '$sleepScore%' : '—',
+                      progress: hasNightData ? sleepScore / 100 : 0.0,
+                      color: hasNightData ? AppColors.sleepBlue : palette.hairline,
                       onTap: () {
                         CircaHaptics.selectionClick();
                         CircaRecoveryBreakdownSheet.show(
@@ -342,9 +402,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     MetricDial(
                       label: AppStrings.tr('home_recovery', language),
-                      value: '${readiness.score}%',
-                      progress: readiness.score / 100,
-                      color: readiness.zone.color,
+                      value: hasNightData
+                          ? (isCalibrating ? '~${readiness.score}%' : '${readiness.score}%')
+                          : '—',
+                      progress: hasNightData ? readiness.score / 100 : 0.0,
+                      color: hasNightData ? readiness.zone.color : palette.hairline,
                       onTap: () {
                         CircaHaptics.selectionClick();
                         CircaRecoveryBreakdownSheet.show(
@@ -386,11 +448,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocaleNotifier.pick(
-                          'Цель нагрузки сегодня  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
-                          'Бүгүнкү жүктөм  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
-                          'Target Strain Today  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
-                        ),
+                        hasNightData
+                            ? AppLocaleNotifier.pick(
+                                'Цель нагрузки сегодня  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                                'Бүгүнкү жүктөм  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                                'Target Strain Today  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                              )
+                            : AppLocaleNotifier.pick(
+                                'Базовая цель нагрузки  8–12',
+                                'Базалык жүктөм  8–12',
+                                'Baseline Strain Target  8–12',
+                              ),
                         style: AppTypography.bodySemibold(palette.fg),
                       ),
                       const SizedBox(height: 6),
@@ -435,18 +503,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              DayCopy.morning(
-                                sleepScore: sleepScore,
-                                tMin: strainResult.targetStrainMin,
-                                tMax: strainResult.targetStrainMax,
-                                miss: _miss,
-                                climate: _climate,
-                              ),
+                              hasNightData
+                                  ? DayCopy.morning(
+                                      sleepScore: sleepScore,
+                                      tMin: strainResult.targetStrainMin,
+                                      tMax: strainResult.targetStrainMax,
+                                      miss: _miss,
+                                      climate: _climate,
+                                    )
+                                  : AppLocaleNotifier.pick(
+                                      'Ночь без данных СААТ-1 · Часы не были надеты ночью. Рекомендация базовая, без учёта ночного восстановления.',
+                                      'Түнкү маалымат жок. Калыбына келүү эсептелген жок.',
+                                      'Night without SAAT-1 data. Baseline recommendation without overnight recovery.',
+                                    ),
                               style: AppTypography.body(palette.fg).copyWith(height: 1.4, fontSize: 13),
                             ),
                           ),
                         ],
                       ),
+                      if (hasNightData && isCalibrating) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          AppLocaleNotifier.pick(
+                            'Калибровка ($_calDays/14 дней) · Рекомендация адаптивная (коридор ±15%). Личная норма формируется.',
+                            'Калибрлөө ($_calDays/14 күн) · Сунуш ыңгайлаштырылган (коридор ±15%). Жеке норма калыптанууда.',
+                            'Calibrating ($_calDays/14 days) · Adaptive target (corridor ±15%). Personal baseline is forming.',
+                          ),
+                          style: AppTypography.caption(AppColors.amber),
+                        ),
+                      ],
                       const SizedBox(height: 10),
                       Text(
                         _telemetry.hrv > 0
@@ -455,11 +540,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 'Түнкү HRV ${_telemetry.hrv.toStringAsFixed(0)} · норма ${_baseline.calibrationDaysDone >= 14 ? _baseline.meanHrv.toStringAsFixed(0) : "калибрлөө ${_baseline.calibrationDaysDone}/14"}',
                                 'Night HRV ${_telemetry.hrv.toStringAsFixed(0)} · baseline ${_baseline.calibrationDaysDone >= 14 ? _baseline.meanHrv.toStringAsFixed(0) : "calibrating ${_baseline.calibrationDaysDone}/14"}',
                               )
-                            : AppLocaleNotifier.pick(
-                                'HRV ночи: нет данных · калибровка ${_baseline.calibrationDaysDone}/14 дней',
-                                'Түнкү HRV: маалымат жок · калибрлөө ${_baseline.calibrationDaysDone}/14 күн',
-                                'Night HRV: no data yet · calibrating ${_baseline.calibrationDaysDone}/14 days',
-                              ),
+                            : (hasNightData
+                                ? AppLocaleNotifier.pick(
+                                    'HRV ночи: нет данных · калибровка ${_baseline.calibrationDaysDone}/14 дней',
+                                    'Түнкү HRV: маалымат жок · калибрлөө ${_baseline.calibrationDaysDone}/14 күн',
+                                    'Night HRV: no data yet · calibrating ${_baseline.calibrationDaysDone}/14 days',
+                                  )
+                                : AppLocaleNotifier.pick(
+                                    'HRV ночи: часы не были надеты ночью · Нет данных',
+                                    'Түнкү HRV: саат тагылган эмес · Маалымат жок',
+                                    'Night HRV: watch not worn overnight · No data',
+                                  )),
                         style: AppTypography.bodySemibold(palette.fg),
                       ),
                       if (_miss != null) ...[

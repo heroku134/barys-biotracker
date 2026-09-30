@@ -40,6 +40,9 @@ class CycleAnalysisResult {
 
 /// Физиологический движок анализа менструального цикла и связки с сенсорами часов «СААТ-1»
 class MenstrualCycleEngine {
+  /// Проверка: настроен ли цикл пользователем
+  static bool isConfigured(UserProfile profile) => profile.lastPeriodStartDate != null;
+
   /// Расчет текущего дня цикла на основе даты последних месячных
   static int calculateCurrentCycleDay(DateTime? lastPeriodStart, {int cycleLength = 28}) {
     if (lastPeriodStart == null) return 14; // Середина цикла по умолчанию

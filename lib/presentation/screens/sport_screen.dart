@@ -747,13 +747,71 @@ class _SportScreenState extends State<SportScreen> {
                 const SizedBox(height: 8),
 
                 if (_history.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Center(
-                      child: Text(
-                        AppLocaleNotifier.pick('Пока нет сохранённых тренировок.', 'Машыгуулар жок.', 'No saved workouts yet.'),
-                        style: AppTypography.bodyMuted(palette.secondary),
-                      ),
+                  KalkanCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.strainBlue.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                                border: Border.all(color: AppColors.strainBlue.withValues(alpha: 0.3), width: KalkanUi.hairline),
+                              ),
+                              child: const Icon(Icons.fitness_center_outlined, color: AppColors.strainBlue, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    AppLocaleNotifier.pick('ТРЕНИРОВКИ СААТ-1', 'СААТ-1 МАШЫГУУЛАРЫ', 'SAAT-1 WORKOUTS'),
+                                    style: AppTypography.eyebrow(palette.secondary),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    AppLocaleNotifier.pick('Нет сохранённых тренировок', 'Сакталган машыгуулар жок', 'No saved workouts'),
+                                    style: AppTypography.bodySemibold(palette.fg),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          AppLocaleNotifier.pick(
+                            'Запустите активность выше, чтобы часы СААТ-1 записали пульсовые зоны, калории и набранный Strain в дневник.',
+                            'Пульс зоналарын жана Strain көрсөткүчүн сактоо үчүн жогору жактан машыгууну баштаңыз.',
+                            'Start an activity above to track heart rate zones, calories, and accumulated strain with your SAAT-1 watch.',
+                          ),
+                          style: AppTypography.caption(palette.secondary).copyWith(height: 1.4),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              CircaHaptics.selectionClick();
+                              _startWorkout();
+                            },
+                            icon: const Icon(Icons.play_arrow, size: 16, color: AppColors.strainBlue),
+                            label: Text(
+                              AppLocaleNotifier.pick('Начать первую тренировку', 'Биринчи машыгууну баштоо', 'Start First Workout'),
+                              style: const TextStyle(color: AppColors.strainBlue, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: AppColors.strainBlue.withValues(alpha: 0.5), width: KalkanUi.hairline),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 else

@@ -247,6 +247,7 @@ class AppTypography {
   );
 
   static const AppTextStyle overline = monoLabel;
+  static const AppTextStyle eyebrow = monoLabel;
 
   // 8. Единицы измерения: 10 mono +1.1
   static const AppTextStyle monoUnit = AppTextStyle(

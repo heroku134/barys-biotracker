@@ -13,7 +13,6 @@ import '../../data/services/cloud_sync_service.dart';
 import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
-import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/kalkan_chrome.dart';
 
@@ -263,32 +262,120 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
             children: [
-              GlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(_phaseName(phase), style: AppTypography.screenTitle(color)),
-                    const SizedBox(height: 4),
-                    Text(
-                      _tr('День $_selectedDay из $_length', '$_selectedDay-күн / $_length', 'Day $_selectedDay of $_length'),
-                      style: AppTypography.caption(palette.secondary),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(children: [
-                      Expanded(child: _forecast(palette, _tr('Следующие месячные', 'Кийинки этек кир', 'Next Period'), untilNext)),
-                      const SizedBox(width: 8),
-                      Expanded(child: _forecast(palette, _tr('Овуляция', 'Овуляция', 'Ovulation'), untilOvu)),
-                    ]),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${_tr('Нагрузка сегодня', 'Бүгүнкү жүктөм', 'Today Strain')}  ${analysis.targetStrainMin.toStringAsFixed(0)}–${analysis.targetStrainMax.toStringAsFixed(1)}',
-                      style: AppTypography.bodySemibold(palette.fg),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(analysis.trainingDirective, style: AppTypography.caption(palette.secondary).copyWith(height: 1.35)),
-                  ],
+              if (_profile.lastPeriodStartDate == null)
+                KalkanCard(
+                  padding: const EdgeInsets.all(16),
+                  borderColor: AppColors.rose.withValues(alpha: 0.35),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.rose.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                            ),
+                            child: const Icon(Icons.calendar_today_outlined, color: AppColors.rose, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _tr('БИОРИТМ СААТ-1', 'СААТ-1 БИОЫРГАГЫ', 'SAAT-1 BIORHYTHM'),
+                                  style: AppTypography.eyebrow(palette.secondary),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _tr('Цикл ещё не настроен', 'Цикл жөндөлө элек', 'Cycle Not Configured'),
+                                  style: AppTypography.bodySemibold(palette.fg),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _tr(
+                          'Укажите дату начала последних месячных. Без неё фазы цикла, окно овуляции и адаптивный Strain рассчитывать некорректно.',
+                          'Акыркы этек кирдин күнүн белгилеңиз. Ансыз фазалар жана овуляция туура эмес эсептелет.',
+                          'Please set the start date of your last period. Without it, cycle phases, ovulation window, and adaptive strain cannot be calculated correctly.',
+                        ),
+                        style: AppTypography.caption(palette.secondary).copyWith(height: 1.4),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _markPeriodStarted(DateTime.now()),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.rose,
+                                side: const BorderSide(color: AppColors.rose),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                              ),
+                              child: Text(_tr('Начались сегодня', 'Бүгүн башталды', 'Started Today')),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                final now = DateTime.now();
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: now.subtract(const Duration(days: 7)),
+                                  firstDate: now.subtract(const Duration(days: 90)),
+                                  lastDate: now,
+                                );
+                                if (picked != null) {
+                                  await _markPeriodStarted(picked);
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                              ),
+                              child: Text(_tr('Выбрать дату', 'Күндү тандоо', 'Pick Date')),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                )
+              else
+                KalkanCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_phaseName(phase), style: AppTypography.screenTitle(color)),
+                      const SizedBox(height: 4),
+                      Text(
+                        _tr('День $_selectedDay из $_length', '$_selectedDay-күн / $_length', 'Day $_selectedDay of $_length'),
+                        style: AppTypography.caption(palette.secondary),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(children: [
+                        Expanded(child: _forecast(palette, _tr('Следующие месячные', 'Кийинки этек кир', 'Next Period'), untilNext)),
+                        const SizedBox(width: 8),
+                        Expanded(child: _forecast(palette, _tr('Овуляция', 'Овуляция', 'Ovulation'), untilOvu)),
+                      ]),
+                      const SizedBox(height: 12),
+                      Text(
+                        '${_tr('Нагрузка сегодня', 'Бүгүнкү жүктөм', 'Today Strain')}  ${analysis.targetStrainMin.toStringAsFixed(0)}–${analysis.targetStrainMax.toStringAsFixed(1)}',
+                        style: AppTypography.bodySemibold(palette.fg),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(analysis.trainingDirective, style: AppTypography.caption(palette.secondary).copyWith(height: 1.35)),
+                    ],
+                  ),
                 ),
-              ),
               const SizedBox(height: 12),
               Row(children: [
                 Expanded(
@@ -333,7 +420,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               const SizedBox(height: 16),
               _legend(palette),
               const SizedBox(height: 16),
-              GlassCard(
+              KalkanCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -414,7 +501,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
               ),
               const SizedBox(height: 16),
               // Переход в режим беременности
-              GlassCard(
+              KalkanCard(
                 onTap: _enablePregnancyMode,
                 child: Row(
                   children: [
@@ -523,7 +610,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
       const ['Mo','Tu','We','Th','Fr','Sa','Su'],
     );
 
-    return GlassCard(
+    return KalkanCard(
       child: Column(
         children: [
           Row(

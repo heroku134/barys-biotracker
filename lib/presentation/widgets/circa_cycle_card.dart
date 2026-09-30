@@ -6,7 +6,6 @@ import '../../core/circa_haptics.dart';
 import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
-import 'glass_card.dart';
 import 'kalkan_ui.dart';
 
 /// Виджет-карточка менструального цикла на главном экране (активна строго для женского пола)
@@ -53,6 +52,101 @@ class CircaCycleCard extends StatelessWidget {
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
       builder: (context, language, _) {
+        final palette = KalkanColors.of(context);
+
+        // Если дата последних месячных не указана — не генерируем ложный 14-й день
+        if (profile.lastPeriodStartDate == null) {
+          return GestureDetector(
+            onTap: () {
+              CircaHaptics.selectionClick();
+              onTap();
+            },
+            child: KalkanCard(
+              padding: const EdgeInsets.all(KalkanUi.cardPadding),
+              borderColor: AppColors.rose.withValues(alpha: 0.35),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.rose.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.rose.withValues(alpha: 0.35), width: KalkanUi.hairline),
+                        ),
+                        child: const Icon(Icons.female, color: AppColors.rose, size: 14),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        AppStrings.tr('cycle_card_header', language),
+                        style: TextStyle(
+                          color: palette.secondary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        AppLocaleNotifier.pick('Настроить →', 'Жөндөө →', 'Setup →'),
+                        style: const TextStyle(
+                          color: AppColors.rose,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    AppLocaleNotifier.pick('Цикл не настроен', 'Цикл жөндөлө элек', 'Cycle not configured'),
+                    style: TextStyle(
+                      color: palette.fg,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    AppLocaleNotifier.pick(
+                      'Укажите дату последних месячных для точного расчёта фаз, прогноза фертильности и адаптивной нагрузки СААТ-1.',
+                      'Фазаларды, фертилдүүлүктү жана машыгуу жүктөмүн так эсептөө үчүн акыркы этек кирдин күнүн белгилеңиз.',
+                      'Set your last period date for accurate cycle phases, fertility predictions, and adaptive SAAT-1 strain targets.',
+                    ),
+                    style: TextStyle(
+                      color: palette.secondary,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        CircaHaptics.selectionClick();
+                        onTap();
+                      },
+                      icon: const Icon(Icons.calendar_month_outlined, size: 16, color: AppColors.rose),
+                      label: Text(
+                        AppLocaleNotifier.pick('Указать дату начала', 'Башталыш күнүн тандоо', 'Set Start Date'),
+                        style: const TextStyle(color: AppColors.rose, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.rose.withValues(alpha: 0.5), width: KalkanUi.hairline),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         final analysis = MenstrualCycleEngine.analyze(
           telemetry: telemetry,
           profile: profile,
@@ -66,8 +160,7 @@ class CircaCycleCard extends StatelessWidget {
             CircaHaptics.ringZoneTick();
             onTap();
           },
-          child: GlassCard(
-            borderRadius: KalkanUi.cardRadius,
+          child: KalkanCard(
             padding: const EdgeInsets.all(KalkanUi.cardPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
