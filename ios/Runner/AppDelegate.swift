@@ -12,6 +12,21 @@ import ActivityKit
 import UTEBluetoothRYApi
 #endif
 
+#if canImport(Darwin)
+import Darwin
+
+@_cdecl("swift_coroFrameAlloc")
+public func _kalkan_swift_coroFrameAlloc(_ size: Int) -> UnsafeMutableRawPointer? {
+  return malloc(size)
+}
+
+@_cdecl("swift_coroFrameAllocStub")
+public func _kalkan_swift_coroFrameAllocStub(_ size: Int) -> UnsafeMutableRawPointer? {
+  return malloc(size)
+}
+#endif
+
+
 class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, FlutterStreamHandler {
   static let shared = KalkanBleManager()
 
