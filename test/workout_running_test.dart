@@ -66,10 +66,11 @@ void main() {
       expect(calibratedSnap.isCalibrating, isFalse);
     });
 
-    test('PrivateLeagueRepository loads league without infinite hang', () async {
+    test('PrivateLeagueRepository loads league with only current user (no fake friends)', () async {
       final league = await PrivateLeagueRepository.loadLeague();
-      expect(league.members.isNotEmpty, isTrue);
-      expect(league.members.any((m) => m.isCurrentUser), isTrue);
+      expect(league.members.length, 1);
+      expect(league.members.first.isCurrentUser, isTrue);
+      expect(league.members.any((m) => m.id.startsWith('friend_')), isFalse);
     });
 
     test('PartnerCycleRepository handles linking with and without name, and clean unlinking', () async {

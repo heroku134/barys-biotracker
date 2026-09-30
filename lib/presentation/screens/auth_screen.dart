@@ -72,46 +72,72 @@ class _AuthScreenState extends State<AuthScreen> {
 
     bool navigated = false;
     try {
+      if (Firebase.apps.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Облачный сервис авторизации недоступен. Проверьте интернет или конфигурацию.';
+          });
+        }
+        return;
+      }
+
       String? firebaseDisplayName;
       try {
-        if (Firebase.apps.isNotEmpty) {
-          if (_isSignUp) {
-            final cred = await FirebaseAuth.instance
-                .createUserWithEmailAndPassword(
-                  email: email,
-                  password: pass,
-                )
-                .timeout(const Duration(seconds: 8));
-            if (name.isNotEmpty) {
-              await cred.user?.updateDisplayName(name).timeout(const Duration(seconds: 4));
-            }
-            firebaseDisplayName = name;
-          } else {
-            final cred = await FirebaseAuth.instance
-                .signInWithEmailAndPassword(
-                  email: email,
-                  password: pass,
-                )
-                .timeout(const Duration(seconds: 8));
-            firebaseDisplayName = cred.user?.displayName;
+        if (_isSignUp) {
+          final cred = await FirebaseAuth.instance
+              .createUserWithEmailAndPassword(
+                email: email,
+                password: pass,
+              )
+              .timeout(const Duration(seconds: 10));
+          if (name.isNotEmpty) {
+            await cred.user?.updateDisplayName(name).timeout(const Duration(seconds: 5));
           }
+          firebaseDisplayName = name;
         } else {
-          await Future.delayed(const Duration(milliseconds: 200));
-          firebaseDisplayName = name.isNotEmpty ? name : 'Искандер';
+          final cred = await FirebaseAuth.instance
+              .signInWithEmailAndPassword(
+                email: email,
+                password: pass,
+              )
+              .timeout(const Duration(seconds: 10));
+          firebaseDisplayName = cred.user?.displayName;
         }
       } on FirebaseAuthException catch (e) {
         debugPrint('FirebaseAuthException: ${e.code} - ${e.message}');
-        if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
-          if (mounted) setState(() => _errorMessage = 'Неверный email или пароль.');
-          return;
-        } else if (e.code == 'email-already-in-use') {
-          if (mounted) setState(() => _errorMessage = 'Этот email уже занят. Нажмите «Войти».');
-          return;
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+              _errorMessage = 'Неверный email или пароль.';
+            } else if (e.code == 'email-already-in-use') {
+              _errorMessage = 'Этот email уже занят. Нажмите «Войти».';
+            } else if (e.code == 'network-request-failed') {
+              _errorMessage = 'Ошибка сети. Проверьте подключение к интернету.';
+            } else {
+              _errorMessage = e.message ?? 'Ошибка авторизации (${e.code})';
+            }
+          });
         }
-        firebaseDisplayName = name.isNotEmpty ? name : email.split('@').first;
+        return;
+      } on TimeoutException {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Превышено время ожидания ответа сервера. Попробуйте еще раз.';
+          });
+        }
+        return;
       } catch (e) {
-        debugPrint('Auth offline fallback mode: $e');
-        firebaseDisplayName = name.isNotEmpty ? name : email.split('@').first;
+        debugPrint('Auth error: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Не удалось авторизоваться: $e';
+          });
+        }
+        return;
       }
 
       UserProfile effectiveProfile;

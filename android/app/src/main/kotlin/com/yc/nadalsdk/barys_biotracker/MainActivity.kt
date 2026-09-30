@@ -39,11 +39,11 @@ class MainActivity : FlutterActivity() {
 
     private var pendingPermissionResult: MethodChannel.Result? = null
 
-    private var currentBpm: Int = 72
-    private var currentSteps: Int = 6840
-    private var currentCalories: Int = 420
-    private var currentBattery: Int = 84
-    private var currentDeviceName: String = "UTE Watch"
+    private var currentBpm: Int = 0
+    private var currentSteps: Int = 0
+    private var currentCalories: Int = 0
+    private var currentBattery: Int = 0
+    private var currentDeviceName: String = "СААТ-1"
     private var isConnected: Boolean = false
 
     private val telemetryPollRunnable = object : Runnable {
@@ -336,6 +336,7 @@ class MainActivity : FlutterActivity() {
                     }
                     BleConnectStateListener.STATE_DISCONNECTED -> {
                         isConnected = false
+                        currentBpm = 0
                         mainHandler.removeCallbacks(telemetryPollRunnable)
                         pushTelemetry()
                     }

@@ -55,7 +55,7 @@ class UteBleBridge {
       _eventSub = _eventChannel.receiveBroadcastStream().listen(
         (dynamic event) {
           if (event is Map) {
-            final isConnected = event['isConnected'] as bool? ?? true;
+            final isConnected = event['isConnected'] as bool? ?? false;
             final prev = _realTelemetry;
 
             final telemetry = BleTelemetry(

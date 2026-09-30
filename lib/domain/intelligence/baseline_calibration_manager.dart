@@ -59,7 +59,7 @@ class BaselineCalibrationManager {
         meanRhr: 52,
         meanRespiratoryRate: 14.4,
         baselineSkinTemp: 36.4,
-        calibrationDaysDone: 14,
+        calibrationDaysDone: 0,
       );
     }
 
@@ -124,20 +124,22 @@ class BaselineCalibrationManager {
     return loadCalibratedBaseline();
   }
 
-  /// Возвращает уровень достоверности калибровки в процентах (30%..100%)
+  /// Возвращает уровень достоверности калибровки в процентах (0%..100%)
   static int calculateConfidence(int daysDone) {
     if (daysDone >= 14) return 100;
     if (daysDone >= 10) return 85;
     if (daysDone >= 7) return 70;
     if (daysDone >= 4) return 50;
-    return 30;
+    if (daysDone >= 1) return 30;
+    return 0;
   }
 
   /// Возвращает текстовое описание статуса калибровки
   static String getCalibrationStatusLabel(int daysDone) {
     if (daysDone >= 14) return 'БЕЙЗЛАЙН СКАЛИБРОВАН (100%)';
     if (daysDone >= 7) return 'ДЕНЬ $daysDone ИЗ 14 · ВЫСОКАЯ ТОЧНОСТЬ';
-    return 'ДЕНЬ $daysDone ИЗ 14 · АКТИВНЫЙ СБОР ПАТТЕРНОВ';
+    if (daysDone >= 1) return 'ДЕНЬ $daysDone ИЗ 14 · АКТИВНЫЙ СБОР ПАТТЕРНОВ';
+    return 'КАЛИБРОВКА 0/14 ДНЕЙ · ОЖИДАНИЕ ПЕРВОЙ НОЧИ';
   }
 
   /// Сбрасывает калибровку и начинает 14-дневный цикл заново

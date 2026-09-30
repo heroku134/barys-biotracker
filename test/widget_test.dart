@@ -20,6 +20,24 @@ void main() {
       sleepDebtMinutes: 20,
     );
 
+    test('0. Empty State: New user starts with 0 calibration days and empty telemetry', () {
+      const emptyBase = PersonalBaseline();
+      expect(emptyBase.calibrationDaysDone, 0);
+      expect(emptyBase.isCalibrating, isTrue);
+      expect(emptyBase.sleepDebtMinutes, 0);
+      expect(emptyBase.yesterdayStrain, 0.0);
+      expect(emptyBase.recentRecoveryScores, isEmpty);
+
+      final emptyTelem = BleTelemetry(timestamp: DateTime.now());
+      expect(emptyTelem.heartRate, 0);
+      expect(emptyTelem.steps, 0);
+      expect(emptyTelem.calories, 0);
+      expect(emptyTelem.batteryLevel, 0);
+      expect(emptyTelem.isConnected, isFalse);
+      expect(emptyTelem.sleepMinutes, 0);
+      expect(emptyTelem.currentDayStrain, 0.0);
+    });
+
     test('1. Recovery: Calculates score based on 5 biomarkers and personal baseline', () {
       final telemetry = BleTelemetry(
         heartRate: 70,

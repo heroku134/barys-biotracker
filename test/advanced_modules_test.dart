@@ -32,10 +32,15 @@ void main() {
       expect(updated.meanRhr, 50);
 
       // Check confidence calculations
+      expect(BaselineCalibrationManager.calculateConfidence(0), 0);
       expect(BaselineCalibrationManager.calculateConfidence(1), 30);
       expect(BaselineCalibrationManager.calculateConfidence(7), 70);
       expect(BaselineCalibrationManager.calculateConfidence(14), 100);
 
+      expect(
+        BaselineCalibrationManager.getCalibrationStatusLabel(0),
+        'КАЛИБРОВКА 0/14 ДНЕЙ · ОЖИДАНИЕ ПЕРВОЙ НОЧИ',
+      );
       expect(
         BaselineCalibrationManager.getCalibrationStatusLabel(14),
         'БЕЙЗЛАЙН СКАЛИБРОВАН (100%)',

@@ -64,64 +64,42 @@ class BleTelemetry {
   final int currentStressScore; // 0..100
 
   const BleTelemetry({
-    this.heartRate = 72,
-    this.steps = 6840,
-    this.calories = 420,
-    this.batteryLevel = 84,
-    this.isConnected = true,
-    this.deviceName = 'KALKAN СААТ-1',
+    this.heartRate = 0,
+    this.steps = 0,
+    this.calories = 0,
+    this.batteryLevel = 0,
+    this.isConnected = false,
+    this.deviceName = 'СААТ-1',
     required this.timestamp,
 
     // Ночные маркеры
-    this.hrv = 64.0,
-    this.restingHeartRate = 52,
-    this.respiratoryRate = 14.4,
-    this.skinTempDeviation = 0.1,
+    this.hrv = 0.0,
+    this.restingHeartRate = 0,
+    this.respiratoryRate = 0.0,
+    this.skinTempDeviation = 0.0,
     this.isOffWrist = false,
 
     // Сон
-    this.sleepMinutes = 450, // 7.5 часов
-    this.deepSleepMinutes = 110,
-    this.remSleepMinutes = 95,
-    this.timeInBedMinutes = 495, // 8.25 часов
-    this.sleepEfficiency = 0.91, // 91%
-    this.sleepConsistency = 0.88, // 88%
-    this.restorativeSleepRatio = 0.76, // 76% сна в глубокой релаксации
+    this.sleepMinutes = 0,
+    this.deepSleepMinutes = 0,
+    this.remSleepMinutes = 0,
+    this.timeInBedMinutes = 0,
+    this.sleepEfficiency = 0.0,
+    this.sleepConsistency = 0.0,
+    this.restorativeSleepRatio = 0.0,
     this.sleepHypnogram = const [],
 
     // Нагрузка
-    this.currentDayStrain = 11.4,
-    this.yesterdayStrain = 13.8,
-    this.zoneMinutes = const [75, 45, 20, 8, 2],
+    this.currentDayStrain = 0.0,
+    this.yesterdayStrain = 0.0,
+    this.zoneMinutes = const [0, 0, 0, 0, 0],
 
     // Стресс
-    this.currentStressScore = 32,
+    this.currentStressScore = 0,
   });
 
   factory BleTelemetry.empty() => BleTelemetry(
-        heartRate: 0,
-        steps: 0,
-        calories: 0,
-        batteryLevel: 0,
-        isConnected: false,
-        deviceName: 'СААТ-1',
         timestamp: DateTime.now(),
-        hrv: 0,
-        restingHeartRate: 0,
-        respiratoryRate: 0,
-        skinTempDeviation: 0,
-        isOffWrist: false,
-        sleepMinutes: 0,
-        deepSleepMinutes: 0,
-        remSleepMinutes: 0,
-        timeInBedMinutes: 0,
-        sleepEfficiency: 0,
-        sleepConsistency: 0,
-        restorativeSleepRatio: 0,
-        currentDayStrain: 0,
-        yesterdayStrain: 0,
-        zoneMinutes: const [0, 0, 0, 0, 0],
-        currentStressScore: 0,
       );
 
   BleTelemetry copyWith({

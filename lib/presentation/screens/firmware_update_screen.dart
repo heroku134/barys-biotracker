@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
@@ -28,54 +27,21 @@ class FirmwareUpdateScreen extends StatefulWidget {
 }
 
 class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
-  bool _isUpdating = false;
-  bool _isUpdated = false;
-  double _progress = 0.0;
-  int _transferredBlocks = 0;
-  final int _totalBlocks = 380;
-  Timer? _updateTimer;
+  bool _isChecking = false;
+  DateTime? _lastCheckedAt;
 
-  @override
-  void dispose() {
-    _updateTimer?.cancel();
-    super.dispose();
-  }
+  Future<void> _checkUpdates() async {
+    CircaHaptics.selectionClick();
+    setState(() => _isChecking = true);
 
-  void _startOtaUpdate() {
-    if (widget.watchBatteryPercent < 50) {
-      HapticFeedback.heavyImpact();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.surface,
-          content: Text(
-            'Заряд часов ниже 50%! Подключите СААТ-1 к магнитной зарядке перед прошивкой.',
-            style: TextStyle(color: AppColors.rose),
-          ),
-        ),
-      );
-      return;
-    }
+    await Future.delayed(const Duration(milliseconds: 900));
 
-    CircaHaptics.workoutStart();
+    if (!mounted) return;
     setState(() {
-      _isUpdating = true;
-      _progress = 0.0;
-      _transferredBlocks = 0;
+      _isChecking = false;
+      _lastCheckedAt = DateTime.now();
     });
-
-    _updateTimer = Timer.periodic(const Duration(milliseconds: 150), (timer) {
-      setState(() {
-        _transferredBlocks += 4;
-        _progress = (_transferredBlocks / _totalBlocks).clamp(0.0, 1.0);
-
-        if (_transferredBlocks >= _totalBlocks) {
-          _updateTimer?.cancel();
-          _isUpdating = false;
-          _isUpdated = true;
-          CircaHaptics.success();
-        }
-      });
-    });
+    CircaHaptics.success();
   }
 
   @override
@@ -90,7 +56,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, size: 18, color: AppColors.textNearWhite),
-          onPressed: _isUpdating ? null : () => Navigator.of(context).pop(),
+          onPressed: _isChecking ? null : () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Прошивка',
@@ -149,7 +115,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Текущая версия: v1.2.4 · Доступна: v1.3.0',
+                            'Текущая версия: v1.2.4 · Официальный релиз',
                             style: AppTypography.monoLabel().copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 10,
@@ -196,7 +162,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                             ),
                           ),
                           Text(
-                            canUpdate ? 'Уровень достаточен для DFU (>50%)' : 'Внимание: требуется минимум 50% заряда',
+                            canUpdate ? 'Уровень достаточен для работы (>50%)' : 'Внимание: требуется минимум 50% заряда',
                             style: AppTypography.monoLabel().copyWith(
                               color: AppColors.muted,
                               fontSize: 9.5,
@@ -215,7 +181,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
 
               // 3. СПИСОК ИЗМЕНЕНИЙ (CHANGELOG)
               Text(
-                'ЧТО НОВОГО В V1.3.0 · PRECISION CORE',
+                'ИСТОРИЯ ВЕРСИИ V1.2.4 · ТЕКУЩАЯ СБОРКА',
                 style: AppTypography.monoLabel().copyWith(
                   color: AppColors.textSecondary,
                   fontSize: 10,
@@ -242,8 +208,8 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
 
               Spacer(),
 
-              // 4. ПРОГРЕСС ИЛИ КНОПКА ЗАПУСКА
-              if (_isUpdating) ...[
+              // 4. СТАТУС ПРОВЕРКИ И КНОПКА
+              if (_isChecking) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -251,65 +217,28 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: AppColors.amber.withValues(alpha: 0.5), width: 1.0),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'ПЕРЕДАЧА ПРОШИВКИ (BLE DFU)',
-                            style: AppTypography.monoLabel().copyWith(
-                              color: AppColors.amber,
-                              fontSize: 10,
-                              letterSpacing: -0.1,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            '${(_progress * 100).toInt()}%',
-                            style: TextStyle(
-                              color: AppColors.textNearWhite,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              fontFeatures: [FontFeature.tabularFigures()],
-                            ),
-                          ),
-                        ],
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
                       ),
-                      SizedBox(height: 10),
-                      LinearProgressIndicator(
-                        value: _progress,
-                        backgroundColor: AppColors.raised,
-                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.amber),
-                        minHeight: 6,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Блок $_transferredBlocks / $_totalBlocks (CRC32 OK)',
-                            style: AppTypography.monoLabel().copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 9.5,
-                            ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          'Проверка официального репозитория прошивок KALKAN...',
+                          style: AppTypography.monoLabel().copyWith(
+                            color: AppColors.amber,
+                            fontSize: 10,
                           ),
-                          Text(
-                            '26.4 kB/s',
-                            style: AppTypography.monoLabel().copyWith(
-                              color: AppColors.sage,
-                              fontSize: 9.5,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 16),
-              ] else if (_isUpdated) ...[
+                const SizedBox(height: 16),
+              ] else if (_lastCheckedAt != null) ...[
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -319,14 +248,14 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.check_circle, color: AppColors.sage, size: 24),
-                      SizedBox(width: 12),
+                      const Icon(Icons.check_circle, color: AppColors.sage, size: 24),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'СААТ-1 успешно обновлен!',
+                            const Text(
+                              'Прошивка СААТ-1 актуальна',
                               style: TextStyle(
                                 color: AppColors.textNearWhite,
                                 fontSize: 13,
@@ -334,7 +263,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                               ),
                             ),
                             Text(
-                              'Часы перезагружены и работают на версии v1.3.0',
+                              'Версия v1.2.4 является последней официальной сборкой. Обновлений не требуется.',
                               style: AppTypography.monoLabel().copyWith(
                                 color: AppColors.textSecondary,
                                 fontSize: 10,
@@ -346,13 +275,13 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                     ],
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
               ],
 
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: (_isUpdating || _isUpdated || !canUpdate) ? null : _startOtaUpdate,
+                  onPressed: _isChecking ? null : _checkUpdates,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.amber,
                     foregroundColor: AppColors.stage,
@@ -361,9 +290,9 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                     elevation: 0,
                   ),
                   child: Text(
-                    _isUpdated
-                        ? 'ОБНОВЛЕНИЕ ЗАВЕРШЕНО'
-                        : (_isUpdating ? 'ПЕРЕДАЧА ДАННЫХ...' : 'НАЧАТЬ ОБНОВЛЕНИЕ ПО ВОЗДУХУ'),
+                    _isChecking
+                        ? 'ПРОВЕРКА...'
+                        : (_lastCheckedAt != null ? 'ПРОВЕРИТЬ ПОВТОРНО' : 'ПРОВЕРИТЬ НАЛИЧИЕ ОБНОВЛЕНИЙ'),
                     style: AppTypography.monoLabel().copyWith(
                       color: AppColors.stage,
                       fontSize: 11,

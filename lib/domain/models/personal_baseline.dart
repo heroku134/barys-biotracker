@@ -43,10 +43,10 @@ class PersonalBaseline {
     this.meanRespiratoryRate = 14.4,
     this.baselineSkinTemp = 36.4,
     this.baselineSleepNeedMinutes = 480, // 8 часов
-    this.calibrationDaysDone = 14, // По умолчанию откалиброван (можно выставить <14 для демо)
-    this.sleepDebtMinutes = 25, // 25 мин дефицита
-    this.yesterdayStrain = 11.2,
-    this.recentRecoveryScores = const [78, 65, 72],
+    this.calibrationDaysDone = 0, // По умолчанию 0 дней (калибровка 0/14)
+    this.sleepDebtMinutes = 0, // 0 мин долга у нового пользователя
+    this.yesterdayStrain = 0.0,
+    this.recentRecoveryScores = const [],
     this.cyclePhase,
   });
 
