@@ -476,7 +476,7 @@ class AvatarManager {
     try {
       final prefs = await SharedPreferences.getInstance();
       _cachedLevel = prefs.getInt(_keyLevel) ?? 1;
-      _cachedXp = prefs.getInt(_keyXp) ?? 298;
+      _cachedXp = prefs.getInt(_keyXp) ?? 0;
       xpNotifier.value = _cachedXp;
       final dateStr = DateTime.now().toIso8601String().substring(0, 10);
       _isJournalLoggedToday = prefs.getBool('$_keyQuestJournal$dateStr') ?? false;
@@ -484,11 +484,33 @@ class AvatarManager {
       _isLoaded = true;
     } catch (_) {
       _cachedLevel = 1;
-      _cachedXp = 298;
+      _cachedXp = 0;
       xpNotifier.value = _cachedXp;
     }
   }
 
+  static Future<void> reset() async {
+    _cachedLevel = 1;
+    _cachedXp = 0;
+    xpNotifier.value = 0;
+    _isLoaded = false;
+    _isJournalLoggedToday = false;
+    _isBedtimeLockedToday = false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyLevel);
+      await prefs.remove(_keyXp);
+      for (final k in prefs.getKeys()) {
+        if (k.startsWith(_keyQuestJournal) || k.startsWith(_keyQuestBedtime)) {
+          await prefs.remove(k);
+        }
+      }
+    } catch (_) {}
+  }
+
+
+  static int get currentLevel => _cachedLevel;
+  static int get currentXp => _cachedXp;
 
   static int getMaxXpForLevel(int level) => level * 400;
 

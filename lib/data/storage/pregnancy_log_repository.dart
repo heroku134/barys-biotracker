@@ -95,4 +95,13 @@ class PregnancyLogRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key(d), jsonEncode(log.toJson()));
   }
+
+  static Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final k in prefs.getKeys()) {
+      if (k.startsWith('kalkan_preg_')) {
+        await prefs.remove(k);
+      }
+    }
+  }
 }

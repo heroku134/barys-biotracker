@@ -36,8 +36,8 @@ class PrivateLeagueRepository {
       sleepPerformance: (telemetry.sleepEfficiency * 100).round(),
       hrv: telemetry.hrv,
       restingHeartRate: telemetry.restingHeartRate,
-      lastSyncText: 'Live',
-      statusQuote: '«В синхроне с датчиком СААТ-1»',
+      lastSyncText: telemetry.isConnected ? 'Live' : 'Офлайн',
+      statusQuote: telemetry.isConnected ? '«В синхроне с датчиком СААТ-1»' : '«Ожидание синхронизации СААТ-1»',
       isCurrentUser: true,
     );
   }
@@ -181,5 +181,6 @@ class PrivateLeagueRepository {
   static Future<void> resetToDefaultLeague() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyLeague);
+    await prefs.remove(_legacyKeyLeague);
   }
 }

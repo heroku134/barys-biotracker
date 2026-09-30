@@ -277,4 +277,17 @@ class HealthSyncService {
     if (str != null) return DateTime.tryParse(str);
     return null;
   }
+
+  /// Полная очистка кэша синхронизации сторонних тренировок
+  static Future<void> clearSyncData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefKeyImportedIds);
+      await prefs.remove(_prefKeyExportedWorkouts);
+      await prefs.remove(_prefKeyLastSync);
+      lastSyncReportNotifier.value = null;
+    } catch (e) {
+      debugPrint('HealthSyncService.clearSyncData error: $e');
+    }
+  }
 }

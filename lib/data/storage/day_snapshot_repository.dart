@@ -77,6 +77,10 @@ class DaySnapshotRepository {
   }
 
   static Future<void> recordTelemetry(BleTelemetry t, {required int recovery, required int sleep}) async {
+    // Не записываем пустые фиктивные замеры, если часы не подключены и нет данных
+    if (!t.isConnected && t.hrv <= 0 && t.restingHeartRate <= 0 && t.sleepMinutes <= 0 && t.currentDayStrain <= 0) {
+      return;
+    }
     final today = DaySnapshot.keyFor(DateTime.now());
     await upsert(DaySnapshot(
       dateKey: today,
@@ -98,6 +102,11 @@ class DaySnapshotRepository {
   /// Очищает устаревшие тестовые предпросмотры: работают только реальные замеры
   static Future<void> seedPreviewIfEmpty(BleTelemetry t) async {
     await purgePreview();
+  }
+
+  static Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
   }
 
   static Future<List<DaySnapshot>> lastDays(int n) async {

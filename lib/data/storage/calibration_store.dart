@@ -97,10 +97,14 @@ class CalibrationStore {
 
   static Future<void> resetCalibration() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('kalkan_calibration_days_v1', 0);
+    await prefs.remove('kalkan_calibration_days_v1');
+    await prefs.remove(_hrvKey);
+    await prefs.remove(_rhrKey);
     await prefs.remove(_lastKey);
-    await prefs.setInt(_nKey, 0);
+    await prefs.remove(_nKey);
     await OnboardingRepository.setCalibrationDays(0);
-    await loadBaseline();
+    baselineNotifier.value = const PersonalBaseline();
   }
+
+  static Future<void> reset() async => resetCalibration();
 }

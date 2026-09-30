@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
+import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
+import '../../data/history/biometrics_history_repository.dart';
 import '../../domain/intelligence/healthspan_engine.dart';
 import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/stress_engine.dart';
 import '../../domain/models/personal_baseline.dart';
-import '../../data/history/biometrics_history_repository.dart';
 import '../../data/storage/calibration_store.dart';
 import '../../data/storage/day_snapshot_repository.dart';
 import '../widgets/circa_healthspan_card.dart';
@@ -239,16 +240,52 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: 90,
-                    child: CircaSparkline(
-                      points: BiometricsHistoryRepository.getHeartRateHistory(_currentHistoryPeriod),
-                      lineColor: AppColors.rose,
-                      height: 90,
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final hrPoints = _pts((s) => s.rhr.toDouble()).where((p) => p.value > 0).toList();
+                      if (hrPoints.length >= 2) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              height: 90,
+                              child: CircaSparkline(
+                                points: hrPoints,
+                                lineColor: AppColors.rose,
+                                height: 90,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildAxisLabels(_selectedPeriod),
+                          ],
+                        );
+                      }
+                      return Container(
+                        height: 76,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: palette.raised,
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.show_chart, color: palette.secondary.withValues(alpha: 0.6), size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              AppLocaleNotifier.pick(
+                                'Нет данных пульса за период — наденьте часы СААТ-1',
+                                'Мезгил боюнча пульс жок — СААТ-1 тагыныңыз',
+                                'No heart rate data for period — wear SAAT-1',
+                              ),
+                              style: AppTypography.caption(palette.secondary),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  _buildAxisLabels(_selectedPeriod),
                 ],
               ),
             ),
@@ -431,21 +468,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
       ),
     );
-  }
-
-  HistoryPeriod get _currentHistoryPeriod {
-    switch (_selectedPeriod) {
-      case 0:
-        return HistoryPeriod.day24h;
-      case 1:
-        return HistoryPeriod.week7d;
-      case 2:
-        return HistoryPeriod.month30d;
-      case 3:
-        return HistoryPeriod.months6;
-      default:
-        return HistoryPeriod.week7d;
-    }
   }
 
   String _getHeartRateCardTitle(int period) {

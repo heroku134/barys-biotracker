@@ -10,6 +10,7 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/partner_cycle_repository.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
+import '../../data/services/user_session_manager.dart';
 import '../../domain/models/partner_cycle_data.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
@@ -431,7 +432,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               try {
                 if (Firebase.apps.isNotEmpty) await FirebaseAuth.instance.signOut();
               } catch (_) {}
-              await UserProfileRepository.setAuthenticated(false);
+              await UserSessionManager.clearLocalUserData();
               navigator.pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => AuthScreen(bleBridge: widget.bleBridge)),
                 (_) => false,

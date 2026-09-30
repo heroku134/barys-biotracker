@@ -9,6 +9,7 @@ import '../../core/app_typography.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
+import '../../data/services/user_session_manager.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_pulsing_logo.dart';
 import '../widgets/circa_text_field.dart';
@@ -147,6 +148,10 @@ class _AuthScreenState extends State<AuthScreen> {
         // Вход в существующий аккаунт:
         // Сначала пробуем получить данные из облака, чтобы НЕ затирать профиль и не спрашивать пол/возраст повторно
         UserProfile? remoteProfile;
+        // Вход в существующий аккаунт:
+        // Очищаем локальные остатки предыдущих сессий перед загрузкой профиля пользователя
+        await UserSessionManager.clearLocalUserData();
+
         try {
           remoteProfile = await CloudSyncService.pullProfile();
         } catch (e) {
@@ -177,6 +182,9 @@ class _AuthScreenState extends State<AuthScreen> {
         }));
       } else {
         // Регистрация нового аккаунта:
+        // Полностью очищаем все локальные хранилища от предыдущих аккаунтов на этом устройстве
+        await UserSessionManager.clearLocalUserData();
+
         // Явно сбрасываем hasCompletedProfile в false, чтобы новый пользователь обязательно прошёл AccountSetupScreen
         effectiveProfile = UserProfile(
           email: email,

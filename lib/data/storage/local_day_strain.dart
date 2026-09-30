@@ -23,4 +23,9 @@ class LocalDayStrain {
     }
     return extra;
   }
+
+  static void reset() {
+    _day = '';
+    extra = 0;
+  }
 }

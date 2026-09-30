@@ -11,6 +11,7 @@ import '../storage/partner_cycle_repository.dart';
 import '../storage/private_league_repository.dart';
 import '../storage/user_profile_repository.dart';
 import 'fcm_service.dart';
+import 'user_session_manager.dart';
 
 /// Firestore only (Spark). No Storage.
 class CloudSyncService {
@@ -413,11 +414,7 @@ class CloudSyncService {
     }
 
     // Очищаем локальные хранилища
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-    } catch (_) {}
-
+    await UserSessionManager.clearLocalUserData();
     await UserProfileRepository.saveProfile(const UserProfile(isAuthenticated: false));
   }
 }

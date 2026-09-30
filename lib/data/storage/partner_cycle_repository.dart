@@ -123,4 +123,11 @@ class PartnerCycleRepository {
 
     await savePartnerCycle(updated);
   }
+
+  static Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_storageKey);
+    await prefs.remove(_legacyStorageKey);
+    notifier.value = PartnerCycleData(lastSyncTime: DateTime.now());
+  }
 }

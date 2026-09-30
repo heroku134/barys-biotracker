@@ -89,4 +89,9 @@ class DayJournalRepository {
     all.insert(0, entry);
     await prefs.setStringList(_key, all.map((e) => jsonEncode(e.toJson())).toList());
   }
+
+  static Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
 }
