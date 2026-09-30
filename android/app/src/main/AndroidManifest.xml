@@ -30,18 +30,18 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round">
         <service
-            android:name=".KalkanBleService"
+            android:name="com.yc.nadalsdk.barys_biotracker.KalkanBleService"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
         <receiver
-            android:name=".KalkanAlarmReceiver"
+            android:name="com.yc.nadalsdk.barys_biotracker.KalkanAlarmReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".KalkanHomeWidgetProvider"
+            android:name="com.yc.nadalsdk.barys_biotracker.KalkanHomeWidgetProvider"
             android:exported="true"
             android:label="@string/widget_name"
             android:description="@string/widget_description">
@@ -53,7 +53,7 @@
                 android:resource="@xml/kalkan_widget_info" />
         </receiver>
         <activity
-            android:name=".MainActivity"
+            android:name="com.yc.nadalsdk.barys_biotracker.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""

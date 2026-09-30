@@ -245,22 +245,21 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
     let rawName = (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? peripheral.name ?? ""
     let cleanName = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
-    let address = peripheral.identifier.uuidString
+    guard !cleanName.isEmpty else { return }
 
-    discoveredPeripherals[address] = peripheral
-
-    let displayName: String
-    if !cleanName.isEmpty {
-      displayName = cleanName
-    } else if RSSI.intValue > -85 {
-      displayName = "СААТ-1 (\(address.prefix(4)))"
-    } else {
+    #if canImport(UTEBluetoothRYApi)
+    let lower = cleanName.lowercased()
+    guard lower.contains("саат") || lower.contains("saat") || lower.contains("kalkan") || lower.contains("ute") || lower.contains("smart") || lower.contains("watch") || lower.contains("nadal") else {
       return
     }
+    #endif
+
+    let address = peripheral.identifier.uuidString
+    discoveredPeripherals[address] = peripheral
 
     DispatchQueue.main.async { [weak self] in
       self?.scanSink?([
-        "name": displayName,
+        "name": cleanName,
         "address": address,
         "rssi": RSSI.intValue
       ])

@@ -50,6 +50,7 @@ class IosWidgetService {
       await HomeWidget.updateWidget(
         name: 'KalkanHomeWidgetProvider',
         androidName: 'KalkanHomeWidgetProvider',
+        qualifiedAndroidName: 'com.yc.nadalsdk.barys_biotracker.KalkanHomeWidgetProvider',
         iOSName: iOSWidgetName,
       );
     } catch (e) {

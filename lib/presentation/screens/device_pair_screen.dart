@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../data/ble/ute_ble_bridge.dart';
+import '../../domain/models/telemetry.dart';
 import '../widgets/circa_band_radar.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
@@ -101,7 +102,18 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
     });
 
     await widget.bleBridge.connect(device.address);
-    await Future.delayed(const Duration(milliseconds: 800));
+
+    bool connected = widget.bleBridge.currentTelemetry.isConnected;
+    if (!connected) {
+      try {
+        final confirmed = await widget.bleBridge.telemetryStream
+            .firstWhere((t) => t.isConnected, orElse: () => BleTelemetry.empty())
+            .timeout(const Duration(seconds: 8), onTimeout: () => BleTelemetry.empty());
+        connected = confirmed.isConnected;
+      } catch (_) {
+        connected = false;
+      }
+    }
 
     if (!mounted) return;
     setState(() {
@@ -109,24 +121,44 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
       _connectingAddress = null;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppColors.surface,
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: AppColors.sage, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Часы ${device.name.isNotEmpty ? device.name : "СААТ-1"} подключены по BLE 5.3!',
-                style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+    if (connected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.surface,
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: AppColors.sage, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Часы ${device.name.isNotEmpty ? device.name : "СААТ-1"} успешно подключены',
+                  style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-    Navigator.of(context).pop();
+      );
+      Navigator.of(context).pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.surface,
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: AppColors.rose, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Не удалось установить соединение. Убедитесь, что часы не подключены к другому устройству и находятся рядом.',
+                  style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   IconData _getRssiIcon(int rssi) {
