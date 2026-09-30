@@ -5,36 +5,49 @@ Flutter-приложение биометрии для часов без экр�
 ## Сборка у себя
 
 ```bash
-cd kalkan_sport
 flutter pub get
 flutter run
 ```
 
-Android (реальный UTE SDK в `android/app/libs/`):
+### Android (нативный UTE/Nadal SDK в `android/app/libs/`):
 
 ```bash
 flutter build apk --release
 ```
 
-iOS (Live Activity / виджеты есть, **BLE SDK часов на iOS в проекте нет**):
+### iOS (нативный UTE SDK v1.3.1 в `ios/Frameworks/` + Live Activity + Widgets):
 
 ```bash
-flutter build ios --release
+cd ios
+pod install
+cd ..
+flutter build ipa --release
 ```
 
-Нужны Flutter 3.29+ / Dart 3.11, Xcode для iOS, Android SDK 34+.
+> **Важно для iOS**: Нативный SDK часов `UTEBluetoothRYApi.framework` (версия 1.3.1) поставляется в `ios/Frameworks/` и подключён через локальный podspec `ios/UTEBluetoothRYApi.podspec`. Перед сборкой обязательно выполните `pod install` в папке `ios/`, чтобы Xcode скомпилировал нативный UTE-мост с прямым протоколом часов, а не запасной CoreBluetooth-сканер.
+
+Нужны Flutter 3.29+ / Dart 3.11, Xcode 14+ для iOS, Android SDK 34+.
 
 ## Что обновлено в этой сборке
 
-- Светлая и тёмная тема через `KalkanColors` (светлая больше не «тёмный UI на белом фоне»).
+- **Нативный BLE SDK на обеих платформах**: Android (UTE AAR) и iOS (`UTEBluetoothRYApi.framework` v1.3.1) с поддержкой прямого считывания пульса, шагов, калорий, батареи, сна и вариабельности (HRV).
+- **Безопасность и приватность данных**:
+  - `UserProfile.fromJson` по умолчанию не авторизует профиль без подтверждения (`isAuthenticated: false`).
+  - Полноценный сброс пароля ("Забыли пароль?") без искажения пробелов в паролях.
+  - Криптографически стойкие инвайт-коды (`SecureInviteGenerator`, пространство $30^8 > 6.5 \cdot 10^{11}$).
+  - Разделение типов инвайтов (`friend` vs `cycle`) с защитой от кросс-использования.
+  - Жесткие правила безопасности Cloud Firestore (`firestore.rules`) с защитой PII и доступом к репродуктивным данным только по проверенной цепочке инвайта.
+  - Внутриприложенное удаление аккаунта и данных (App Store Guideline 5.1.1(v)) в «Профиле».
+  - Разрешения HealthKit (`NSHealthShareUsageDescription`, `NSHealthUpdateUsageDescription`) в `Info.plist` и Health Connect в `AndroidManifest.xml`.
+- **UI и дизайн-система KalkanUi**:
+  - Единая сетка (14/8/4/20/12/16/44), плоские поверхности `KalkanCard` с hairline border, отсутствие декоративного неонового блюра.
+  - Честные пустые состояния (без фейковых "Live" точек у вымышленных друзей, без 380-блочного фейкового OTA, серая полоса гипнограммы при отсутствии ночных фаз).
+  - Спокойная тактильность: одиночный `selectionClick`, тяжелая виброотдача только на старте/финише тренировок.
+  - Защищённый деструктивный паттерн выхода из аккаунта и удаления данных.
+- Светлая и тёмная тема через `KalkanColors`.
 - Шрифты вшиты: **Manrope** + **IBM Plex Mono** (кириллица, в том числе кыргызские ң/ү/ө).
-- Русский и кыргызский сохранены, даты на дашборде больше не JAN/FEB.
-- Новый маскот Барс: 6 состояний в `assets/images/mascot_*.jpg`.
-- Спорт и цикл больше не подменяют друг друга.
-- Починен leak подписки BLE в `MainShell`.
-- Профиль по умолчанию не считается залогиненным.
-- Парсинг `zoneMinutes` с нативного канала больше не падает на `List<dynamic>`.
-- Убраны film grain и «AI pill» со сплэша.
+- Трёхъязычный интерфейс (Русский, Кыргызча, English).
+- Маскот Барс: 6 состояний в `assets/images/mascot_*.jpg`.
 
 ## Маскот
 
@@ -49,6 +62,8 @@ flutter build ios --release
 
 Логика выбора — `lib/domain/avatar/avatar_manager.dart`.
 
-## Честно про часы
+## Подключение часов
 
-На Android подключён UTE/Nadal SDK. С браслета стабильно приходят пульс, шаги, калории, батарея, коннект. HRV / сон / strain в UI частично считаются движками и демо-данными, пока нативный мост их не отдаёт. На iOS SDK часов нет.
+- **Android**: UTE/Nadal SDK через `android/app/libs/`. Прямое чтение датчиков.
+- **iOS**: UTE SDK v1.3.1 (`UTEBluetoothRYApi.framework`) через CocoaPods. Прямое чтение пульса, шагов, сна, HRV, RHR и батареи.
+- При отсутствии часов приложение честно отображает нулевые/пустые состояния без синтетических подставок.
