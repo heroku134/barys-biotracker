@@ -93,19 +93,14 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
     });
   }
 
-  Future<void> _connect(DiscoveredBleDevice? device, bool isDemo) async {
+  Future<void> _connect(DiscoveredBleDevice device) async {
     setState(() {
       _isConnecting = true;
-      _connectingAddress = isDemo ? 'DEMO-CIRC-01' : device?.address;
+      _connectingAddress = device.address;
     });
 
-    if (isDemo) {
-      widget.bleBridge.activateSimulatorMode();
-      await Future.delayed(const Duration(milliseconds: 600));
-    } else if (device != null) {
-      await widget.bleBridge.connect(device.address);
-      await Future.delayed(const Duration(milliseconds: 800));
-    }
+    await widget.bleBridge.connect(device.address);
+    await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
     setState(() {
@@ -119,13 +114,11 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
         content: Row(
           children: [
             Icon(Icons.check_circle, color: AppColors.sage, size: 20),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
-                isDemo
-                    ? 'Демо-часы успешно подключены (Симулятор)'
-                    : 'Часы ${device?.name ?? "СААТ-1"} подключены по BLE 5.3!',
-                style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+                'Часы ${device.name.isNotEmpty ? device.name : "СААТ-1"} подключены по BLE 5.3!',
+                style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -250,7 +243,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                           final isItemConnecting = _isConnecting && _connectingAddress == dev.address;
 
                           return GlassCard(
-                            onTap: _isConnecting ? null : () => _connect(dev, false),
+                            onTap: _isConnecting ? null : () => _connect(dev),
                             child: Row(
                               children: [
                                 Container(
@@ -347,24 +340,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isConnecting ? null : () => _connect(null, true),
-                      icon: Icon(Icons.bolt, color: AppColors.stage, size: 18),
-                      label: Text(
-                        'ПОДКЛЮЧИТЬ ДЕМО-РЕЖИМ (СИМУЛЯТОР)',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.amber,
-                        foregroundColor: AppColors.stage,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
             ],

@@ -10,7 +10,6 @@ import '../../domain/intelligence/stress_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../data/history/biometrics_history_repository.dart';
 import '../../data/storage/day_snapshot_repository.dart';
-import '../../data/storage/demo_mode_store.dart';
 import '../widgets/circa_healthspan_card.dart';
 import '../widgets/circa_hypnogram.dart';
 import '../widgets/circa_sparkline.dart';
@@ -186,7 +185,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             WeeklyMetricChart(
               title: AppLocaleNotifier.pick('Сон, 7 дней', 'Уйку, 7 күн', 'Sleep, 7 days'),
               unit: '%',
-              points: _pts((s) => s.sleep.toDouble()).isNotEmpty ? _pts((s) => s.sleep.toDouble()) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getSleepHistory(_currentHistoryPeriod) : const []),
+              points: _pts((s) => s.sleep.toDouble()),
               color: AppColors.sleepBlue,
               maxValue: 100,
             ),
@@ -194,7 +193,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             WeeklyMetricChart(
               title: AppLocaleNotifier.pick('Восстановление, 7 дней', 'Калыбына келүү, 7 күн', 'Recovery, 7 days'),
               unit: '%',
-              points: _pts((s) => s.recovery.toDouble()).isNotEmpty ? _pts((s) => s.recovery.toDouble()) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getRecoveryHistory(_currentHistoryPeriod) : const []),
+              points: _pts((s) => s.recovery.toDouble()),
               color: AppColors.sage,
               maxValue: 100,
             ),
@@ -202,7 +201,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             WeeklyMetricChart(
               title: AppLocaleNotifier.pick('Нагрузка, 7 дней', 'Жүктөм, 7 күн', 'Strain, 7 days'),
               unit: '',
-              points: _pts((s) => s.strain).isNotEmpty ? _pts((s) => s.strain) : (DemoModeStore.enabled.value ? BiometricsHistoryRepository.getStrainHistory(_currentHistoryPeriod) : const []),
+              points: _pts((s) => s.strain),
               color: AppColors.strainBlue,
               maxValue: 21,
             ),

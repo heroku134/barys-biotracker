@@ -16,7 +16,6 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
-import '../widgets/circa_edge_fade.dart';
 import '../widgets/glass_card.dart';
 
 class BioAvatarScreen extends StatefulWidget {
@@ -37,7 +36,6 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
   late BleTelemetry _telemetry;
   late AvatarProfile _profile;
   final PersonalBaseline _baseline = const PersonalBaseline();
-  AvatarVisualState? _selectedScenario;
   bool _isMorningWoken = false;
   int _mascotDisplayMode = 0;
   StreamSubscription<BleTelemetry>? _sub;
@@ -45,8 +43,6 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedScenario = null;
-    AvatarManager.setDemoOverride(null);
     _telemetry = widget.bleBridge.currentTelemetry;
     _profile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
 
@@ -136,95 +132,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     }
   }
 
-  void _selectScenario(AvatarVisualState? state) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _selectedScenario = state;
-      AvatarManager.setDemoOverride(state);
-      _profile = AvatarManager.getProfile(_telemetry, baseline: _baseline);
-    });
-  }
 
-  void _showDevScenariosSheet() {
-    HapticFeedback.mediumImpact();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) {
-        return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            border: Border(top: BorderSide(color: AppColors.lineStrong, width: 1.2)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.faint,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(Icons.tune, color: AppColors.amber, size: 16),
-                  SizedBox(width: 8),
-                  Text(
-                    'Сценарии персонажа',
-                    style: TextStyle(
-                      color: AppColors.amber,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.6,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Обычный режим берёт данные с часов. Ниже — ручной выбор состояния для проверки.',
-                style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.35),
-              ),
-              SizedBox(height: 16),
-
-              CircaEdgeFade(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: Row(
-                    children: [
-                      _buildScenarioChip(null, 'По часам'),
-                      SizedBox(width: 8),
-                      _buildScenarioChip(AvatarVisualState.charged, 'Бодрый (≥75%)'),
-                      SizedBox(width: 8),
-                      _buildScenarioChip(AvatarVisualState.normal, 'В тонусе (50–74%)'),
-                      SizedBox(width: 8),
-                      _buildScenarioChip(AvatarVisualState.tired, 'Уставший (<34%)'),
-                      SizedBox(width: 8),
-                      _buildScenarioChip(AvatarVisualState.sleep, 'Сон / Отбой'),
-                      SizedBox(width: 8),
-                      _buildScenarioChip(AvatarVisualState.postWorkout, 'После спорта'),
-                      SizedBox(width: 8),
-                      _buildScenarioChip(AvatarVisualState.meditation, 'Стресс'),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   void _showEvolutionTiersSheet() {
     HapticFeedback.mediumImpact();
@@ -533,13 +441,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
                 fontFamily: 'Manrope',
               ),
             ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.tune, color: palette.secondary, size: 20),
-                tooltip: 'Сценарии',
-                onPressed: _showDevScenariosSheet,
-              ),
-            ],
+
           ),
           body: SafeArea(
             child: SingleChildScrollView(
@@ -715,49 +617,7 @@ class _BioAvatarScreenState extends State<BioAvatarScreen> {
     );
   }
 
-  Widget _buildScenarioChip(AvatarVisualState? state, String label) {
-    final isSelected = _selectedScenario == state;
-    final color = state?.badgeColor ?? AppColors.amber;
-    return GestureDetector(
-      onTap: () => _selectScenario(state),
-      child: Container(
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.18) : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? color : AppColors.line,
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (state != null) ...[
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: color,
-                ),
-              ),
-              SizedBox(width: 6),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? AppColors.fg : AppColors.muted,
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildDailyQuestsChecklist() {
     final completedCount = _profile.quests.where((q) => q.isCompleted).length;

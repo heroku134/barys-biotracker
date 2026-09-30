@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/telemetry.dart';
-import 'demo_mode_store.dart';
 import '../services/cloud_sync_service.dart';
 
 class DaySnapshot {
@@ -90,32 +89,15 @@ class DaySnapshotRepository {
     ));
   }
 
-  static Future<void> purgePreviewIfDemoOff() async {
-    if (DemoModeStore.enabled.value) return;
+  static Future<void> purgePreview() async {
     final all = await loadAll();
     final kept = all.where((s) => !s.preview).toList();
     if (kept.length != all.length) await _saveAll(kept);
   }
 
-  /// Fills empty history so Analysis is testable without a watch.
+  /// Очищает устаревшие тестовые предпросмотры: работают только реальные замеры
   static Future<void> seedPreviewIfEmpty(BleTelemetry t) async {
-    await purgePreviewIfDemoOff();
-    final all = await loadAll();
-    if (all.isNotEmpty || !DemoModeStore.enabled.value) return;
-    final baseHrv = t.hrv > 0 ? t.hrv : 64.0;
-    final baseRhr = t.restingHeartRate > 0 ? t.restingHeartRate : 52;
-    for (int i = 6; i >= 0; i--) {
-      final d = DateTime.now().subtract(Duration(days: i));
-      await upsert(DaySnapshot(
-        dateKey: DaySnapshot.keyFor(d),
-        recovery: (72 + (i * 3) % 18).clamp(45, 96),
-        strain: 8.5 + (i % 5) * 1.4,
-        sleep: (78 + (i * 5) % 16).clamp(55, 98),
-        hrv: baseHrv + ((i % 3) - 1) * 4,
-        rhr: baseRhr + (i % 3) - 1,
-        preview: true,
-      ));
-    }
+    await purgePreview();
   }
 
   static Future<List<DaySnapshot>> lastDays(int n) async {

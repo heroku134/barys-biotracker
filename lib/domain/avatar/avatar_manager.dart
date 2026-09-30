@@ -430,7 +430,6 @@ class AvatarManager {
   static int _cachedXp = 298;
   static bool _isLoaded = false;
   static DateTime? _lastWorkoutTime;
-  static AvatarVisualState? _demoStateOverride;
 
   static final ValueNotifier<int> xpNotifier = ValueNotifier<int>(_cachedXp);
 
@@ -490,11 +489,6 @@ class AvatarManager {
     }
   }
 
-  static void setDemoOverride(AvatarVisualState? state) {
-    _demoStateOverride = state;
-  }
-
-  static AvatarVisualState? get demoOverride => _demoStateOverride;
 
   static int getMaxXpForLevel(int level) => level * 400;
 

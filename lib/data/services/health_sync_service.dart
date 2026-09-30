@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/workout_session.dart';
-import '../storage/demo_mode_store.dart';
 import '../storage/local_day_strain.dart';
 import '../storage/workout_repository.dart';
 
@@ -293,7 +292,7 @@ class HealthSyncService {
 
   /// Генератор кандидатов на импорт (сторонние тренировки из Apple HealthKit / Health Connect)
   static List<CompletedWorkout> _getExternalCandidateWorkouts(bool allowSample) {
-    if (!allowSample && !DemoModeStore.enabled.value) {
+    if (!allowSample) {
       return [];
     }
 

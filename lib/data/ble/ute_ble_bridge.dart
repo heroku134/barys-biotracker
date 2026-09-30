@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/models/telemetry.dart';
-import 'ble_simulator.dart';
-import '../storage/demo_mode_store.dart';
 
 class DiscoveredBleDevice {
   final String name;
@@ -33,13 +32,11 @@ class UteBleBridge {
   static const EventChannel _eventChannel = EventChannel('com.nadal.ble/telemetry');
   static const EventChannel _scanChannel = EventChannel('com.nadal.ble/scan');
 
-  final BleSimulator _simulator = BleSimulator();
   final StreamController<BleTelemetry> _telemetryController = StreamController.broadcast();
   final StreamController<List<DiscoveredBleDevice>> _scanController =
       StreamController<List<DiscoveredBleDevice>>.broadcast();
 
   final Map<String, DiscoveredBleDevice> _discoveredMap = {};
-  bool _useSimulator = true;
   StreamSubscription? _eventSub;
   StreamSubscription? _scanSub;
   BleTelemetry? _realTelemetry;
@@ -50,31 +47,14 @@ class UteBleBridge {
       _discoveredMap.values.toList()..sort((a, b) => b.rssi.compareTo(a.rssi));
 
   BleTelemetry get currentTelemetry {
-    if (isSimulatorActive) return _simulator.current;
     return _realTelemetry ?? BleTelemetry.empty();
   }
 
-  bool get isSimulatorActive => _useSimulator && DemoModeStore.enabled.value;
-
   Future<void> init() async {
-    await DemoModeStore.init();
-    _useSimulator = DemoModeStore.enabled.value;
-    _simulator.start();
-    _simulator.telemetryStream.listen((data) {
-      if (DemoModeStore.enabled.value) {
-        _telemetryController.add(data);
-      }
-    });
-    DemoModeStore.enabled.addListener(() {
-      _useSimulator = DemoModeStore.enabled.value;
-      _telemetryController.add(currentTelemetry);
-    });
-
     try {
       _eventSub = _eventChannel.receiveBroadcastStream().listen(
         (dynamic event) {
           if (event is Map) {
-            _useSimulator = false;
             final isConnected = event['isConnected'] as bool? ?? true;
             final prev = _realTelemetry;
 
@@ -109,12 +89,10 @@ class UteBleBridge {
           }
         },
         onError: (err) {
-          if (DemoModeStore.enabled.value) _useSimulator = true;
+          debugPrint('UteBleBridge telemetry stream error: $err');
         },
       );
-    } catch (_) {
-      if (DemoModeStore.enabled.value) _useSimulator = true;
-    }
+    } catch (_) {}
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -202,7 +180,6 @@ class UteBleBridge {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('kalkan_last_device_mac', macAddress);
       await _methodChannel.invokeMethod('connect', {'address': macAddress});
-      _useSimulator = false;
     } catch (_) {}
   }
 
@@ -248,41 +225,6 @@ class UteBleBridge {
       await _methodChannel.invokeMethod('measureHeartRate');
     } catch (_) {}
   }
-
-  // --- Демо-режим и симуляция ---
-
-  bool get isTiredDemo => _simulator.isSimulatedTired;
-  bool get isCrisisDemo => _simulator.isCrisisDemo;
-
-  void setDemoTired(bool tired) {
-    DemoModeStore.setEnabled(true);
-    _useSimulator = true;
-    _simulator.toggleTiredDemo(tired);
-  }
-
-  void setDemoCrisis(bool crisis) {
-    DemoModeStore.setEnabled(true);
-    _useSimulator = true;
-    _simulator.toggleCrisisDemo(crisis);
-  }
-
-  void setDemoStrain(double strain) {
-    DemoModeStore.setEnabled(true);
-    _useSimulator = true;
-    _simulator.setSimulatedStrain(strain);
-  }
-
-  void setSimulatedMetrics({double? strain, int? steps, int? sleepMinutes}) {
-    DemoModeStore.setEnabled(true);
-    _useSimulator = true;
-    _simulator.setSimulatedMetrics(strain: strain, steps: steps, sleepMinutes: sleepMinutes);
-  }
-
-  void activateSimulatorMode() {
-    DemoModeStore.setEnabled(true);
-    _useSimulator = true;
-  }
-
   static List<int>? _parseZoneMinutes(dynamic raw) {
     if (raw is! List) return null;
     final out = raw.map((e) => (e as num).round()).toList();
@@ -294,7 +236,6 @@ class UteBleBridge {
     _scanSub?.cancel();
     _eventSub?.cancel();
     _scanController.close();
-    _simulator.dispose();
     _telemetryController.close();
   }
 }

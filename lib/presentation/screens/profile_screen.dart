@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_typography.dart';
@@ -11,18 +10,15 @@ import '../../data/storage/partner_cycle_repository.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/partner_cycle_data.dart';
-import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_avatar_picker_dialog.dart';
-import '../widgets/circa_morning_briefing_dialog.dart';
 import '../widgets/circa_partner_cycle_sheet.dart';
 import '../widgets/glass_card.dart';
 import 'auth_screen.dart';
 import 'device_settings_screen.dart';
 import 'private_league_screen.dart';
 import 'settings_screen.dart';
-import '../../data/storage/calibration_store.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -35,17 +31,10 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   UserProfile _profile = const UserProfile();
   PartnerCycleData? _partnerCycle;
-  int _versionTapCount = 0;
-  DateTime? _lastVersionTap;
-  bool _isTiredDemo = false;
-  bool _isCrisisMode = false;
-  bool _isCalibrationDemo = false;
 
   @override
   void initState() {
     super.initState();
-    _isTiredDemo = widget.bleBridge.isTiredDemo;
-    _isCrisisMode = widget.bleBridge.isCrisisDemo;
     _loadProfile();
     _loadPartnerCycle();
     UserProfileRepository.profileNotifier.addListener(_onProfileChanged);
@@ -107,7 +96,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             children: [
-              if (_isCrisisMode) _crisisBanner(palette),
               _identityCard(palette, telemetry, language),
               const SizedBox(height: 12),
               _deviceCard(palette, telemetry, language),
@@ -141,12 +129,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 20),
               Center(
-                child: GestureDetector(
-                  onTap: _handleVersionTap,
-                  child: Text(
-                    'КАЛКАН · СААТ-1  v1.4.2',
-                    style: AppTypography.caption(palette.muted),
-                  ),
+                child: Text(
+                  'КАЛКАН · СААТ-1  v1.4.2',
+                  style: AppTypography.caption(palette.muted),
                 ),
               ),
               const SizedBox(height: 12),
@@ -162,39 +147,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _crisisBanner(KalkanColors palette) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.rose.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.rose.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: AppColors.rose, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              _tr('Демо: кризисный режим включён', 'Демо: кризис режими күйүк', 'Demo: crisis mode enabled'),
-              style: TextStyle(color: palette.fg, fontSize: 13),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _isCrisisMode = false;
-                widget.bleBridge.setDemoCrisis(false);
-              });
-            },
-            child: Text(_tr('Выкл', 'Өчүр', 'Off'), style: TextStyle(color: AppColors.rose)),
-          ),
-        ],
-      ),
     );
   }
 
@@ -595,78 +547,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _handleVersionTap() {
-    final now = DateTime.now();
-    if (_lastVersionTap == null || now.difference(_lastVersionTap!).inSeconds > 3) {
-      _versionTapCount = 1;
-    } else {
-      _versionTapCount++;
-    }
-    _lastVersionTap = now;
-    if (_versionTapCount >= 7) {
-      _versionTapCount = 0;
-      HapticFeedback.heavyImpact();
-      _showDeveloperMenu();
-    }
-  }
-
-  void _showDeveloperMenu() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_ru ? 'Инженерное меню' : 'Инженер меню', style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600)),
-                SwitchListTile(
-                  title: Text(_ru ? 'Кризисный режим' : 'Кризис режими', style: TextStyle(color: AppColors.fg, fontSize: 14)),
-                  value: _isCrisisMode,
-                  onChanged: (val) {
-                    setSheetState(() => _isCrisisMode = val);
-                    setState(() {
-                      _isCrisisMode = val;
-                      widget.bleBridge.setDemoCrisis(val);
-                    });
-                  },
-                ),
-                SwitchListTile(
-                  title: Text(_ru ? 'Демо усталости' : 'Чарчоо демо', style: TextStyle(color: AppColors.fg, fontSize: 14)),
-                  value: _isTiredDemo,
-                  onChanged: (val) {
-                    setSheetState(() => _isTiredDemo = val);
-                    setState(() => widget.bleBridge.setDemoTired(val));
-                  },
-                ),
-                SwitchListTile(
-                  title: Text(_ru ? 'Демо калибровки (день 3 из 14)' : 'Калибрлөө демо (3/14)', style: TextStyle(color: AppColors.fg, fontSize: 14)),
-                  value: _isCalibrationDemo,
-                  onChanged: (val) {
-                    setSheetState(() => _isCalibrationDemo = val);
-                    setState(() => _isCalibrationDemo = val);
-                    if (val) {
-                      CalibrationStore.setCalibrationDays(3);
-                    } else {
-                      CalibrationStore.setCalibrationDays(14);
-                    }
-                  },
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    CircaMorningBriefingDialog.show(context, widget.bleBridge.currentTelemetry, const PersonalBaseline());
-                  },
-                  child: Text(_ru ? 'Тест утреннего отчёта' : 'Таңкы отчет'),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
 }

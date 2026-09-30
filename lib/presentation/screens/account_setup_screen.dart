@@ -6,7 +6,6 @@ import '../../core/app_typography.dart';
 import '../../core/circa_haptics.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/services/health_sync_service.dart';
-import '../../data/storage/demo_mode_store.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/glass_card.dart';
@@ -171,8 +170,6 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
       await Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => DevicePairScreen(bleBridge: widget.bleBridge),
       ));
-    } else {
-      await DemoModeStore.setEnabled(true);
     }
     if (!mounted) return;
     setState(() => _step = 2);
@@ -627,7 +624,7 @@ class _AccountSetupScreenState extends State<AccountSetupScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Text(
-                    AppLocaleNotifier.pick('Продолжить в автономном режиме', 'Автономдук режимде улантуу', 'Continue in Standalone Mode'),
+                    AppLocaleNotifier.pick('Пропустить подключение часов', 'Саатты кийинчерээк туташтыруу', 'Skip Watch Pairing'),
                     style: TextStyle(color: palette.secondary, fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),

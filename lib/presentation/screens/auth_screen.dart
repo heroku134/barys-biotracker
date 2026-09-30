@@ -6,7 +6,6 @@ import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
 import '../../core/app_strings.dart';
 import '../../data/ble/ute_ble_bridge.dart';
-import '../../data/storage/demo_mode_store.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
 import '../../domain/models/user_profile.dart';
@@ -188,46 +187,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  Future<void> _quickGuestLogin() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    bool navigated = false;
-    try {
-      final currentProfile = await UserProfileRepository.loadProfile();
-      final updatedProfile = currentProfile.copyWith(
-        name: currentProfile.name.isNotEmpty ? currentProfile.name : 'Гость',
-        email: currentProfile.email.isNotEmpty ? currentProfile.email : 'guest@kalkan.sport',
-        isAuthenticated: true,
-      );
-      await UserProfileRepository.saveProfile(updatedProfile);
-      await DemoModeStore.setEnabled(true);
-      unawaited(CloudSyncService.afterLogin(updatedProfile).catchError((e) {
-        debugPrint('CloudSync guest note: $e');
-      }));
 
-      navigated = true;
-      if (!mounted) return;
-      if (updatedProfile.hasCompletedProfile) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => MainShell(bleBridge: widget.bleBridge),
-          ),
-        );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => AccountSetupScreen(bleBridge: widget.bleBridge),
-          ),
-        );
-      }
-    } finally {
-      if (!navigated && mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -386,28 +346,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
 
-                          SizedBox(height: 16),
 
-                          // Кнопка быстрого автономного входа (для тестов и автономного режима)
-                          OutlinedButton.icon(
-                            onPressed: _isLoading ? null : _quickGuestLogin,
-                            icon: Icon(Icons.flash_on, color: AppColors.sage, size: 16),
-                            label: Text(
-                              'БЫСТРЫЙ ВХОД (АВТОНОМНЫЙ РЕЖИМ)',
-                              style: TextStyle(
-                                color: AppColors.sage,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: AppColors.line),
-                              backgroundColor: AppColors.surface,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
                         ],
                       ),
                     ),

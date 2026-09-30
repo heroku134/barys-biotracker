@@ -4,7 +4,6 @@ import '../../core/app_colors.dart';
 import '../../data/services/paired_pulse.dart';
 import '../../core/app_language.dart';
 import '../../data/ble/ute_ble_bridge.dart';
-import '../../data/storage/demo_mode_store.dart';
 import '../widgets/glass_card.dart';
 import 'device_pair_screen.dart';
 import 'firmware_update_screen.dart';
@@ -142,10 +141,6 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     'Обновить': 'Update',
     'Найти браслет': 'Find band',
     'Функции часов': 'Watch features',
-    'Демо-режим': 'Demo mode',
-    'Эмуляция сенсоров без часов': 'Sensor emulation without watch',
-    'Эмуляция включена': 'Emulation enabled',
-    'Физические часы': 'Physical watch',
     'Антипотеря': 'Anti-loss',
     'Сигнал, если браслет дальше 10 метров': 'Alert if band is farther than 10m',
     'Оповещение об отключении': 'Disconnect alert',
@@ -370,55 +365,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             ),
             SizedBox(height: 10),
 
-            // Fake Watch Mode
-            GlassCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.bolt, color: AppColors.amber, size: 16),
-                            SizedBox(width: 6),
-                            Text(
-                              tr('Демо-режим', 'Демо режим'),
-                              style: TextStyle(color: AppColors.fg, fontSize: 14, fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          tr('Эмуляция сенсоров без часов', 'Сенсорлорду эмуляциялоо'),
-                          style: TextStyle(color: AppColors.muted, fontSize: 11, height: 1.3),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: DemoModeStore.enabled.value,
-                    activeThumbColor: AppColors.amber,
-                    onChanged: (val) async {
-                      await DemoModeStore.setEnabled(val);
-                      if (!context.mounted) return;
-                      setState(() {});
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: AppColors.surface,
-                          content: Text(
-                            val ? tr('Эмуляция включена', 'Эмуляция күйдү') : tr('Физические часы', 'Чыныгы саат'),
-                            style: TextStyle(color: AppColors.fg),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 10),
+
 
             // Антипотеря (Anti-loss)
             GlassCard(
