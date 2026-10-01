@@ -8,14 +8,16 @@ class IosWidgetService {
   static const String iOSWidgetName = 'KalkanRecoveryWidget';
 
   static bool _initialized = false;
+  static bool _hasAppGroupError = false;
 
   static Future<void> init() async {
-    if (_initialized) return;
+    if (_initialized || _hasAppGroupError) return;
     try {
       await HomeWidget.setAppGroupId(appGroupId);
       _initialized = true;
     } catch (e) {
-      debugPrint('IosWidgetService.init error: $e');
+      _hasAppGroupError = true;
+      debugPrint('IosWidgetService.init note: $e');
     }
   }
 
@@ -29,8 +31,10 @@ class IosWidgetService {
     int calibrationDay = 14,
     bool hasNightData = false,
   }) async {
+    if (_hasAppGroupError) return;
     try {
       await init();
+      if (!_initialized) return;
 
       final sleepMins = telemetry.sleepMinutes;
       await HomeWidget.saveWidgetData<int>('recovery_score', hasNightData ? readiness.score : 0);
