@@ -431,7 +431,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         else if cmd == 0x31 || cmd == 0x09 {
           if data.count >= 6 {
             let hr = Int(data[5])
-            if hr in 30...240 {
+            if hr >= 30 && hr <= 240 {
               currentBpm = hr
               pushTelemetry()
             }
