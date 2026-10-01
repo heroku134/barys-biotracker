@@ -3,6 +3,7 @@ import UIKit
 import UserNotifications
 import BackgroundTasks
 import CoreBluetooth
+import AudioToolbox
 
 #if canImport(ActivityKit)
 import ActivityKit
@@ -11,9 +12,6 @@ import ActivityKit
 #if canImport(UTEBluetoothRYApi)
 import UTEBluetoothRYApi
 #endif
-
-
-
 
 class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, FlutterStreamHandler {
   static let shared = KalkanBleManager()
@@ -25,6 +23,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private var isScanning = false
   private var discoveredPeripherals: [String: CBPeripheral] = [:]
   private var connectedPeripheral: CBPeripheral?
+  private var pendingConnectAddress: String?
 
   #if canImport(UTEBluetoothRYApi)
   private var discoveredUteDevices: [String: UTEModelDevice] = [:]
@@ -137,6 +136,20 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         }
       }
     }
+    // If not in current scan cache (e.g. app restart), instantiate model with identifier
+    // UTE SDK internally uses retrievePeripheralsWithIdentifiers on CBCentralManager
+    if targetUte == nil && !address.isEmpty {
+      let fallbackDev = UTEModelDevice()
+      fallbackDev.identifier = address
+      fallbackDev.addressStr = address
+      discoveredUteDevices[address] = fallbackDev
+      targetUte = fallbackDev
+      pendingConnectAddress = address
+      if !mgr.isScanning {
+        mgr.isScanRepeat = true
+        mgr.startScanDevices()
+      }
+    }
     if let model = targetUte {
       mgr.connectDevice(model)
       result(true)
@@ -144,7 +157,15 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     }
     #endif
 
-    if let peripheral = discoveredPeripherals[address] {
+    var targetPeripheral = discoveredPeripherals[address]
+    if targetPeripheral == nil, let uuid = UUID(uuidString: address) {
+      if let retrieved = centralManager?.retrievePeripherals(withIdentifiers: [uuid]).first {
+        discoveredPeripherals[address] = retrieved
+        targetPeripheral = retrieved
+      }
+    }
+
+    if let peripheral = targetPeripheral {
       connectedPeripheral = peripheral
       peripheral.delegate = self
       centralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])
@@ -152,10 +173,19 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       return
     }
 
-    result(FlutterError(code: "DEVICE_NOT_FOUND", message: "Device \(address) not found in scan results", details: nil))
+    // If device not yet cached, start background scan and auto-connect upon discovery
+    if centralManager?.state == .poweredOn && !address.isEmpty {
+      pendingConnectAddress = address
+      centralManager?.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
+      result(true)
+      return
+    }
+
+    result(FlutterError(code: "DEVICE_NOT_FOUND", message: "Device \(address) not found", details: nil))
   }
 
   func disconnect(result: @escaping FlutterResult) {
+    pendingConnectAddress = nil
     #if canImport(UTEBluetoothRYApi)
     if let model = connectedModel {
       _ = mgr.disconnectDevices(model)
@@ -300,13 +330,20 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         "rssi": RSSI.intValue
       ])
     }
+
+    if let pending = pendingConnectAddress, address == pending {
+      pendingConnectAddress = nil
+      centralManager.stopScan()
+      connectedPeripheral = peripheral
+      peripheral.delegate = self
+      centralManager.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])
+    }
   }
 
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-    isConnected = true
+    // Await characteristic discovery before marking isConnected = true
     currentDeviceName = peripheral.name ?? "СААТ-1"
     peripheral.discoverServices(nil)
-    pushTelemetry()
   }
 
   func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
@@ -379,6 +416,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       if c.properties.contains(.read) && uuid != "2A37" {
         peripheral.readValue(for: c)
       }
+    }
+
+    if !isConnected {
+      isConnected = true
+      pushTelemetry()
     }
 
     // Handshake: Send initial time sync, battery query, and continuous HR enable packet
@@ -615,10 +657,20 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.setContinueMeasureHeartRateSwitch(true) { _, _ in }
     device.setAutoHeartRate(true) { _, _ in }
 
-    // Live continuous heart rate stream
+    // Live continuous heart rate stream (model.rate is property of UTEModelHRMReal)
     device.onNotifyHRMReal { [weak self] model, _ in
-      guard let self = self, let m = model, m.heartRate > 0 else { return }
-      self.currentBpm = Int(m.heartRate)
+      guard let self = self, let m = model, m.rate > 0 else { return }
+      self.currentBpm = Int(m.rate)
+      self.pushTelemetry()
+    }
+
+    // Live real-time motion and steps stream
+    device.onNotifyCurrentData { [weak self] currentModel in
+      guard let self = self, let m = currentModel else { return }
+      if m.step > 0 { self.currentSteps = Int(m.step) }
+      if m.calorie > 0 { self.currentCalories = Int(m.calorie) }
+      if m.restingHeartRate > 0 { self.currentRhr = Int(m.restingHeartRate) }
+      if m.dynamicHeartRate > 0 { self.currentBpm = Int(m.dynamicHeartRate) }
       self.pushTelemetry()
     }
 
@@ -643,6 +695,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       self.pushTelemetry()
     }
 
+    // Live HRV stream
     device.onNotifyMeasurementBlock { [weak self] _, type, value in
       guard let self = self else { return }
       if type == .HRV && value > 0 {
@@ -651,16 +704,39 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       }
     }
 
+    // Live stress stream
     device.onNotifyCurrentPressureData { [weak self] model in
       guard let self = self, let p = model?.pressure, p > 0 else { return }
       self.currentStressScore = Int(p)
       self.pushTelemetry()
     }
 
+    // Live body temperature
+    device.onNotifyBodyTemperatureValueBlock { [weak self] time, state, value in
+      guard let self = self, value > 0 else { return }
+      let deg = Double(value) / 10.0
+      if deg >= 30.0 && deg <= 45.0 {
+        self.skinTempDeviation = round((deg - 36.6) * 10) / 10
+        self.pushTelemetry()
+      }
+    }
+
+    // Wearing state (off wrist)
     device.onNotifyOffWristBlock { [weak self] _, _, state in
       guard let self = self else { return }
       self.isOffWrist = (state == 1)
       self.pushTelemetry()
+    }
+
+    // Find phone alert triggered from watch
+    device.notifyFindMyPhoneNotifyReal { status, _, _ in
+      AudioServicesPlayAlertSound(kSystemSoundID_Vibrate)
+      AudioServicesPlaySystemSound(1005)
+    }
+
+    // Camera shutter triggered from watch
+    device.notifyCamera { status, _, _ in
+      AudioServicesPlaySystemSound(1108)
     }
 
     device.clickMeasurementType(.HRM) { _ in }
@@ -690,10 +766,18 @@ extension KalkanBleManager: UTEBluetoothDelegate {
         "rssi": model.rssi
       ])
     }
+
+    // Auto-connect if this was a pending auto-reconnect target
+    if let pending = pendingConnectAddress, addr == pending || model.identifier == pending {
+      pendingConnectAddress = nil
+      mgr.stopScanDevices()
+      mgr.connectDevice(model)
+    }
   }
 
   func uteDevicesStatus(_ status: UTEDevicesStatus, error: Error?, userInfo info: [AnyHashable: Any]?) {
-    if status.rawValue == 0 {
+    switch status.rawValue {
+    case 0: // UTEDevicesStatusConnected
       isConnected = true
       connectedModel = mgr.connnectModel
       currentDeviceName = connectedModel?.name ?? "KALKAN СААТ-1"
@@ -710,7 +794,14 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       pullNightAndDay()
       startTelemetryPoll()
       pushTelemetry()
-    } else if status.rawValue == 1 || status.rawValue == -1 || status.rawValue == 3 {
+
+    case 4: // UTEDevicesStatusConnecting
+      // Connection in progress; do not mark isConnected = true yet
+      break
+
+    case 1, 2, 3, 5, -1: // Disconnected, ConnectingError, ConnectionTimedout, Disconnecting, ConnectCheckFail
+      fallthrough
+    default:
       isConnected = false
       connectedModel = nil
       stopTelemetryPoll()
@@ -721,6 +812,11 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       currentHrv = 0
       currentRhr = 0
       currentSleepMinutes = 0
+      currentDeepSleepMinutes = 0
+      currentRemSleepMinutes = 0
+      currentStressScore = 0
+      isOffWrist = false
+      skinTempDeviation = 0.0
       currentDeviceName = ""
       pushTelemetry()
     }
