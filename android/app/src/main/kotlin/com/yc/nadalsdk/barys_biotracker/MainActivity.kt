@@ -406,8 +406,9 @@ class MainActivity : FlutterActivity() {
                                 val timeSeconds = (System.currentTimeMillis() / 1000).toInt()
                                 val timeZone = TimeZone.getDefault().rawOffset / (1000 * 3600)
                                 val tc = TimeClock()
-                                tc.time = timeSeconds
+                                tc.timeSeconds = timeSeconds
                                 tc.timeZone = timeZone
+                                tc.minuteOffset = 0
                                 uteBleConnection?.setTimeClock(tc)
 
                                 // 3. Enable Continuous Heart Rate and Sensors
