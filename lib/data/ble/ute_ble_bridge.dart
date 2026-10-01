@@ -55,34 +55,34 @@ class UteBleBridge {
       _eventSub = _eventChannel.receiveBroadcastStream().listen(
         (dynamic event) {
           if (event is Map) {
-            final isConnected = event['isConnected'] as bool? ?? false;
+            final isConnected = _parseBool(event['isConnected'], false);
             final prev = _realTelemetry;
 
             final telemetry = BleTelemetry(
-              heartRate: event['heartRate'] as int? ?? prev?.heartRate ?? 0,
-              steps: event['steps'] as int? ?? prev?.steps ?? 0,
-              calories: event['calories'] as int? ?? prev?.calories ?? 0,
-              batteryLevel: event['batteryLevel'] as int? ?? prev?.batteryLevel ?? 0,
-              isCharging: event['isCharging'] as bool? ?? prev?.isCharging ?? false,
+              heartRate: _parseInt(event['heartRate'], prev?.heartRate ?? 0),
+              steps: _parseInt(event['steps'], prev?.steps ?? 0),
+              calories: _parseInt(event['calories'], prev?.calories ?? 0),
+              batteryLevel: _parseInt(event['batteryLevel'], prev?.batteryLevel ?? 0),
+              isCharging: _parseBool(event['isCharging'], prev?.isCharging ?? false),
               isConnected: isConnected,
-              deviceName: event['deviceName'] as String? ?? (isConnected ? 'KALKAN СААТ-1' : (prev?.deviceName ?? 'СААТ-1')),
+              deviceName: event['deviceName']?.toString() ?? (isConnected ? 'KALKAN СААТ-1' : (prev?.deviceName ?? 'СААТ-1')),
               timestamp: DateTime.now(),
-              hrv: (event['hrv'] as num?)?.toDouble() ?? prev?.hrv ?? 0,
-              restingHeartRate: event['restingHeartRate'] as int? ?? prev?.restingHeartRate ?? 0,
-              respiratoryRate: (event['respiratoryRate'] as num?)?.toDouble() ?? prev?.respiratoryRate ?? 0,
-              skinTempDeviation: (event['skinTempDeviation'] as num?)?.toDouble() ?? prev?.skinTempDeviation ?? 0,
-              isOffWrist: event['isOffWrist'] as bool? ?? prev?.isOffWrist ?? false,
-              sleepMinutes: event['sleepMinutes'] as int? ?? prev?.sleepMinutes ?? 0,
-              deepSleepMinutes: event['deepSleepMinutes'] as int? ?? prev?.deepSleepMinutes ?? 0,
-              remSleepMinutes: event['remSleepMinutes'] as int? ?? prev?.remSleepMinutes ?? 0,
-              timeInBedMinutes: event['timeInBedMinutes'] as int? ?? prev?.timeInBedMinutes ?? 0,
-              sleepEfficiency: (event['sleepEfficiency'] as num?)?.toDouble() ?? prev?.sleepEfficiency ?? 0,
-              sleepConsistency: (event['sleepConsistency'] as num?)?.toDouble() ?? prev?.sleepConsistency ?? 0,
-              restorativeSleepRatio: (event['restorativeSleepRatio'] as num?)?.toDouble() ?? prev?.restorativeSleepRatio ?? 0,
-              currentDayStrain: (event['currentDayStrain'] as num?)?.toDouble() ?? prev?.currentDayStrain ?? 0,
-              yesterdayStrain: (event['yesterdayStrain'] as num?)?.toDouble() ?? prev?.yesterdayStrain ?? 0,
+              hrv: _parseDouble(event['hrv'], prev?.hrv ?? 0.0),
+              restingHeartRate: _parseInt(event['restingHeartRate'], prev?.restingHeartRate ?? 0),
+              respiratoryRate: _parseDouble(event['respiratoryRate'], prev?.respiratoryRate ?? 0.0),
+              skinTempDeviation: _parseDouble(event['skinTempDeviation'], prev?.skinTempDeviation ?? 0.0),
+              isOffWrist: _parseBool(event['isOffWrist'], prev?.isOffWrist ?? false),
+              sleepMinutes: _parseInt(event['sleepMinutes'], prev?.sleepMinutes ?? 0),
+              deepSleepMinutes: _parseInt(event['deepSleepMinutes'], prev?.deepSleepMinutes ?? 0),
+              remSleepMinutes: _parseInt(event['remSleepMinutes'], prev?.remSleepMinutes ?? 0),
+              timeInBedMinutes: _parseInt(event['timeInBedMinutes'], prev?.timeInBedMinutes ?? 0),
+              sleepEfficiency: _parseDouble(event['sleepEfficiency'], prev?.sleepEfficiency ?? 0.0),
+              sleepConsistency: _parseDouble(event['sleepConsistency'], prev?.sleepConsistency ?? 0.0),
+              restorativeSleepRatio: _parseDouble(event['restorativeSleepRatio'], prev?.restorativeSleepRatio ?? 0.0),
+              currentDayStrain: _parseDouble(event['currentDayStrain'], prev?.currentDayStrain ?? 0.0),
+              yesterdayStrain: _parseDouble(event['yesterdayStrain'], prev?.yesterdayStrain ?? 0.0),
               zoneMinutes: _parseZoneMinutes(event['zoneMinutes']) ?? prev?.zoneMinutes ?? const [0, 0, 0, 0, 0],
-              currentStressScore: event['currentStressScore'] as int? ?? prev?.currentStressScore ?? 0,
+              currentStressScore: _parseInt(event['currentStressScore'], prev?.currentStressScore ?? 0),
             );
 
             _realTelemetry = telemetry;
@@ -150,12 +150,12 @@ class UteBleBridge {
     try {
       _scanSub = _scanChannel.receiveBroadcastStream().listen((dynamic event) {
         if (event is Map) {
-          if (event['isScanComplete'] == true) {
+          if (_parseBool(event['isScanComplete'], false)) {
             return;
           }
-          final name = event['name'] as String? ?? 'Unknown';
-          final address = event['address'] as String? ?? '';
-          final rssi = event['rssi'] as int? ?? -70;
+          final name = event['name']?.toString() ?? 'Unknown';
+          final address = event['address']?.toString() ?? '';
+          final rssi = _parseInt(event['rssi'], -70);
 
           if (address.isNotEmpty) {
             _discoveredMap[address] = DiscoveredBleDevice(
@@ -248,6 +248,31 @@ class UteBleBridge {
       debugPrint('UteBleBridge triggerHeartRateMeasurement error: $e');
     }
   }
+  static bool _parseBool(dynamic val, [bool fallback = false]) {
+    if (val == null) return fallback;
+    if (val is bool) return val;
+    if (val is num) return val != 0;
+    if (val is String) {
+      final s = val.trim().toLowerCase();
+      return s == 'true' || s == '1' || s == 'yes';
+    }
+    return fallback;
+  }
+
+  static int _parseInt(dynamic val, [int fallback = 0]) {
+    if (val == null) return fallback;
+    if (val is num) return val.toInt();
+    if (val is String) return int.tryParse(val) ?? fallback;
+    return fallback;
+  }
+
+  static double _parseDouble(dynamic val, [double fallback = 0.0]) {
+    if (val == null) return fallback;
+    if (val is num) return val.toDouble();
+    if (val is String) return double.tryParse(val) ?? fallback;
+    return fallback;
+  }
+
   static List<int>? _parseZoneMinutes(dynamic raw) {
     if (raw is! List) return null;
     final out = raw.map((e) => (e as num).round()).toList();

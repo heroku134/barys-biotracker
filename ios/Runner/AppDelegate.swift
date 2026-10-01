@@ -97,22 +97,23 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     mgr.delegate = self
     mgr.isScanRepeat = true
     mgr.startScanDevices()
-    #endif
-
+    #else
     if centralManager == nil {
       centralManager = CBCentralManager(delegate: self, queue: .main)
     } else if centralManager?.state == .poweredOn {
       centralManager?.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
     }
+    #endif
 
     result(true)
   }
 
   func stopScan(result: @escaping FlutterResult) {
     isScanning = false
-    centralManager?.stopScan()
     #if canImport(UTEBluetoothRYApi)
     mgr.stopScanDevices()
+    #else
+    centralManager?.stopScan()
     #endif
 
     DispatchQueue.main.async { [weak self] in
@@ -133,7 +134,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       }
     }
     if let model = targetUte {
-      mgr.connect(model)
+      mgr.connectDevice(model)
       result(true)
       return
     }
@@ -371,12 +372,40 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       }
     }
 
+    // Handshake: Send initial time sync, battery query, and continuous HR enable packet
+    if let wChar = self.writeCharacteristic {
+      let writeType: CBCharacteristicWriteType = wChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
+      let now = Date()
+      let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: now)
+      let y = comps.year ?? 2026
+      let m = comps.month ?? 1
+      let d = comps.day ?? 1
+      let h = comps.hour ?? 12
+      let min = comps.minute ?? 0
+      let s = comps.second ?? 0
+      let timePacket = Data([0xAB, 0x00, 0x08, 0xFF, 0x01, UInt8((y >> 8) & 0xFF), UInt8(y & 0xFF), UInt8(m), UInt8(d), UInt8(h), UInt8(min), UInt8(s)])
+      peripheral.writeValue(timePacket, for: wChar, type: writeType)
+
+      let batPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x70, 0x01])
+      peripheral.writeValue(batPacket, for: wChar, type: writeType)
+
+      let hrPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x31, 0x01])
+      peripheral.writeValue(hrPacket, for: wChar, type: writeType)
+    }
+
     // Start background poll timer for battery refresh if not already active
     if pollTimer == nil && isConnected {
       pollTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self, weak peripheral] _ in
         guard let self = self, let p = peripheral, self.isConnected else { return }
         if let bChar = self.batteryCharacteristic {
           p.readValue(for: bChar)
+        }
+        if let wChar = self.writeCharacteristic {
+          let writeType: CBCharacteristicWriteType = wChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
+          let batPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x70, 0x01])
+          p.writeValue(batPacket, for: wChar, type: writeType)
+          let stepPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x07, 0x01])
+          p.writeValue(stepPacket, for: wChar, type: writeType)
         }
       }
     }
@@ -435,6 +464,14 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
               currentBpm = hr
               pushTelemetry()
             }
+          }
+        }
+        // Steps report (0x07 or 0x51 or 0x52)
+        else if (cmd == 0x07 || cmd == 0x51 || cmd == 0x52) && data.count >= 8 {
+          let steps = (Int(data[5]) << 16) | (Int(data[6]) << 8) | Int(data[7])
+          if steps > 0 && steps < 200000 {
+            currentSteps = steps
+            pushTelemetry()
           }
         }
       }
@@ -500,8 +537,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
   private func refreshWorkout() {
     device.getBatteryInfo { [weak self] percent, code, _ in
-      if self?.sdkOk(Int(code)) == true, percent > 0 {
+      if percent > 0 && percent <= 100 {
         self?.currentBattery = Int(percent)
+        self?.pushTelemetry()
       }
     }
     device.getCurrentDayTotalWorkoutData { [weak self] todayModel, code, _ in
@@ -561,9 +599,31 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.setContinueMeasureHeartRateSwitch(true) { _, _ in }
     device.setAutoHeartRate(true) { _, _ in }
 
+    // Live continuous heart rate stream
+    device.onNotifyHRMReal { [weak self] model, _ in
+      guard let self = self, let m = model, m.heartRate > 0 else { return }
+      self.currentBpm = Int(m.heartRate)
+      self.pushTelemetry()
+    }
+
+    // One-click measurement notification
     device.onNotifyOneClickMeasurementBlock { [weak self] _, hrm, _, _ in
       guard let self = self, hrm > 0 else { return }
       self.currentBpm = Int(hrm)
+      self.pushTelemetry()
+    }
+
+    // Live battery notifications
+    device.onNofityBattery { [weak self] bat, _ in
+      guard let self = self, bat > 0 else { return }
+      self.currentBattery = Int(bat)
+      self.pushTelemetry()
+    }
+
+    device.onNofityBatteryModel { [weak self] bModel in
+      guard let self = self, let bModel = bModel else { return }
+      if bModel.battery > 0 { self.currentBattery = Int(bModel.battery) }
+      self.isCharging = (bModel.status == 1)
       self.pushTelemetry()
     }
 
@@ -575,7 +635,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       }
     }
 
-    device.click(.HRV, block: { _ in })
+    device.clickMeasurementType(.HRM) { _ in }
   }
   #else
   private func stopTelemetryPoll() {
@@ -609,6 +669,15 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       isConnected = true
       connectedModel = mgr.connnectModel
       currentDeviceName = connectedModel?.name ?? "KALKAN СААТ-1"
+
+      // Handshake: query supported services
+      device.querySupportService([1, 5, 12, 14, 17]) { _ in }
+
+      // Sync time
+      let now = Int(Date().timeIntervalSince1970)
+      let timeZone = TimeZone.current.secondsFromGMT() / 3600
+      device.setTimeClock(now, timeZone: timeZone, minuteOffset: 0) { _, _ in }
+
       bindLiveStreams()
       pullNightAndDay()
       startTelemetryPoll()

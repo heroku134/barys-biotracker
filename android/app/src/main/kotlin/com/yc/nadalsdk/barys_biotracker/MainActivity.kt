@@ -12,12 +12,17 @@ import com.yc.nadalsdk.bean.BatteryInfo
 import com.yc.nadalsdk.bean.DeviceHealthDataInfo
 import com.yc.nadalsdk.bean.FindWearState
 import com.yc.nadalsdk.bean.HeartRateReport
+import com.yc.nadalsdk.bean.HonorAccountConfig
+import com.yc.nadalsdk.bean.MotionCurrentMinute
 import com.yc.nadalsdk.bean.Notify
 import com.yc.nadalsdk.bean.TimeClock
+import com.yc.nadalsdk.bean.WorkoutRealTimeData
+import com.yc.nadalsdk.bean.WorkoutRealTimeDataReport
 import com.yc.nadalsdk.ble.open.UteBleClient
 import com.yc.nadalsdk.ble.open.UteBleConnection
 import com.yc.nadalsdk.ble.open.UteBleDevice
 import com.yc.nadalsdk.constants.NotifyType
+import com.yc.nadalsdk.constants.ServiceIds
 import com.yc.nadalsdk.listener.BleConnectStateListener
 import com.yc.nadalsdk.listener.DeviceNotifyListener
 import com.yc.nadalsdk.scan.UteScanCallback
@@ -83,6 +88,10 @@ class MainActivity : FlutterActivity() {
                             }
                             if (motion.calorieSum > 0) {
                                 currentCalories = motion.calorieSum
+                            }
+                            val hr = motion.heartRate?.rate ?: 0
+                            if (hr in 30..240) {
+                                currentBpm = hr
                             }
                         }
                     } catch (e: Exception) {
@@ -382,10 +391,31 @@ class MainActivity : FlutterActivity() {
 
                         bleExecutor.execute {
                             try {
+                                // 1. Mandatory UTE Handshake: Query supported services
+                                val services = listOf(
+                                    ServiceIds.DEVICE_MANAGE,
+                                    ServiceIds.HEART_RATE,
+                                    ServiceIds.FITNESS,
+                                    ServiceIds.WORKOUT,
+                                    ServiceIds.STRESS,
+                                    ServiceIds.ALARM
+                                )
+                                uteBleConnection?.querySupportService(services)
+
+                                // 2. TimeClock synchronization
+                                val timeSeconds = (System.currentTimeMillis() / 1000).toInt()
+                                val timeZone = TimeZone.getDefault().rawOffset / (1000 * 3600)
+                                val tc = TimeClock()
+                                tc.time = timeSeconds
+                                tc.timeZone = timeZone
+                                uteBleConnection?.setTimeClock(tc)
+
+                                // 3. Enable Continuous Heart Rate and Sensors
                                 uteBleConnection?.setContinuousHeartRate(true)
                                 uteBleConnection?.setAutoHeartRate(true)
                                 uteBleConnection?.setAutoStress(true)
 
+                                // 4. Read battery and initial motion summary
                                 val cached = uteBleConnection?.smartGetBatteryInfo()?.data
                                 if (cached != null) {
                                     if (cached.percents > 0) currentBattery = cached.percents
@@ -395,6 +425,14 @@ class MainActivity : FlutterActivity() {
                                 if (fresh != null) {
                                     if (fresh.percents > 0) currentBattery = fresh.percents
                                     isCharging = (fresh.status == BatteryInfo.CHARGING)
+                                }
+                                val motion = uteBleConnection?.getMotionSummaryData()?.data
+                                if (motion != null) {
+                                    val stepsSum = motion.motionDetailList?.sumOf { it.step } ?: 0
+                                    if (stepsSum > 0) currentSteps = stepsSum
+                                    if (motion.calorieSum > 0) currentCalories = motion.calorieSum
+                                    val hr = motion.heartRate?.rate ?: 0
+                                    if (hr in 30..240) currentBpm = hr
                                 }
                             } catch (e: Exception) {
                                 e.printStackTrace()
@@ -454,24 +492,62 @@ class MainActivity : FlutterActivity() {
                         NotifyType.HEART_RATE_REPORT -> {
                             val hrReport = notify.data as? HeartRateReport
                             val latestRate = hrReport?.heartRateList?.lastOrNull()?.rate ?: 0
-                            if (latestRate > 0) {
+                            if (latestRate in 30..240) {
                                 currentBpm = latestRate
                             }
                         }
                         NotifyType.DEVICE_HEALTH_TEST_RESULT_NOTIFY -> {
                             val health = notify.data as? DeviceHealthDataInfo
-                            if (health != null && health.heartRateValue > 0) {
+                            if (health != null && health.heartRateValue in 30..240) {
                                 currentBpm = health.heartRateValue
                             }
                         }
-                        NotifyType.CONTINUOUS_HEART_RATE_NOTIFY,
-                        NotifyType.HEART_RATE_INTERVAL_NOTIFY -> {
-                            val data = notify.data
-                            if (data is Number) {
-                                val hr = data.toInt()
-                                if (hr in 30..240) {
-                                    currentBpm = hr
+                        NotifyType.MOTION_CURRENT_MINUTE_NOTIFY -> {
+                            val motion = notify.data as? MotionCurrentMinute
+                            if (motion != null) {
+                                if (motion.dynamicHeartRate in 30..240) {
+                                    currentBpm = motion.dynamicHeartRate
                                 }
+                                if (motion.step > 0) {
+                                    currentSteps = motion.step
+                                }
+                                if (motion.calorie > 0) {
+                                    currentCalories = motion.calorie
+                                }
+                            }
+                        }
+                        NotifyType.WORKOUT_REAL_TIME_DATE_REPORT -> {
+                            val wReport = notify.data as? WorkoutRealTimeDataReport
+                            if (wReport != null) {
+                                if (wReport.heartRate in 30..240) {
+                                    currentBpm = wReport.heartRate
+                                }
+                                if (wReport.step > 0) {
+                                    currentSteps = wReport.step
+                                }
+                                if (wReport.calorie > 0) {
+                                    currentCalories = wReport.calorie
+                                }
+                            }
+                            val wData = notify.data as? WorkoutRealTimeData
+                            if (wData != null) {
+                                if (wData.realTimeHeartRate in 30..240) {
+                                    currentBpm = wData.realTimeHeartRate
+                                }
+                                if (wData.steps > 0) {
+                                    currentSteps = wData.steps
+                                }
+                                if (wData.calorie > 0) {
+                                    currentCalories = wData.calorie
+                                }
+                            }
+                        }
+                        NotifyType.DEVICE_PAIRED_STATE_NOTIFY -> {
+                            try {
+                                val honorConfig = HonorAccountConfig()
+                                uteBleConnection?.setHonorAccount(honorConfig)
+                            } catch (e: Exception) {
+                                // ignore
                             }
                         }
                     }
