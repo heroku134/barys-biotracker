@@ -749,7 +749,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.setContinueMeasureHeartRateSwitch(true) { _, _ in }
     device.setAutoHeartRate(true) { _, _ in }
     device.setAutoHeartRateInterval(1) { _ in }
-    device.setSportHeartRateSwitch(true) { _, _ in }
 
     // Live continuous heart rate stream (model.rate is property of UTEModelHRMReal)
     device.onNotifyHRMReal { [weak self] model, _ in
