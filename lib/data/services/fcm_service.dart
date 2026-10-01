@@ -6,6 +6,13 @@ import 'package:flutter/foundation.dart';
 
 class FcmService {
   static Future<void> init() async {
+    // APNs push notifications require paid Apple Developer certificate and aps-environment entitlement.
+    // On iOS without APNs entitlement (e.g. AltStore / Sideloadly), calling requestPermission / getToken
+    // triggers [UIApplication registerForRemoteNotifications], causing an NSException or process termination.
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      debugPrint('FcmService: Push notifications skipped on non-Android platform (no APNs profile)');
+      return;
+    }
     if (Firebase.apps.isEmpty) return;
     try {
       final messaging = FirebaseMessaging.instance;

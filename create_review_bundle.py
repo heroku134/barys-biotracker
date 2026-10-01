@@ -6,7 +6,8 @@ def create_review_bundle():
     root = os.path.dirname(os.path.abspath(__file__))
     zip_name = "kalkan_logic_ui_brains_review.zip"
     zip_path = os.path.join(root, zip_name)
-    desktop_path = os.path.expanduser(r"~\Desktop\kalkan_logic_ui_brains_review.zip")
+    desktop_review = os.path.expanduser(r"~\Desktop\kalkan_logic_ui_brains_review.zip")
+    desktop_sport = os.path.expanduser(r"~\Desktop\kalkan_sport_review.zip")
     artifact_dir = r"C:\Users\KPK\.gemini\antigravity\brain\16482f10-ac02-4fe0-90f1-c7b0d41ee2ca"
 
     included_root_files = {
@@ -20,17 +21,26 @@ def create_review_bundle():
     }
 
     included_native_files = {
-        os.path.normpath('android/app/build.gradle'),
+        os.path.normpath('android/build.gradle'),
+        os.path.normpath('android/build.gradle.kts'),
+        os.path.normpath('android/app/build.gradle.kts'),
         os.path.normpath('android/app/src/main/AndroidManifest.xml'),
         os.path.normpath('android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/MainActivity.kt'),
         os.path.normpath('android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanBleService.kt'),
         os.path.normpath('android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanNotify.kt'),
         os.path.normpath('android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanAlarmReceiver.kt'),
         os.path.normpath('android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanHomeWidgetProvider.kt'),
+        os.path.normpath('android/app/src/main/res/layout/kalkan_widget.xml'),
+        os.path.normpath('android/app/src/main/res/xml/kalkan_widget_info.xml'),
         os.path.normpath('ios/Podfile'),
         os.path.normpath('ios/Runner/Info.plist'),
         os.path.normpath('ios/Runner/AppDelegate.swift'),
-        os.path.normpath('ios/Runner/SceneDelegate.swift'),
+        os.path.normpath('ios/Runner/Runner.entitlements'),
+        os.path.normpath('ios/Runner/GoogleService-Info.plist'),
+        os.path.normpath('ios/KalkanWidget/KalkanWidget.swift'),
+        os.path.normpath('ios/KalkanWidget/KalkanWidgetBundle.swift'),
+        os.path.normpath('ios/KalkanWidget/KalkanWidget.entitlements'),
+        os.path.normpath('ios/KalkanWidget/Info.plist'),
         os.path.normpath('.github/workflows/build_ios.yml'),
     }
 
@@ -38,7 +48,7 @@ def create_review_bundle():
         norm = os.path.normpath(rel_path)
         parts = norm.split(os.sep)
 
-        # 1. Whole lib/ folder (UI, Logic, Brains, Core)
+        # 1. Whole lib/ folder (UI, Logic, Brains, Core, Models, Storage, Services)
         if parts[0] == 'lib' and norm.endswith('.dart'):
             return True
 
@@ -66,7 +76,6 @@ def create_review_bundle():
     print(f"Packing review bundle: {zip_path} ...")
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
         for foldername, subfolders, filenames in os.walk(root):
-            # Prune excluded directories immediately to speed up traversal
             subfolders[:] = [
                 d for d in subfolders
                 if d not in {
@@ -81,7 +90,6 @@ def create_review_bundle():
                 rel_path = os.path.relpath(full_path, root)
 
                 if should_include(rel_path):
-                    # Store with forward slashes for clean cross-platform unzipping
                     arcname = rel_path.replace(os.sep, '/')
                     zf.write(full_path, arcname)
                     file_count += 1
@@ -95,10 +103,15 @@ def create_review_bundle():
 
     # Copy to Desktop
     try:
-        shutil.copy2(zip_path, desktop_path)
-        print(f"Copied to Desktop: {desktop_path}")
+        shutil.copy2(zip_path, desktop_review)
+        shutil.copy2(zip_path, desktop_sport)
+        print(f"Copied to Desktop:\n  - {desktop_review}\n  - {desktop_sport}")
     except Exception as e:
         print(f"Desktop copy notice: {e}")
+
+    # Copy mirror in root
+    root_sport = os.path.join(root, "kalkan_sport_review.zip")
+    shutil.copy2(zip_path, root_sport)
 
     # Copy to Artifact directory
     if os.path.isdir(artifact_dir):
@@ -107,9 +120,71 @@ def create_review_bundle():
             art_sport = os.path.join(artifact_dir, "kalkan_sport_review.zip")
             shutil.copy2(zip_path, art_review)
             shutil.copy2(zip_path, art_sport)
-            print(f"Copied to Artifact dir: {art_review}")
+            print(f"Copied to Artifact dir:\n  - {art_review}\n  - {art_sport}")
         except Exception as e:
             print(f"Artifact copy notice: {e}")
 
+
+def create_full_project_zip():
+    root = os.path.dirname(os.path.abspath(__file__))
+    zip_name = "kalkan_sport_source.zip"
+    zip_path = os.path.join(root, zip_name)
+    desktop_path = os.path.expanduser(r"~\Desktop\kalkan_sport_source.zip")
+    artifact_dir = r"C:\Users\KPK\.gemini\antigravity\brain\16482f10-ac02-4fe0-90f1-c7b0d41ee2ca"
+
+    exclude_dirs = {
+        'build', '.dart_tool', '.git', '.gradle', '.idea',
+        'Pods', '.symlinks', '.flutter-plugins-dependencies',
+        'xcuserdata', 'DerivedData'
+    }
+
+    exclude_exts = {'.ipa', '.apk', '.zip', '.tar', '.gz', '.log'}
+
+    file_count = 0
+    total_bytes = 0
+
+    print(f"\nPacking full project source: {zip_path} ...")
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for foldername, subfolders, filenames in os.walk(root):
+            subfolders[:] = [
+                d for d in subfolders
+                if d not in exclude_dirs and not d.startswith('.tmp')
+            ]
+
+            for filename in filenames:
+                _, ext = os.path.splitext(filename.lower())
+                if ext in exclude_exts:
+                    continue
+
+                full_path = os.path.join(foldername, filename)
+                rel_path = os.path.relpath(full_path, root)
+                arcname = rel_path.replace(os.sep, '/')
+
+                zf.write(full_path, arcname)
+                file_count += 1
+                total_bytes += os.path.getsize(full_path)
+
+    compressed_size = os.path.getsize(zip_path)
+    print(f"Created {zip_name}:")
+    print(f"  - Total files: {file_count}")
+    print(f"  - Uncompressed: {total_bytes:,} bytes")
+    print(f"  - Compressed:   {compressed_size:,} bytes ({compressed_size / (1024*1024):.2f} MB)")
+
+    try:
+        shutil.copy2(zip_path, desktop_path)
+        print(f"Copied to Desktop: {desktop_path}")
+    except Exception as e:
+        print(f"Desktop copy notice: {e}")
+
+    if os.path.isdir(artifact_dir):
+        try:
+            art_path = os.path.join(artifact_dir, zip_name)
+            shutil.copy2(zip_path, art_path)
+            print(f"Copied to Artifact dir: {art_path}")
+        except Exception as e:
+            print(f"Artifact copy notice: {e}")
+
+
 if __name__ == "__main__":
     create_review_bundle()
+    create_full_project_zip()
