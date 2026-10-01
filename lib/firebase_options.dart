@@ -37,7 +37,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '718180799511',
     projectId: 'watch-ba720',
     storageBucket: 'watch-ba720.firebasestorage.app',
-    iosBundleId: 'kalkan.comp',
   );
 
   static const FirebaseOptions web = FirebaseOptions(

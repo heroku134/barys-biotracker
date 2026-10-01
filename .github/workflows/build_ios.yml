@@ -90,8 +90,6 @@ jobs:
           # Clean any stale PlugIns directory to ensure no broken .appex kills the app on launch
           rm -rf Payload/Runner.app/PlugIns
 
-          # Ensure any generated .bundle files (privacy manifests, vendor SDK bundles) are inside the app
-          find build -name "*.bundle" -exec cp -R {} Payload/Runner.app/ \; 2>/dev/null || true
           zip -r KALKAN_SPORT.ipa Payload
           cp KALKAN_SPORT.ipa barys_biotracker.ipa
           ls -lh KALKAN_SPORT.ipa

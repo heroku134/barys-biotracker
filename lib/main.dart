@@ -64,9 +64,11 @@ void main() {
     Future.microtask(() async {
       // Инициализация Firebase с платформенными ключами
       try {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
+        if (Firebase.apps.isEmpty) {
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+        }
         await FcmService.init();
       } catch (e) {
         debugPrint('KALKAN Firebase deferred init note: $e');

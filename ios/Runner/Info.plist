@@ -16,39 +16,7 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>barys_biotracker</string>
-	<key>CFBundleIcons</key>
-	<dict>
-		<key>CFBundlePrimaryIcon</key>
-		<dict>
-			<key>CFBundleIconFiles</key>
-			<array>
-				<string>AppIcon</string>
-			</array>
-			<key>UIPrerenderedIcon</key>
-			<false/>
-		</dict>
-		<key>CFBundleAlternateIcons</key>
-		<dict>
-			<key>AppIcon-Light</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIcon-Light</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-			<key>Porcelain</key>
-			<dict>
-				<key>CFBundleIconFiles</key>
-				<array>
-					<string>AppIcon-Light</string>
-				</array>
-				<key>UIPrerenderedIcon</key>
-				<false/>
-			</dict>
-		</dict>
-	</dict>
+
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Приложению требуется Bluetooth для подключения к часам KALKAN СААТ-1 и синхронизации биометрии.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
@@ -57,6 +25,8 @@
 	<string>Приложению требуется доступ к галерее для выбора фото профиля и публикации фото дня.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Приложению требуется камера для создания снимков тренировок и фото дня.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Приложению требуется микрофон для записи звука во время видео-тренировок.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Приложению требуется доступ к геолокации для записи маршрута, темпа и дистанции беговой тренировки.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
@@ -93,6 +63,13 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
