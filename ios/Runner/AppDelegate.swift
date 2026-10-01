@@ -151,7 +151,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       }
     }
     if let model = targetUte {
-      mgr.connectDevice(model)
+      mgr.connect(model)
       result(true)
       return
     }
@@ -333,10 +333,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
     if let pending = pendingConnectAddress, address == pending {
       pendingConnectAddress = nil
-      centralManager.stopScan()
+      centralManager?.stopScan()
       connectedPeripheral = peripheral
       peripheral.delegate = self
-      centralManager.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])
+      centralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])
     }
   }
 
@@ -690,8 +690,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
     device.onNofityBatteryModel { [weak self] bModel in
       guard let self = self, let bModel = bModel else { return }
-      if bModel.battery > 0 { self.currentBattery = Int(bModel.battery) }
-      self.isCharging = (bModel.status == 1)
+      if bModel.value > 0 { self.currentBattery = Int(bModel.value) }
+      self.isCharging = (bModel.status == .charging)
       self.pushTelemetry()
     }
 
@@ -739,7 +739,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       AudioServicesPlaySystemSound(1108)
     }
 
-    device.clickMeasurementType(.HRM) { _ in }
+    device.click(.HRM) { _ in }
   }
   #else
   private func stopTelemetryPoll() {
@@ -771,7 +771,7 @@ extension KalkanBleManager: UTEBluetoothDelegate {
     if let pending = pendingConnectAddress, addr == pending || model.identifier == pending {
       pendingConnectAddress = nil
       mgr.stopScanDevices()
-      mgr.connectDevice(model)
+      mgr.connect(model)
     }
   }
 
