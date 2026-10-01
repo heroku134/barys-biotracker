@@ -37,6 +37,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private var isConnected = false
   private var currentDeviceName = ""
   private var pollTimer: Timer?
+  private var batteryCharacteristic: CBCharacteristic?
+  private var alertCharacteristic: CBCharacteristic?
+  private var writeCharacteristic: CBCharacteristic?
 
   private var currentBpm: Int = 0
   private var currentSteps: Int = 0
@@ -161,6 +164,12 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     }
 
     isConnected = false
+    isCharging = false
+    pollTimer?.invalidate()
+    pollTimer = nil
+    batteryCharacteristic = nil
+    alertCharacteristic = nil
+    writeCharacteristic = nil
     stopTelemetryPoll()
     currentBpm = 0
     currentBattery = 0
@@ -183,6 +192,19 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.setFindWearCmd(1) { _, _ in }
     result(true)
     #else
+    guard isConnected, let peripheral = connectedPeripheral else {
+      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
+      return
+    }
+    if let alertChar = alertCharacteristic {
+      peripheral.writeValue(Data([0x02]), for: alertChar, type: .withoutResponse)
+    }
+    if let writeChar = writeCharacteristic {
+      let findPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x70, 0x01])
+      let writeType: CBCharacteristicWriteType = writeChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
+      peripheral.writeValue(findPacket, for: writeChar, type: writeType)
+      peripheral.writeValue(Data([0x01]), for: writeChar, type: writeType)
+    }
     result(true)
     #endif
   }
@@ -193,9 +215,18 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
       return
     }
-    device.click(UTEMeasurementType.HRM) { _ in }
+    device.oneClickMeasurement { _ in }
     result(true)
     #else
+    guard isConnected, let peripheral = connectedPeripheral else {
+      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
+      return
+    }
+    if let writeChar = writeCharacteristic {
+      let measurePacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x31, 0x01])
+      let writeType: CBCharacteristicWriteType = writeChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
+      peripheral.writeValue(measurePacket, for: writeChar, type: writeType)
+    }
     result(true)
     #endif
   }
@@ -264,11 +295,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
     isConnected = true
     currentDeviceName = peripheral.name ?? "СААТ-1"
-    peripheral.discoverServices([
-      CBUUID(string: "180D"),
-      CBUUID(string: "180F"),
-      CBUUID(string: "180A")
-    ])
+    peripheral.discoverServices(nil)
     pushTelemetry()
   }
 
@@ -280,6 +307,12 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
     isConnected = false
     connectedPeripheral = nil
+    batteryCharacteristic = nil
+    alertCharacteristic = nil
+    writeCharacteristic = nil
+    isCharging = false
+    pollTimer?.invalidate()
+    pollTimer = nil
     currentBpm = 0
     currentBattery = 0
     currentSteps = 0
@@ -303,18 +336,57 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
     guard let chars = service.characteristics else { return }
     for c in chars {
-      if c.uuid == CBUUID(string: "2A37") {
+      let uuid = c.uuid.uuidString.uppercased()
+
+      // Heart Rate Measurement: 0x2A37
+      if uuid == "2A37" {
         peripheral.setNotifyValue(true, for: c)
-      } else if c.uuid == CBUUID(string: "2A19") {
+      }
+      // Battery Level: 0x2A19
+      else if uuid == "2A19" {
+        self.batteryCharacteristic = c
         peripheral.readValue(for: c)
         peripheral.setNotifyValue(true, for: c)
+      }
+      // Immediate Alert: 0x2A06
+      else if uuid == "2A06" {
+        self.alertCharacteristic = c
+      }
+
+      // JieLi / UTE Vendor Write: 0xAE01 or any writable characteristic
+      if c.properties.contains(.write) || c.properties.contains(.writeWithoutResponse) {
+        if self.writeCharacteristic == nil || uuid == "AE01" {
+          self.writeCharacteristic = c
+        }
+      }
+
+      // JieLi / UTE Vendor Notify: 0xAE02 or any notify
+      if uuid == "AE02" || c.properties.contains(.notify) || c.properties.contains(.indicate) {
+        peripheral.setNotifyValue(true, for: c)
+      }
+
+      // Read readable characteristics (except standard stream)
+      if c.properties.contains(.read) && uuid != "2A37" {
+        peripheral.readValue(for: c)
+      }
+    }
+
+    // Start background poll timer for battery refresh if not already active
+    if pollTimer == nil && isConnected {
+      pollTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self, weak peripheral] _ in
+        guard let self = self, let p = peripheral, self.isConnected else { return }
+        if let bChar = self.batteryCharacteristic {
+          p.readValue(for: bChar)
+        }
       }
     }
   }
 
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
     guard let data = characteristic.value, !data.isEmpty else { return }
-    if characteristic.uuid == CBUUID(string: "2A37") {
+    let uuid = characteristic.uuid.uuidString.uppercased()
+
+    if uuid == "2A37" {
       let flags = data[0]
       let is16Bit = (flags & 0x01) != 0
       let bpm: Int
@@ -329,9 +401,43 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         currentBpm = bpm
         pushTelemetry()
       }
-    } else if characteristic.uuid == CBUUID(string: "2A19") {
-      currentBattery = Int(data[0])
+    } else if uuid == "2A19" || characteristic == batteryCharacteristic {
+      let bat = Int(data[0])
+      if bat >= 0 && bat <= 100 {
+        currentBattery = bat
+      }
+      if data.count >= 2 {
+        isCharging = (data[1] == 1)
+      }
       pushTelemetry()
+    } else {
+      // Vendor frame parsing (e.g. JieLi / UTE packet starting with 0xAB)
+      if data[0] == 0xAB && data.count >= 5 {
+        let cmd = data[4]
+        // Battery report (0x70 or 0x08)
+        if cmd == 0x70 || cmd == 0x08 {
+          if data.count >= 6 {
+            let bat = Int(data[5])
+            if bat >= 0 && bat <= 100 {
+              currentBattery = bat
+            }
+          }
+          if data.count >= 7 {
+            isCharging = (data[6] == 1)
+          }
+          pushTelemetry()
+        }
+        // Heart rate report (0x31 or 0x09)
+        else if cmd == 0x31 || cmd == 0x09 {
+          if data.count >= 6 {
+            let hr = Int(data[5])
+            if hr in 30...240 {
+              currentBpm = hr
+              pushTelemetry()
+            }
+          }
+        }
+      }
     }
   }
 
