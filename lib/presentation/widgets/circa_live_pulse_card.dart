@@ -53,6 +53,9 @@ class _CircaLivePulseCardState extends State<CircaLivePulseCard>
     });
 
     try {
+      if (!widget.bleBridge.currentTelemetry.isConnected) {
+        await widget.bleBridge.checkAndReconnect();
+      }
       await widget.bleBridge.triggerHeartRateMeasurement();
     } catch (_) {}
 
@@ -280,7 +283,7 @@ class _CircaLivePulseCardState extends State<CircaLivePulseCard>
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: (!isConnected || _isMeasuring) ? null : _startMeasurement,
+                  onPressed: _isMeasuring ? null : _startMeasurement,
                   icon: _isMeasuring
                       ? const SizedBox(
                           width: 14,
@@ -294,7 +297,9 @@ class _CircaLivePulseCardState extends State<CircaLivePulseCard>
                   label: Text(
                     _isMeasuring
                         ? AppLocaleNotifier.pick('Идёт замер ($_secondsRemaining с)…', 'Өлчөө жүрүп жатат ($_secondsRemaining с)…', 'Measuring ($_secondsRemaining s)…')
-                        : AppLocaleNotifier.pick('Запустить замер пульса', 'Пульсту өлчөө', 'Measure Pulse Now'),
+                        : (!isConnected
+                            ? AppLocaleNotifier.pick('Подключить и измерить пульс', 'Туташтыруу жана пульс өлчөө', 'Connect & Measure Pulse')
+                            : AppLocaleNotifier.pick('Запустить замер пульса', 'Пульсту өлчөө', 'Measure Pulse Now')),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -303,7 +308,7 @@ class _CircaLivePulseCardState extends State<CircaLivePulseCard>
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.rose,
                     side: BorderSide(
-                      color: isConnected ? AppColors.rose.withValues(alpha: 0.5) : palette.hairline,
+                      color: AppColors.rose.withValues(alpha: isConnected ? 0.5 : 0.35),
                       width: KalkanUi.hairline,
                     ),
                     minimumSize: const Size(44, KalkanUi.minTapTarget),

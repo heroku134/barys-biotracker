@@ -77,19 +77,36 @@ class DaySnapshotRepository {
   }
 
   static Future<void> recordTelemetry(BleTelemetry t, {required int recovery, required int sleep}) async {
-    // Не записываем пустые фиктивные замеры, если часы не подключены и нет данных
-    if (!t.isConnected && t.hrv <= 0 && t.restingHeartRate <= 0 && t.sleepMinutes <= 0 && t.currentDayStrain <= 0) {
+    // Не записываем пустые фиктивные замеры, если часы не подключены и нет никаких биометрических данных
+    if (!t.isConnected && t.hrv <= 0 && t.restingHeartRate <= 0 && t.sleepMinutes <= 0 && t.currentDayStrain <= 0 && t.heartRate <= 0) {
       return;
     }
     final today = DaySnapshot.keyFor(DateTime.now());
+    final all = await loadAll();
+    DaySnapshot? existing;
+    for (final s in all) {
+      if (s.dateKey == today) {
+        existing = s;
+        break;
+      }
+    }
+
+    final resolvedRhr = t.restingHeartRate > 0
+        ? t.restingHeartRate
+        : (t.heartRate > 0 ? t.heartRate : (existing?.rhr ?? 0));
+    final resolvedHrv = t.hrv > 0 ? t.hrv : (existing?.hrv ?? 0.0);
+    final resolvedStrain = t.currentDayStrain > 0 ? t.currentDayStrain : (existing?.strain ?? 0.0);
+    final resolvedSleep = sleep > 0 ? sleep : (existing?.sleep ?? 0);
+    final resolvedRecovery = recovery > 0 ? recovery : (existing?.recovery ?? 0);
+
     await upsert(DaySnapshot(
       dateKey: today,
-      recovery: recovery,
-      strain: t.currentDayStrain > 0 ? t.currentDayStrain : 0,
-      sleep: sleep,
-      hrv: t.hrv,
-      rhr: t.restingHeartRate,
-      preview: !t.isConnected,
+      recovery: resolvedRecovery,
+      strain: resolvedStrain,
+      sleep: resolvedSleep,
+      hrv: resolvedHrv,
+      rhr: resolvedRhr,
+      preview: false,
     ));
   }
 

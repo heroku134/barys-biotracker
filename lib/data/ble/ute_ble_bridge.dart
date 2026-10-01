@@ -223,6 +223,20 @@ class UteBleBridge {
     }
   }
 
+  Future<void> checkAndReconnect() async {
+    try {
+      if (_realTelemetry?.isConnected == true) return;
+      final prefs = await SharedPreferences.getInstance();
+      final lastMac = prefs.getString('kalkan_last_device_mac');
+      if (lastMac != null && lastMac.isNotEmpty) {
+        debugPrint('UteBleBridge: auto-reconnecting to $lastMac');
+        await connect(lastMac);
+      }
+    } catch (e) {
+      debugPrint('UteBleBridge checkAndReconnect error: $e');
+    }
+  }
+
   // --- Команды часам ---
 
   Future<void> findWatch() async {

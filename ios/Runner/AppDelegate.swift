@@ -54,16 +54,69 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private var isOffWrist: Bool = false
   private var skinTempDeviation: Double = 0.0
 
+  private var lastConnectedAddress: String?
+
   func initSdk() {
     if centralManager == nil {
       centralManager = CBCentralManager(delegate: self, queue: .main)
     }
     #if canImport(UTEBluetoothRYApi)
-    if centralManager?.state == .poweredOn {
-      mgr.initUTEMgr()
-      mgr.delegate = self
+    mgr.initUTEMgr()
+    mgr.delegate = self
+    mgr.isScanRepeat = true
+    lastConnectedAddress = UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
+    #endif
+
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleAppForeground),
+      name: UIApplication.didBecomeActiveNotification,
+      object: nil
+    )
+  }
+
+  @objc func handleAppForeground() {
+    #if canImport(UTEBluetoothRYApi)
+    // 1. If UTE SDK already maintains an active connection:
+    if mgr.connectStatus.rawValue == 0, let model = mgr.connnectModel {
+      isConnected = true
+      connectedModel = model
+      currentDeviceName = model.name ?? "KALKAN СААТ-1"
+      bindLiveStreams()
+      refreshWorkout()
+      pushTelemetry()
+      return
+    }
+
+    // 2. Check if device is already connected to iOS system Bluetooth:
+    let knownServices = ["6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "EFF5", "6540", "FEE7", "180D", "180F", "180A", "FEF5", "FEE0", "FFE0", "FFE5"]
+    if let connectedDevs = mgr.retrieveConnectedDevice(withServers: knownServices), let firstDev = connectedDevs.first {
+      let addr = deviceAddress(firstDev)
+      discoveredUteDevices[addr] = firstDev
+      if let id = firstDev.identifier { discoveredUteDevices[id] = firstDev }
+      mgr.connect(firstDev)
+      return
+    }
+
+    // 3. Auto-reconnect to last known paired watch:
+    let target = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address") ?? pendingConnectAddress
+    if let addr = target, !addr.isEmpty && !isConnected {
+      connect(address: addr) { _ in }
+    } else if !isConnected && (target == nil || target?.isEmpty == true) {
+      if let dev = discoveredUteDevices.values.first {
+        connect(address: deviceAddress(dev)) { _ in }
+      }
     }
     #endif
+
+    if let cm = centralManager, cm.state == .poweredOn && !isConnected {
+      let candidateServices = [CBUUID(string: "180D"), CBUUID(string: "180F"), CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"), CBUUID(string: "6540"), CBUUID(string: "FEE7"), CBUUID(string: "EFF5"), CBUUID(string: "180A"), CBUUID(string: "FEF5")]
+      let connectedList = cm.retrieveConnectedPeripherals(withServices: candidateServices)
+      if let dev = connectedList.first {
+        discoveredPeripherals[dev.identifier.uuidString] = dev
+        connect(address: dev.identifier.uuidString) { _ in }
+      }
+    }
   }
 
   func isBluetoothEnabled() -> Bool {
@@ -127,6 +180,35 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
   func connect(address: String, result: @escaping FlutterResult) {
     #if canImport(UTEBluetoothRYApi)
+    lastConnectedAddress = address
+    UserDefaults.standard.set(address, forKey: "kalkan_last_connected_address")
+
+    if mgr.connectStatus == .connected, let model = mgr.connnectModel {
+      if deviceAddress(model) == address || model.identifier == address {
+        isConnected = true
+        connectedModel = model
+        currentDeviceName = model.name ?? "KALKAN СААТ-1"
+        bindLiveStreams()
+        refreshWorkout()
+        pushTelemetry()
+        result(true)
+        return
+      }
+    }
+
+    let knownServices = ["6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "EFF5", "6540", "FEE7", "180D", "180F", "180A", "FEF5"]
+    if let connectedDevs = mgr.retrieveConnectedDevice(withServers: knownServices) {
+      for dev in connectedDevs {
+        if deviceAddress(dev) == address || dev.identifier == address {
+          discoveredUteDevices[address] = dev
+          pendingConnectAddress = nil
+          mgr.connect(dev)
+          result(true)
+          return
+        }
+      }
+    }
+
     var targetUte: UTEModelDevice? = discoveredUteDevices[address]
     if targetUte == nil {
       for dev in discoveredUteDevices.values {
@@ -151,6 +233,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       }
     }
     if let model = targetUte {
+      pendingConnectAddress = address
       mgr.connect(model)
       result(true)
       return
@@ -185,6 +268,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   func disconnect(result: @escaping FlutterResult) {
+    lastConnectedAddress = nil
+    UserDefaults.standard.removeObject(forKey: "kalkan_last_connected_address")
     pendingConnectAddress = nil
     #if canImport(UTEBluetoothRYApi)
     if let model = connectedModel {
@@ -255,6 +340,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
       return
     }
+    device.setContinueMeasureHeartRateSwitch(true) { _, _ in }
+    device.click(.HRM) { _ in }
     device.oneClickMeasurement { _ in }
     result(true)
     #else
@@ -294,6 +381,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       #if canImport(UTEBluetoothRYApi)
       mgr.initUTEMgr()
       mgr.delegate = self
+      mgr.isScanRepeat = true
+      let target = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address") ?? pendingConnectAddress
+      if let addr = target, !addr.isEmpty && !isConnected {
+        connect(address: addr) { _ in }
+      }
       #endif
       if isScanning {
         central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
@@ -656,11 +748,16 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private func bindLiveStreams() {
     device.setContinueMeasureHeartRateSwitch(true) { _, _ in }
     device.setAutoHeartRate(true) { _, _ in }
+    device.setAutoHeartRateInterval(1) { _ in }
+    device.setSportHeartRateSwitch(true) { _, _ in }
 
     // Live continuous heart rate stream (model.rate is property of UTEModelHRMReal)
     device.onNotifyHRMReal { [weak self] model, _ in
       guard let self = self, let m = model, m.rate > 0 else { return }
       self.currentBpm = Int(m.rate)
+      if self.currentRhr == 0 && m.rate >= 40 && m.rate <= 100 {
+        self.currentRhr = Int(m.rate)
+      }
       self.pushTelemetry()
     }
 
@@ -678,6 +775,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.onNotifyOneClickMeasurementBlock { [weak self] _, hrm, _, _ in
       guard let self = self, hrm > 0 else { return }
       self.currentBpm = Int(hrm)
+      if self.currentRhr == 0 && hrm >= 40 && hrm <= 100 {
+        self.currentRhr = Int(hrm)
+      }
       self.pushTelemetry()
     }
 
@@ -695,11 +795,28 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       self.pushTelemetry()
     }
 
-    // Live HRV stream
+    // Live single or continuous measurement notifications (HRM, HRV, Pressure, Temperature, OXY)
     device.onNotifyMeasurementBlock { [weak self] _, type, value in
-      guard let self = self else { return }
-      if type == .HRV && value > 0 {
+      guard let self = self, value > 0 else { return }
+      if type == .HRM {
+        self.currentBpm = Int(value)
+        if self.currentRhr == 0 && value >= 40 && value <= 100 {
+          self.currentRhr = Int(value)
+        }
+        self.pushTelemetry()
+      } else if type == .HRV {
         self.currentHrv = Double(value)
+        self.pushTelemetry()
+      } else if type == .pressure {
+        self.currentStressScore = Int(value)
+        self.pushTelemetry()
+      } else if type == .temperature {
+        let deg = Double(value) / 10.0
+        if deg >= 30.0 && deg <= 45.0 {
+          self.skinTempDeviation = round((deg - 36.6) * 10) / 10
+          self.pushTelemetry()
+        }
+      } else {
         self.pushTelemetry()
       }
     }
@@ -738,8 +855,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.notifyCamera { status, _, _ in
       AudioServicesPlaySystemSound(1108)
     }
-
-    device.click(.HRM) { _ in }
   }
   #else
   private func stopTelemetryPoll() {
@@ -768,10 +883,15 @@ extension KalkanBleManager: UTEBluetoothDelegate {
     }
 
     // Auto-connect if this was a pending auto-reconnect target
-    if let pending = pendingConnectAddress, addr == pending || model.identifier == pending {
-      pendingConnectAddress = nil
-      mgr.stopScanDevices()
-      mgr.connect(model)
+    if let pending = pendingConnectAddress, !pending.isEmpty && !isConnected {
+      let isMatch = addr.caseInsensitiveCompare(pending) == .orderedSame ||
+                    model.identifier?.caseInsensitiveCompare(pending) == .orderedSame ||
+                    (name.contains("СААТ") || name.contains("SAAT") || name.contains("KALKAN"))
+      if isMatch {
+        pendingConnectAddress = nil
+        mgr.stopScanDevices()
+        mgr.connect(model)
+      }
     }
   }
 
@@ -780,6 +900,12 @@ extension KalkanBleManager: UTEBluetoothDelegate {
     case 0: // UTEDevicesStatusConnected
       isConnected = true
       connectedModel = mgr.connnectModel
+      let addr = connectedModel != nil ? deviceAddress(connectedModel!) : ""
+      if !addr.isEmpty {
+        lastConnectedAddress = addr
+        UserDefaults.standard.set(addr, forKey: "kalkan_last_connected_address")
+      }
+      pendingConnectAddress = nil
       currentDeviceName = connectedModel?.name ?? "KALKAN СААТ-1"
 
       // Handshake: query supported services
@@ -793,6 +919,7 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       bindLiveStreams()
       pullNightAndDay()
       startTelemetryPoll()
+      refreshWorkout()
       pushTelemetry()
 
     case 4: // UTEDevicesStatusConnecting
@@ -800,25 +927,26 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       break
 
     case 1, 2, 3, 5, -1: // Disconnected, ConnectingError, ConnectionTimedout, Disconnecting, ConnectCheckFail
-      fallthrough
-    default:
       isConnected = false
       connectedModel = nil
       stopTelemetryPoll()
       currentBpm = 0
-      currentBattery = 0
-      currentSteps = 0
-      currentCalories = 0
-      currentHrv = 0
-      currentRhr = 0
-      currentSleepMinutes = 0
-      currentDeepSleepMinutes = 0
-      currentRemSleepMinutes = 0
-      currentStressScore = 0
       isOffWrist = false
       skinTempDeviation = 0.0
-      currentDeviceName = ""
       pushTelemetry()
+
+      // Auto-reconnect if device was paired and user didn't manually disconnect
+      if let addr = lastConnectedAddress, !addr.isEmpty, pendingConnectAddress == nil {
+        pendingConnectAddress = addr
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+          guard let self = self, !self.isConnected else { return }
+          self.connect(address: addr) { _ in }
+        }
+      }
+
+    default:
+      // Unknown or sync/intermediate status (e.g. sync start/end) - do NOT disconnect!
+      break
     }
   }
 }
@@ -852,6 +980,16 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
     }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  override func applicationDidBecomeActive(_ application: UIApplication) {
+    super.applicationDidBecomeActive(application)
+    KalkanBleManager.shared.handleAppForeground()
+  }
+
+  override func applicationWillEnterForeground(_ application: UIApplication) {
+    super.applicationWillEnterForeground(application)
+    KalkanBleManager.shared.handleAppForeground()
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {

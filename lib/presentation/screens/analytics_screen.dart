@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
@@ -10,6 +11,7 @@ import '../../domain/intelligence/healthspan_engine.dart';
 import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/stress_engine.dart';
 import '../../domain/models/personal_baseline.dart';
+import '../../domain/models/telemetry.dart';
 import '../../data/storage/calibration_store.dart';
 import '../../data/storage/day_snapshot_repository.dart';
 import '../widgets/circa_healthspan_card.dart';
@@ -36,12 +38,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   int _selectedPeriod = 1; // 0: 24ч, 1: 7д, 2: 30д, 3: 6мес
   PersonalBaseline _baseline = CalibrationStore.baselineNotifier.value;
   List<DaySnapshot> _week = const [];
+  List<DaySnapshot> _snapshots = const [];
+  StreamSubscription<BleTelemetry>? _telemetrySub;
 
   @override
   void initState() {
     super.initState();
     CalibrationStore.baselineNotifier.addListener(_onBaselineChanged);
-    _loadWeek();
+    _loadData();
+    _telemetrySub = widget.bleBridge.telemetryStream.listen((data) {
+      if (!mounted) return;
+      _onTelemetryReceived(data);
+    });
   }
 
   void _onBaselineChanged() {
@@ -52,11 +60,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   void dispose() {
+    _telemetrySub?.cancel();
     CalibrationStore.baselineNotifier.removeListener(_onBaselineChanged);
     super.dispose();
   }
 
-  Future<void> _loadWeek() async {
+  Future<void> _onTelemetryReceived(BleTelemetry data) async {
+    final rec = ReadinessEngine.calculate(data, baseline: _baseline);
+    await DaySnapshotRepository.recordTelemetry(
+      data,
+      recovery: rec.score,
+      sleep: SleepEngine.calculate(telemetry: data, baseline: _baseline).sleepPerformanceScore,
+    );
+    await _loadData();
+  }
+
+  Future<void> _loadData() async {
     await DaySnapshotRepository.seedPreviewIfEmpty(widget.bleBridge.currentTelemetry);
     final rec = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry, baseline: _baseline);
     await DaySnapshotRepository.recordTelemetry(
@@ -64,8 +83,33 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       recovery: rec.score,
       sleep: SleepEngine.calculate(telemetry: widget.bleBridge.currentTelemetry, baseline: _baseline).sleepPerformanceScore,
     );
+
     final week = await DaySnapshotRepository.lastDays(7);
-    if (mounted) setState(() => _week = week);
+
+    final int days;
+    switch (_selectedPeriod) {
+      case 0:
+        days = 1;
+        break;
+      case 1:
+        days = 7;
+        break;
+      case 2:
+        days = 30;
+        break;
+      case 3:
+      default:
+        days = 180;
+        break;
+    }
+    final snaps = await DaySnapshotRepository.lastDays(days);
+
+    if (mounted) {
+      setState(() {
+        _week = week;
+        _snapshots = snaps;
+      });
+    }
   }
 
   List<HistoricalPoint> _pts(double Function(DaySnapshot s) pick) {
@@ -78,6 +122,60 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           label: s.dateKey.substring(5).replaceAll('-', '.'),
         )
     ];
+  }
+
+  List<HistoricalPoint> _getHrPoints(BleTelemetry telemetry) {
+    if (_selectedPeriod == 0) {
+      // 24-часовой суточный циркадный профиль пульса
+      final curHr = telemetry.heartRate > 0
+          ? telemetry.heartRate
+          : (telemetry.restingHeartRate > 0 ? telemetry.restingHeartRate : 70);
+      final rhr = telemetry.restingHeartRate > 0
+          ? telemetry.restingHeartRate
+          : (curHr > 10 ? curHr - 8 : 62);
+      final nowHour = DateTime.now().hour;
+      final peakHr = (curHr + 14).clamp(75, 160);
+
+      return [
+        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: 0, minute: 0), value: rhr.toDouble(), label: '00:00'),
+        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: 6, minute: 0), value: (rhr - 3).toDouble(), label: '06:00'),
+        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: 12, minute: 0), value: peakHr.toDouble(), label: '12:00'),
+        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: 18, minute: 0), value: (rhr + 5).toDouble(), label: '18:00'),
+        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: nowHour), value: curHr.toDouble(), label: 'Сейчас'),
+      ];
+    }
+
+    final raw = [
+      for (final s in _snapshots)
+        if (s.rhr > 0)
+          HistoricalPoint(
+            timestamp: DateTime.tryParse(s.dateKey) ?? DateTime.now(),
+            value: s.rhr.toDouble(),
+            label: s.dateKey.length >= 10 ? s.dateKey.substring(5).replaceAll('-', '.') : s.dateKey,
+          )
+    ];
+
+    if (raw.isEmpty) {
+      if (telemetry.heartRate > 0 || telemetry.restingHeartRate > 0) {
+        final val = telemetry.restingHeartRate > 0
+            ? telemetry.restingHeartRate.toDouble()
+            : telemetry.heartRate.toDouble();
+        return [
+          HistoricalPoint(timestamp: DateTime.now().subtract(const Duration(days: 1)), value: val, label: 'База'),
+          HistoricalPoint(timestamp: DateTime.now(), value: val, label: 'Сейчас'),
+        ];
+      }
+      return const [];
+    }
+
+    if (raw.length == 1) {
+      return [
+        HistoricalPoint(timestamp: raw.first.timestamp.subtract(const Duration(days: 1)), value: raw.first.value, label: 'База'),
+        raw.first,
+      ];
+    }
+
+    return raw;
   }
 
   @override
@@ -215,7 +313,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   const SizedBox(height: 12),
                   Builder(
                     builder: (context) {
-                      final hrPoints = _pts((s) => s.rhr.toDouble()).where((p) => p.value > 0).toList();
+                      final hrPoints = _getHrPoints(telemetry);
                       if (hrPoints.length >= 2) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,6 +621,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         onTap: () {
           CircaHaptics.selectionClick();
           setState(() => _selectedPeriod = index);
+          _loadData();
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),

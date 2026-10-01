@@ -64,6 +64,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      widget.bleBridge.checkAndReconnect();
       BackgroundBleSyncService.performSync(widget.bleBridge);
     } else if (state == AppLifecycleState.paused) {
       BackgroundBleSyncService.performSync(widget.bleBridge);
