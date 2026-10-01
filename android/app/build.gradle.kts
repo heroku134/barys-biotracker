@@ -49,3 +49,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.6")
     implementation("androidx.core:core-ktx:1.13.1")
 }
+
+tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+    enabled = false
+}

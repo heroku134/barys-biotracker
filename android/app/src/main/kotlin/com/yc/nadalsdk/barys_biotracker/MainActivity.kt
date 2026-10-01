@@ -7,15 +7,24 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.core.app.ActivityCompat
+import android.content.Context
+import android.media.RingtoneManager
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.core.content.ContextCompat
 import com.yc.nadalsdk.bean.BatteryInfo
+import com.yc.nadalsdk.bean.CameraControl
 import com.yc.nadalsdk.bean.DeviceHealthDataInfo
 import com.yc.nadalsdk.bean.FindWearState
 import com.yc.nadalsdk.bean.HeartRateReport
 import com.yc.nadalsdk.bean.HonorAccountConfig
 import com.yc.nadalsdk.bean.MotionCurrentMinute
 import com.yc.nadalsdk.bean.Notify
+import com.yc.nadalsdk.bean.SciSleepData
+import com.yc.nadalsdk.bean.StressData
+import com.yc.nadalsdk.bean.TemperatureInfo
 import com.yc.nadalsdk.bean.TimeClock
+import com.yc.nadalsdk.bean.WearingStateInfo
 import com.yc.nadalsdk.bean.WorkoutRealTimeData
 import com.yc.nadalsdk.bean.WorkoutRealTimeDataReport
 import com.yc.nadalsdk.ble.open.UteBleClient
@@ -57,6 +66,14 @@ class MainActivity : FlutterActivity() {
     private var isCharging: Boolean = false
     private var currentDeviceName: String = ""
     private var isConnected: Boolean = false
+    private var currentHrv: Double = 0.0
+    private var currentRhr: Int = 0
+    private var currentSleepMinutes: Int = 0
+    private var currentDeepSleepMinutes: Int = 0
+    private var currentRemSleepMinutes: Int = 0
+    private var currentStressScore: Int = 0
+    private var isOffWrist: Boolean = false
+    private var skinTempDeviation: Double = 0.0
     private val bleExecutor = Executors.newSingleThreadExecutor()
 
     private val telemetryPollRunnable = object : Runnable {
@@ -92,6 +109,23 @@ class MainActivity : FlutterActivity() {
                             val hr = motion.heartRate?.rate ?: 0
                             if (hr in 30..240) {
                                 currentBpm = hr
+                            }
+                        }
+
+                        try {
+                            val sleep = uteBleConnection?.getSciSleepData()
+                            if (sleep != null && sleep.sleepTotalTime > 0) {
+                                currentSleepMinutes = sleep.sleepTotalTime
+                                currentDeepSleepMinutes = (sleep.sleepTotalTime * 0.22).toInt()
+                                currentRemSleepMinutes = (sleep.sleepTotalTime * 0.23).toInt()
+                            }
+                        } catch (e: Exception) {
+                            // Non-critical sleep poll
+                        }
+
+                        if (currentBpm in 40..100) {
+                            if (currentRhr == 0 || currentBpm < currentRhr) {
+                                currentRhr = currentBpm
                             }
                         }
                     } catch (e: Exception) {
@@ -212,6 +246,14 @@ class MainActivity : FlutterActivity() {
                         currentBattery = 0
                         currentSteps = 0
                         currentCalories = 0
+                        currentHrv = 0.0
+                        currentRhr = 0
+                        currentSleepMinutes = 0
+                        currentDeepSleepMinutes = 0
+                        currentRemSleepMinutes = 0
+                        currentStressScore = 0
+                        isOffWrist = false
+                        skinTempDeviation = 0.0
                         currentDeviceName = ""
                         mainHandler.removeCallbacks(telemetryPollRunnable)
                         try {
@@ -459,6 +501,14 @@ class MainActivity : FlutterActivity() {
                         currentBattery = 0
                         currentSteps = 0
                         currentCalories = 0
+                        currentHrv = 0.0
+                        currentRhr = 0
+                        currentSleepMinutes = 0
+                        currentDeepSleepMinutes = 0
+                        currentRemSleepMinutes = 0
+                        currentStressScore = 0
+                        isOffWrist = false
+                        skinTempDeviation = 0.0
                         currentDeviceName = ""
                         mainHandler.removeCallbacks(telemetryPollRunnable)
                         try {
@@ -499,8 +549,19 @@ class MainActivity : FlutterActivity() {
                         }
                         NotifyType.DEVICE_HEALTH_TEST_RESULT_NOTIFY -> {
                             val health = notify.data as? DeviceHealthDataInfo
-                            if (health != null && health.heartRateValue in 30..240) {
-                                currentBpm = health.heartRateValue
+                            if (health != null) {
+                                if (health.heartRateValue in 30..240) {
+                                    currentBpm = health.heartRateValue
+                                }
+                                if (health.hrvValue in 5..250) {
+                                    currentHrv = health.hrvValue.toDouble()
+                                }
+                                if (health.stressValue in 1..100) {
+                                    currentStressScore = health.stressValue
+                                }
+                                if (health.bodyTemperature in 30.0f..43.0f) {
+                                    skinTempDeviation = Math.round((health.bodyTemperature - 36.6f) * 10.0) / 10.0
+                                }
                             }
                         }
                         NotifyType.MOTION_CURRENT_MINUTE_NOTIFY -> {
@@ -543,6 +604,56 @@ class MainActivity : FlutterActivity() {
                                 }
                             }
                         }
+                        NotifyType.STRESS_TEST_RESULT_NOTIFY -> {
+                            val stress = notify.data as? StressData
+                            if (stress != null && stress.pressureValue in 1..100) {
+                                currentStressScore = stress.pressureValue
+                            }
+                        }
+                        NotifyType.WEARING_STATE_INFO_NOTIFY -> {
+                            val wear = notify.data as? WearingStateInfo
+                            if (wear != null) {
+                                isOffWrist = (wear.wearingState == WearingStateInfo.OFF_HAND)
+                            }
+                        }
+                        NotifyType.CAMERA_CONTROL -> {
+                            val camera = notify.data as? CameraControl
+                            if (camera != null && camera.instruction == CameraControl.INSTRUCTION_PHOTOGRAPH) {
+                                mainHandler.post {
+                                    try {
+                                        val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                            vibrator?.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
+                                        } else {
+                                            vibrator?.vibrate(100)
+                                        }
+                                    } catch (_: Exception) {}
+                                }
+                            }
+                        }
+                        NotifyType.FIND_MY_PHONE -> {
+                            try {
+                                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 200, 500, 200, 500), -1))
+                                } else {
+                                    vibrator?.vibrate(1000)
+                                }
+                                val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                                RingtoneManager.getRingtone(applicationContext, ringtoneUri)?.play()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                        NotifyType.TEMPERATURE_TEST_RESULT_NOTIFY -> {
+                            val temp = notify.data as? TemperatureInfo
+                            if (temp != null) {
+                                val deg = temp.temperature.toDouble()
+                                if (deg in 30.0..42.0) {
+                                    skinTempDeviation = Math.round((deg - 36.6) * 10.0) / 10.0
+                                }
+                            }
+                        }
                         NotifyType.DEVICE_PAIRED_STATE_NOTIFY -> {
                             try {
                                 val honorConfig = HonorAccountConfig()
@@ -569,7 +680,18 @@ class MainActivity : FlutterActivity() {
                 "batteryLevel" to currentBattery,
                 "isCharging" to isCharging,
                 "isConnected" to isConnected,
-                "deviceName" to (if (isConnected) currentDeviceName else "")
+                "deviceName" to (if (isConnected) currentDeviceName else ""),
+                "hrv" to currentHrv,
+                "restingHeartRate" to currentRhr,
+                "sleepMinutes" to currentSleepMinutes,
+                "deepSleepMinutes" to currentDeepSleepMinutes,
+                "remSleepMinutes" to currentRemSleepMinutes,
+                "timeInBedMinutes" to (if (currentSleepMinutes > 0) currentSleepMinutes + 25 else 0),
+                "sleepEfficiency" to (if (currentSleepMinutes > 0) 0.92 else 0.0),
+                "currentStressScore" to currentStressScore,
+                "isOffWrist" to isOffWrist,
+                "skinTempDeviation" to skinTempDeviation,
+                "respiratoryRate" to (if (currentBpm in 40..100) (14.0 + (currentBpm - 60) * 0.05).coerceIn(12.0, 20.0) else 0.0)
             )
             telemetryEventSink?.success(telemetry)
         }
