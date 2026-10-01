@@ -8,11 +8,16 @@ import android.os.Handler
 import android.os.Looper
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.yc.nadalsdk.bean.BatteryInfo
+import com.yc.nadalsdk.bean.DeviceHealthDataInfo
+import com.yc.nadalsdk.bean.FindWearState
+import com.yc.nadalsdk.bean.HeartRateReport
 import com.yc.nadalsdk.bean.Notify
 import com.yc.nadalsdk.bean.TimeClock
 import com.yc.nadalsdk.ble.open.UteBleClient
 import com.yc.nadalsdk.ble.open.UteBleConnection
 import com.yc.nadalsdk.ble.open.UteBleDevice
+import com.yc.nadalsdk.constants.NotifyType
 import com.yc.nadalsdk.listener.BleConnectStateListener
 import com.yc.nadalsdk.listener.DeviceNotifyListener
 import com.yc.nadalsdk.scan.UteScanCallback
@@ -23,6 +28,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.TimeZone
+import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
 
@@ -43,32 +49,47 @@ class MainActivity : FlutterActivity() {
     private var currentSteps: Int = 0
     private var currentCalories: Int = 0
     private var currentBattery: Int = 0
+    private var isCharging: Boolean = false
     private var currentDeviceName: String = ""
     private var isConnected: Boolean = false
+    private val bleExecutor = Executors.newSingleThreadExecutor()
 
     private val telemetryPollRunnable = object : Runnable {
         override fun run() {
             if (isConnected && uteBleConnection != null) {
-                try {
-                    val batteryResp = uteBleConnection?.getBatteryInfo()
-                    batteryResp?.data?.let { batteryInfo ->
-                        currentBattery = batteryInfo.percents
-                    }
+                bleExecutor.execute {
+                    try {
+                        val cachedBattery = uteBleConnection?.smartGetBatteryInfo()?.data
+                        if (cachedBattery != null) {
+                            if (cachedBattery.percents > 0) {
+                                currentBattery = cachedBattery.percents
+                            }
+                            isCharging = (cachedBattery.status == BatteryInfo.CHARGING)
+                        }
 
-                    val motionResp = uteBleConnection?.getMotionSummaryData()
-                    motionResp?.data?.let { motion ->
-                        val stepsSum = motion.motionDetailList?.sumOf { it.step } ?: 0
-                        if (stepsSum > 0) {
-                            currentSteps = stepsSum
+                        val batteryResp = uteBleConnection?.getBatteryInfo()
+                        batteryResp?.data?.let { batteryInfo ->
+                            if (batteryInfo.percents > 0) {
+                                currentBattery = batteryInfo.percents
+                            }
+                            isCharging = (batteryInfo.status == BatteryInfo.CHARGING)
                         }
-                        if (motion.calorieSum > 0) {
-                            currentCalories = motion.calorieSum
+
+                        val motionResp = uteBleConnection?.getMotionSummaryData()
+                        motionResp?.data?.let { motion ->
+                            val stepsSum = motion.motionDetailList?.sumOf { it.step } ?: 0
+                            if (stepsSum > 0) {
+                                currentSteps = stepsSum
+                            }
+                            if (motion.calorieSum > 0) {
+                                currentCalories = motion.calorieSum
+                            }
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                    pushTelemetry()
                 }
-                pushTelemetry()
                 mainHandler.postDelayed(this, 5000L)
             }
         }
@@ -177,6 +198,7 @@ class MainActivity : FlutterActivity() {
                     "disconnect" -> {
                         uteBleClient?.disconnect()
                         isConnected = false
+                        isCharging = false
                         currentBpm = 0
                         currentBattery = 0
                         currentSteps = 0
@@ -193,7 +215,13 @@ class MainActivity : FlutterActivity() {
                     }
                     "findDevice" -> {
                         if (isConnected && uteBleConnection != null) {
-                            uteBleConnection?.setFindWearCmd(1)
+                            bleExecutor.execute {
+                                try {
+                                    uteBleConnection?.setFindWearCmd(FindWearState.STATE_OPEN)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
                             result.success(true)
                         } else {
                             result.error("NOT_CONNECTED", "Watch is not connected", null)
@@ -201,7 +229,13 @@ class MainActivity : FlutterActivity() {
                     }
                     "measureHeartRate" -> {
                         if (isConnected && uteBleConnection != null) {
-                            uteBleConnection?.oneClickMeasurement()
+                            bleExecutor.execute {
+                                try {
+                                    uteBleConnection?.oneClickMeasurement()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
                             result.success(true)
                         } else {
                             result.error("NOT_CONNECTED", "Watch is not connected", null)
@@ -209,13 +243,19 @@ class MainActivity : FlutterActivity() {
                     }
                     "syncTime" -> {
                         if (isConnected && uteBleConnection != null) {
-                            val timeSeconds = (System.currentTimeMillis() / 1000).toInt()
-                            val timeZone = TimeZone.getDefault().rawOffset / (1000 * 3600)
-                            val tc = TimeClock()
-                            tc.timeSeconds = timeSeconds
-                            tc.timeZone = timeZone
-                            tc.minuteOffset = 0
-                            uteBleConnection?.setTimeClock(tc)
+                            bleExecutor.execute {
+                                try {
+                                    val timeSeconds = (System.currentTimeMillis() / 1000).toInt()
+                                    val timeZone = TimeZone.getDefault().rawOffset / (1000 * 3600)
+                                    val tc = TimeClock()
+                                    tc.timeSeconds = timeSeconds
+                                    tc.timeZone = timeZone
+                                    tc.minuteOffset = 0
+                                    uteBleConnection?.setTimeClock(tc)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
                             result.success(true)
                         } else {
                             result.error("NOT_CONNECTED", "Watch is not connected", null)
@@ -338,12 +378,28 @@ class MainActivity : FlutterActivity() {
                         isConnected = true
                         currentDeviceName = uteBleClient?.deviceName ?: "СААТ-1"
                         
-                        try {
-                            uteBleConnection?.setContinuousHeartRate(true)
-                            uteBleConnection?.setAutoHeartRate(true)
-                            uteBleConnection?.setAutoStress(true)
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                        setupDeviceListeners()
+
+                        bleExecutor.execute {
+                            try {
+                                uteBleConnection?.setContinuousHeartRate(true)
+                                uteBleConnection?.setAutoHeartRate(true)
+                                uteBleConnection?.setAutoStress(true)
+
+                                val cached = uteBleConnection?.smartGetBatteryInfo()?.data
+                                if (cached != null) {
+                                    if (cached.percents > 0) currentBattery = cached.percents
+                                    isCharging = (cached.status == BatteryInfo.CHARGING)
+                                }
+                                val fresh = uteBleConnection?.getBatteryInfo()?.data
+                                if (fresh != null) {
+                                    if (fresh.percents > 0) currentBattery = fresh.percents
+                                    isCharging = (fresh.status == BatteryInfo.CHARGING)
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                            pushTelemetry()
                         }
 
                         try {
@@ -359,6 +415,7 @@ class MainActivity : FlutterActivity() {
                     }
                     BleConnectStateListener.STATE_DISCONNECTED -> {
                         isConnected = false
+                        isCharging = false
                         currentBpm = 0
                         currentBattery = 0
                         currentSteps = 0
@@ -383,6 +440,44 @@ class MainActivity : FlutterActivity() {
     private fun setupDeviceListeners() {
         uteBleConnection?.setDeviceNotifyListener(object : DeviceNotifyListener {
             override fun onNotify(device: UteBleDevice, notify: Notify) {
+                try {
+                    when (notify.type) {
+                        NotifyType.DEVICE_BATTERY_REPORT -> {
+                            val batteryInfo = notify.data as? BatteryInfo
+                            if (batteryInfo != null) {
+                                if (batteryInfo.percents > 0) {
+                                    currentBattery = batteryInfo.percents
+                                }
+                                isCharging = (batteryInfo.status == BatteryInfo.CHARGING)
+                            }
+                        }
+                        NotifyType.HEART_RATE_REPORT -> {
+                            val hrReport = notify.data as? HeartRateReport
+                            val latestRate = hrReport?.heartRateList?.lastOrNull()?.rate ?: 0
+                            if (latestRate > 0) {
+                                currentBpm = latestRate
+                            }
+                        }
+                        NotifyType.DEVICE_HEALTH_TEST_RESULT_NOTIFY -> {
+                            val health = notify.data as? DeviceHealthDataInfo
+                            if (health != null && health.heartRateValue > 0) {
+                                currentBpm = health.heartRateValue
+                            }
+                        }
+                        NotifyType.CONTINUOUS_HEART_RATE_NOTIFY,
+                        NotifyType.HEART_RATE_INTERVAL_NOTIFY -> {
+                            val data = notify.data
+                            if (data is Number) {
+                                val hr = data.toInt()
+                                if (hr in 30..240) {
+                                    currentBpm = hr
+                                }
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
                 pushTelemetry()
             }
         })
@@ -395,6 +490,7 @@ class MainActivity : FlutterActivity() {
                 "steps" to currentSteps,
                 "calories" to currentCalories,
                 "batteryLevel" to currentBattery,
+                "isCharging" to isCharging,
                 "isConnected" to isConnected,
                 "deviceName" to (if (isConnected) currentDeviceName else "")
             )

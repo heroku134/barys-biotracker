@@ -63,6 +63,7 @@ class UteBleBridge {
               steps: event['steps'] as int? ?? prev?.steps ?? 0,
               calories: event['calories'] as int? ?? prev?.calories ?? 0,
               batteryLevel: event['batteryLevel'] as int? ?? prev?.batteryLevel ?? 0,
+              isCharging: event['isCharging'] as bool? ?? prev?.isCharging ?? false,
               isConnected: isConnected,
               deviceName: event['deviceName'] as String? ?? (isConnected ? 'KALKAN СААТ-1' : (prev?.deviceName ?? 'СААТ-1')),
               timestamp: DateTime.now(),
@@ -207,7 +208,7 @@ class UteBleBridge {
       debugPrint('UteBleBridge disconnect error: $e');
     }
     if (_realTelemetry != null) {
-      _realTelemetry = _realTelemetry!.copyWith(isConnected: false);
+      _realTelemetry = _realTelemetry!.copyWith(isConnected: false, isCharging: false);
       _telemetryController.add(_realTelemetry!);
     }
   }

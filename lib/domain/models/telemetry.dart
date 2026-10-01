@@ -34,6 +34,7 @@ class BleTelemetry {
   final int steps;
   final int calories;
   final int batteryLevel;
+  final bool isCharging;
   final bool isConnected;
   final String deviceName;
   final DateTime timestamp;
@@ -68,6 +69,7 @@ class BleTelemetry {
     this.steps = 0,
     this.calories = 0,
     this.batteryLevel = 0,
+    this.isCharging = false,
     this.isConnected = false,
     this.deviceName = 'СААТ-1',
     required this.timestamp,
@@ -107,6 +109,7 @@ class BleTelemetry {
     int? steps,
     int? calories,
     int? batteryLevel,
+    bool? isCharging,
     bool? isConnected,
     String? deviceName,
     DateTime? timestamp,
@@ -133,6 +136,7 @@ class BleTelemetry {
       steps: steps ?? this.steps,
       calories: calories ?? this.calories,
       batteryLevel: batteryLevel ?? this.batteryLevel,
+      isCharging: isCharging ?? this.isCharging,
       isConnected: isConnected ?? this.isConnected,
       deviceName: deviceName ?? this.deviceName,
       timestamp: timestamp ?? this.timestamp,

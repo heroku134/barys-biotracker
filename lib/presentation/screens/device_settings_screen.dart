@@ -245,25 +245,45 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: (telemetry.isConnected ? AppColors.sage : AppColors.rose).withValues(alpha: 0.15),
+                          color: (!telemetry.isConnected
+                                  ? AppColors.rose
+                                  : (telemetry.isCharging ? AppColors.amber : AppColors.sage))
+                              .withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
                           border: Border.all(
-                            color: (telemetry.isConnected ? AppColors.sage : AppColors.rose).withValues(alpha: 0.4),
+                            color: (!telemetry.isConnected
+                                    ? AppColors.rose
+                                    : (telemetry.isCharging ? AppColors.amber : AppColors.sage))
+                                .withValues(alpha: 0.4),
                             width: KalkanUi.hairline,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
-                              telemetry.isConnected ? Icons.battery_charging_full : Icons.bluetooth_disabled,
-                              color: telemetry.isConnected ? AppColors.sage : AppColors.rose,
+                              !telemetry.isConnected
+                                  ? Icons.bluetooth_disabled
+                                  : (telemetry.isCharging ? Icons.battery_charging_full : Icons.battery_std),
+                              color: !telemetry.isConnected
+                                  ? AppColors.rose
+                                  : (telemetry.isCharging ? AppColors.amber : AppColors.sage),
                               size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              telemetry.isConnected ? '${telemetry.batteryLevel}%' : tr('Нет сигнала', 'Сигнал жок', 'No signal'),
+                              !telemetry.isConnected
+                                  ? tr('Нет сигнала', 'Сигнал жок', 'No signal')
+                                  : (telemetry.isCharging
+                                      ? (telemetry.batteryLevel > 0
+                                          ? '${telemetry.batteryLevel}% ⚡ ${tr('Зарядка', 'Заряддалууда', 'Charging')}'
+                                          : '⚡ ${tr('Зарядка…', 'Заряддалууда…', 'Charging…')}')
+                                      : (telemetry.batteryLevel > 0
+                                          ? '${telemetry.batteryLevel}%'
+                                          : tr('Подключено', 'Туташты', 'Connected'))),
                               style: TextStyle(
-                                color: telemetry.isConnected ? AppColors.sage : AppColors.rose,
+                                color: !telemetry.isConnected
+                                    ? AppColors.rose
+                                    : (telemetry.isCharging ? AppColors.amber : AppColors.sage),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),

@@ -281,10 +281,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       isConnected ? AppColors.sage : AppColors.rose,
                     ),
                   ),
+                  if (isConnected && _telemetry.batteryLevel > 0) ...[
+                    const SizedBox(width: 8),
+                    Icon(
+                      _telemetry.isCharging ? Icons.battery_charging_full : Icons.battery_std,
+                      size: 13,
+                      color: _telemetry.isCharging ? AppColors.amber : palette.secondary,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${_telemetry.batteryLevel}%${_telemetry.isCharging ? " ⚡" : ""}',
+                      style: AppTypography.caption(_telemetry.isCharging ? AppColors.amber : palette.secondary),
+                    ),
+                  ] else if (isConnected && _telemetry.isCharging) ...[
+                    const SizedBox(width: 8),
+                    const Icon(Icons.bolt, size: 13, color: AppColors.amber),
+                    Text(
+                      AppLocaleNotifier.pick('Зарядка', 'Заряддалууда', 'Charging'),
+                      style: AppTypography.caption(AppColors.amber),
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
+          const SizedBox(width: 16),
         ],
       ),
       body: SafeArea(

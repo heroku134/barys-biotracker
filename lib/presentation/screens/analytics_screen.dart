@@ -14,6 +14,7 @@ import '../../data/storage/calibration_store.dart';
 import '../../data/storage/day_snapshot_repository.dart';
 import '../widgets/circa_healthspan_card.dart';
 import '../widgets/circa_hypnogram.dart';
+import '../widgets/circa_live_pulse_card.dart';
 import '../widgets/circa_sparkline.dart';
 import '../widgets/circa_stress_timeline.dart';
 import '../widgets/kalkan_ui.dart';
@@ -161,35 +162,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            KalkanCard(
-              padding: const EdgeInsets.all(KalkanUi.cardPadding),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocaleNotifier.pick('Пульс', 'Пульс', 'Heart rate'), style: TextStyle(color: palette.secondary, fontSize: 13)),
-                        const SizedBox(height: 4),
-                        Text(telemetry.heartRate > 0 ? '${telemetry.heartRate}' : '—', style: TextStyle(color: palette.fg, fontSize: 32, fontWeight: FontWeight.w600)),
-                        Text('bpm', style: TextStyle(color: palette.secondary, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocaleNotifier.pick('Покой', 'Тынч', 'Resting'), style: TextStyle(color: palette.secondary, fontSize: 13)),
-                        const SizedBox(height: 4),
-                        Text(telemetry.restingHeartRate > 0 ? '${telemetry.restingHeartRate}' : '—', style: TextStyle(color: palette.fg, fontSize: 32, fontWeight: FontWeight.w600)),
-                        Text('bpm', style: TextStyle(color: palette.secondary, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            CircaLivePulseCard(bleBridge: widget.bleBridge),
             const SizedBox(height: 12),
             WeeklyMetricChart(
               title: AppLocaleNotifier.pick('Сон, 7 дней', 'Уйку, 7 күн', 'Sleep, 7 days'),

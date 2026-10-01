@@ -42,6 +42,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private var currentSteps: Int = 0
   private var currentCalories: Int = 0
   private var currentBattery: Int = 0
+  private var isCharging: Bool = false
   private var currentHrv: Double = 0
   private var currentRhr: Int = 0
   private var currentSleepMinutes: Int = 0
@@ -344,6 +345,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         "steps": self.currentSteps,
         "calories": self.currentCalories,
         "batteryLevel": self.currentBattery,
+        "isCharging": self.isCharging,
         "isConnected": self.isConnected,
         "deviceName": self.isConnected ? self.currentDeviceName : "",
         "hrv": self.currentHrv,

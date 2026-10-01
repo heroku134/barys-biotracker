@@ -253,9 +253,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(telemetry.deviceName.isNotEmpty ? telemetry.deviceName : 'СААТ-1', style: AppTypography.bodySemibold(palette.fg)),
                 Text(
                   telemetry.isConnected
-                      ? (_tr('Подключены · ${telemetry.batteryLevel}%', 'Туташкан · ${telemetry.batteryLevel}%', 'Connected · ${telemetry.batteryLevel}%'))
+                      ? (telemetry.isCharging
+                          ? _tr('Подключены · ${telemetry.batteryLevel}% ⚡', 'Туташкан · ${telemetry.batteryLevel}% ⚡', 'Connected · ${telemetry.batteryLevel}% ⚡')
+                          : _tr('Подключены · ${telemetry.batteryLevel}%', 'Туташкан · ${telemetry.batteryLevel}%', 'Connected · ${telemetry.batteryLevel}%'))
                       : (_tr('Нет связи', 'Байланыш жок', 'Not connected')),
-                  style: AppTypography.caption(telemetry.isConnected ? AppColors.sage : palette.secondary),
+                  style: AppTypography.caption(telemetry.isConnected ? (telemetry.isCharging ? AppColors.amber : AppColors.sage) : palette.secondary),
                 ),
               ],
             ),
