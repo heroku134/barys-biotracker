@@ -35,11 +35,13 @@ target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
   # UTE / JieLi Bluetooth Watch SDK & dependencies
-  pod 'SSZipArchive'
-  pod 'MJExtension'
-  pod 'iOSOTAJL'
-  pod 'SocketRocket'
-  pod 'UTEBluetoothRYApi', :path => '.'
+  # Disabled for AltStore/Sideloadly builds to prevent dyld _swift_coroFrameAlloc crash before main()
+  # Native CoreBluetooth is used instead.
+  # pod 'SSZipArchive'
+  # pod 'MJExtension'
+  # pod 'iOSOTAJL'
+  # pod 'SocketRocket'
+  # pod 'UTEBluetoothRYApi', :path => '.'
 
   target 'RunnerTests' do
     inherit! :search_paths

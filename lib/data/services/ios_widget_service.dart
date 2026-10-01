@@ -7,13 +7,28 @@ class IosWidgetService {
   static const String appGroupId = 'group.watch.circle.kalkan';
   static const String iOSWidgetName = 'KalkanRecoveryWidget';
 
+  /// Sideloading via AltStore / Sideloadly on a free Apple ID cannot provision App Groups.
+  /// If home_widget tries to access UserDefaults(suiteName:) without a valid App Group entitlement,
+  /// iOS crashes natively before Dart try/catch can intercept.
+  /// Keep this false until an Apple Developer Program team with configured App Group is provisioned.
+  static const bool hasAppGroupEntitlement = false;
+
   static bool _initialized = false;
   static bool _hasAppGroupError = false;
 
+  static bool get _isIos => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
   static Future<void> init() async {
+    // On iOS without App Group capability, NEVER touch HomeWidget to avoid native crash
+    if (_isIos && !hasAppGroupEntitlement) {
+      debugPrint('IosWidgetService.init: Skipped on iOS (no paid App Group profile)');
+      return;
+    }
     if (_initialized || _hasAppGroupError) return;
     try {
-      await HomeWidget.setAppGroupId(appGroupId);
+      if (_isIos) {
+        await HomeWidget.setAppGroupId(appGroupId);
+      }
       _initialized = true;
     } catch (e) {
       _hasAppGroupError = true;
@@ -31,10 +46,12 @@ class IosWidgetService {
     int calibrationDay = 14,
     bool hasNightData = false,
   }) async {
+    // On iOS without App Group capability, NEVER touch HomeWidget to avoid native crash
+    if (_isIos && !hasAppGroupEntitlement) return;
     if (_hasAppGroupError) return;
     try {
       await init();
-      if (!_initialized) return;
+      if (_isIos && !_initialized) return;
 
       final sleepMins = telemetry.sleepMinutes;
       await HomeWidget.saveWidgetData<int>('recovery_score', hasNightData ? readiness.score : 0);

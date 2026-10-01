@@ -12,19 +12,7 @@ import ActivityKit
 import UTEBluetoothRYApi
 #endif
 
-#if canImport(Darwin)
-import Darwin
 
-@_cdecl("swift_coroFrameAlloc")
-public func _kalkan_swift_coroFrameAlloc(_ size: Int) -> UnsafeMutableRawPointer? {
-  return malloc(size)
-}
-
-@_cdecl("swift_coroFrameAllocStub")
-public func _kalkan_swift_coroFrameAllocStub(_ size: Int) -> UnsafeMutableRawPointer? {
-  return malloc(size)
-}
-#endif
 
 
 class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, FlutterStreamHandler {
@@ -64,8 +52,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       centralManager = CBCentralManager(delegate: self, queue: .main)
     }
     #if canImport(UTEBluetoothRYApi)
-    mgr.initUTEMgr()
-    mgr.delegate = self
+    if centralManager?.state == .poweredOn {
+      mgr.initUTEMgr()
+      mgr.delegate = self
+    }
     #endif
   }
 
@@ -229,6 +219,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
     switch central.state {
     case .poweredOn:
+      #if canImport(UTEBluetoothRYApi)
+      mgr.initUTEMgr()
+      mgr.delegate = self
+      #endif
       if isScanning {
         central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
       }
@@ -549,8 +543,6 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
-
     BGTaskScheduler.shared.register(forTaskWithIdentifier: "sport.kalkan.bio.refresh", using: nil) { task in
       let request = BGAppRefreshTaskRequest(identifier: "sport.kalkan.bio.refresh")
       request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
@@ -558,18 +550,12 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
       task.setTaskCompleted(success: true)
     }
 
-    let ok = super.application(application, didFinishLaunchingWithOptions: launchOptions)
-
-    if let controller = window?.rootViewController as? FlutterViewController {
-      setupChannels(messenger: controller.binaryMessenger)
-    }
-
-    return ok
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "KalkanBlePlugin") {
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "KalkanNative") {
       setupChannels(messenger: registrar.messenger())
     }
   }
