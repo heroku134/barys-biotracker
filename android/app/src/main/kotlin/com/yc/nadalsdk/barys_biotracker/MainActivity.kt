@@ -263,9 +263,19 @@ class MainActivity : FlutterActivity() {
             return true
         }
         val lm = getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return false
-        val gpsEnabled = try { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) } catch (_: Exception) { false }
-        val netEnabled = try { lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) } catch (_: Exception) { false }
-        return gpsEnabled || netEnabled
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                lm.isLocationEnabled
+            } catch (_: Exception) {
+                val gpsEnabled = try { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) } catch (_: Exception) { false }
+                val netEnabled = try { lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) } catch (_: Exception) { false }
+                gpsEnabled || netEnabled
+            }
+        } else {
+            val gpsEnabled = try { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) } catch (_: Exception) { false }
+            val netEnabled = try { lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) } catch (_: Exception) { false }
+            gpsEnabled || netEnabled
+        }
     }
 
     private fun openAppSettings() {

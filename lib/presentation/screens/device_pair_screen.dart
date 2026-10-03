@@ -121,6 +121,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
   }
 
   Future<void> _startScan() async {
+    if (_isScanning) return;
     setState(() {
       _isScanning = true;
       _devices = widget.bleBridge.discoveredDevices;
@@ -135,7 +136,13 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
       }
     });
 
-    await widget.bleBridge.startScan();
+    try {
+      await widget.bleBridge.startScan();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isScanning = false);
+      }
+    }
 
     // Автоматический останов анимации и нативного сканирования через 15 секунд
     Future.delayed(const Duration(seconds: 15), () {

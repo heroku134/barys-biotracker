@@ -90,6 +90,8 @@ class UteBleBridge {
   Timer? _backoffTimer;
   bool _isManuallyDisconnected = false;
   bool get isManuallyDisconnected => _isManuallyDisconnected;
+  bool _isScanning = false;
+  bool get isScanning => _isScanning;
 
   Stream<BleTelemetry> get telemetryStream => _telemetryController.stream;
   Stream<List<DiscoveredBleDevice>> get scanResultsStream => _scanController.stream;
@@ -278,50 +280,67 @@ class UteBleBridge {
   }
 
   Future<void> startScan() async {
+    if (_isScanning) {
+      debugPrint('UteBleBridge startScan skipped: scan already in progress');
+      return;
+    }
+    _isScanning = true;
     _discoveredMap.clear();
     _scanController.add([]);
 
     _scanSub?.cancel();
     try {
-      _scanSub = _scanChannel.receiveBroadcastStream().listen((dynamic event) {
-        if (event is Map) {
-          if (_parseBool(event['isScanComplete'], false)) {
-            return;
-          }
-          final name = event['name']?.toString() ?? 'BLE Устройство';
-          final address = event['address']?.toString() ?? '';
-          final rssi = _parseInt(event['rssi'], -70);
-          final isKalkan = _parseBool(event['isKalkan'], false) || matchesKalkanFilter(name);
-
-          if (address.isNotEmpty) {
-            if (_discoveredMap.length >= 100 && !_discoveredMap.containsKey(address)) {
+      _scanSub = _scanChannel.receiveBroadcastStream().listen(
+        (dynamic event) {
+          if (event is Map) {
+            if (_parseBool(event['isScanComplete'], false)) {
+              _isScanning = false;
               return;
             }
-            _discoveredMap[address] = DiscoveredBleDevice(
-              name: name,
-              address: address,
-              rssi: rssi,
-              isKalkanBand: isKalkan,
-            );
-            final sorted = _discoveredMap.values.toList()
-              ..sort((a, b) {
-                if (a.isKalkanBand != b.isKalkanBand) {
-                  return a.isKalkanBand ? -1 : 1;
-                }
-                return b.rssi.compareTo(a.rssi);
-              });
-            _scanController.add(sorted);
+            final name = event['name']?.toString() ?? 'BLE Устройство';
+            final address = event['address']?.toString() ?? '';
+            final rssi = _parseInt(event['rssi'], -70);
+            final isKalkan = _parseBool(event['isKalkan'], false) || matchesKalkanFilter(name);
+
+            if (address.isNotEmpty) {
+              if (_discoveredMap.length >= 100 && !_discoveredMap.containsKey(address)) {
+                return;
+              }
+              _discoveredMap[address] = DiscoveredBleDevice(
+                name: name,
+                address: address,
+                rssi: rssi,
+                isKalkanBand: isKalkan,
+              );
+              final sorted = _discoveredMap.values.toList()
+                ..sort((a, b) {
+                  if (a.isKalkanBand != b.isKalkanBand) {
+                    return a.isKalkanBand ? -1 : 1;
+                  }
+                  return b.rssi.compareTo(a.rssi);
+                });
+              _scanController.add(sorted);
+            }
           }
-        }
-      });
+        },
+        onError: (Object err) {
+          _isScanning = false;
+          debugPrint('UteBleBridge scanChannel error: $err');
+        },
+        onDone: () {
+          _isScanning = false;
+        },
+      );
 
       await _methodChannel.invokeMethod('startScan');
     } catch (e) {
+      _isScanning = false;
       debugPrint('UteBleBridge startScan error: $e');
     }
   }
 
   Future<void> stopScan() async {
+    _isScanning = false;
     try {
       await _methodChannel.invokeMethod('stopScan');
     } catch (e) {
@@ -337,6 +356,9 @@ class UteBleBridge {
   Future<bool> connect(String macAddress, {Duration timeout = const Duration(seconds: 15)}) async {
     final trimmedMac = macAddress.trim();
     if (trimmedMac.isEmpty) return false;
+
+    // Останавливаем активный скан перед подключением
+    await stopScan();
 
     // Reset manual disconnect flag on explicit connect
     _isManuallyDisconnected = false;

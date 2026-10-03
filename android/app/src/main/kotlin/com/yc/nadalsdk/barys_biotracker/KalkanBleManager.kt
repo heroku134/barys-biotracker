@@ -91,6 +91,7 @@ object KalkanBleManager {
 
     // BLE-05: Polling rate control & queue bounding guards
     private val isPollingInProgress = AtomicBoolean(false)
+    private val isScanning = AtomicBoolean(false)
     private var lastBatteryPollTimeMs: Long = 0L
     private var lastSleepPollTimeMs: Long = 0L
 
@@ -163,7 +164,13 @@ object KalkanBleManager {
             return
         }
 
-        client.scanDevice(object : UteScanCallback {
+        if (!isScanning.compareAndSet(false, true)) {
+            // Protect against duplicate or concurrent scan triggers
+            callback(true, null)
+            return
+        }
+
+        val scanStarted = client.scanDevice(object : UteScanCallback {
             override fun onScanning(scanDevice: UteScanDevice?) {
                 if (scanDevice != null) {
                     val rawDevice = scanDevice.device
@@ -186,22 +193,36 @@ object KalkanBleManager {
             }
 
             override fun onScanComplete(scanDevices: MutableList<UteScanDevice?>?) {
+                isScanning.set(false)
                 mainHandler.post {
                     scanEventSink?.success(mapOf("isScanComplete" to true))
                 }
             }
 
             override fun onScanFailed(errorCode: Int) {
+                isScanning.set(false)
                 mainHandler.post {
                     scanEventSink?.error("SCAN_ERROR", "Scan failed with error: $errorCode", null)
                 }
             }
         }, 15000L)
-        callback(true, null)
+
+        if (!scanStarted) {
+            isScanning.set(false)
+            callback(false, "Failed to start BLE scan")
+        } else {
+            callback(true, null)
+        }
     }
 
     fun stopScan() {
-        uteBleClient?.cancelScan()
+        isScanning.set(false)
+        try {
+            uteBleClient?.cancelScan()
+        } catch (_: Exception) {}
+        mainHandler.post {
+            scanEventSink?.success(mapOf("isScanComplete" to true))
+        }
     }
 
     fun updateSnapshot(immediate: Boolean = false, transform: (TelemetrySnapshot) -> TelemetrySnapshot): TelemetrySnapshot {
@@ -211,6 +232,7 @@ object KalkanBleManager {
     }
 
     fun connect(address: String, callback: (Boolean, String?) -> Unit) {
+        stopScan()
         val client = uteBleClient
         if (client == null) {
             callback(false, "UteBleClient not initialized")
@@ -233,8 +255,7 @@ object KalkanBleManager {
         }
         mainHandler.postDelayed(connectTimeoutRunnable!!, 15000)
 
-        uteBleConnection = client.getUteBleConnection()
-        uteBleConnection?.setConnectStateListener(object : BleConnectStateListener {
+        val connectListener = object : BleConnectStateListener {
             override fun onConnecteStateChange(state: Int) {
                 when (state) {
                     BleConnectStateListener.STATE_CONNECTED -> {
@@ -245,6 +266,9 @@ object KalkanBleManager {
                             )
                         }
 
+                        val conn = uteBleConnection ?: uteBleClient?.getUteBleConnection()
+                        uteBleConnection = conn
+                        conn?.setConnectStateListener(this)
                         setupDeviceListeners()
 
                         bleExecutor.execute {
@@ -343,12 +367,21 @@ object KalkanBleManager {
                     }
                 }
             }
-        })
+        }
 
-        uteBleConnection = client.connect(address)
+        // Pre-bind on current connection instance
+        val preConn = uteBleConnection ?: client.getUteBleConnection()
+        preConn?.setConnectStateListener(connectListener)
+
+        // client.connect initiates connection and returns active UteBleConnection instance
+        val newConn = client.connect(address)
+        uteBleConnection = newConn ?: client.getUteBleConnection()
+        uteBleConnection?.setConnectStateListener(connectListener)
+        setupDeviceListeners()
     }
 
     fun cancelConnect() {
+        stopScan()
         connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
         connectTimeoutRunnable = null
         val cb = pendingConnectCallback
@@ -360,6 +393,7 @@ object KalkanBleManager {
     }
 
     fun disconnect(forget: Boolean = false) {
+        stopScan()
         connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
         connectTimeoutRunnable = null
         val cb = pendingConnectCallback
@@ -582,37 +616,79 @@ object KalkanBleManager {
                     var rem = 0
                     var awake = 0
                     val epochs = mutableListOf<Map<String, Any>>()
+
+                    // Baseline reference for sleep timeline in unix seconds
+                    val sessionStartSec = sleep.startTime
+                    val sessionEndSec = sleep.endTime
                     val nowSec = (System.currentTimeMillis() / 1000).toInt()
-                    var cursorSec = 0
+
+                    val baseStartSec = if (sessionStartSec > 0) {
+                        sessionStartSec
+                    } else if (sessionEndSec > 0) {
+                        sessionEndSec - (sleep.sleepTotalTime * 60)
+                    } else {
+                        nowSec - (sleep.sleepTotalTime * 60)
+                    }
+
+                    var cursorSec = baseStartSec
 
                     for (item in detailList) {
-                        val dur = item.sleepTime
+                        val dur = item.sleepTime // in minutes
                         if (dur <= 0) continue
+
                         val stage = when (item.sleepType) {
-                            1 -> { deep += dur; total += dur; "deep" }
-                            2, 5, 6 -> { light += dur; total += dur; "light" }
-                            4 -> { rem += dur; total += dur; "rem" }
-                            3, 7, 8 -> { awake += dur; "awake" }
-                            else -> { light += dur; total += dur; "light" }
+                            SciSleepData.SCI_SLEEP_TYPE_DEEP -> {
+                                deep += dur
+                                total += dur
+                                "deep"
+                            }
+                            SciSleepData.SCI_SLEEP_TYPE_LIGHT,
+                            SciSleepData.SCI_SLEEP_TYPE_SNOOZE,
+                            SciSleepData.SCI_SLEEP_TYPE_SNORE -> {
+                                light += dur
+                                total += dur
+                                "light"
+                            }
+                            SciSleepData.SCI_SLEEP_TYPE_REM -> {
+                                rem += dur
+                                total += dur
+                                "rem"
+                            }
+                            SciSleepData.SCI_SLEEP_TYPE_AWAKE,
+                            SciSleepData.SCI_SLEEP_TYPE_START,
+                            SciSleepData.SCI_SLEEP_TYPE_END -> {
+                                awake += dur
+                                "awake"
+                            }
+                            else -> {
+                                light += dur
+                                total += dur
+                                "light"
+                            }
                         }
+
                         val rawStart = item.startTime
-                        val startSec = if (rawStart > cursorSec) {
-                            rawStart
-                        } else if (cursorSec > 0) {
-                            cursorSec
-                        } else if (rawStart > 0) {
+                        val rawEnd = item.endTime
+
+                        val epochStartSec = if (rawStart > 0) {
                             rawStart
                         } else {
-                            nowSec - (total + awake) * 60
+                            cursorSec
                         }
-                        val rawEnd = item.endTime
-                        val endSec = if (rawEnd > startSec) rawEnd else (startSec + dur * 60)
-                        cursorSec = endSec
+
+                        val epochEndSec = if (rawEnd > epochStartSec) {
+                            rawEnd
+                        } else {
+                            epochStartSec + (dur * 60)
+                        }
+
+                        cursorSec = epochEndSec
+
                         epochs.add(
                             mapOf(
                                 "stage" to stage,
-                                "startTime" to startSec.toLong() * 1000L,
-                                "endTime" to endSec.toLong() * 1000L,
+                                "startTime" to epochStartSec.toLong() * 1000L,
+                                "endTime" to epochEndSec.toLong() * 1000L,
                                 "durationMinutes" to dur
                             )
                         )
@@ -649,7 +725,9 @@ object KalkanBleManager {
     }
 
     private fun setupDeviceListeners() {
-        uteBleConnection?.setDeviceNotifyListener(object : DeviceNotifyListener {
+        val conn = uteBleConnection ?: uteBleClient?.getUteBleConnection()
+        uteBleConnection = conn
+        conn?.setDeviceNotifyListener(object : DeviceNotifyListener {
             override fun onNotify(device: UteBleDevice, notify: Notify) {
                 try {
                     when (notify.type) {

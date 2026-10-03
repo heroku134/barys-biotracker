@@ -10,7 +10,7 @@ def main():
     artifact_zip = r"C:\Users\KPK\.gemini\antigravity\brain\16482f10-ac02-4fe0-90f1-c7b0d41ee2ca\kalkan_sport_complete_source.zip"
     
     exclude_dir_names = {
-        '.git', '.gradle', 'build', '.dart_tool', '.kotlin', 'ephemeral', '.symlinks'
+        '.git', '.gradle', 'build', '.dart_tool', '.kotlin', 'ephemeral', '.symlinks', 'ios_build', 'android_build'
     }
     
     exclude_file_exts = {
@@ -27,8 +27,8 @@ def main():
     count = 0
     with zipfile.ZipFile(temp_zip, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
         for root, dirs, files in os.walk(root_dir):
-            # Prune excluded directories in-place
-            dirs[:] = [d for d in dirs if d not in exclude_dir_names]
+            # Prune excluded directories in-place (case-insensitive & prefix match)
+            dirs[:] = [d for d in dirs if d.lower() not in exclude_dir_names and not d.lower().startswith('.gradle') and not d.lower().startswith('.kotlin')]
             
             for file in files:
                 ext = os.path.splitext(file)[1].lower()
@@ -37,6 +37,12 @@ def main():
                 
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, root_dir).replace('\\', '/')
+                
+                # Double-check that no cached build artifact or compiler error log leaks in
+                parts = rel_path.lower().split('/')
+                if any(p in exclude_dir_names or p.startswith('.gradle') or p.startswith('.kotlin') for p in parts[:-1]):
+                    continue
+                
                 zf.write(full_path, rel_path)
                 count += 1
                 

@@ -18,7 +18,6 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
-        freeCompilerArgs += listOf("-Xskip-metadata-version-check")
     }
 
     defaultConfig {
@@ -51,6 +50,3 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
 }
 
-tasks.matching { it.name.contains("AarMetadata") }.configureEach {
-    enabled = false
-}
