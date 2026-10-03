@@ -565,7 +565,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
 
   // MARK: - Scientific Sleep Processing & Primary Session Isolation
 
-  private struct ParsedSleepSession {
+  private final class ParsedSleepSession {
     var epochs: [[String: Any]] = []
     var startSec: Int = 0
     var endSec: Int = 0
@@ -574,6 +574,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     var lightSleepMinutes: Int = 0
     var remSleepMinutes: Int = 0
     var awakeMinutes: Int = 0
+
+    init(startSec: Int, endSec: Int) {
+      self.startSec = startSec
+      self.endSec = endSec
+    }
 
     var timeInBedMinutes: Int {
       let spanMinutes = max(0, (endSec - startSec) / 60)
@@ -691,39 +696,44 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
             currentSession = ParsedSleepSession(startSec: startSec, endSec: endSec)
           }
 
-          let stage: String
-          switch item.sleepType {
-          case 1:
-            stage = "deep"
-            currentSession?.deepSleepMinutes += effectiveDur
-            currentSession?.totalSleepMinutes += effectiveDur
-          case 2, 5, 6:
-            stage = "light"
-            currentSession?.lightSleepMinutes += effectiveDur
-            currentSession?.totalSleepMinutes += effectiveDur
-          case 4:
-            stage = "rem"
-            currentSession?.remSleepMinutes += effectiveDur
-            currentSession?.totalSleepMinutes += effectiveDur
-          case 3, 7, 8:
-            stage = "awake"
-            currentSession?.awakeMinutes += effectiveDur
-          default:
-            stage = "light"
-            currentSession?.lightSleepMinutes += effectiveDur
-            currentSession?.totalSleepMinutes += effectiveDur
+          if let session = currentSession {
+            let stage: String
+            switch item.sleepType {
+            case 1:
+              stage = "deep"
+              session.deepSleepMinutes += effectiveDur
+              session.totalSleepMinutes += effectiveDur
+            case 2, 5, 6:
+              stage = "light"
+              session.lightSleepMinutes += effectiveDur
+              session.totalSleepMinutes += effectiveDur
+            case 4:
+              stage = "rem"
+              session.remSleepMinutes += effectiveDur
+              session.totalSleepMinutes += effectiveDur
+            case 3, 7, 8:
+              stage = "awake"
+              session.awakeMinutes += effectiveDur
+            default:
+              stage = "light"
+              session.lightSleepMinutes += effectiveDur
+              session.totalSleepMinutes += effectiveDur
+            }
+
+            if effectiveDur > 0 {
+              session.epochs.append([
+                "stage": stage,
+                "startTime": Int64(startSec) * 1000,
+                "endTime": Int64(endSec) * 1000,
+                "durationMinutes": effectiveDur
+              ])
+            }
+
+            if endSec > session.endSec {
+              session.endSec = endSec
+            }
           }
 
-          if effectiveDur > 0 {
-            currentSession?.epochs.append([
-              "stage": stage,
-              "startTime": Int64(startSec) * 1000,
-              "endTime": Int64(endSec) * 1000,
-              "durationMinutes": effectiveDur
-            ])
-          }
-
-          currentSession?.endSec = max(currentSession?.endSec ?? 0, endSec)
           sessionCursorSec = max(sessionCursorSec, endSec)
 
           if item.sleepType == 8 {
