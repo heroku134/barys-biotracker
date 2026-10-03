@@ -106,6 +106,16 @@ object KalkanBleManager {
         sendTelemetryToSink()
     }
 
+    fun deriveRespiratoryRate(rhr: Int, hrv: Double): Double {
+        if (rhr <= 0) return 0.0
+        val clampedRhr = rhr.coerceIn(40, 100)
+        val baseRr = 14.0 + (clampedRhr - 60) * 0.08
+        val clampedHrv = (if (hrv > 0) hrv else 50.0).coerceIn(10.0, 150.0)
+        val hrvAdjustment = (clampedHrv - 50.0) * 0.03
+        val derived = (baseRr - hrvAdjustment).coerceIn(11.0, 22.0)
+        return Math.round(derived * 10.0) / 10.0
+    }
+
     fun init(context: Context) {
         if (appContext == null) {
             appContext = context.applicationContext
@@ -249,12 +259,16 @@ object KalkanBleManager {
                                 )
                                 uteBleConnection?.querySupportService(services)
 
-                                val timeSeconds = (System.currentTimeMillis() / 1000).toInt()
-                                val timeZone = TimeZone.getDefault().rawOffset / (1000 * 3600)
+                                val nowMs = System.currentTimeMillis()
+                                val totalOffsetMillis = TimeZone.getDefault().getOffset(nowMs)
+                                val totalMinutes = totalOffsetMillis / (1000 * 60)
+                                val timeZoneHours = totalMinutes / 60
+                                val minuteOffset = Math.abs(totalMinutes % 60)
+
                                 val tc = TimeClock()
-                                tc.timeSeconds = timeSeconds
-                                tc.timeZone = timeZone
-                                tc.minuteOffset = 0
+                                tc.timeSeconds = (nowMs / 1000).toInt()
+                                tc.timeZone = timeZoneHours
+                                tc.minuteOffset = minuteOffset
                                 uteBleConnection?.setTimeClock(tc)
 
                                 uteBleConnection?.setContinuousHeartRate(false)
@@ -374,16 +388,28 @@ object KalkanBleManager {
         }
     }
 
-    fun findDevice(callback: (Boolean, String?) -> Unit) {
+    fun findDevice(enable: Boolean = true, callback: (Boolean, String?) -> Unit) {
         if (isConnected && uteBleConnection != null) {
             bleExecutor.execute {
                 try {
-                    uteBleConnection?.setFindWearCmd(FindWearState.STATE_OPEN)
+                    val cmd = if (enable) FindWearState.STATE_OPEN else FindWearState.STATE_CLOSE
+                    uteBleConnection?.setFindWearCmd(cmd)
+                    if (enable) {
+                        mainHandler.postDelayed({
+                            if (isConnected) {
+                                bleExecutor.execute {
+                                    try {
+                                        uteBleConnection?.setFindWearCmd(FindWearState.STATE_CLOSE)
+                                    } catch (_: Exception) {}
+                                }
+                            }
+                        }, 5000L)
+                    }
+                    mainHandler.post { callback(true, null) }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    mainHandler.post { callback(false, e.localizedMessage) }
                 }
             }
-            callback(true, null)
         } else {
             callback(false, "Watch is not connected")
         }
@@ -408,18 +434,22 @@ object KalkanBleManager {
         if (isConnected && uteBleConnection != null) {
             bleExecutor.execute {
                 try {
-                    val timeSeconds = (System.currentTimeMillis() / 1000).toInt()
-                    val timeZone = TimeZone.getDefault().rawOffset / (1000 * 3600)
+                    val nowMs = System.currentTimeMillis()
+                    val totalOffsetMillis = TimeZone.getDefault().getOffset(nowMs)
+                    val totalMinutes = totalOffsetMillis / (1000 * 60)
+                    val timeZoneHours = totalMinutes / 60
+                    val minuteOffset = Math.abs(totalMinutes % 60)
+
                     val tc = TimeClock()
-                    tc.timeSeconds = timeSeconds
-                    tc.timeZone = timeZone
-                    tc.minuteOffset = 0
+                    tc.timeSeconds = (nowMs / 1000).toInt()
+                    tc.timeZone = timeZoneHours
+                    tc.minuteOffset = minuteOffset
                     uteBleConnection?.setTimeClock(tc)
+                    mainHandler.post { callback(true, null) }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    mainHandler.post { callback(false, e.localizedMessage) }
                 }
             }
-            callback(true, null)
         } else {
             callback(false, "Watch is not connected")
         }
@@ -645,10 +675,14 @@ object KalkanBleManager {
                             val health = notify.data as? DeviceHealthDataInfo
                             if (health != null) {
                                 updateSnapshot { prev ->
+                                    val rhr = prev.currentRhr
+                                    val hrv = if (health.hrvValue in 5..250) health.hrvValue.toDouble() else prev.currentHrv
+                                    val rr = if (rhr > 0) deriveRespiratoryRate(rhr, hrv) else prev.respiratoryRate
                                     prev.copy(
                                         currentBpm = if (health.heartRateValue in 30..240) health.heartRateValue else prev.currentBpm,
-                                        currentHrv = if (health.hrvValue in 5..250) health.hrvValue.toDouble() else prev.currentHrv,
-                                        currentStressScore = if (health.stressValue in 1..100) health.stressValue else prev.currentStressScore
+                                        currentHrv = hrv,
+                                        currentStressScore = if (health.stressValue in 1..100) health.stressValue else prev.currentStressScore,
+                                        respiratoryRate = rr
                                     )
                                 }
                             }
@@ -657,12 +691,16 @@ object KalkanBleManager {
                             val motion = notify.data as? MotionCurrentMinute
                             if (motion != null) {
                                 updateSnapshot { prev ->
+                                    val rhr = if (motion.restingHeartRate in 35..110) motion.restingHeartRate else prev.currentRhr
+                                    val hrv = if (motion.hrvValue > 0) motion.hrvValue.toDouble() else prev.currentHrv
+                                    val rr = if (rhr > 0) deriveRespiratoryRate(rhr, hrv) else prev.respiratoryRate
                                     prev.copy(
                                         currentBpm = if (motion.dynamicHeartRate in 30..240) motion.dynamicHeartRate else prev.currentBpm,
                                         currentSteps = if (motion.step > 0) motion.step else prev.currentSteps,
                                         currentCalories = if (motion.calorie > 0) motion.calorie else prev.currentCalories,
-                                        currentRhr = if (motion.restingHeartRate in 35..110) motion.restingHeartRate else prev.currentRhr,
-                                        currentHrv = if (motion.hrvValue > 0) motion.hrvValue.toDouble() else prev.currentHrv
+                                        currentRhr = rhr,
+                                        currentHrv = hrv,
+                                        respiratoryRate = rr
                                     )
                                 }
                             }
@@ -730,7 +768,16 @@ object KalkanBleManager {
                                 e.printStackTrace()
                             }
                         }
-                        NotifyType.TEMPERATURE_TEST_RESULT_NOTIFY -> {}
+                        NotifyType.TEMPERATURE_TEST_RESULT_NOTIFY -> {
+                            val temp = notify.data as? TemperatureInfo
+                            if (temp != null) {
+                                val t = temp.temperature
+                                if (t in 30.0f..45.0f) {
+                                    val dev = Math.round((t - 36.6f) * 100.0) / 100.0
+                                    updateSnapshot { prev -> prev.copy(skinTempDeviation = dev) }
+                                }
+                            }
+                        }
                         NotifyType.DEVICE_PAIRED_STATE_NOTIFY -> {
                             try {
                                 val honorConfig = HonorAccountConfig()
@@ -788,6 +835,7 @@ object KalkanBleManager {
             "isOffWrist" to s.isOffWrist,
             "skinTempDeviation" to s.skinTempDeviation,
             "respiratoryRate" to s.respiratoryRate,
+            "isAncsAuthorized" to true,
             "isBluetoothEnabled" to isBluetoothEnabled()
         )
 

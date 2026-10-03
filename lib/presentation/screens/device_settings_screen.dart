@@ -384,6 +384,78 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ],
               ),
             ),
+            if (telemetry.isConnected && !telemetry.isAncsAuthorized) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.amber.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(KalkanUi.cardRadius),
+                  border: Border.all(
+                    color: AppColors.amber.withValues(alpha: 0.4),
+                    width: KalkanUi.hairline,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.notifications_off_outlined, color: AppColors.amber, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            tr(
+                              'Уведомления iOS не передаются',
+                              'iOS билдирүүлөрү өткөрүлбөйт',
+                              'iOS Notifications not shared',
+                            ),
+                            style: const TextStyle(
+                              color: AppColors.amber,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      tr(
+                        'Чтобы часы получали звонки и SMS, откройте Настройки iOS ➔ Bluetooth ➔ выберите часы ➔ включите «Делиться системными уведомлениями».',
+                        'Саат чалууларды жана SMSтерди алышы үчүн, iOS Орнотуулар ➔ Bluetooth ➔ саатты тандап ➔ «Системалык билдирүүлөр менен бөлүшүү» күйгүзүңүз.',
+                        'To receive calls and messages on the watch, open iOS Settings ➔ Bluetooth ➔ tap your watch ➔ enable "Share System Notifications".',
+                      ),
+                      style: TextStyle(
+                        color: palette.secondary,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    InkWell(
+                      onTap: () => widget.bleBridge.openAppSettings(),
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.amber.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                        ),
+                        child: Text(
+                          tr('Открыть Настройки', 'Орнотууларды ачуу', 'Open Settings'),
+                          style: const TextStyle(
+                            color: AppColors.amber,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             SizedBox(height: 14),
 
             // Кнопка поиска часов (Вибрация)

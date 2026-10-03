@@ -146,6 +146,7 @@ class UteBleBridge {
               yesterdayStrain: _parseDouble(event['yesterdayStrain'], prev?.yesterdayStrain ?? 0.0),
               zoneMinutes: _parseZoneMinutes(event['zoneMinutes']) ?? prev?.zoneMinutes ?? const [0, 0, 0, 0, 0],
               currentStressScore: _parseInt(event['currentStressScore'], prev?.currentStressScore ?? 0),
+              isAncsAuthorized: _parseBool(event['isAncsAuthorized'], prev?.isAncsAuthorized ?? true),
             );
 
             _realTelemetry = telemetry;
@@ -588,9 +589,9 @@ class UteBleBridge {
 
   // --- Команды часам ---
 
-  Future<void> findWatch() async {
+  Future<void> findWatch({bool enable = true}) async {
     try {
-      await _methodChannel.invokeMethod('findDevice');
+      await _methodChannel.invokeMethod('findDevice', {'enable': enable});
     } catch (e) {
       debugPrint('UteBleBridge findWatch error: $e');
     }

@@ -65,6 +65,9 @@ class BleTelemetry {
   // Дневной стресс
   final int currentStressScore; // 0..100
 
+  // Apple Notification Center Service (iOS Bluetooth permissions)
+  final bool isAncsAuthorized;
+
   // Флаги доступности реальных биомаркеров
   bool get hasHrv => hrv > 0;
   bool get hasRhr => restingHeartRate > 0;
@@ -108,6 +111,9 @@ class BleTelemetry {
 
     // Стресс
     this.currentStressScore = 0,
+
+    // Уведомления iOS
+    this.isAncsAuthorized = true,
   });
 
   factory BleTelemetry.empty() => BleTelemetry(
@@ -141,6 +147,7 @@ class BleTelemetry {
     double? yesterdayStrain,
     List<int>? zoneMinutes,
     int? currentStressScore,
+    bool? isAncsAuthorized,
   }) {
     return BleTelemetry(
       heartRate: heartRate ?? this.heartRate,
@@ -169,6 +176,7 @@ class BleTelemetry {
       yesterdayStrain: yesterdayStrain ?? this.yesterdayStrain,
       zoneMinutes: zoneMinutes ?? this.zoneMinutes,
       currentStressScore: currentStressScore ?? this.currentStressScore,
+      isAncsAuthorized: isAncsAuthorized ?? this.isAncsAuthorized,
     );
   }
 }

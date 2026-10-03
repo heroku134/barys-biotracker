@@ -61,6 +61,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   private var currentStressScore: Int = 0
   private var isOffWrist: Bool = false
   private var skinTempDeviation: Double = 0.0
+  private var currentRespiratoryRate: Double = 0.0
+  private var isAncsAuthorized: Bool = true
+  private var findDeviceAutoStopWorkItem: DispatchWorkItem?
 
   private var lastConnectedAddress: String?
   private var pendingConnectResult: FlutterResult?
@@ -94,6 +97,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   }
 
   func initSdk() {
+    restoreLatestSnapshot()
     if centralManager == nil {
       centralManager = CBCentralManager(
         delegate: self,
@@ -107,6 +111,42 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     mgr.delegate = self
     mgr.isScanRepeat = true
     lastConnectedAddress = UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
+  }
+
+  private func restoreLatestSnapshot() {
+    guard let cached = UserDefaults.standard.dictionary(forKey: "kalkan_latest_telemetry_snapshot") else { return }
+    if let bpm = cached["heartRate"] as? Int, bpm > 0 { currentBpm = bpm }
+    if let st = cached["steps"] as? Int, st > 0 { currentSteps = st }
+    if let cal = cached["calories"] as? Int, cal > 0 { currentCalories = cal }
+    if let bat = cached["batteryLevel"] as? Int, bat > 0 { currentBattery = bat }
+    if let ch = cached["isCharging"] as? Bool { isCharging = ch }
+    if let hrv = cached["hrv"] as? Double, hrv > 0 { currentHrv = hrv }
+    if let rhr = cached["restingHeartRate"] as? Int, rhr > 0 { currentRhr = rhr }
+    if let sl = cached["sleepMinutes"] as? Int, sl > 0 { currentSleepMinutes = sl }
+    if let dsl = cached["deepSleepMinutes"] as? Int, dsl > 0 { currentDeepSleepMinutes = dsl }
+    if let rsl = cached["remSleepMinutes"] as? Int, rsl > 0 { currentRemSleepMinutes = rsl }
+    if let tib = cached["timeInBedMinutes"] as? Int, tib > 0 { timeInBedMinutes = tib }
+    if let eff = cached["sleepEfficiency"] as? Double, eff > 0 { currentSleepEfficiency = eff }
+    if let hyp = cached["sleepHypnogram"] as? [[String: Any]], !hyp.isEmpty { currentHypnogram = hyp }
+    if let sc = cached["currentStressScore"] as? Int, sc > 0 { currentStressScore = sc }
+    if let sk = cached["skinTempDeviation"] as? Double { skinTempDeviation = sk }
+    if let rr = cached["respiratoryRate"] as? Double, rr > 0 {
+      currentRespiratoryRate = rr
+    } else if currentRhr > 0 {
+      currentRespiratoryRate = deriveRespiratoryRate(rhr: currentRhr, hrv: currentHrv)
+    }
+    if let ancs = cached["isAncsAuthorized"] as? Bool { isAncsAuthorized = ancs }
+    if let dev = cached["deviceName"] as? String, !dev.isEmpty { currentDeviceName = dev }
+  }
+
+  private func deriveRespiratoryRate(rhr: Int, hrv: Double) -> Double {
+    guard rhr > 0 else { return 0.0 }
+    let clampedRhr = min(100, max(40, rhr))
+    let baseRr = 14.0 + Double(clampedRhr - 60) * 0.08
+    let clampedHrv = min(150.0, max(10.0, hrv > 0 ? hrv : 50.0))
+    let hrvAdjustment = (clampedHrv - 50.0) * 0.03
+    let derived = min(22.0, max(11.0, baseRr - hrvAdjustment))
+    return round(derived * 10.0) / 10.0
   }
 
   private func runWhenSdkReady(_ action: @escaping () -> Void) {
@@ -352,6 +392,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
 
   func disconnect(forget: Bool = false, result: @escaping FlutterResult) {
     isManualDisconnect = true
+    findDeviceAutoStopWorkItem?.cancel()
+    findDeviceAutoStopWorkItem = nil
     if mgr.isScanning && !isScanning {
       mgr.stopScanDevices()
     }
@@ -372,6 +414,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       currentHypnogram = []
       currentStressScore = 0
       currentDeviceName = ""
+      currentRespiratoryRate = 0.0
     }
     pendingConnectAddress = nil
     if let model = connectedModel {
@@ -421,13 +464,31 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     device.setProfessionalSleep(true) { _, _ in }
   }
 
-  func findDevice(result: @escaping FlutterResult) {
+  func findDevice(enable: Bool = true, result: @escaping FlutterResult) {
     guard isConnected else {
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
       return
     }
-    device.setFindWearCmd(1) { _, _ in }
-    result(true)
+    findDeviceAutoStopWorkItem?.cancel()
+    findDeviceAutoStopWorkItem = nil
+
+    let cmd = enable ? 1 : 0
+    device.setFindWearCmd(cmd) { [weak self] code, _ in
+      guard let self = self else { return }
+      if self.sdkOk(Int(code)) {
+        if enable {
+          let item = DispatchWorkItem { [weak self] in
+            guard let self = self, self.isConnected else { return }
+            self.device.setFindWearCmd(0) { _, _ in }
+          }
+          self.findDeviceAutoStopWorkItem = item
+          DispatchQueue.main.asyncAfter(deadline: .now() + 5.0, execute: item)
+        }
+        result(true)
+      } else {
+        result(FlutterError(code: "COMMAND_FAILED", message: "setFindWearCmd failed with code \(code)", details: nil))
+      }
+    }
   }
 
   func measureHeartRate(result: @escaping FlutterResult) {
@@ -435,10 +496,22 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
       return
     }
-    device.setContinueMeasureHeartRateSwitch(true) { _, _ in }
-    device.click(.HRM) { _ in }
-    device.oneClickMeasurement { _ in }
-    result(true)
+    // Do NOT enable continuous measurement switch here! Measure on-demand optical HRM cleanly.
+    device.clickMeasurementType(.HRM) { [weak self] code in
+      guard let self = self else { return }
+      if self.sdkOk(Int(code)) {
+        result(true)
+      } else {
+        self.device.oneClickMeasurement { [weak self] fallbackCode in
+          guard let self = self else { return }
+          if self.sdkOk(Int(fallbackCode)) {
+            result(true)
+          } else {
+            result(FlutterError(code: "MEASUREMENT_FAILED", message: "Failed to trigger heart rate measurement (code \(fallbackCode))", details: nil))
+          }
+        }
+      }
+    }
   }
 
   func syncTime(result: @escaping FlutterResult) {
@@ -447,9 +520,17 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       return
     }
     let seconds = Int(Date().timeIntervalSince1970)
-    let timeZone = TimeZone.current.secondsFromGMT() / 3600
-    device.setTimeClock(seconds, timeZone: timeZone, minuteOffset: 0) { _, _ in }
-    result(true)
+    let totalOffsetSec = TimeZone.current.secondsFromGMT()
+    let timeZone = totalOffsetSec / 3600
+    let minuteOffset = (abs(totalOffsetSec) % 3600) / 60
+    device.setTimeClock(seconds, timeZone: timeZone, minuteOffset: minuteOffset) { [weak self] code, _ in
+      guard let self = self else { return }
+      if self.sdkOk(Int(code)) {
+        result(true)
+      } else {
+        result(FlutterError(code: "SYNC_TIME_FAILED", message: "setTimeClock failed with code \(code)", details: nil))
+      }
+    }
   }
 
   // MARK: - CBCentralManagerDelegate
@@ -519,7 +600,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       "currentStressScore": self.currentStressScore,
       "isOffWrist": self.isOffWrist,
       "skinTempDeviation": self.skinTempDeviation,
-      "respiratoryRate": 0.0
+      "respiratoryRate": self.currentRespiratoryRate,
+      "isAncsAuthorized": self.isAncsAuthorized
     ]
     self.telemetrySink?(snapshot)
     UserDefaults.standard.set(snapshot, forKey: "kalkan_latest_telemetry_snapshot")
@@ -943,20 +1025,32 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       }
     }
 
-    // Live continuous heart rate stream (model.rate is property of UTEModelHRMReal)
+    // Heart rate alarm trigger notification (m.rate is threshold value triggering alarm)
     device.onNotifyHRMReal { [weak self] model, _ in
       guard let self = self, let m = model, m.rate > 0 else { return }
       self.currentBpm = Int(m.rate)
       self.pushTelemetry()
     }
 
-    // Live real-time motion and steps stream
+    // Live real-time minute data stream (steps, dynamic/resting heart rate, calories)
     device.onNotifyCurrentData { [weak self] currentModel in
       guard let self = self, let m = currentModel else { return }
       if m.step > 0 { self.currentSteps = Int(m.step) }
       if m.calorie > 0 { self.currentCalories = Int(m.calorie) }
-      if m.restingHeartRate > 0 { self.currentRhr = Int(m.restingHeartRate) }
+      if m.restingHeartRate > 0 {
+        self.currentRhr = Int(m.restingHeartRate)
+        self.currentRespiratoryRate = self.deriveRespiratoryRate(rhr: self.currentRhr, hrv: self.currentHrv)
+      }
       if m.dynamicHeartRate > 0 { self.currentBpm = Int(m.dynamicHeartRate) }
+      self.pushTelemetry()
+    }
+
+    // Live workout sport real data stream (continuous heart rate and motion during workout)
+    device.onNotifySportRealData { [weak self] model, _ in
+      guard let self = self, let m = model else { return }
+      if m.heartRate > 0 { self.currentBpm = Int(m.heartRate) }
+      if m.step > 0 { self.currentSteps = Int(m.step) }
+      if m.calorie > 0 { self.currentCalories = Int(m.calorie) }
       self.pushTelemetry()
     }
 
@@ -989,10 +1083,19 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
         self.pushTelemetry()
       } else if type == .HRV {
         self.currentHrv = Double(value)
+        if self.currentRhr > 0 {
+          self.currentRespiratoryRate = self.deriveRespiratoryRate(rhr: self.currentRhr, hrv: self.currentHrv)
+        }
         self.pushTelemetry()
       } else if type == .pressure {
         self.currentStressScore = Int(value)
         self.pushTelemetry()
+      } else if type == .temperature {
+        let tempC: Double = value > 1000 ? Double(value) / 100.0 : (value > 100 ? Double(value) / 10.0 : Double(value))
+        if tempC >= 30.0 && tempC <= 45.0 {
+          self.skinTempDeviation = round((tempC - 36.6) * 100.0) / 100.0
+          self.pushTelemetry()
+        }
       } else {
         self.pushTelemetry()
       }
@@ -1008,7 +1111,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     // Live body temperature notification
     device.onNotifyBodyTemperatureValueBlock { [weak self] time, state, value in
       guard let self = self, value > 0 else { return }
-      self.pushTelemetry()
+      let tempC: Double = value > 1000 ? Double(value) / 100.0 : (value > 100 ? Double(value) / 10.0 : Double(value))
+      if tempC >= 30.0 && tempC <= 45.0 {
+        self.skinTempDeviation = round((tempC - 36.6) * 100.0) / 100.0
+        self.pushTelemetry()
+      }
     }
 
     // Wearing state (off wrist): state 0 = off-wrist (снято), state 1 = on-wrist (надето)
@@ -1112,8 +1219,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
 
       // Sync time
       let now = Int(Date().timeIntervalSince1970)
-      let timeZone = TimeZone.current.secondsFromGMT() / 3600
-      device.setTimeClock(now, timeZone: timeZone, minuteOffset: 0) { _, _ in }
+      let totalOffsetSec = TimeZone.current.secondsFromGMT()
+      let timeZone = totalOffsetSec / 3600
+      let minuteOffset = (abs(totalOffsetSec) % 3600) / 60
+      device.setTimeClock(now, timeZone: timeZone, minuteOffset: minuteOffset) { _, _ in }
 
       bindLiveStreams()
       applyDeviceHardwareSettings()
@@ -1156,6 +1265,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       // Unknown or sync/intermediate status (e.g. sync start/end) - do NOT disconnect!
       break
     }
+  }
+
+  func uteANCSAuthorization(_ ancsAuthorized: Bool) {
+    isAncsAuthorized = ancsAuthorized
+    pushTelemetry()
   }
 }
 
@@ -1324,17 +1438,8 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
       binaryMessenger: messenger
     )
     liveActivityChannel.setMethodCallHandler { (call, result) in
-      #if canImport(ActivityKit)
-      if #available(iOS 16.1, *) {
-        switch call.method {
-        case "startWorkoutActivity", "updateWorkoutActivity", "endWorkoutActivity":
-          result(true)
-        default:
-          result(FlutterMethodNotImplemented)
-        }
-        return
-      }
-      #endif
+      // Currently KALKAN SPORT does not bundle an embedded ActivityKit Widget Extension.
+      // Return false honestly so the application knows Live Activities are currently inactive.
       result(false)
     }
 
@@ -1379,7 +1484,8 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
           result(false)
         }
       case "findDevice":
-        KalkanBleManager.shared.findDevice(result: result)
+        let enable = (call.arguments as? [String: Any])?["enable"] as? Bool ?? true
+        KalkanBleManager.shared.findDevice(enable: enable, result: result)
       case "measureHeartRate":
         KalkanBleManager.shared.measureHeartRate(result: result)
       case "syncTime":

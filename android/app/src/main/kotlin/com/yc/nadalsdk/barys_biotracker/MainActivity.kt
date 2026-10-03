@@ -203,7 +203,8 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
                     "findDevice" -> {
-                        KalkanBleManager.findDevice { success, err ->
+                        val enable = call.argument<Boolean>("enable") ?: true
+                        KalkanBleManager.findDevice(enable) { success, err ->
                             if (success) result.success(true) else result.error("NOT_CONNECTED", err, null)
                         }
                     }

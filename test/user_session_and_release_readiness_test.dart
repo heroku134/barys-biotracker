@@ -602,6 +602,52 @@ void main() {
       expect(prefs.getInt('kalkan_hr_interval_minutes'), 30);
       expect(methodCalls.last.arguments['intervalMinutes'], 30);
     });
+
+    test('18. BLE ANCS status, skin temperature deviation, and derived respiratory rate telemetry integrity', () {
+      final defaultTelemetry = BleTelemetry.empty();
+      expect(defaultTelemetry.isAncsAuthorized, isTrue);
+      expect(defaultTelemetry.skinTempDeviation, 0.0);
+      expect(defaultTelemetry.respiratoryRate, 0.0);
+      expect(defaultTelemetry.hasSkinTempDeviation, isFalse);
+      expect(defaultTelemetry.hasRespiratoryRate, isFalse);
+
+      final activeTelemetry = defaultTelemetry.copyWith(
+        skinTempDeviation: 0.2,
+        respiratoryRate: 15.6,
+        isAncsAuthorized: false,
+      );
+
+      expect(activeTelemetry.isAncsAuthorized, isFalse);
+      expect(activeTelemetry.skinTempDeviation, 0.2);
+      expect(activeTelemetry.respiratoryRate, 15.6);
+      expect(activeTelemetry.hasSkinTempDeviation, isTrue);
+      expect(activeTelemetry.hasRespiratoryRate, isTrue);
+    });
+
+    test('19. BLE Watch Commands: findWatch with enable parameter and safe protocol', () async {
+      final methodCalls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('com.nadal.ble/methods'),
+        (MethodCall call) async {
+          methodCalls.add(call);
+          return true;
+        },
+      );
+
+      final bridge = UteBleBridge();
+      await bridge.init();
+
+      // Test start finding watch (enable: true)
+      await bridge.findWatch(enable: true);
+      expect(methodCalls.last.method, 'findDevice');
+      expect(methodCalls.last.arguments, {'enable': true});
+
+      // Test stop finding watch (enable: false)
+      await bridge.findWatch(enable: false);
+      expect(methodCalls.last.method, 'findDevice');
+      expect(methodCalls.last.arguments, {'enable': false});
+    });
   });
 }
 
