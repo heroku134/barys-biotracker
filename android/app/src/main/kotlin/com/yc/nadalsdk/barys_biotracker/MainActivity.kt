@@ -153,27 +153,22 @@ class MainActivity : FlutterActivity() {
                                     currentDeepSleepMinutes = deep
                                     currentRemSleepMinutes = rem
                                     val inBed = total + awake
-                                    timeInBedMinutes = if (inBed > 0) inBed else (currentSleepMinutes + 25)
-                                    currentSleepEfficiency = if (timeInBedMinutes > 0) {
+                                    timeInBedMinutes = if (inBed > 0) inBed else total
+                                    currentSleepEfficiency = if (timeInBedMinutes > 0 && total > 0) {
                                         Math.round((currentSleepMinutes.toDouble() / timeInBedMinutes.toDouble()) * 100.0) / 100.0
-                                    } else 0.92
+                                    } else 0.0
                                     currentHypnogram = epochs
                                 } else {
                                     currentSleepMinutes = sleep.sleepTotalTime
-                                    currentDeepSleepMinutes = (sleep.sleepTotalTime * 0.22).toInt()
-                                    currentRemSleepMinutes = (sleep.sleepTotalTime * 0.23).toInt()
-                                    timeInBedMinutes = currentSleepMinutes + 25
-                                    currentSleepEfficiency = 0.92
+                                    currentDeepSleepMinutes = 0
+                                    currentRemSleepMinutes = 0
+                                    timeInBedMinutes = sleep.sleepTotalTime
+                                    currentSleepEfficiency = 0.0
+                                    currentHypnogram = emptyList()
                                 }
                             }
                         } catch (e: Exception) {
                             // Non-critical sleep poll
-                        }
-
-                        if (currentBpm in 40..100) {
-                            if (currentRhr == 0 || currentBpm < currentRhr) {
-                                currentRhr = currentBpm
-                            }
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -613,9 +608,6 @@ class MainActivity : FlutterActivity() {
                                 if (health.stressValue in 1..100) {
                                     currentStressScore = health.stressValue
                                 }
-                                if (health.bodyTemperature in 30.0f..43.0f) {
-                                    skinTempDeviation = Math.round((health.bodyTemperature - 36.6f) * 10.0) / 10.0
-                                }
                             }
                         }
                         NotifyType.MOTION_CURRENT_MINUTE_NOTIFY -> {
@@ -629,6 +621,12 @@ class MainActivity : FlutterActivity() {
                                 }
                                 if (motion.calorie > 0) {
                                     currentCalories = motion.calorie
+                                }
+                                if (motion.restingHeartRate in 35..110) {
+                                    currentRhr = motion.restingHeartRate
+                                }
+                                if (motion.hrvValue > 0) {
+                                    currentHrv = motion.hrvValue.toDouble()
                                 }
                             }
                         }
@@ -701,12 +699,7 @@ class MainActivity : FlutterActivity() {
                         }
                         NotifyType.TEMPERATURE_TEST_RESULT_NOTIFY -> {
                             val temp = notify.data as? TemperatureInfo
-                            if (temp != null) {
-                                val deg = temp.temperature.toDouble()
-                                if (deg in 30.0..42.0) {
-                                    skinTempDeviation = Math.round((deg - 36.6) * 10.0) / 10.0
-                                }
-                            }
+                            // Spot skin temperature: do not subtract synthetic 36.6 constant
                         }
                         NotifyType.DEVICE_PAIRED_STATE_NOTIFY -> {
                             try {
@@ -740,13 +733,13 @@ class MainActivity : FlutterActivity() {
                 "sleepMinutes" to currentSleepMinutes,
                 "deepSleepMinutes" to currentDeepSleepMinutes,
                 "remSleepMinutes" to currentRemSleepMinutes,
-                "timeInBedMinutes" to (if (timeInBedMinutes > 0) timeInBedMinutes else (if (currentSleepMinutes > 0) currentSleepMinutes + 25 else 0)),
-                "sleepEfficiency" to (if (currentSleepEfficiency > 0.0) currentSleepEfficiency else (if (currentSleepMinutes > 0) 0.92 else 0.0)),
+                "timeInBedMinutes" to timeInBedMinutes,
+                "sleepEfficiency" to currentSleepEfficiency,
                 "sleepHypnogram" to currentHypnogram,
                 "currentStressScore" to currentStressScore,
                 "isOffWrist" to isOffWrist,
                 "skinTempDeviation" to skinTempDeviation,
-                "respiratoryRate" to (if (currentBpm in 40..100) (14.0 + (currentBpm - 60) * 0.05).coerceIn(12.0, 20.0) else 0.0)
+                "respiratoryRate" to 0.0
             )
             telemetryEventSink?.success(telemetry)
         }

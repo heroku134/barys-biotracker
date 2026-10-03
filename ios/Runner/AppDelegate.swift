@@ -650,13 +650,13 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         "sleepMinutes": self.currentSleepMinutes,
         "deepSleepMinutes": self.currentDeepSleepMinutes,
         "remSleepMinutes": self.currentRemSleepMinutes,
-        "timeInBedMinutes": self.timeInBedMinutes > 0 ? self.timeInBedMinutes : (self.currentSleepMinutes > 0 ? self.currentSleepMinutes + 25 : 0),
-        "sleepEfficiency": self.currentSleepEfficiency > 0.0 ? self.currentSleepEfficiency : (self.currentSleepMinutes > 0 ? 0.92 : 0.0),
+        "timeInBedMinutes": self.timeInBedMinutes,
+        "sleepEfficiency": self.currentSleepEfficiency,
         "sleepHypnogram": self.currentHypnogram,
         "currentStressScore": self.currentStressScore,
         "isOffWrist": self.isOffWrist,
         "skinTempDeviation": self.skinTempDeviation,
-        "respiratoryRate": (self.currentBpm >= 40 && self.currentBpm <= 100) ? min(max(14.0 + Double(self.currentBpm - 60) * 0.05, 12.0), 20.0) : 0.0
+        "respiratoryRate": 0.0
       ] as [String: Any])
     }
   }
@@ -738,8 +738,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
           self.currentDeepSleepMinutes = deep
           self.currentRemSleepMinutes = rem
           let inBed = total + awake
-          self.timeInBedMinutes = inBed > 0 ? inBed : (total + 25)
-          self.currentSleepEfficiency = self.timeInBedMinutes > 0 ? round((Double(total) / Double(self.timeInBedMinutes)) * 100.0) / 100.0 : 0.92
+          self.timeInBedMinutes = inBed > 0 ? inBed : total
+          self.currentSleepEfficiency = (inBed > 0 && total > 0) ? round((Double(total) / Double(inBed)) * 100.0) / 100.0 : 0.0
           self.currentHypnogram = epochs
           self.pushTelemetry()
           self.refreshWorkout()
@@ -749,10 +749,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
       if let minutes = self.sleepMinutes(from: dict), minutes > 0 {
         self.currentSleepMinutes = minutes
-        self.currentDeepSleepMinutes = Int(Double(minutes) * 0.22)
-        self.currentRemSleepMinutes = Int(Double(minutes) * 0.23)
-        self.timeInBedMinutes = minutes + 25
-        self.currentSleepEfficiency = 0.92
+        self.currentDeepSleepMinutes = 0
+        self.currentRemSleepMinutes = 0
+        self.timeInBedMinutes = minutes
+        self.currentSleepEfficiency = 0.0
+        self.currentHypnogram = []
         self.pushTelemetry()
       }
     }
@@ -840,9 +841,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.onNotifyHRMReal { [weak self] model, _ in
       guard let self = self, let m = model, m.rate > 0 else { return }
       self.currentBpm = Int(m.rate)
-      if self.currentRhr == 0 && m.rate >= 40 && m.rate <= 100 {
-        self.currentRhr = Int(m.rate)
-      }
       self.pushTelemetry()
     }
 
@@ -860,9 +858,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.onNotifyOneClickMeasurementBlock { [weak self] _, hrm, _, _ in
       guard let self = self, hrm > 0 else { return }
       self.currentBpm = Int(hrm)
-      if self.currentRhr == 0 && hrm >= 40 && hrm <= 100 {
-        self.currentRhr = Int(hrm)
-      }
       self.pushTelemetry()
     }
 
@@ -885,9 +880,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       guard let self = self, value > 0 else { return }
       if type == .HRM {
         self.currentBpm = Int(value)
-        if self.currentRhr == 0 && value >= 40 && value <= 100 {
-          self.currentRhr = Int(value)
-        }
         self.pushTelemetry()
       } else if type == .HRV {
         self.currentHrv = Double(value)
@@ -895,12 +887,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       } else if type == .pressure {
         self.currentStressScore = Int(value)
         self.pushTelemetry()
-      } else if type == .temperature {
-        let deg = Double(value) / 10.0
-        if deg >= 30.0 && deg <= 45.0 {
-          self.skinTempDeviation = round((deg - 36.6) * 10) / 10
-          self.pushTelemetry()
-        }
       } else {
         self.pushTelemetry()
       }
@@ -913,14 +899,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       self.pushTelemetry()
     }
 
-    // Live body temperature
+    // Live body temperature notification
     device.onNotifyBodyTemperatureValueBlock { [weak self] time, state, value in
       guard let self = self, value > 0 else { return }
-      let deg = Double(value) / 10.0
-      if deg >= 30.0 && deg <= 45.0 {
-        self.skinTempDeviation = round((deg - 36.6) * 10) / 10
-        self.pushTelemetry()
-      }
+      // Spot skin temperature in Celsius: do not subtract synthetic 36.6 constant
+      self.pushTelemetry()
     }
 
     // Wearing state (off wrist)

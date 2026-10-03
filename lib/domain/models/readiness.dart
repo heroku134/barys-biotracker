@@ -87,9 +87,22 @@ class ReadinessResult {
   // Режим калибровки первых 14 дней
   final bool isCalibrating;
   final int calibrationDay;
-
-  // Был ли снят браслет ночью
   final bool isOffWrist;
+
+  // Доступность ночных компонентов
+  final bool hasHrv;
+  final bool hasRhr;
+  final bool hasSleep;
+  final bool hasRr;
+  final bool hasTemp;
+  final bool hasSufficientData;
+
+  // Динамические веса (в процентах, сумма активных = 100%)
+  final int hrvWeightPct;
+  final int rhrWeightPct;
+  final int sleepWeightPct;
+  final int rrWeightPct;
+  final int tempWeightPct;
 
   const ReadinessResult({
     required this.score,
@@ -113,5 +126,16 @@ class ReadinessResult {
     this.isCalibrating = false,
     this.calibrationDay = 14,
     this.isOffWrist = false,
+    this.hasHrv = true,
+    this.hasRhr = true,
+    this.hasSleep = true,
+    this.hasRr = false,
+    this.hasTemp = false,
+    this.hasSufficientData = true,
+    this.hrvWeightPct = 35,
+    this.rhrWeightPct = 25,
+    this.sleepWeightPct = 20,
+    this.rrWeightPct = 10,
+    this.tempWeightPct = 10,
   });
 }

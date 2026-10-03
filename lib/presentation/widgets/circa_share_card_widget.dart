@@ -390,17 +390,37 @@ class CircaShareCardWidget extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Expanded(child: _buildMetricColumn('HRV rMSSD', '${(telemetry.hrv * progress).round()}', 'мс')),
+              Expanded(
+                child: _buildMetricColumn(
+                  'HRV rMSSD',
+                  telemetry.hrv > 0 ? '${(telemetry.hrv * progress).round()}' : '—',
+                  telemetry.hrv > 0 ? 'мс' : '',
+                ),
+              ),
               _buildVerticalHairline(),
-              Expanded(child: _buildMetricColumn('RHR NADIR', '${telemetry.restingHeartRate}', 'bpm')),
+              Expanded(
+                child: _buildMetricColumn(
+                  'RHR NADIR',
+                  telemetry.restingHeartRate > 0 ? '${telemetry.restingHeartRate}' : '—',
+                  telemetry.restingHeartRate > 0 ? 'bpm' : '',
+                ),
+              ),
               _buildVerticalHairline(),
-              Expanded(child: _buildMetricColumn('RESP RATE', telemetry.respiratoryRate.toStringAsFixed(1), 'rpm')),
+              Expanded(
+                child: _buildMetricColumn(
+                  'RESP RATE',
+                  telemetry.respiratoryRate > 0 ? telemetry.respiratoryRate.toStringAsFixed(1) : '—',
+                  telemetry.respiratoryRate > 0 ? 'rpm' : '',
+                ),
+              ),
               _buildVerticalHairline(),
               Expanded(
                 child: _buildMetricColumn(
                   'SKIN TEMP',
-                  '${telemetry.skinTempDeviation >= 0 ? '+' : ''}${telemetry.skinTempDeviation.toStringAsFixed(1)}°',
-                  'C',
+                  telemetry.skinTempDeviation != 0.0
+                      ? '${telemetry.skinTempDeviation >= 0 ? '+' : ''}${telemetry.skinTempDeviation.toStringAsFixed(1)}°'
+                      : '—',
+                  telemetry.skinTempDeviation != 0.0 ? 'C' : '',
                 ),
               ),
             ],

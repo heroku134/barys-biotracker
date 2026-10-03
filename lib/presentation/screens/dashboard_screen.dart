@@ -218,7 +218,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final sleepScore = sleepResult.sleepPerformanceScore;
     final name = _userProfile.name.isNotEmpty ? _userProfile.name : AppStrings.tr('home_guest', language);
     final isConnected = _telemetry.isConnected;
-    final hasNightData = _telemetry.sleepMinutes > 0 || _telemetry.hrv > 0;
+    final hasNightData = readiness.hasSufficientData;
     final isCalibrating = _calDays < 14;
 
     return Scaffold(

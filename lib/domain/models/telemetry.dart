@@ -64,6 +64,14 @@ class BleTelemetry {
   // Дневной стресс
   final int currentStressScore; // 0..100
 
+  // Флаги доступности реальных биомаркеров
+  bool get hasHrv => hrv > 0;
+  bool get hasRhr => restingHeartRate > 0;
+  bool get hasSleep => sleepMinutes > 0;
+  bool get hasRespiratoryRate => respiratoryRate > 0;
+  bool get hasSkinTempDeviation => skinTempDeviation != 0.0;
+  bool get hasNocturnalData => hasSleep || hasHrv || hasRhr;
+
   const BleTelemetry({
     this.heartRate = 0,
     this.steps = 0,

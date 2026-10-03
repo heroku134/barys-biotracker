@@ -209,57 +209,71 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
 
               _buildBiomarkerRow(
                 title: 'Ритм сердца (вариабельность)',
-                weight: '35%',
-                currentVal: '${readiness.currentHrv.round()} мс',
-                baselineVal: 'База: ${readiness.baselineHrv.round()} мс (${readiness.hrvDiffPercent >= 0 ? "+${readiness.hrvDiffPercent}" : "${readiness.hrvDiffPercent}"}%)',
-                score: readiness.hrvFactor,
-                color: readiness.hrvFactor >= 70
-                    ? AppColors.sage
-                    : (readiness.hrvFactor >= 45 ? AppColors.amber : AppColors.rose),
+                weight: readiness.hasHrv ? '${readiness.hrvWeightPct}%' : '—',
+                currentVal: readiness.hasHrv ? '${readiness.currentHrv.round()} мс' : 'Ожидание ночного замера',
+                baselineVal: readiness.hasHrv
+                    ? 'База: ${readiness.baselineHrv.round()} мс (${readiness.hrvDiffPercent >= 0 ? "+${readiness.hrvDiffPercent}" : "${readiness.hrvDiffPercent}"}%)'
+                    : 'Требуется запись сна',
+                score: readiness.hasHrv ? readiness.hrvFactor : 0,
+                color: readiness.hasHrv
+                    ? (readiness.hrvFactor >= 70
+                        ? AppColors.sage
+                        : (readiness.hrvFactor >= 45 ? AppColors.amber : AppColors.rose))
+                    : AppColors.muted,
               ),
 
               _buildBiomarkerRow(
                 title: 'Пульс во сне (минимум)',
-                weight: '25%',
-                currentVal: '${readiness.currentRhr} уд/мин',
-                baselineVal: 'База: ${readiness.baselineRhr} (${readiness.rhrDiffBpm > 0 ? "+${readiness.rhrDiffBpm}" : "${readiness.rhrDiffBpm}"} уд/мин)',
-                score: readiness.rhrFactor,
-                color: readiness.rhrFactor >= 70
-                    ? AppColors.sage
-                    : (readiness.rhrFactor >= 45 ? AppColors.amber : AppColors.rose),
+                weight: readiness.hasRhr ? '${readiness.rhrWeightPct}%' : '—',
+                currentVal: readiness.hasRhr ? '${readiness.currentRhr} уд/мин' : 'Ожидание ночного замера',
+                baselineVal: readiness.hasRhr
+                    ? 'База: ${readiness.baselineRhr} (${readiness.rhrDiffBpm > 0 ? "+${readiness.rhrDiffBpm}" : "${readiness.rhrDiffBpm}"} уд/мин)'
+                    : 'RHR глубокого сна',
+                score: readiness.hasRhr ? readiness.rhrFactor : 0,
+                color: readiness.hasRhr
+                    ? (readiness.rhrFactor >= 70
+                        ? AppColors.sage
+                        : (readiness.rhrFactor >= 45 ? AppColors.amber : AppColors.rose))
+                    : AppColors.muted,
               ),
 
               _buildBiomarkerRow(
                 title: 'Восстановление сном',
-                weight: '20%',
-                currentVal: '${readiness.sleepFactor}%',
-                baselineVal: 'Глубокий сон, продолжительность и режим',
-                score: readiness.sleepFactor,
-                color: readiness.sleepFactor >= 70
-                    ? AppColors.sage
-                    : (readiness.sleepFactor >= 45 ? AppColors.amber : AppColors.rose),
+                weight: readiness.hasSleep ? '${readiness.sleepWeightPct}%' : '—',
+                currentVal: readiness.hasSleep ? '${readiness.sleepFactor}%' : 'Ожидание данных сна',
+                baselineVal: readiness.hasSleep ? 'Глубокий сон, продолжительность и режим' : 'Часы не зафиксировали сон',
+                score: readiness.hasSleep ? readiness.sleepFactor : 0,
+                color: readiness.hasSleep
+                    ? (readiness.sleepFactor >= 70
+                        ? AppColors.sage
+                        : (readiness.sleepFactor >= 45 ? AppColors.amber : AppColors.rose))
+                    : AppColors.muted,
               ),
 
               _buildBiomarkerRow(
                 title: 'Частота дыхания',
-                weight: '10%',
-                currentVal: '${readiness.currentRr.toStringAsFixed(1)} /мин',
-                baselineVal: 'База: ${readiness.baselineRr.toStringAsFixed(1)} вдохов/мин',
-                score: readiness.rrFactor,
-                color: readiness.rrFactor >= 70
-                    ? AppColors.sage
-                    : (readiness.rrFactor >= 45 ? AppColors.amber : AppColors.rose),
+                weight: readiness.hasRr ? '${readiness.rrWeightPct}%' : '—',
+                currentVal: readiness.hasRr ? '${readiness.currentRr.toStringAsFixed(1)} /мин' : 'Датчик не поддерживается',
+                baselineVal: readiness.hasRr ? 'База: ${readiness.baselineRr.toStringAsFixed(1)} вдохов/мин' : 'Без синтетической интерполяции',
+                score: readiness.hasRr ? readiness.rrFactor : 0,
+                color: readiness.hasRr
+                    ? (readiness.rrFactor >= 70
+                        ? AppColors.sage
+                        : (readiness.rrFactor >= 45 ? AppColors.amber : AppColors.rose))
+                    : AppColors.muted,
               ),
 
               _buildBiomarkerRow(
                 title: 'Температура кожи',
-                weight: '10%',
-                currentVal: '${readiness.tempDiffCelsius >= 0 ? "+${readiness.tempDiffCelsius}" : "${readiness.tempDiffCelsius}"}°C',
-                baselineVal: 'Отклонение от персональной нормы',
-                score: readiness.tempFactor,
-                color: readiness.tempFactor >= 70
-                    ? AppColors.sage
-                    : (readiness.tempFactor >= 45 ? AppColors.amber : AppColors.rose),
+                weight: readiness.hasTemp ? '${readiness.tempWeightPct}%' : '—',
+                currentVal: readiness.hasTemp ? '${readiness.tempDiffCelsius >= 0 ? "+${readiness.tempDiffCelsius}" : "${readiness.tempDiffCelsius}"}°C' : 'Ожидание базового замера',
+                baselineVal: readiness.hasTemp ? 'Отклонение от персональной нормы' : 'Требуется ночная калибровка',
+                score: readiness.hasTemp ? readiness.tempFactor : 0,
+                color: readiness.hasTemp
+                    ? (readiness.tempFactor >= 70
+                        ? AppColors.sage
+                        : (readiness.tempFactor >= 45 ? AppColors.amber : AppColors.rose))
+                    : AppColors.muted,
               ),
 
               SizedBox(height: 14),
@@ -273,7 +287,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
                   border: Border.all(color: AppColors.line),
                 ),
                 child: Text(
-                  'Расчёт: Ритм сердца (35%) + Пульс во сне (25%) + Сон (20%) + Дыхание (10%) + Температура (10%). Дневная нагрузка не занижает утреннее восстановление.',
+                  'Честный расчёт по реальным датчикам: веса динамически нормируются на 100% только по реально полученным ночным биомаркерам. Никаких синтетических коэффициентов или поддельных оценок.',
                   style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 11,
