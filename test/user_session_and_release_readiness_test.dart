@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:barys_biotracker/data/ble/ute_ble_bridge.dart';
@@ -504,6 +505,102 @@ void main() {
       expect(UteBleBridge.matchesKalkanFilter('Sony WH-1000XM5'), isFalse);
       expect(UteBleBridge.matchesKalkanFilter('Unknown'), isFalse);
       expect(UteBleBridge.matchesKalkanFilter(''), isFalse);
+    });
+
+    test('15. BLE Sticky Manual Disconnect preserves user intent and halts auto-reconnect', () async {
+      final methodCalls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('com.nadal.ble/methods'),
+        (MethodCall call) async {
+          methodCalls.add(call);
+          if (call.method == 'isBluetoothEnabled') return true;
+          if (call.method == 'checkPermissions') return 'granted';
+          if (call.method == 'connect') return true;
+          if (call.method == 'disconnect') return true;
+          return null;
+        },
+      );
+
+      final bridge = UteBleBridge();
+      await bridge.init();
+      expect(bridge.isManuallyDisconnected, isFalse);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('kalkan_last_device_mac', 'AA:BB:CC:DD:EE:FF');
+
+      // 1. User explicitly clicks "Disconnect"
+      await bridge.disconnect(forget: false);
+      expect(bridge.isManuallyDisconnected, isTrue);
+      expect(prefs.getBool('kalkan_is_manually_disconnected'), isTrue);
+      // The last paired mac should still be preserved when forget = false
+      expect(prefs.getString('kalkan_last_device_mac'), 'AA:BB:CC:DD:EE:FF');
+
+      // 2. App resume / checkAndReconnect should NOT reconnect because user manually disconnected
+      methodCalls.clear();
+      await bridge.checkAndReconnect();
+      expect(methodCalls.any((c) => c.method == 'connect'), isFalse);
+
+      // 3. User explicitly initiates connection again -> sticky disconnect flag is cleared
+      await bridge.connect('AA:BB:CC:DD:EE:FF');
+      expect(bridge.isManuallyDisconnected, isFalse);
+      expect(prefs.getBool('kalkan_is_manually_disconnected'), isFalse);
+    });
+
+    test('16. BLE Factory Reset sends hardware command, forgets pairing, and wipes telemetry', () async {
+      final methodCalls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('com.nadal.ble/methods'),
+        (MethodCall call) async {
+          methodCalls.add(call);
+          return true;
+        },
+      );
+
+      final bridge = UteBleBridge();
+      await bridge.init();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('kalkan_last_device_mac', 'AA:BB:CC:DD:EE:FF');
+
+      final success = await bridge.resetToFactorySettings();
+      expect(success, isTrue);
+
+      // Verify resetFactory native method was called
+      expect(methodCalls.any((c) => c.method == 'resetFactory'), isTrue);
+      // Verify disconnect with forget = true was called
+      expect(methodCalls.any((c) => c.method == 'disconnect' && c.arguments['forget'] == true), isTrue);
+      // Verify MAC address is removed from preferences
+      expect(prefs.getString('kalkan_last_device_mac'), isNull);
+      expect(bridge.isManuallyDisconnected, isTrue);
+    });
+
+    test('17. Heart Rate Monitoring Configuration persists interval and continuous mode', () async {
+      final methodCalls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('com.nadal.ble/methods'),
+        (MethodCall call) async {
+          methodCalls.add(call);
+          return true;
+        },
+      );
+
+      final bridge = UteBleBridge();
+      await bridge.init();
+      final prefs = await SharedPreferences.getInstance();
+
+      // Configure default power-saving 15m interval
+      await bridge.configureHeartRateMonitoring(intervalMinutes: 15, continuous: false);
+      expect(prefs.getInt('kalkan_hr_interval_minutes'), 15);
+      expect(prefs.getBool('kalkan_hr_continuous_enabled'), isFalse);
+      expect(methodCalls.last.method, 'configureHeartRateMonitoring');
+      expect(methodCalls.last.arguments, {'intervalMinutes': 15, 'continuous': false});
+
+      // Switch to 30m interval
+      await bridge.configureHeartRateMonitoring(intervalMinutes: 30, continuous: false);
+      expect(prefs.getInt('kalkan_hr_interval_minutes'), 30);
+      expect(methodCalls.last.arguments['intervalMinutes'], 30);
     });
   });
 }

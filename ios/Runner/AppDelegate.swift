@@ -35,6 +35,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   private var isConnected = false
   private var currentDeviceName = ""
   private var pollTimer: Timer?
+  private var isStreamsBound = false
+  private var isSdkBluetoothReady = false
+  private var pendingSdkReadyBlocks: [() -> Void] = []
 
   // BLE-05: Telemetry coalescing (1 Hz max) and non-draining polling controls
   private var lastPushTime: TimeInterval = 0
@@ -76,6 +79,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       if let model = targetModel {
         _ = mgr.disconnectDevices(model)
       }
+      if mgr.isScanning && !isScanning {
+        mgr.stopScanDevices()
+      }
     }
     if let result = pendingConnectResult {
       pendingConnectResult = nil
@@ -101,6 +107,22 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     mgr.delegate = self
     mgr.isScanRepeat = true
     lastConnectedAddress = UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
+  }
+
+  private func runWhenSdkReady(_ action: @escaping () -> Void) {
+    if isSdkBluetoothReady || mgr.isOpenBluetooth {
+      action()
+    } else {
+      pendingSdkReadyBlocks.append(action)
+      // Safety timeout: execute if SDK callback doesn't arrive within 2.5s and BT is powered on
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+        guard let self = self else { return }
+        if !self.pendingSdkReadyBlocks.isEmpty {
+          let b = self.pendingSdkReadyBlocks.removeFirst()
+          b()
+        }
+      }
+    }
   }
 
   private func isKalkanDevice(_ name: String) -> Bool {
@@ -130,10 +152,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   }
 
   func isBluetoothEnabled() -> Bool {
-    if let cm = centralManager {
-      return cm.state == .poweredOn
-    }
-    return mgr.isOpenBluetooth
+    guard let cm = centralManager else { return mgr.isOpenBluetooth }
+    return cm.state == .poweredOn
   }
 
   func checkPermissions() -> String {
@@ -168,33 +188,44 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
         result("restricted")
         return
       case .notDetermined:
-        break
+        pendingPermissionResult?(FlutterError(code: "CANCELLED", message: "Superseded by newer permission request", details: nil))
+        pendingPermissionResult = result
+        if centralManager == nil {
+          centralManager = CBCentralManager(
+            delegate: self,
+            queue: .main,
+            options: [
+              CBCentralManagerOptionShowPowerAlertKey: true
+            ]
+          )
+        }
+        return
       @unknown default:
         break
       }
     }
-    // Cancel prior pending result to avoid hanging Flutter Futures
-    pendingPermissionResult?(FlutterError(code: "CANCELLED", message: "Superseded by newer permission request", details: nil))
-    pendingPermissionResult = result
-
-    if centralManager == nil {
-      centralManager = CBCentralManager(
-        delegate: self,
-        queue: .main,
-        options: [
-          CBCentralManagerOptionShowPowerAlertKey: true
-        ]
-      )
-    }
+    result("granted")
   }
 
   func startScan(result: @escaping FlutterResult) {
-    isScanning = true
-    discoveredUteDevices.removeAll()
-    mgr.delegate = self
-    mgr.isScanRepeat = true
-    mgr.startScanDevices()
-    result(true)
+    guard isBluetoothEnabled() else {
+      result(FlutterError(code: "BLUETOOTH_DISABLED", message: "Bluetooth is powered off", details: nil))
+      return
+    }
+    guard checkPermissions() == "granted" else {
+      result(FlutterError(code: "PERMISSION_DENIED", message: "Bluetooth permission not granted", details: nil))
+      return
+    }
+
+    runWhenSdkReady { [weak self] in
+      guard let self = self else { return }
+      self.isScanning = true
+      self.discoveredUteDevices.removeAll()
+      self.mgr.delegate = self
+      self.mgr.isScanRepeat = true
+      self.mgr.startScanDevices()
+      result(true)
+    }
   }
 
   func stopScan(result: @escaping FlutterResult) {
@@ -208,15 +239,22 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
 
   func connect(address: String, result: @escaping FlutterResult) {
     isManualDisconnect = false
-    if !isBluetoothEnabled() {
+    guard isBluetoothEnabled() else {
       result(FlutterError(code: "BLUETOOTH_DISABLED", message: "Bluetooth is powered off", details: nil))
       return
     }
-    if checkPermissions() != "granted" {
+    guard checkPermissions() == "granted" else {
       result(FlutterError(code: "PERMISSION_DENIED", message: "Bluetooth permission not granted", details: nil))
       return
     }
 
+    runWhenSdkReady { [weak self] in
+      guard let self = self else { return }
+      self.performConnect(address: address, result: result)
+    }
+  }
+
+  private func performConnect(address: String, result: @escaping FlutterResult) {
     if isConnected {
       if let model = mgr.connnectModel, (deviceAddress(model).caseInsensitiveCompare(address) == .orderedSame || model.identifier?.caseInsensitiveCompare(address) == .orderedSame || model.addressStr?.caseInsensitiveCompare(address) == .orderedSame) {
         result(true)
@@ -229,6 +267,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     let timeoutItem = DispatchWorkItem { [weak self] in
       guard let self = self else { return }
       if self.pendingConnectResult != nil {
+        if self.mgr.isScanning && !self.isScanning {
+          self.mgr.stopScanDevices()
+        }
         self.resolvePendingConnect(success: false, errorMessage: "Connection to \(address) timed out after 15 seconds")
       }
     }
@@ -241,6 +282,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
         connectedModel = model
         currentDeviceName = model.name ?? "KALKAN СААТ-1"
         bindLiveStreams()
+        applyDeviceHardwareSettings()
         refreshWorkout()
         pushTelemetry()
         resolvePendingConnect(success: true)
@@ -274,7 +316,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     }
 
     // If not in current scan cache (e.g. app restart), instantiate model with identifier
-    // UTE SDK internally uses retrievePeripheralsWithIdentifiers on CBCentralManager
     if targetUte == nil && !address.isEmpty {
       let fallbackDev = UTEModelDevice()
       fallbackDev.identifier = address
@@ -295,16 +336,25 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       return
     }
 
+    if mgr.isScanning && !isScanning {
+      mgr.stopScanDevices()
+    }
     resolvePendingConnect(success: false, errorMessage: "Device \(address) not found")
   }
 
   func cancelConnect(result: @escaping FlutterResult) {
+    if mgr.isScanning && !isScanning {
+      mgr.stopScanDevices()
+    }
     resolvePendingConnect(success: false, errorMessage: "Cancelled by client")
     result(true)
   }
 
   func disconnect(forget: Bool = false, result: @escaping FlutterResult) {
     isManualDisconnect = true
+    if mgr.isScanning && !isScanning {
+      mgr.stopScanDevices()
+    }
     resolvePendingConnect(success: false, errorMessage: "Disconnected by user")
     if forget {
       lastConnectedAddress = nil
@@ -337,6 +387,38 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     skinTempDeviation = 0.0
     pushTelemetry(immediate: true)
     result(true)
+  }
+
+  func resetFactory(result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
+      return
+    }
+    device.resetFactory(0) { [weak self] code, _ in
+      guard let self = self else { return }
+      self.disconnect(forget: true) { _ in }
+      result(true)
+    }
+  }
+
+  func configureHeartRateMonitoring(intervalMinutes: Int, continuous: Bool, result: @escaping FlutterResult) {
+    UserDefaults.standard.set(intervalMinutes, forKey: "kalkan_hr_interval_minutes")
+    UserDefaults.standard.set(continuous, forKey: "kalkan_hr_continuous_enabled")
+    if isConnected {
+      applyDeviceHardwareSettings(intervalMinutes: intervalMinutes, continuousHr: continuous)
+    }
+    result(true)
+  }
+
+  private func applyDeviceHardwareSettings(intervalMinutes: Int? = nil, continuousHr: Bool? = nil) {
+    let savedInterval = UserDefaults.standard.integer(forKey: "kalkan_hr_interval_minutes")
+    let interval = intervalMinutes ?? (savedInterval > 0 ? savedInterval : 15) // 15m default to save battery
+    let continuous = continuousHr ?? UserDefaults.standard.bool(forKey: "kalkan_hr_continuous_enabled")
+
+    device.setAutoHeartRate(true) { _, _ in }
+    device.setAutoHeartRateInterval(interval) { _ in }
+    device.setContinueMeasureHeartRateSwitch(continuous) { _, _ in }
+    device.setProfessionalSleep(true) { _, _ in }
   }
 
   func findDevice(result: @escaping FlutterResult) {
@@ -568,7 +650,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
             if currentSession == nil || rawTimeStamp > sessionCursorSec {
               startSec = rawTimeStamp
             } else {
-              // item.timeStamp repeated across epochs indicates night session start time -> chain to cursor
               startSec = sessionCursorSec
             }
           } else {
@@ -594,8 +675,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
           }
 
           // 3. Detect session boundaries:
-          // - sleepType == 7: explicit sleep beginning marker
-          // - Gap > 60 minutes between epochs
           let isNewSessionBreak = currentSession != nil && (
             item.sleepType == 7 ||
             (startSec - sessionCursorSec) > 3600
@@ -647,7 +726,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
           currentSession?.endSec = max(currentSession?.endSec ?? 0, endSec)
           sessionCursorSec = max(sessionCursorSec, endSec)
 
-          // Explicit sleep ending marker (sleepType == 8)
           if item.sleepType == 8 {
             if let cs = currentSession, cs.totalSleepMinutes > 0 || cs.awakeMinutes > 0 {
               sessions.append(cs)
@@ -660,8 +738,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
           sessions.append(cs)
         }
 
-        // 4. Select single primary night sleep session:
-        // Calculate UTE sleep day window [20:00 yesterday .. 20:00 today) or [20:00 today .. 20:00 tomorrow)
+        // 4. Select single primary night sleep session
         let cal = Calendar.current
         let currentDate = Date()
         let currentHour = cal.component(.hour, from: currentDate)
@@ -673,10 +750,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
           cycleStart = cal.date(bySettingHour: 20, minute: 0, second: 0, of: currentDate) ?? currentDate
         }
         let cycleStartSec = Int(cycleStart.timeIntervalSince1970)
-        // Allow 2-hour buffer (from 18:00) for early sleepers
         let windowStartSec = cycleStartSec - 2 * 3600
 
-        // Sessions belonging to current sleep cycle window
         let candidates = sessions.filter { $0.endSec >= windowStartSec }
         let primaryCandidates = candidates.filter { $0.totalSleepMinutes >= 60 }
 
@@ -697,7 +772,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
         }
       }
 
-      // Fallback: parse discrete session from uteDict (never sum multiple days)
+      // Fallback: parse discrete session from uteDict
       if let session = self.extractSleepSession(from: dict), session.sleep > 0 {
         self.currentSleepMinutes = session.sleep
         self.currentDeepSleepMinutes = session.deep
@@ -754,19 +829,22 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     }
   }
 
-  // BLE-05: 30-second cadence instead of battery-draining 8-second polling
+  // BLE-05: 30-second cadence instead of battery-draining polling
   private func startTelemetryPoll() {
-    stopTelemetryPoll()
     DispatchQueue.main.async { [weak self] in
-      self?.pollTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+      guard let self = self, self.isConnected else { return }
+      self.pollTimer?.invalidate()
+      self.pollTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
         self?.refreshWorkout()
       }
     }
   }
 
   private func stopTelemetryPoll() {
-    pollTimer?.invalidate()
-    pollTimer = nil
+    DispatchQueue.main.async { [weak self] in
+      self?.pollTimer?.invalidate()
+      self?.pollTimer = nil
+    }
   }
 
   private func extractSleepSession(from dict: [AnyHashable: Any]?) -> (sleep: Int, deep: Int, rem: Int, inBed: Int, efficiency: Double)? {
@@ -841,10 +919,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   }
 
   private func bindLiveStreams() {
-    device.setContinueMeasureHeartRateSwitch(true) { _, _ in }
-    device.setAutoHeartRate(true) { _, _ in }
-    device.setAutoHeartRateInterval(1) { _ in }
-    device.setProfessionalSleep(true) { _, _ in }
+    guard !isStreamsBound else { return }
+    isStreamsBound = true
 
     // Sport and scientific sleep data notifications (0x04: sci sleep update, 0x10: sleep notify)
     device.onNotifySportData { [weak self] type, _ in
@@ -925,8 +1001,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       self.pushTelemetry()
     }
 
-    // Wearing state (off wrist)
-    // UTE SDK: state 0 = off wrist (снято), 1 = on wrist (надето)
+    // Wearing state (off wrist): state 0 = off-wrist (снято), state 1 = on-wrist (надето)
     device.onNotifyOffWristBlock { [weak self] _, _, state in
       guard let self = self else { return }
       self.isOffWrist = (state == 0)
@@ -946,6 +1021,23 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   }
 
   // MARK: - UTEBluetoothDelegate
+
+  func uteBluetoothStatus(_ status: UTEBluetoothStatus) {
+    switch status.rawValue {
+    case 0: // UTEBluetoothStatusOpen
+      isSdkBluetoothReady = true
+      let blocks = pendingSdkReadyBlocks
+      pendingSdkReadyBlocks.removeAll()
+      for b in blocks { b() }
+    case 1, 2, 3, 4, 5: // Close, Resetting, Unsupported, Unauthorized, Unknown
+      isSdkBluetoothReady = false
+      if status.rawValue == 4 {
+        resolvePendingConnect(success: false, errorMessage: "UTE SDK Bluetooth unauthorized")
+      }
+    default:
+      break
+    }
+  }
 
   func uteDiscoverDevices(_ model: UTEModelDevice?) {
     guard let model = model else { return }
@@ -999,6 +1091,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
         UserDefaults.standard.set(addr, forKey: "kalkan_last_connected_address")
       }
       pendingConnectAddress = nil
+      if mgr.isScanning && !isScanning {
+        mgr.stopScanDevices()
+      }
       resolvePendingConnect(success: true)
       currentDeviceName = connectedModel?.name ?? "KALKAN СААТ-1"
 
@@ -1011,6 +1106,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       device.setTimeClock(now, timeZone: timeZone, minuteOffset: 0) { _, _ in }
 
       bindLiveStreams()
+      applyDeviceHardwareSettings()
       pullNightAndDay()
       startTelemetryPoll()
       refreshWorkout()
@@ -1020,8 +1116,19 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       // Connection in progress; do not mark isConnected = true yet
       break
 
-    case 1, 2, 3, 5, -1: // Disconnected, ConnectingError, ConnectionTimedout, Disconnecting, ConnectCheckFail
-      resolvePendingConnect(success: false, errorMessage: "UTE connection status error: \(status.rawValue)")
+    case 5: // UTEDevicesStatusDisconnecting
+      // Disconnection in progress; ignore to avoid dual reconnect race
+      break
+
+    case 1, 2, 3, -1: // Disconnected, ConnectingError, ConnectionTimedout, ConnectCheckFail
+      var errorMsg = "UTE connection status error: \(status.rawValue)"
+      if let nsError = error as NSError? {
+        errorMsg += " (code: \(nsError.code), \(nsError.localizedDescription))"
+        if nsError.code == 14 || nsError.code == 15 {
+          errorMsg = "PEER_REMOVED_PAIRING: Please remove KALKAN from iOS Settings -> Bluetooth -> Forget This Device (code \(nsError.code))"
+        }
+      }
+      resolvePendingConnect(success: false, errorMessage: errorMsg)
       isConnected = false
       connectedModel = nil
       stopTelemetryPoll()
@@ -1029,6 +1136,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       isOffWrist = false
       skinTempDeviation = 0.0
       pendingConnectAddress = nil
+      if mgr.isScanning && !isScanning {
+        mgr.stopScanDevices()
+      }
       // BLE-04: Preserve accumulated metrics: steps, calories, battery, hrv, rhr, sleep, hypnogram, deviceName
       pushTelemetry(immediate: true)
 
@@ -1242,6 +1352,12 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
       case "disconnect":
         let forget = (call.arguments as? [String: Any])?["forget"] as? Bool ?? false
         KalkanBleManager.shared.disconnect(forget: forget, result: result)
+      case "resetFactory":
+        KalkanBleManager.shared.resetFactory(result: result)
+      case "configureHeartRateMonitoring":
+        let interval = (call.arguments as? [String: Any])?["intervalMinutes"] as? Int ?? 15
+        let continuous = (call.arguments as? [String: Any])?["continuous"] as? Bool ?? false
+        KalkanBleManager.shared.configureHeartRateMonitoring(intervalMinutes: interval, continuous: continuous, result: result)
       case "isLocationServiceEnabled":
         result(true)
       case "openAppSettings", "openLocationSettings":

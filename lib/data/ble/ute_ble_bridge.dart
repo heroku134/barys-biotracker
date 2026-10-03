@@ -88,6 +88,8 @@ class UteBleBridge {
   Completer<bool>? _connectCompleter;
   int _reconnectAttempts = 0;
   Timer? _backoffTimer;
+  bool _isManuallyDisconnected = false;
+  bool get isManuallyDisconnected => _isManuallyDisconnected;
 
   Stream<BleTelemetry> get telemetryStream => _telemetryController.stream;
   Stream<List<DiscoveredBleDevice>> get scanResultsStream => _scanController.stream;
@@ -99,6 +101,11 @@ class UteBleBridge {
   }
 
   Future<void> init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _isManuallyDisconnected = prefs.getBool('kalkan_is_manually_disconnected') ?? false;
+    } catch (_) {}
+
     try {
       _eventSub = _eventChannel.receiveBroadcastStream().listen(
         (dynamic event) {
@@ -149,7 +156,14 @@ class UteBleBridge {
               _reconnectAttempts = 0;
             } else if (_connectionState == BleConnectionState.ready) {
               _setConnectionState(BleConnectionState.idle);
-              checkAndReconnect();
+              if (!_isManuallyDisconnected) {
+                // Connection dropped involuntarily: schedule backoff reconnect
+                getLastPairedAddress().then((lastMac) {
+                  if (lastMac != null && lastMac.isNotEmpty && !_isManuallyDisconnected) {
+                    _scheduleBackoffReconnect(lastMac);
+                  }
+                });
+              }
             }
           }
         },
@@ -164,7 +178,7 @@ class UteBleBridge {
     try {
       final prefs = await SharedPreferences.getInstance();
       final lastMac = prefs.getString('kalkan_last_device_mac');
-      if (lastMac != null && lastMac.isNotEmpty) {
+      if (lastMac != null && lastMac.isNotEmpty && !_isManuallyDisconnected) {
         checkAndReconnect();
       }
     } catch (e) {
@@ -323,6 +337,13 @@ class UteBleBridge {
     final trimmedMac = macAddress.trim();
     if (trimmedMac.isEmpty) return false;
 
+    // Reset manual disconnect flag on explicit connect
+    _isManuallyDisconnected = false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('kalkan_is_manually_disconnected', false);
+    } catch (_) {}
+
     // Guard от повторного входа: если уже подключены к этому устройству
     if (_realTelemetry?.isConnected == true && _connectionState == BleConnectionState.ready) {
       final lastMac = await getLastPairedAddress();
@@ -438,12 +459,14 @@ class UteBleBridge {
   }
 
   Future<void> disconnect({bool forget = false}) async {
+    _isManuallyDisconnected = true;
     _backoffTimer?.cancel();
     _backoffTimer = null;
     _reconnectAttempts = 0;
     try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('kalkan_is_manually_disconnected', true);
       if (forget) {
-        final prefs = await SharedPreferences.getInstance();
         await prefs.remove('kalkan_last_device_mac');
       }
       await _methodChannel.invokeMethod('disconnect', {'forget': forget});
@@ -467,6 +490,30 @@ class UteBleBridge {
     }
   }
 
+  Future<bool> resetToFactorySettings() async {
+    try {
+      await _methodChannel.invokeMethod('resetFactory');
+    } catch (e) {
+      debugPrint('UteBleBridge resetToFactorySettings error: $e');
+    }
+    await disconnect(forget: true);
+    return true;
+  }
+
+  Future<void> configureHeartRateMonitoring({int intervalMinutes = 15, bool continuous = false}) async {
+    try {
+      await _methodChannel.invokeMethod('configureHeartRateMonitoring', {
+        'intervalMinutes': intervalMinutes,
+        'continuous': continuous,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('kalkan_hr_interval_minutes', intervalMinutes);
+      await prefs.setBool('kalkan_hr_continuous_enabled', continuous);
+    } catch (e) {
+      debugPrint('UteBleBridge configureHeartRateMonitoring error: $e');
+    }
+  }
+
   Future<String?> getLastPairedAddress() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -479,6 +526,10 @@ class UteBleBridge {
 
   Future<void> checkAndReconnect() async {
     if (_isConnecting) return;
+    if (_isManuallyDisconnected) {
+      debugPrint('UteBleBridge: auto-reconnect skipped because user manually disconnected');
+      return;
+    }
     if (_realTelemetry?.isConnected == true) return;
     if (_connectionState == BleConnectionState.connecting || _connectionState == BleConnectionState.discovering) return;
 
@@ -495,11 +546,17 @@ class UteBleBridge {
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      final isManual = prefs.getBool('kalkan_is_manually_disconnected') ?? false;
+      if (isManual) {
+        _isManuallyDisconnected = true;
+        debugPrint('UteBleBridge: auto-reconnect skipped because user manually disconnected (prefs)');
+        return;
+      }
       final lastMac = prefs.getString('kalkan_last_device_mac');
       if (lastMac != null && lastMac.isNotEmpty) {
         debugPrint('UteBleBridge: auto-reconnecting to $lastMac (attempt $_reconnectAttempts)');
         final ok = await connect(lastMac);
-        if (!ok && _realTelemetry?.isConnected != true) {
+        if (!ok && _realTelemetry?.isConnected != true && !_isManuallyDisconnected) {
           _scheduleBackoffReconnect(lastMac);
         }
       }
@@ -509,6 +566,7 @@ class UteBleBridge {
   }
 
   void _scheduleBackoffReconnect(String macAddress) {
+    if (_isManuallyDisconnected) return;
     _backoffTimer?.cancel();
     _reconnectAttempts++;
     // Экспоненциальный бэкофф с джиттером: 2 -> 4 -> 8 -> 16 -> 32 -> 60s
@@ -520,9 +578,9 @@ class UteBleBridge {
     debugPrint('UteBleBridge: scheduling backoff reconnect in ${delaySeconds.toStringAsFixed(1)}s (attempt $_reconnectAttempts)');
 
     _backoffTimer = Timer(Duration(milliseconds: (delaySeconds * 1000).toInt()), () async {
-      if (_realTelemetry?.isConnected == true || _isConnecting) return;
+      if (_realTelemetry?.isConnected == true || _isConnecting || _isManuallyDisconnected) return;
       final ok = await connect(macAddress);
-      if (!ok && _realTelemetry?.isConnected != true) {
+      if (!ok && _realTelemetry?.isConnected != true && !_isManuallyDisconnected) {
         _scheduleBackoffReconnect(macAddress);
       }
     });

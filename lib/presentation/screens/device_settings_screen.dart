@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_colors.dart';
 import '../../data/services/paired_pulse.dart';
 import '../../core/app_language.dart';
@@ -26,6 +27,42 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   bool _smartAlarm = true;
   bool _hydrationReminder = true;
   bool _isMeasuringHr = false;
+  int _hrIntervalMinutes = 15;
+  bool _continuousHr = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHrSettings();
+  }
+
+  Future<void> _loadHrSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _hrIntervalMinutes = prefs.getInt('kalkan_hr_interval_minutes') ?? 15;
+          _continuousHr = prefs.getBool('kalkan_hr_continuous_enabled') ?? false;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _updateHrInterval(int minutes) async {
+    setState(() => _hrIntervalMinutes = minutes);
+    await widget.bleBridge.configureHeartRateMonitoring(
+      intervalMinutes: minutes,
+      continuous: _continuousHr,
+    );
+  }
+
+  Future<void> _toggleContinuousHr(bool value) async {
+    setState(() => _continuousHr = value);
+    await widget.bleBridge.configureHeartRateMonitoring(
+      intervalMinutes: _hrIntervalMinutes,
+      continuous: value,
+    );
+  }
 
   void _findWatch() {
     PairedPulse.play(widget.bleBridge, kind: PairedPulseKind.find);
@@ -114,15 +151,20 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             child: Text(tr('Отмена', 'Жок'), style: TextStyle(color: AppColors.muted)),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              widget.bleBridge.disconnect();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  backgroundColor: AppColors.surface,
-                  content: Text('Браслет сброшен до заводских настроек', style: TextStyle(color: AppColors.rose)),
-                ),
-              );
+              await widget.bleBridge.resetToFactorySettings();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppColors.surface,
+                    content: Text(
+                      tr('Браслет сброшен до заводских настроек', 'Билерик баштапкы абалга кайтарылды', 'Watch reset to factory settings'),
+                      style: const TextStyle(color: AppColors.rose),
+                    ),
+                  ),
+                );
+              }
             },
             child: Text(tr('Сбросить', 'Кайтаруу'), style: TextStyle(color: AppColors.rose, fontWeight: FontWeight.w600)),
           ),
@@ -135,6 +177,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
     'Сброс до заводских настроек?': 'Reset to factory settings?',
     'Отмена': 'Cancel',
     'Сбросить': 'Reset',
+    'Браслет сброшен до заводских настроек': 'Watch reset to factory settings',
+    'Мониторинг пульса': 'Heart Rate Monitoring',
+    'Интервал автозамера в покое и движении': 'Auto-measurement interval in rest and motion',
+    'мин': 'min',
+    'Непрерывный замер': 'Continuous HR',
+    'Высокий расход батареи (~1-2 дня)': 'High battery drain (~1-2 days)',
     'Часы': 'Watch',
     'Часы КАЛКАН СААТ-1': 'KALKAN SAAT-1 Watch',
     'Поиск другого браслета': 'Search for another band',
@@ -458,6 +506,119 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                 ),
               ),
             const SizedBox(height: 20),
+
+            Text(
+              tr('МОНИТОРИНГ ЗДОРОВЬЯ', 'ДЕН СООЛУКТУ КӨЗӨМӨЛДӨӨ', 'HEALTH MONITORING'),
+              style: TextStyle(
+                color: palette.secondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Настройка интервала замера пульса
+            KalkanCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tr('Интервал замера пульса', 'Пульсту өлчөө интервалы', 'Heart Rate Interval'),
+                              style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              tr('Автозамер в покое и движении (15 мин сохраняет батарею 7-10 дней)', 'Тынч жана кыймылда автоөлчөө (15 мүн батареяны 7-10 күн сактайт)', 'Auto-measurement in rest/motion (15m saves battery 7-10d)'),
+                              style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '$_hrIntervalMinutes ${tr('мин', 'мүн', 'min')}',
+                        style: const TextStyle(color: AppColors.sage, fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [15, 30, 60, 1].map((interval) {
+                      final isSelected = _hrIntervalMinutes == interval;
+                      final label = interval == 15
+                          ? '15 ${tr('мин', 'мүн', 'min')} ★'
+                          : '$interval ${tr('мин', 'мүн', 'min')}';
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                          child: InkWell(
+                            onTap: () => _updateHrInterval(interval),
+                            borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppColors.sage.withValues(alpha: 0.2) : AppColors.raised,
+                                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                                border: Border.all(
+                                  color: isSelected ? AppColors.sage : AppColors.line,
+                                  width: isSelected ? 1.5 : KalkanUi.hairline,
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  label,
+                                  style: TextStyle(
+                                    color: isSelected ? AppColors.sage : palette.secondary,
+                                    fontSize: 11,
+                                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(color: AppColors.line, height: 1),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tr('Непрерывный замер', 'Үзгүлтүксүз өлчөө', 'Continuous HR'),
+                              style: TextStyle(color: palette.fg, fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                            Text(
+                              tr('Быстрый разряд батареи (~1-2 дня)', 'Батареяны тез сарптайт (~1-2 күн)', 'High battery drain (~1-2 days)'),
+                              style: TextStyle(color: palette.secondary, fontSize: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _continuousHr,
+                        activeThumbColor: AppColors.rose,
+                        onChanged: _toggleContinuousHr,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
 
             Text(
               tr('Функции часов', 'Сааттын функциялары'),

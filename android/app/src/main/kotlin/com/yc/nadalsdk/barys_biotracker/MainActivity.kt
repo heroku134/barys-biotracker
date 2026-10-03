@@ -217,6 +217,17 @@ class MainActivity : FlutterActivity() {
                             if (success) result.success(true) else result.error("NOT_CONNECTED", err, null)
                         }
                     }
+                    "resetFactory" -> {
+                        KalkanBleManager.resetFactory { success, err ->
+                            if (success) result.success(true) else result.error("RESET_ERROR", err, null)
+                        }
+                    }
+                    "configureHeartRateMonitoring" -> {
+                        val interval = call.argument<Int>("intervalMinutes") ?: 15
+                        val continuous = call.argument<Boolean>("continuous") ?: false
+                        KalkanBleManager.configureHeartRateMonitoring(interval, continuous)
+                        result.success(true)
+                    }
                     else -> result.notImplemented()
                 }
             }

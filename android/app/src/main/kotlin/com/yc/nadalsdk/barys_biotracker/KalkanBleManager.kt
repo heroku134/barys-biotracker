@@ -257,7 +257,7 @@ object KalkanBleManager {
                                 tc.minuteOffset = 0
                                 uteBleConnection?.setTimeClock(tc)
 
-                                uteBleConnection?.setContinuousHeartRate(true)
+                                uteBleConnection?.setContinuousHeartRate(false)
                                 uteBleConnection?.setAutoHeartRate(true)
                                 uteBleConnection?.setAutoStress(true)
 
@@ -422,6 +422,37 @@ object KalkanBleManager {
             callback(true, null)
         } else {
             callback(false, "Watch is not connected")
+        }
+    }
+
+    fun resetFactory(callback: (Boolean, String?) -> Unit) {
+        if (!isConnected || uteBleConnection == null) {
+            callback(false, "Watch is not connected")
+            return
+        }
+        bleExecutor.execute {
+            try {
+                uteBleConnection?.resetFactory(0)
+                mainHandler.post {
+                    disconnect(forget = true)
+                    callback(true, null)
+                }
+            } catch (e: Exception) {
+                mainHandler.post {
+                    callback(false, e.localizedMessage)
+                }
+            }
+        }
+    }
+
+    fun configureHeartRateMonitoring(intervalMinutes: Int, continuous: Boolean) {
+        bleExecutor.execute {
+            try {
+                uteBleConnection?.setAutoHeartRate(true)
+                uteBleConnection?.setContinuousHeartRate(continuous)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
