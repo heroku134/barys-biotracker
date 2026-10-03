@@ -522,6 +522,7 @@ object KalkanBleManager {
                     var awake = 0
                     val epochs = mutableListOf<Map<String, Any>>()
                     val nowSec = (System.currentTimeMillis() / 1000).toInt()
+                    var cursorSec = 0
 
                     for (item in detailList) {
                         val dur = item.sleepTime
@@ -533,8 +534,19 @@ object KalkanBleManager {
                             3, 7, 8 -> { awake += dur; "awake" }
                             else -> { light += dur; total += dur; "light" }
                         }
-                        val startSec = if (item.startTime > 0) item.startTime else (nowSec - (total + awake) * 60)
-                        val endSec = if (item.endTime > startSec) item.endTime else (startSec + dur * 60)
+                        val rawStart = item.startTime
+                        val startSec = if (rawStart > cursorSec) {
+                            rawStart
+                        } else if (cursorSec > 0) {
+                            cursorSec
+                        } else if (rawStart > 0) {
+                            rawStart
+                        } else {
+                            nowSec - (total + awake) * 60
+                        }
+                        val rawEnd = item.endTime
+                        val endSec = if (rawEnd > startSec) rawEnd else (startSec + dur * 60)
+                        cursorSec = endSec
                         epochs.add(
                             mapOf(
                                 "stage" to stage,

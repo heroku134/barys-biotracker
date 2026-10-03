@@ -887,75 +887,228 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     return UUID().uuidString
   }
 
+  // MARK: - Scientific Sleep Processing & Primary Session Isolation
+  private struct ParsedSleepSession {
+    var epochs: [[String: Any]] = []
+    var startSec: Int = 0
+    var endSec: Int = 0
+    var totalSleepMinutes: Int = 0
+    var deepSleepMinutes: Int = 0
+    var lightSleepMinutes: Int = 0
+    var remSleepMinutes: Int = 0
+    var awakeMinutes: Int = 0
+
+    var timeInBedMinutes: Int {
+      let spanMinutes = max(0, (endSec - startSec) / 60)
+      let sumMinutes = totalSleepMinutes + awakeMinutes
+      return max(spanMinutes, sumMinutes)
+    }
+
+    var sleepEfficiency: Double {
+      let inBed = timeInBedMinutes
+      guard inBed > 0, totalSleepMinutes > 0 else { return 0.0 }
+      let ratio = Double(totalSleepMinutes) / Double(inBed)
+      return min(1.0, max(0.0, round(ratio * 100.0) / 100.0))
+    }
+  }
+
+  private static let sleepDateFormatter: DateFormatter = {
+    let df = DateFormatter()
+    df.locale = Locale(identifier: "en_US_POSIX")
+    df.timeZone = TimeZone.current
+    return df
+  }()
+
+  private func parseEpochDate(_ str: String?) -> Date? {
+    guard let str = str?.trimmingCharacters(in: .whitespacesAndNewlines), !str.isEmpty else { return nil }
+    let formats = [
+      "yyyy-MM-dd-HH-mm",
+      "yyyy-MM-dd HH:mm",
+      "yyyy-MM-dd-HH-mm-ss",
+      "yyyy-MM-dd HH:mm:ss",
+      "yyyy/MM/dd HH:mm",
+      "yyyy/MM/dd-HH-mm",
+      "yyyy-MM-dd'T'HH:mm:ss"
+    ]
+    for fmt in formats {
+      KalkanBleManager.sleepDateFormatter.dateFormat = fmt
+      if let d = KalkanBleManager.sleepDateFormatter.date(from: str) {
+        return d
+      }
+    }
+    return nil
+  }
+
   private func pullNightAndDay() {
     let now = Int(Date().timeIntervalSince1970)
     let start = now - 36 * 3600
     device.getSciSleepModel(withStartTime: start, endTime: now) { [weak self] debugArray, _, ok, code, _, dict in
       guard let self = self, self.sdkOk(Int(code)) || ok else { return }
       if let list = debugArray, !list.isEmpty {
-        var total = 0
-        var deep = 0
-        var light = 0
-        var rem = 0
-        var awake = 0
-        var epochs: [[String: Any]] = []
+        var sessions: [ParsedSleepSession] = []
+        var currentSession: ParsedSleepSession? = nil
+        var sessionCursorSec: Int = 0
         let nowSec = Int(Date().timeIntervalSince1970)
 
         for item in list {
           let dur = item.sleepTime
-          guard dur > 0 else { continue }
+          // Skip placeholder items with zero duration unless explicit start/end markers
+          if dur <= 0 && item.sleepType != 7 && item.sleepType != 8 {
+            continue
+          }
+
+          // 1. Resolve epoch start timestamp
+          let parsedStartDate = self.parseEpochDate(item.startTime)
+          let parsedStartSec = parsedStartDate != nil ? Int(parsedStartDate!.timeIntervalSince1970) : nil
+          let rawTimeStamp = item.timeStamp > 10_000_000_000 ? item.timeStamp / 1000 : item.timeStamp
+
+          var startSec: Int
+          if let parsed = parsedStartSec, parsed > 0 {
+            if currentSession != nil && parsed < sessionCursorSec && (sessionCursorSec - parsed) <= 120 {
+              startSec = sessionCursorSec
+            } else {
+              startSec = parsed
+            }
+          } else if rawTimeStamp > 0 {
+            if currentSession == nil || rawTimeStamp > sessionCursorSec {
+              startSec = rawTimeStamp
+            } else {
+              // item.timeStamp repeated across epochs indicates night session start time -> chain to cursor
+              startSec = sessionCursorSec
+            }
+          } else {
+            startSec = sessionCursorSec > 0 ? sessionCursorSec : (nowSec - max(1, dur) * 60)
+          }
+
+          // 2. Resolve epoch end timestamp
+          let parsedEndDate = self.parseEpochDate(item.endTime)
+          let parsedEndSec = parsedEndDate != nil ? Int(parsedEndDate!.timeIntervalSince1970) : nil
+
+          var effectiveDur = dur
+          var endSec: Int
+          if let parsedEnd = parsedEndSec, parsedEnd > startSec {
+            endSec = parsedEnd
+            let spanDur = (endSec - startSec) / 60
+            if effectiveDur <= 0 {
+              effectiveDur = spanDur
+            }
+          } else if effectiveDur > 0 {
+            endSec = startSec + effectiveDur * 60
+          } else {
+            endSec = startSec
+          }
+
+          // 3. Detect session boundaries:
+          // - sleepType == 7: explicit sleep beginning marker
+          // - Gap > 60 minutes between epochs
+          let isNewSessionBreak = currentSession != nil && (
+            item.sleepType == 7 ||
+            (startSec - sessionCursorSec) > 3600
+          )
+
+          if isNewSessionBreak {
+            if let cs = currentSession, cs.totalSleepMinutes > 0 || cs.awakeMinutes > 0 {
+              sessions.append(cs)
+            }
+            currentSession = nil
+          }
+
+          if currentSession == nil {
+            currentSession = ParsedSleepSession(startSec: startSec, endSec: endSec)
+          }
+
           let stage: String
           switch item.sleepType {
           case 1:
             stage = "deep"
-            deep += dur
-            total += dur
+            currentSession?.deepSleepMinutes += effectiveDur
+            currentSession?.totalSleepMinutes += effectiveDur
           case 2, 5, 6:
             stage = "light"
-            light += dur
-            total += dur
+            currentSession?.lightSleepMinutes += effectiveDur
+            currentSession?.totalSleepMinutes += effectiveDur
           case 4:
             stage = "rem"
-            rem += dur
-            total += dur
+            currentSession?.remSleepMinutes += effectiveDur
+            currentSession?.totalSleepMinutes += effectiveDur
           case 3, 7, 8:
             stage = "awake"
-            awake += dur
+            currentSession?.awakeMinutes += effectiveDur
           default:
             stage = "light"
-            light += dur
-            total += dur
+            currentSession?.lightSleepMinutes += effectiveDur
+            currentSession?.totalSleepMinutes += effectiveDur
           }
-          let startSec = item.timeStamp > 0 ? item.timeStamp : (nowSec - (total + awake) * 60)
-          let endSec = startSec + (dur * 60)
-          epochs.append([
-            "stage": stage,
-            "startTime": startSec * 1000,
-            "endTime": endSec * 1000,
-            "durationMinutes": dur
-          ])
+
+          if effectiveDur > 0 {
+            currentSession?.epochs.append([
+              "stage": stage,
+              "startTime": Int64(startSec) * 1000,
+              "endTime": Int64(endSec) * 1000,
+              "durationMinutes": effectiveDur
+            ])
+          }
+
+          currentSession?.endSec = max(currentSession?.endSec ?? 0, endSec)
+          sessionCursorSec = max(sessionCursorSec, endSec)
+
+          // Explicit sleep ending marker (sleepType == 8)
+          if item.sleepType == 8 {
+            if let cs = currentSession, cs.totalSleepMinutes > 0 || cs.awakeMinutes > 0 {
+              sessions.append(cs)
+            }
+            currentSession = nil
+          }
         }
 
-        if total > 0 || awake > 0 {
-          self.currentSleepMinutes = total
-          self.currentDeepSleepMinutes = deep
-          self.currentRemSleepMinutes = rem
-          let inBed = total + awake
-          self.timeInBedMinutes = inBed > 0 ? inBed : total
-          self.currentSleepEfficiency = (inBed > 0 && total > 0) ? round((Double(total) / Double(inBed)) * 100.0) / 100.0 : 0.0
-          self.currentHypnogram = epochs
+        if let cs = currentSession, cs.totalSleepMinutes > 0 || cs.awakeMinutes > 0 {
+          sessions.append(cs)
+        }
+
+        // 4. Select single primary night sleep session:
+        // Calculate UTE sleep day window [20:00 yesterday .. 20:00 today) or [20:00 today .. 20:00 tomorrow)
+        let cal = Calendar.current
+        let currentDate = Date()
+        let currentHour = cal.component(.hour, from: currentDate)
+        let cycleStart: Date
+        if currentHour < 20 {
+          let yesterday = cal.date(byAdding: .day, value: -1, to: currentDate) ?? currentDate
+          cycleStart = cal.date(bySettingHour: 20, minute: 0, second: 0, of: yesterday) ?? yesterday
+        } else {
+          cycleStart = cal.date(bySettingHour: 20, minute: 0, second: 0, of: currentDate) ?? currentDate
+        }
+        let cycleStartSec = Int(cycleStart.timeIntervalSince1970)
+        // Allow 2-hour buffer (from 18:00) for early sleepers
+        let windowStartSec = cycleStartSec - 2 * 3600
+
+        // Sessions belonging to current sleep cycle window
+        let candidates = sessions.filter { $0.endSec >= windowStartSec }
+        let primaryCandidates = candidates.filter { $0.totalSleepMinutes >= 60 }
+
+        let selectedSession: ParsedSleepSession? = primaryCandidates.max(by: { $0.totalSleepMinutes < $1.totalSleepMinutes })
+          ?? candidates.max(by: { $0.totalSleepMinutes < $1.totalSleepMinutes })
+          ?? sessions.last
+
+        if let session = selectedSession, session.totalSleepMinutes > 0 || session.awakeMinutes > 0 {
+          self.currentSleepMinutes = session.totalSleepMinutes
+          self.currentDeepSleepMinutes = session.deepSleepMinutes
+          self.currentRemSleepMinutes = session.remSleepMinutes
+          self.timeInBedMinutes = session.timeInBedMinutes
+          self.currentSleepEfficiency = session.sleepEfficiency
+          self.currentHypnogram = session.epochs
           self.pushTelemetry()
           self.refreshWorkout()
           return
         }
       }
 
-      if let minutes = self.sleepMinutes(from: dict), minutes > 0 {
-        self.currentSleepMinutes = minutes
-        self.currentDeepSleepMinutes = 0
-        self.currentRemSleepMinutes = 0
-        self.timeInBedMinutes = minutes
-        self.currentSleepEfficiency = 0.0
+      // Fallback: parse discrete session from uteDict (never sum multiple days)
+      if let session = self.extractSleepSession(from: dict), session.sleep > 0 {
+        self.currentSleepMinutes = session.sleep
+        self.currentDeepSleepMinutes = session.deep
+        self.currentRemSleepMinutes = session.rem
+        self.timeInBedMinutes = session.inBed
+        self.currentSleepEfficiency = session.efficiency
         self.currentHypnogram = []
         self.pushTelemetry()
       }
@@ -997,7 +1150,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
           sleep += Int(item.sleepTime)
         }
         if steps > 0 { self.currentSteps = steps }
-        if sleep > 0 { self.currentSleepMinutes = sleep }
+        if sleep > 0 && self.currentSleepMinutes == 0 {
+          self.currentSleepMinutes = sleep
+          self.timeInBedMinutes = sleep
+        }
       }
       self.pushTelemetry()
     }
@@ -1018,22 +1174,79 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     pollTimer = nil
   }
 
-  private func sleepMinutes(from dict: [AnyHashable: Any]?) -> Int? {
+  private func extractSleepSession(from dict: [AnyHashable: Any]?) -> (sleep: Int, deep: Int, rem: Int, inBed: Int, efficiency: Double)? {
     guard let dict = dict else { return nil }
-    var total = 0
-    for (_, value) in dict {
-      if let arr = value as? [Any] {
-        for row in arr {
-          if let map = row as? [AnyHashable: Any] {
-            for key in ["sleepTime", "sleepMinutes", "duration", "totalSleep"] {
-              if let n = map[key] as? NSNumber { total += n.intValue }
-            }
+
+    var candidateArrays: [[Any]] = []
+    if let dayByDay = dict[kSDKQuerySleepDayByDay] as? [Any] {
+      candidateArrays.append(dayByDay)
+    }
+    if let dayByDayStr = dict["kSDKQuerySleepDayByDay"] as? [Any] {
+      candidateArrays.append(dayByDayStr)
+    }
+    for (_, val) in dict {
+      if let arr = val as? [Any] {
+        candidateArrays.append(arr)
+      }
+    }
+
+    var bestSession: (sleep: Int, deep: Int, rem: Int, inBed: Int, efficiency: Double)? = nil
+
+    for arr in candidateArrays {
+      for item in arr {
+        guard let map = item as? [AnyHashable: Any] else { continue }
+
+        var total = 0
+        for key in ["sleepTime", "totalSleep", "sleepMinutes", "duration"] {
+          if let n = map[key] as? NSNumber, n.intValue > 0 {
+            total = n.intValue
+            break
           }
+        }
+        if total > 1440 { total /= 60 }
+        guard total > 0 && total <= 960 else { continue }
+
+        var deep = 0
+        for key in ["deepSleepTime", "deepTime", "deepSleep", "deep"] {
+          if let n = map[key] as? NSNumber, n.intValue > 0 {
+            deep = n.intValue
+            break
+          }
+        }
+        if deep > 1440 { deep /= 60 }
+
+        var rem = 0
+        for key in ["remSleepTime", "remTime", "remSleep", "rem"] {
+          if let n = map[key] as? NSNumber, n.intValue > 0 {
+            rem = n.intValue
+            break
+          }
+        }
+        if rem > 1440 { rem /= 60 }
+
+        var awake = 0
+        for key in ["awakeSleepTime", "awakeTime", "awakeSleep", "awake"] {
+          if let n = map[key] as? NSNumber, n.intValue > 0 {
+            awake = n.intValue
+            break
+          }
+        }
+        if awake > 1440 { awake /= 60 }
+
+        let inBed = max(total, total + awake)
+        let eff = inBed > 0 ? min(1.0, round((Double(total) / Double(inBed)) * 100.0) / 100.0) : 0.0
+
+        if bestSession == nil || total > bestSession!.sleep {
+          bestSession = (sleep: total, deep: deep, rem: rem, inBed: inBed, efficiency: eff)
         }
       }
     }
-    if total > 24 * 60 { total = total / 60 }
-    return total > 0 ? total : nil
+
+    return bestSession
+  }
+
+  private func sleepMinutes(from dict: [AnyHashable: Any]?) -> Int? {
+    return extractSleepSession(from: dict)?.sleep
   }
 
   private func bindLiveStreams() {

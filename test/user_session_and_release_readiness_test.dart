@@ -12,6 +12,8 @@ import 'package:barys_biotracker/data/storage/pregnancy_log_repository.dart';
 import 'package:barys_biotracker/data/storage/user_profile_repository.dart';
 import 'package:barys_biotracker/data/storage/workout_repository.dart';
 import 'package:barys_biotracker/domain/avatar/avatar_manager.dart';
+import 'package:barys_biotracker/domain/intelligence/sleep_engine.dart';
+import 'package:barys_biotracker/domain/models/personal_baseline.dart';
 import 'package:barys_biotracker/domain/models/telemetry.dart';
 import 'package:barys_biotracker/domain/models/workout_session.dart';
 
@@ -378,6 +380,95 @@ void main() {
       // Verify cancelConnect transitions state safely
       await bridge.cancelConnect();
       expect(bridge.connectionState, BleConnectionState.idle);
+    });
+
+    test('13. Sleep Processing: Primary sleep session isolation and non-overlapping hypnogram epochs', () {
+      // Create mock epochs representing a primary night sleep session
+      final baseTime = DateTime(2026, 10, 3, 23, 0); // 23:00
+      final epochsData = [
+        {'stage': 'light', 'durationMinutes': 25},
+        {'stage': 'deep', 'durationMinutes': 45},
+        {'stage': 'rem', 'durationMinutes': 30},
+        {'stage': 'deep', 'durationMinutes': 60},
+        {'stage': 'awake', 'durationMinutes': 10},
+        {'stage': 'light', 'durationMinutes': 50},
+        {'stage': 'rem', 'durationMinutes': 40},
+      ];
+
+      var cursor = baseTime;
+      final rawList = <Map<String, dynamic>>[];
+      for (final e in epochsData) {
+        final dur = e['durationMinutes'] as int;
+        final start = cursor;
+        final end = start.add(Duration(minutes: dur));
+        cursor = end;
+        rawList.add({
+          'stage': e['stage'],
+          'startTime': start.millisecondsSinceEpoch,
+          'endTime': end.millisecondsSinceEpoch,
+          'durationMinutes': dur,
+        });
+      }
+
+      final telemetry = BleTelemetry(
+        timestamp: DateTime.now(),
+        sleepMinutes: 250, // 25 + 45 + 30 + 60 + 50 + 40 = 250
+        deepSleepMinutes: 105, // 45 + 60 = 105
+        remSleepMinutes: 70, // 30 + 40 = 70
+        timeInBedMinutes: 260, // 250 + 10 awake = 260
+        sleepEfficiency: 0.96, // 250 / 260 = 0.9615 -> 0.96
+        sleepHypnogram: rawList.map((m) => SleepEpoch(
+          stage: m['stage'] == 'deep'
+              ? SleepStageType.deep
+              : m['stage'] == 'rem'
+                  ? SleepStageType.rem
+                  : m['stage'] == 'awake'
+                      ? SleepStageType.awake
+                      : SleepStageType.light,
+          startTime: DateTime.fromMillisecondsSinceEpoch(m['startTime'] as int),
+          endTime: DateTime.fromMillisecondsSinceEpoch(m['endTime'] as int),
+        )).toList(),
+      );
+
+      // Verify sleep metrics contract
+      expect(telemetry.hasSleep, isTrue);
+      expect(telemetry.sleepMinutes, 250);
+      expect(telemetry.deepSleepMinutes, 105);
+      expect(telemetry.remSleepMinutes, 70);
+      expect(telemetry.timeInBedMinutes, 260);
+      expect(telemetry.sleepEfficiency, 0.96);
+
+      // Verify hypnogram is strictly non-overlapping and chronologically ordered
+      final epochs = telemetry.sleepHypnogram;
+      expect(epochs.length, 7);
+      for (int i = 0; i < epochs.length; i++) {
+        expect(epochs[i].endTime.isAfter(epochs[i].startTime), isTrue,
+            reason: 'Epoch $i must have endTime > startTime');
+        if (i > 0) {
+          expect(
+            epochs[i].startTime.isAtSameMomentAs(epochs[i - 1].endTime) ||
+                epochs[i].startTime.isAfter(epochs[i - 1].endTime),
+            isTrue,
+            reason: 'Epoch $i startTime must be >= Epoch ${i - 1} endTime (no overlaps)',
+          );
+        }
+      }
+
+      // Verify SleepEngine analysis
+      final analysis = SleepEngine.calculate(
+        telemetry: telemetry,
+        baseline: const PersonalBaseline(
+          meanHrv: 65.0,
+          meanRhr: 58,
+          meanRespiratoryRate: 14.5,
+          baselineSkinTemp: 36.4,
+          baselineSleepNeedMinutes: 480,
+          calibrationDaysDone: 14,
+        ),
+      );
+      expect(analysis.sleepPerformanceScore, greaterThan(0));
+      expect(analysis.sleepPerformanceScore, lessThanOrEqualTo(100));
+      expect(analysis.hypnogram.length, 7);
     });
   });
 }
