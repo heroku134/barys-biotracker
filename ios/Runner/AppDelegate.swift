@@ -66,12 +66,35 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private var lastConnectedAddress: String?
   private var pendingConnectResult: FlutterResult?
   private var connectTimeoutWorkItem: DispatchWorkItem?
+  private var isManualDisconnect = false
+  #if canImport(UTEBluetoothRYApi)
+  private var connectingUteModel: UTEModelDevice?
+  #endif
+  private var connectingPeripheral: CBPeripheral?
 
   private func resolvePendingConnect(success: Bool, errorMessage: String? = nil) {
     connectTimeoutWorkItem?.cancel()
     connectTimeoutWorkItem = nil
+    #if canImport(UTEBluetoothRYApi)
+    let targetModel = connectingUteModel
+    connectingUteModel = nil
+    #endif
+    let targetPeriph = connectingPeripheral
+    connectingPeripheral = nil
+
     if !success {
       pendingConnectAddress = nil
+      #if canImport(UTEBluetoothRYApi)
+      if let model = targetModel {
+        _ = mgr.disconnectDevices(model)
+      }
+      #endif
+      if let p = targetPeriph, !isConnected {
+        centralManager?.cancelPeripheralConnection(p)
+      }
+      if centralManager?.isScanning == true && !isScanning {
+        centralManager?.stopScan()
+      }
     }
     if let result = pendingConnectResult {
       pendingConnectResult = nil
@@ -262,6 +285,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   func connect(address: String, result: @escaping FlutterResult) {
+    isManualDisconnect = false
     if !isBluetoothEnabled() {
       result(FlutterError(code: "BLUETOOTH_DISABLED", message: "Bluetooth is powered off", details: nil))
       return
@@ -315,6 +339,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         if deviceAddress(dev) == address || dev.identifier == address {
           discoveredUteDevices[address] = dev
           pendingConnectAddress = address
+          connectingUteModel = dev
           mgr.connect(dev)
           return
         }
@@ -346,6 +371,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     }
     if let model = targetUte {
       pendingConnectAddress = address
+      connectingUteModel = model
       mgr.connect(model)
       return
     }
@@ -361,6 +387,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
     if let peripheral = targetPeripheral {
       connectedPeripheral = peripheral
+      connectingPeripheral = peripheral
       peripheral.delegate = self
       pendingConnectAddress = address
       centralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])
@@ -377,7 +404,13 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     resolvePendingConnect(success: false, errorMessage: "Device \(address) not found")
   }
 
+  func cancelConnect(result: @escaping FlutterResult) {
+    resolvePendingConnect(success: false, errorMessage: "Cancelled by client")
+    result(true)
+  }
+
   func disconnect(forget: Bool = false, result: @escaping FlutterResult) {
+    isManualDisconnect = true
     resolvePendingConnect(success: false, errorMessage: "Disconnected by user")
     if forget {
       lastConnectedAddress = nil
@@ -1193,17 +1226,8 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       currentBpm = 0
       isOffWrist = false
       skinTempDeviation = 0.0
-      pushTelemetry(immediate: true)
-
-      // Auto-reconnect if device was paired and user didn't manually disconnect
       pendingConnectAddress = nil
-      let savedAddr = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
-      if let addr = savedAddr, !addr.isEmpty {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-          guard let self = self, !self.isConnected else { return }
-          self.connect(address: addr) { _ in }
-        }
-      }
+      pushTelemetry(immediate: true)
 
     default:
       // Unknown or sync/intermediate status (e.g. sync start/end) - do NOT disconnect!
@@ -1411,6 +1435,8 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
       case "connect":
         let address = (call.arguments as? [String: Any])?["address"] as? String ?? ""
         KalkanBleManager.shared.connect(address: address, result: result)
+      case "cancelConnect":
+        KalkanBleManager.shared.cancelConnect(result: result)
       case "disconnect":
         let forget = (call.arguments as? [String: Any])?["forget"] as? Bool ?? false
         KalkanBleManager.shared.disconnect(forget: forget, result: result)

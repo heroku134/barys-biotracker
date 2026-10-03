@@ -329,6 +329,8 @@ class UteBleBridge {
       if (lastMac == trimmedMac) {
         return true;
       }
+      // Подключены к другому устройству: сначала разрываем старое соединение
+      await disconnect(forget: false);
     }
 
     // Если подключение уже в процессе — ожидаем завершения текущего
@@ -359,11 +361,13 @@ class UteBleBridge {
     _backoffTimer = null;
 
     Timer? timeoutTimer;
-    StreamSubscription<BleTelemetry>? readySub;
+    bool isCompleted = false;
 
     void finishConnect(bool success) async {
+      if (isCompleted) return;
+      isCompleted = true;
       timeoutTimer?.cancel();
-      await readySub?.cancel();
+      timeoutTimer = null;
       _isConnecting = false;
 
       if (success) {
@@ -386,20 +390,24 @@ class UteBleBridge {
       }
     }
 
-    timeoutTimer = Timer(timeout, () {
+    timeoutTimer = Timer(timeout, () async {
       debugPrint('UteBleBridge.connect: timeout after ${timeout.inSeconds}s for $trimmedMac');
-      finishConnect(false);
-    });
-
-    readySub = telemetryStream.listen((t) {
-      if (t.isConnected) {
-        finishConnect(true);
+      // Таймаут в Dart: обязательно отменяем нативную попытку подключения!
+      try {
+        await _methodChannel.invokeMethod('cancelConnect');
+      } catch (_) {
+        try {
+          await _methodChannel.invokeMethod('disconnect', {'forget': false});
+        } catch (_) {}
       }
+      finishConnect(false);
     });
 
     try {
       final res = await _methodChannel.invokeMethod<bool>('connect', {'address': trimmedMac});
-      if (res == false) {
+      if (res == true) {
+        finishConnect(true);
+      } else {
         finishConnect(false);
       }
     } catch (e) {
@@ -408,6 +416,25 @@ class UteBleBridge {
     }
 
     return completer.future;
+  }
+
+  Future<void> cancelConnect() async {
+    _backoffTimer?.cancel();
+    _backoffTimer = null;
+    if (_isConnecting) {
+      try {
+        await _methodChannel.invokeMethod('cancelConnect');
+      } catch (_) {
+        try {
+          await _methodChannel.invokeMethod('disconnect', {'forget': false});
+        } catch (_) {}
+      }
+      _isConnecting = false;
+      _setConnectionState(BleConnectionState.idle);
+      if (_connectCompleter != null && !_connectCompleter!.isCompleted) {
+        _connectCompleter!.complete(false);
+      }
+    }
   }
 
   Future<void> disconnect({bool forget = false}) async {

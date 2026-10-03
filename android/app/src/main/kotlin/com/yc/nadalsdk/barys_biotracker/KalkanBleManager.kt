@@ -213,8 +213,12 @@ object KalkanBleManager {
 
         connectTimeoutRunnable = Runnable {
             if (pendingConnectCallback != null) {
-                pendingConnectCallback?.invoke(false, "Connection timed out (15s)")
+                val cb = pendingConnectCallback
                 pendingConnectCallback = null
+                try {
+                    client.disconnect()
+                } catch (_: Exception) {}
+                cb?.invoke(false, "Connection timed out (15s)")
             }
         }
         mainHandler.postDelayed(connectTimeoutRunnable!!, 15000)
@@ -330,8 +334,27 @@ object KalkanBleManager {
         uteBleConnection = client.connect(address)
     }
 
+    fun cancelConnect() {
+        connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+        connectTimeoutRunnable = null
+        val cb = pendingConnectCallback
+        pendingConnectCallback = null
+        try {
+            uteBleClient?.disconnect()
+        } catch (_: Exception) {}
+        cb?.invoke(false, "Connection cancelled")
+    }
+
     fun disconnect(forget: Boolean = false) {
-        uteBleClient?.disconnect()
+        connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+        connectTimeoutRunnable = null
+        val cb = pendingConnectCallback
+        pendingConnectCallback = null
+        cb?.invoke(false, "Disconnected by user")
+
+        try {
+            uteBleClient?.disconnect()
+        } catch (_: Exception) {}
         stopBackgroundPolling()
 
         if (forget) {

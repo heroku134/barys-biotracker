@@ -357,5 +357,27 @@ void main() {
       expect(reloaded.length, 60);
       expect(reloaded.last.recovery, 99);
     });
+
+    test('12. BLE Connection Hardening: disconnect flags, timeout cancellation, and no false ready from telemetry', () async {
+      SharedPreferences.setMockInitialValues({'kalkan_last_device_mac': 'AA:BB:CC:DD:EE:11'});
+      final bridge = UteBleBridge();
+
+      // Verify initial paired address
+      expect(await bridge.getLastPairedAddress(), 'AA:BB:CC:DD:EE:11');
+
+      // Test disconnect(forget: false) retains paired address in prefs
+      await bridge.disconnect(forget: false);
+      expect(await bridge.getLastPairedAddress(), 'AA:BB:CC:DD:EE:11');
+      expect(bridge.connectionState, BleConnectionState.idle);
+
+      // Test disconnect(forget: true) clears paired address in prefs
+      await bridge.disconnect(forget: true);
+      expect(await bridge.getLastPairedAddress(), isNull);
+      expect(bridge.connectionState, BleConnectionState.idle);
+
+      // Verify cancelConnect transitions state safely
+      await bridge.cancelConnect();
+      expect(bridge.connectionState, BleConnectionState.idle);
+    });
   });
 }

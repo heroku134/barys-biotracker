@@ -193,6 +193,10 @@ class MainActivity : FlutterActivity() {
                             result.error("INVALID_ADDRESS", "Device address is null", null)
                         }
                     }
+                    "cancelConnect" -> {
+                        KalkanBleManager.cancelConnect()
+                        result.success(true)
+                    }
                     "disconnect" -> {
                         val forget = call.argument<Boolean>("forget") ?: false
                         KalkanBleManager.disconnect(forget)
