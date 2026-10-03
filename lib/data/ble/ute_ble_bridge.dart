@@ -79,6 +79,7 @@ class UteBleBridge {
               sleepEfficiency: _parseDouble(event['sleepEfficiency'], prev?.sleepEfficiency ?? 0.0),
               sleepConsistency: _parseDouble(event['sleepConsistency'], prev?.sleepConsistency ?? 0.0),
               restorativeSleepRatio: _parseDouble(event['restorativeSleepRatio'], prev?.restorativeSleepRatio ?? 0.0),
+              sleepHypnogram: _parseSleepHypnogram(event['sleepHypnogram']) ?? prev?.sleepHypnogram ?? const [],
               currentDayStrain: _parseDouble(event['currentDayStrain'], prev?.currentDayStrain ?? 0.0),
               yesterdayStrain: _parseDouble(event['yesterdayStrain'], prev?.yesterdayStrain ?? 0.0),
               zoneMinutes: _parseZoneMinutes(event['zoneMinutes']) ?? prev?.zoneMinutes ?? const [0, 0, 0, 0, 0],
@@ -156,8 +157,12 @@ class UteBleBridge {
           final name = event['name']?.toString() ?? 'Unknown';
           final address = event['address']?.toString() ?? '';
           final rssi = _parseInt(event['rssi'], -70);
+          if (rssi < -85 && rssi != 0) return;
 
           if (address.isNotEmpty) {
+            if (_discoveredMap.length >= 25 && !_discoveredMap.containsKey(address)) {
+              return;
+            }
             _discoveredMap[address] = DiscoveredBleDevice(
               name: name,
               address: address,
@@ -292,6 +297,42 @@ class UteBleBridge {
     final out = raw.map((e) => (e as num).round()).toList();
     if (out.length < 5) return null;
     return out.take(5).toList();
+  }
+
+  static List<SleepEpoch>? _parseSleepHypnogram(dynamic raw) {
+    if (raw is! List) return null;
+    final epochs = <SleepEpoch>[];
+    for (final item in raw) {
+      if (item is Map) {
+        final stageStr = item['stage']?.toString().toLowerCase();
+        SleepStageType stage;
+        switch (stageStr) {
+          case 'deep':
+            stage = SleepStageType.deep;
+            break;
+          case 'rem':
+            stage = SleepStageType.rem;
+            break;
+          case 'light':
+            stage = SleepStageType.light;
+            break;
+          case 'awake':
+          default:
+            stage = SleepStageType.awake;
+            break;
+        }
+        final startMs = _parseInt(item['startTime'] ?? item['startTs']);
+        final endMs = _parseInt(item['endTime'] ?? item['endTs']);
+        if (startMs > 0 && endMs > startMs) {
+          epochs.add(SleepEpoch(
+            startTime: DateTime.fromMillisecondsSinceEpoch(startMs),
+            endTime: DateTime.fromMillisecondsSinceEpoch(endMs),
+            stage: stage,
+          ));
+        }
+      }
+    }
+    return epochs.isEmpty ? null : epochs;
   }
 
   void dispose() {

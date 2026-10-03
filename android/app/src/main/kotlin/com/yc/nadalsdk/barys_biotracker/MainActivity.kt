@@ -71,6 +71,9 @@ class MainActivity : FlutterActivity() {
     private var currentSleepMinutes: Int = 0
     private var currentDeepSleepMinutes: Int = 0
     private var currentRemSleepMinutes: Int = 0
+    private var timeInBedMinutes: Int = 0
+    private var currentSleepEfficiency: Double = 0.0
+    private var currentHypnogram: List<Map<String, Any>> = emptyList()
     private var currentStressScore: Int = 0
     private var isOffWrist: Boolean = false
     private var skinTempDeviation: Double = 0.0
@@ -115,9 +118,53 @@ class MainActivity : FlutterActivity() {
                         try {
                             val sleep = uteBleConnection?.getSciSleepData()
                             if (sleep != null && sleep.sleepTotalTime > 0) {
-                                currentSleepMinutes = sleep.sleepTotalTime
-                                currentDeepSleepMinutes = (sleep.sleepTotalTime * 0.22).toInt()
-                                currentRemSleepMinutes = (sleep.sleepTotalTime * 0.23).toInt()
+                                val detailList = sleep.sleepDetailList
+                                if (!detailList.isNullOrEmpty()) {
+                                    var total = 0
+                                    var deep = 0
+                                    var light = 0
+                                    var rem = 0
+                                    var awake = 0
+                                    val epochs = mutableListOf<Map<String, Any>>()
+                                    val nowSec = (System.currentTimeMillis() / 1000).toInt()
+
+                                    for (item in detailList) {
+                                        val dur = item.sleepTime
+                                        if (dur <= 0) continue
+                                        val stage = when (item.sleepType) {
+                                            1 -> { deep += dur; total += dur; "deep" }
+                                            2, 5, 6 -> { light += dur; total += dur; "light" }
+                                            4 -> { rem += dur; total += dur; "rem" }
+                                            3, 7, 8 -> { awake += dur; "awake" }
+                                            else -> { light += dur; total += dur; "light" }
+                                        }
+                                        val startSec = if (item.startTime > 0) item.startTime else (nowSec - (total + awake) * 60)
+                                        val endSec = if (item.endTime > startSec) item.endTime else (startSec + dur * 60)
+                                        epochs.add(
+                                            mapOf(
+                                                "stage" to stage,
+                                                "startTime" to startSec.toLong() * 1000L,
+                                                "endTime" to endSec.toLong() * 1000L,
+                                                "durationMinutes" to dur
+                                            )
+                                        )
+                                    }
+                                    currentSleepMinutes = if (total > 0) total else sleep.sleepTotalTime
+                                    currentDeepSleepMinutes = deep
+                                    currentRemSleepMinutes = rem
+                                    val inBed = total + awake
+                                    timeInBedMinutes = if (inBed > 0) inBed else (currentSleepMinutes + 25)
+                                    currentSleepEfficiency = if (timeInBedMinutes > 0) {
+                                        Math.round((currentSleepMinutes.toDouble() / timeInBedMinutes.toDouble()) * 100.0) / 100.0
+                                    } else 0.92
+                                    currentHypnogram = epochs
+                                } else {
+                                    currentSleepMinutes = sleep.sleepTotalTime
+                                    currentDeepSleepMinutes = (sleep.sleepTotalTime * 0.22).toInt()
+                                    currentRemSleepMinutes = (sleep.sleepTotalTime * 0.23).toInt()
+                                    timeInBedMinutes = currentSleepMinutes + 25
+                                    currentSleepEfficiency = 0.92
+                                }
                             }
                         } catch (e: Exception) {
                             // Non-critical sleep poll
@@ -251,6 +298,9 @@ class MainActivity : FlutterActivity() {
                         currentSleepMinutes = 0
                         currentDeepSleepMinutes = 0
                         currentRemSleepMinutes = 0
+                        timeInBedMinutes = 0
+                        currentSleepEfficiency = 0.0
+                        currentHypnogram = emptyList()
                         currentStressScore = 0
                         isOffWrist = false
                         skinTempDeviation = 0.0
@@ -394,6 +444,7 @@ class MainActivity : FlutterActivity() {
                     }
                     val address = rawDevice?.address ?: ""
                     val rssi = scanDevice.rssi
+                    if (rssi < -85 && rssi != 0) return
 
                     mainHandler.post {
                         scanEventSink?.success(mapOf(
@@ -506,6 +557,9 @@ class MainActivity : FlutterActivity() {
                         currentSleepMinutes = 0
                         currentDeepSleepMinutes = 0
                         currentRemSleepMinutes = 0
+                        timeInBedMinutes = 0
+                        currentSleepEfficiency = 0.0
+                        currentHypnogram = emptyList()
                         currentStressScore = 0
                         isOffWrist = false
                         skinTempDeviation = 0.0
@@ -686,8 +740,9 @@ class MainActivity : FlutterActivity() {
                 "sleepMinutes" to currentSleepMinutes,
                 "deepSleepMinutes" to currentDeepSleepMinutes,
                 "remSleepMinutes" to currentRemSleepMinutes,
-                "timeInBedMinutes" to (if (currentSleepMinutes > 0) currentSleepMinutes + 25 else 0),
-                "sleepEfficiency" to (if (currentSleepMinutes > 0) 0.92 else 0.0),
+                "timeInBedMinutes" to (if (timeInBedMinutes > 0) timeInBedMinutes else (if (currentSleepMinutes > 0) currentSleepMinutes + 25 else 0)),
+                "sleepEfficiency" to (if (currentSleepEfficiency > 0.0) currentSleepEfficiency else (if (currentSleepMinutes > 0) 0.92 else 0.0)),
+                "sleepHypnogram" to currentHypnogram,
                 "currentStressScore" to currentStressScore,
                 "isOffWrist" to isOffWrist,
                 "skinTempDeviation" to skinTempDeviation,
