@@ -20,6 +20,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
   bool _isBluetoothEnabled = true;
   bool _isConnecting = false;
   String? _connectingAddress;
+  bool _showAllDevices = false;
   List<DiscoveredBleDevice> _devices = [];
   StreamSubscription? _scanSub;
 
@@ -167,9 +168,119 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
     super.dispose();
   }
 
+  Widget _buildDeviceCard(DiscoveredBleDevice dev) {
+    final isItemConnecting = _isConnecting && _connectingAddress == dev.address;
+    final displayName = dev.name.isNotEmpty
+        ? dev.name
+        : (dev.isKalkanBand ? 'KALKAN СААТ-1' : 'BLE Устройство');
+
+    return GlassCard(
+      onTap: _isConnecting ? null : () => _connect(dev),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: dev.isKalkanBand
+                  ? AppColors.sage.withValues(alpha: 0.15)
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+              border: Border.all(
+                color: dev.isKalkanBand
+                    ? AppColors.sage.withValues(alpha: 0.3)
+                    : AppColors.line,
+                width: KalkanUi.hairline,
+              ),
+            ),
+            child: Icon(
+              _getRssiIcon(dev.rssi),
+              color: _getRssiColor(dev.rssi),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        displayName,
+                        style: const TextStyle(
+                          color: AppColors.fg,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (dev.isKalkanBand) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.sage.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppColors.sage.withValues(alpha: 0.3), width: KalkanUi.hairline),
+                        ),
+                        child: const Text(
+                          'KALKAN',
+                          style: TextStyle(
+                            color: AppColors.sage,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      dev.address,
+                      style: const TextStyle(color: AppColors.muted, fontSize: 11),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('•', style: TextStyle(color: AppColors.faint, fontSize: 11)),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${dev.rssi} dBm',
+                      style: TextStyle(
+                        color: _getRssiColor(dev.rssi),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          isItemConnecting
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
+                )
+              : const Icon(Icons.chevron_right, color: AppColors.muted),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasDevices = _devices.isNotEmpty;
+    final kalkanDevices = _devices.where((d) => d.isKalkanBand).toList();
+    final otherDevices = _devices.where((d) => !d.isKalkanBand).toList();
 
     return Scaffold(
       backgroundColor: AppColors.stage,
@@ -255,86 +366,97 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
               // Список найденных устройств
               Expanded(
                 child: hasDevices
-                    ? ListView.separated(
-                        itemCount: _devices.length,
-                        separatorBuilder: (context, index) => SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final dev = _devices[index];
-                          final isItemConnecting = _isConnecting && _connectingAddress == dev.address;
-
-                          return GlassCard(
-                            onTap: _isConnecting ? null : () => _connect(dev),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.sage.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                                    border: Border.all(color: AppColors.sage.withValues(alpha: 0.3), width: KalkanUi.hairline),
+                    ? ListView(
+                        children: [
+                          if (kalkanDevices.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8, top: 2),
+                              child: Row(
+                                children: [
+                                  const Text(
+                                    'УСТРОЙСТВА KALKAN',
+                                    style: TextStyle(
+                                      color: AppColors.muted,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.2,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    _getRssiIcon(dev.rssi),
-                                    color: _getRssiColor(dev.rssi),
-                                    size: 22,
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '(${kalkanDevices.length})',
+                                    style: const TextStyle(color: AppColors.faint, fontSize: 11),
                                   ),
-                                ),
-                                SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        dev.name.isNotEmpty ? dev.name : 'UTE Smart Watch',
-                                        style: TextStyle(
-                                          color: AppColors.fg,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            dev.address,
-                                            style: TextStyle(color: AppColors.muted, fontSize: 11),
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text('•', style: TextStyle(color: AppColors.faint, fontSize: 11)),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            '${dev.rssi} dBm',
-                                            style: TextStyle(
-                                              color: _getRssiColor(dev.rssi),
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                isItemConnecting
-                                    ? SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
-                                      )
-                                    : Icon(Icons.chevron_right, color: AppColors.muted),
-                              ],
+                                ],
+                              ),
                             ),
-                          );
-                        },
+                            ...kalkanDevices.map((d) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: _buildDeviceCard(d),
+                                )),
+                          ],
+                          if (otherDevices.isNotEmpty) ...[
+                            if (kalkanDevices.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Center(
+                                  child: TextButton.icon(
+                                    onPressed: () => setState(() => _showAllDevices = !_showAllDevices),
+                                    icon: Icon(
+                                      _showAllDevices ? Icons.expand_less : Icons.expand_more,
+                                      size: 16,
+                                      color: AppColors.muted,
+                                    ),
+                                    label: Text(
+                                      _showAllDevices
+                                          ? 'Скрыть сторонние устройства'
+                                          : 'Показать все устройства (${otherDevices.length})',
+                                      style: const TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (_showAllDevices || kalkanDevices.isEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8, top: 6),
+                                child: Row(
+                                  children: [
+                                    const Text(
+                                      'ДРУГИЕ BLE УСТРОЙСТВА',
+                                      style: TextStyle(
+                                        color: AppColors.muted,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '(${otherDevices.length})',
+                                      style: const TextStyle(color: AppColors.faint, fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              ...otherDevices.map((d) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: _buildDeviceCard(d),
+                                  )),
+                            ],
+                          ],
+                        ],
                       )
                     : Center(
                         child: Text(
                           _isScanning
-                              ? 'Идет поиск UTE / KALKAN устройств по Bluetooth...'
+                              ? 'Идет поиск устройств KALKAN по Bluetooth...'
                               : 'В радиусе действия устройства не обнаружены.\nНажмите «Искать снова».',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.muted, fontSize: 12, height: 1.5),
+                          style: const TextStyle(color: AppColors.muted, fontSize: 12, height: 1.5),
                         ),
                       ),
               ),

@@ -89,6 +89,18 @@ object KalkanBleManager {
         return uteBleClient?.isBluetoothEnable() ?: false
     }
 
+    private fun isKalkanDevice(name: String): Boolean {
+        val lower = name.lowercase().trim()
+        if (lower.isBlank()) return false
+        if (lower.contains("kalkan") || lower.contains("саат") || lower.contains("saat") || lower.contains("nadal")) {
+            return true
+        }
+        if (lower.startsWith("ute") || lower.contains(" ute") || lower.contains("ute-") || lower.contains("ute_")) {
+            return true
+        }
+        return false
+    }
+
     fun startScan(callback: (Boolean, String?) -> Unit) {
         val client = uteBleClient
         if (client == null) {
@@ -100,16 +112,19 @@ object KalkanBleManager {
             override fun onScanning(scanDevice: UteScanDevice?) {
                 if (scanDevice != null) {
                     val rawDevice = scanDevice.device
-                    val name = rawDevice?.name ?: "UTE Watch"
+                    val rawName = rawDevice?.name?.trim() ?: ""
                     val address = rawDevice?.address ?: ""
                     val rssi = scanDevice.rssi
-                    if (rssi < -85 && rssi != 0) return
+
+                    val isKalkan = isKalkanDevice(rawName)
+                    val displayName = if (rawName.isNotBlank()) rawName else if (isKalkan) "KALKAN СААТ-1" else "BLE Устройство"
 
                     mainHandler.post {
                         scanEventSink?.success(mapOf(
-                            "name" to name,
+                            "name" to displayName,
                             "address" to address,
-                            "rssi" to rssi
+                            "rssi" to rssi,
+                            "isKalkan" to isKalkan
                         ))
                     }
                 }

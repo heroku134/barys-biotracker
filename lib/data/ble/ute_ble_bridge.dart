@@ -19,11 +19,13 @@ class DiscoveredBleDevice {
   final String name;
   final String address;
   final int rssi;
+  final bool isKalkanBand;
 
   const DiscoveredBleDevice({
     required this.name,
     required this.address,
     required this.rssi,
+    this.isKalkanBand = false,
   });
 
   @override
@@ -181,6 +183,18 @@ class UteBleBridge {
 
   // --- Сканирование и обнаружение устройств ---
 
+  static final RegExp _uteWordRegex = RegExp(r'(^|[\s\-_])ute([\s\-_0-9]|$)', caseSensitive: false);
+
+  static bool matchesKalkanFilter(String name) {
+    final lower = name.toLowerCase().trim();
+    if (lower.isEmpty || lower == 'unknown' || lower == 'ble устройство') return false;
+    return lower.contains('kalkan') ||
+        lower.contains('саат') ||
+        lower.contains('saat') ||
+        lower.contains('nadal') ||
+        _uteWordRegex.hasMatch(lower);
+  }
+
   Future<void> startScan() async {
     _discoveredMap.clear();
     _scanController.add([]);
@@ -192,22 +206,28 @@ class UteBleBridge {
           if (_parseBool(event['isScanComplete'], false)) {
             return;
           }
-          final name = event['name']?.toString() ?? 'Unknown';
+          final name = event['name']?.toString() ?? 'BLE Устройство';
           final address = event['address']?.toString() ?? '';
           final rssi = _parseInt(event['rssi'], -70);
-          if (rssi < -85 && rssi != 0) return;
+          final isKalkan = _parseBool(event['isKalkan'], false) || matchesKalkanFilter(name);
 
           if (address.isNotEmpty) {
-            if (_discoveredMap.length >= 25 && !_discoveredMap.containsKey(address)) {
+            if (_discoveredMap.length >= 100 && !_discoveredMap.containsKey(address)) {
               return;
             }
             _discoveredMap[address] = DiscoveredBleDevice(
               name: name,
               address: address,
               rssi: rssi,
+              isKalkanBand: isKalkan,
             );
             final sorted = _discoveredMap.values.toList()
-              ..sort((a, b) => b.rssi.compareTo(a.rssi));
+              ..sort((a, b) {
+                if (a.isKalkanBand != b.isKalkanBand) {
+                  return a.isKalkanBand ? -1 : 1;
+                }
+                return b.rssi.compareTo(a.rssi);
+              });
             _scanController.add(sorted);
           }
         }

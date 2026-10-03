@@ -188,5 +188,35 @@ void main() {
         BleConnectionState.failed,
       ]));
     });
+
+    test('7. BLE-03: Kalkan band identification, filter matching, and weak signal inclusion', () {
+      expect(UteBleBridge.matchesKalkanFilter('KALKAN СААТ-1'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('СААТ-1'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('UTE Watch'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('Nadal Band'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('Smart TV'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter('Computer'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter('Apple Watch'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter('BLE Устройство'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter(''), isFalse);
+
+      // Verify DiscoveredBleDevice handles weak RSSI (> -100 dBm) and sets isKalkanBand flag
+      const weakKalkan = DiscoveredBleDevice(
+        name: 'KALKAN СААТ-1',
+        address: 'AA:BB:CC:DD:EE:FF',
+        rssi: -94,
+        isKalkanBand: true,
+      );
+      expect(weakKalkan.rssi, -94);
+      expect(weakKalkan.isKalkanBand, isTrue);
+
+      const foreignDevice = DiscoveredBleDevice(
+        name: 'Samsung Smart TV',
+        address: '11:22:33:44:55:66',
+        rssi: -60,
+        isKalkanBand: false,
+      );
+      expect(foreignDevice.isKalkanBand, isFalse);
+    });
   });
 }

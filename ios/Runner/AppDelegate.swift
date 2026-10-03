@@ -103,6 +103,18 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     )
   }
 
+  private func isKalkanDevice(_ name: String) -> Bool {
+    let lower = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+    if lower.isEmpty { return false }
+    if lower.contains("kalkan") || lower.contains("саат") || lower.contains("saat") || lower.contains("nadal") {
+      return true
+    }
+    if lower.hasPrefix("ute") || lower.contains(" ute") || lower.contains("ute-") || lower.contains("ute_") {
+      return true
+    }
+    return false
+  }
+
   @objc func handleAppForeground() {
     #if canImport(UTEBluetoothRYApi)
     // 1. If UTE SDK already maintains an active connection:
@@ -116,33 +128,32 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       return
     }
 
-    // 2. Check if device is already connected to iOS system Bluetooth:
-    let knownServices = ["6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "EFF5", "6540", "FEE7", "180D", "180F", "180A", "FEF5", "FEE0", "FFE0", "FFE5"]
-    if let connectedDevs = mgr.retrieveConnectedDevice(withServers: knownServices), let firstDev = connectedDevs.first {
-      let addr = deviceAddress(firstDev)
-      discoveredUteDevices[addr] = firstDev
-      if let id = firstDev.identifier { discoveredUteDevices[id] = firstDev }
-      mgr.connect(firstDev)
-      return
-    }
-
-    // 3. Auto-reconnect to last known paired watch:
-    let target = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address") ?? pendingConnectAddress
-    if let addr = target, !addr.isEmpty && !isConnected {
-      connect(address: addr) { _ in }
-    } else if !isConnected && (target == nil || target?.isEmpty == true) {
-      if let dev = discoveredUteDevices.values.first {
-        connect(address: deviceAddress(dev)) { _ in }
+    // 2. ONLY auto-reconnect to the specifically saved watch identifier:
+    let savedAddress = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
+    if let addr = savedAddress, !addr.isEmpty && !isConnected {
+      let knownServices = ["6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "EFF5", "6540", "FEE7", "180D", "180F", "180A", "FEF5", "FEE0", "FFE0", "FFE5"]
+      if let connectedDevs = mgr.retrieveConnectedDevice(withServers: knownServices) {
+        for dev in connectedDevs {
+          if deviceAddress(dev) == addr || dev.identifier == addr {
+            discoveredUteDevices[addr] = dev
+            mgr.connect(dev)
+            return
+          }
+        }
       }
+      connect(address: addr) { _ in }
     }
     #endif
 
+    // CoreBluetooth fallback: ONLY reconnect to saved address!
     if let cm = centralManager, cm.state == .poweredOn && !isConnected {
-      let candidateServices = [CBUUID(string: "180D"), CBUUID(string: "180F"), CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"), CBUUID(string: "6540"), CBUUID(string: "FEE7"), CBUUID(string: "EFF5"), CBUUID(string: "180A"), CBUUID(string: "FEF5")]
-      let connectedList = cm.retrieveConnectedPeripherals(withServices: candidateServices)
-      if let dev = connectedList.first {
-        discoveredPeripherals[dev.identifier.uuidString] = dev
-        connect(address: dev.identifier.uuidString) { _ in }
+      let savedAddress = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
+      if let addr = savedAddress, !addr.isEmpty, let uuid = UUID(uuidString: addr) {
+        let connectedList = cm.retrievePeripherals(withIdentifiers: [uuid])
+        if let dev = connectedList.first {
+          discoveredPeripherals[dev.identifier.uuidString] = dev
+          connect(address: dev.identifier.uuidString) { _ in }
+        }
       }
     }
   }
@@ -474,32 +485,25 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
     let rawName = (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? peripheral.name ?? ""
     let cleanName = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !cleanName.isEmpty else { return }
-
-    #if canImport(UTEBluetoothRYApi)
-    let lower = cleanName.lowercased()
-    guard lower.contains("саат") || lower.contains("saat") || lower.contains("kalkan") || lower.contains("ute") || lower.contains("smart") || lower.contains("watch") || lower.contains("nadal") else {
-      return
-    }
-    #endif
-
-    if RSSI.intValue < -85 && RSSI.intValue != 0 { return }
+    let isKalkan = isKalkanDevice(cleanName)
+    let displayName = !cleanName.isEmpty ? cleanName : (isKalkan ? "KALKAN СААТ-1" : "BLE Устройство")
 
     let address = peripheral.identifier.uuidString
-    if discoveredPeripherals.count >= 25 && discoveredPeripherals[address] == nil {
+    if discoveredPeripherals.count >= 100 && discoveredPeripherals[address] == nil {
       return
     }
     discoveredPeripherals[address] = peripheral
 
     DispatchQueue.main.async { [weak self] in
       self?.scanSink?([
-        "name": cleanName,
+        "name": displayName,
         "address": address,
-        "rssi": RSSI.intValue
+        "rssi": RSSI.intValue,
+        "isKalkan": isKalkan
       ])
     }
 
-    if let pending = pendingConnectAddress, address == pending {
+    if let pending = pendingConnectAddress, address.caseInsensitiveCompare(pending) == .orderedSame {
       pendingConnectAddress = nil
       centralManager?.stopScan()
       connectedPeripheral = peripheral
@@ -1030,10 +1034,13 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 extension KalkanBleManager: UTEBluetoothDelegate {
   func uteDiscoverDevices(_ model: UTEModelDevice?) {
     guard let model = model else { return }
-    if model.rssi < -85 && model.rssi != 0 { return }
-    let name = model.name ?? "KALKAN СААТ-1"
+    let rawName = model.name ?? ""
+    let cleanName = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+    let isKalkan = isKalkanDevice(cleanName)
+    let displayName = !cleanName.isEmpty ? cleanName : (isKalkan ? "KALKAN СААТ-1" : "BLE Устройство")
     let addr = deviceAddress(model)
-    if discoveredUteDevices.count >= 25 && discoveredUteDevices[addr] == nil {
+
+    if discoveredUteDevices.count >= 100 && discoveredUteDevices[addr] == nil {
       return
     }
     discoveredUteDevices[addr] = model
@@ -1042,17 +1049,17 @@ extension KalkanBleManager: UTEBluetoothDelegate {
     }
     DispatchQueue.main.async { [weak self] in
       self?.scanSink?([
-        "name": name,
+        "name": displayName,
         "address": addr,
-        "rssi": model.rssi
+        "rssi": model.rssi,
+        "isKalkan": isKalkan
       ])
     }
 
-    // Auto-connect if this was a pending auto-reconnect target
+    // Auto-connect ONLY if this was a pending auto-reconnect target matching the exact address/identifier
     if let pending = pendingConnectAddress, !pending.isEmpty && !isConnected {
       let isMatch = addr.caseInsensitiveCompare(pending) == .orderedSame ||
-                    model.identifier?.caseInsensitiveCompare(pending) == .orderedSame ||
-                    (name.contains("СААТ") || name.contains("SAAT") || name.contains("KALKAN"))
+                    model.identifier?.caseInsensitiveCompare(pending) == .orderedSame
       if isMatch {
         pendingConnectAddress = nil
         mgr.stopScanDevices()
