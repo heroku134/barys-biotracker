@@ -58,6 +58,9 @@ object KalkanBleManager {
     private const val PREFS_NAME = "kalkan_ble_prefs"
     private const val KEY_SNAPSHOT = "kalkan_latest_telemetry_snapshot"
 
+    private var pendingConnectCallback: ((Boolean, String?) -> Unit)? = null
+    private var connectTimeoutRunnable: Runnable? = null
+
     fun init(context: Context) {
         if (appContext == null) {
             appContext = context.applicationContext
@@ -138,6 +141,18 @@ object KalkanBleManager {
             return
         }
 
+        connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+        pendingConnectCallback?.invoke(false, "Cancelled by newer connect attempt")
+        pendingConnectCallback = callback
+
+        connectTimeoutRunnable = Runnable {
+            if (pendingConnectCallback != null) {
+                pendingConnectCallback?.invoke(false, "Connection timed out (15s)")
+                pendingConnectCallback = null
+            }
+        }
+        mainHandler.postDelayed(connectTimeoutRunnable!!, 15000)
+
         uteBleConnection = client.getUteBleConnection()
         uteBleConnection?.setConnectStateListener(object : BleConnectStateListener {
             override fun onConnecteStateChange(state: Int) {
@@ -199,6 +214,12 @@ object KalkanBleManager {
                         appContext?.let { KalkanBleService.start(it) }
                         startBackgroundPolling()
                         pushTelemetry()
+
+                        connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+                        connectTimeoutRunnable = null
+                        val cb = pendingConnectCallback
+                        pendingConnectCallback = null
+                        cb?.invoke(true, null)
                     }
                     BleConnectStateListener.STATE_DISCONNECTED -> {
                         isConnected = false
@@ -222,13 +243,18 @@ object KalkanBleManager {
                         stopBackgroundPolling()
                         appContext?.let { KalkanBleService.stop(it) }
                         pushTelemetry()
+
+                        connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+                        connectTimeoutRunnable = null
+                        val cb = pendingConnectCallback
+                        pendingConnectCallback = null
+                        cb?.invoke(false, "Disconnected before ready")
                     }
                 }
             }
         })
 
         uteBleConnection = client.connect(address)
-        callback(true, null)
     }
 
     fun disconnect() {

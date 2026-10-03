@@ -1,8 +1,19 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/models/telemetry.dart';
+
+/// Состояния конечного автомата подключения BLE (BLE-02)
+enum BleConnectionState {
+  idle,
+  connecting,
+  discovering,
+  ready,
+  backoff,
+  failed,
+}
 
 class DiscoveredBleDevice {
   final String name;
@@ -40,6 +51,25 @@ class UteBleBridge {
   StreamSubscription? _eventSub;
   StreamSubscription? _scanSub;
   BleTelemetry? _realTelemetry;
+
+  BleConnectionState _connectionState = BleConnectionState.idle;
+  final ValueNotifier<BleConnectionState> connectionStateNotifier =
+      ValueNotifier<BleConnectionState>(BleConnectionState.idle);
+
+  BleConnectionState get connectionState => _connectionState;
+
+  void _setConnectionState(BleConnectionState state) {
+    if (_connectionState != state) {
+      _connectionState = state;
+      connectionStateNotifier.value = state;
+      debugPrint('UteBleBridge: connectionState -> $state');
+    }
+  }
+
+  bool _isConnecting = false;
+  Completer<bool>? _connectCompleter;
+  int _reconnectAttempts = 0;
+  Timer? _backoffTimer;
 
   Stream<BleTelemetry> get telemetryStream => _telemetryController.stream;
   Stream<List<DiscoveredBleDevice>> get scanResultsStream => _scanController.stream;
@@ -88,6 +118,14 @@ class UteBleBridge {
 
             _realTelemetry = telemetry;
             _telemetryController.add(telemetry);
+
+            if (isConnected) {
+              _setConnectionState(BleConnectionState.ready);
+              _reconnectAttempts = 0;
+            } else if (_connectionState == BleConnectionState.ready) {
+              _setConnectionState(BleConnectionState.idle);
+              checkAndReconnect();
+            }
           }
         },
         onError: (err) {
@@ -102,7 +140,7 @@ class UteBleBridge {
       final prefs = await SharedPreferences.getInstance();
       final lastMac = prefs.getString('kalkan_last_device_mac');
       if (lastMac != null && lastMac.isNotEmpty) {
-        connect(lastMac);
+        checkAndReconnect();
       }
     } catch (e) {
       debugPrint('UteBleBridge auto-connect error: $e');
@@ -190,19 +228,92 @@ class UteBleBridge {
     _scanSub?.cancel();
   }
 
-  // --- Управление подключением ---
+  // --- Управление подключением (BLE-02: статус-машина, таймаут 15с, бэкофф) ---
 
-  Future<void> connect(String macAddress) async {
+  /// Подключение к часам с явной статус-машиной и таймаутом 15 секунд.
+  /// MAC-адрес сохраняется в SharedPreferences ТОЛЬКО после подтверждения готовности (ready).
+  Future<bool> connect(String macAddress, {Duration timeout = const Duration(seconds: 15)}) async {
+    final trimmedMac = macAddress.trim();
+    if (trimmedMac.isEmpty) return false;
+
+    // Guard от повторного входа: если уже подключены к этому устройству
+    if (_realTelemetry?.isConnected == true && _connectionState == BleConnectionState.ready) {
+      final lastMac = await getLastPairedAddress();
+      if (lastMac == trimmedMac) {
+        return true;
+      }
+    }
+
+    // Если подключение уже в процессе — ожидаем завершения текущего
+    if (_isConnecting && _connectCompleter != null) {
+      return _connectCompleter!.future;
+    }
+
+    _isConnecting = true;
+    _setConnectionState(BleConnectionState.connecting);
+    final completer = Completer<bool>();
+    _connectCompleter = completer;
+
+    // Сбрасываем бэкофф-таймер перед новой явной попыткой
+    _backoffTimer?.cancel();
+    _backoffTimer = null;
+
+    Timer? timeoutTimer;
+    StreamSubscription<BleTelemetry>? readySub;
+
+    void finishConnect(bool success) async {
+      timeoutTimer?.cancel();
+      await readySub?.cancel();
+      _isConnecting = false;
+
+      if (success) {
+        _setConnectionState(BleConnectionState.ready);
+        _reconnectAttempts = 0;
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('kalkan_last_device_mac', trimmedMac);
+        } catch (e) {
+          debugPrint('UteBleBridge: error saving MAC to prefs: $e');
+        }
+        if (!completer.isCompleted) {
+          completer.complete(true);
+        }
+      } else {
+        _setConnectionState(BleConnectionState.failed);
+        if (!completer.isCompleted) {
+          completer.complete(false);
+        }
+      }
+    }
+
+    timeoutTimer = Timer(timeout, () {
+      debugPrint('UteBleBridge.connect: timeout after ${timeout.inSeconds}s for $trimmedMac');
+      finishConnect(false);
+    });
+
+    readySub = telemetryStream.listen((t) {
+      if (t.isConnected) {
+        finishConnect(true);
+      }
+    });
+
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('kalkan_last_device_mac', macAddress);
-      await _methodChannel.invokeMethod('connect', {'address': macAddress});
+      final res = await _methodChannel.invokeMethod<bool>('connect', {'address': trimmedMac});
+      if (res == false) {
+        finishConnect(false);
+      }
     } catch (e) {
       debugPrint('UteBleBridge connect error: $e');
+      finishConnect(false);
     }
+
+    return completer.future;
   }
 
   Future<void> disconnect({bool forget = false}) async {
+    _backoffTimer?.cancel();
+    _backoffTimer = null;
+    _reconnectAttempts = 0;
     try {
       if (forget) {
         final prefs = await SharedPreferences.getInstance();
@@ -212,6 +323,7 @@ class UteBleBridge {
     } catch (e) {
       debugPrint('UteBleBridge disconnect error: $e');
     }
+    _setConnectionState(BleConnectionState.idle);
     if (_realTelemetry != null) {
       _realTelemetry = _realTelemetry!.copyWith(isConnected: false, isCharging: false);
       _telemetryController.add(_realTelemetry!);
@@ -229,17 +341,43 @@ class UteBleBridge {
   }
 
   Future<void> checkAndReconnect() async {
+    if (_isConnecting) return;
+    if (_realTelemetry?.isConnected == true) return;
+    if (_connectionState == BleConnectionState.connecting || _connectionState == BleConnectionState.discovering) return;
+
     try {
-      if (_realTelemetry?.isConnected == true) return;
       final prefs = await SharedPreferences.getInstance();
       final lastMac = prefs.getString('kalkan_last_device_mac');
       if (lastMac != null && lastMac.isNotEmpty) {
-        debugPrint('UteBleBridge: auto-reconnecting to $lastMac');
-        await connect(lastMac);
+        debugPrint('UteBleBridge: auto-reconnecting to $lastMac (attempt $_reconnectAttempts)');
+        final ok = await connect(lastMac);
+        if (!ok && _realTelemetry?.isConnected != true) {
+          _scheduleBackoffReconnect(lastMac);
+        }
       }
     } catch (e) {
       debugPrint('UteBleBridge checkAndReconnect error: $e');
     }
+  }
+
+  void _scheduleBackoffReconnect(String macAddress) {
+    _backoffTimer?.cancel();
+    _reconnectAttempts++;
+    // Экспоненциальный бэкофф с джиттером: 2 -> 4 -> 8 -> 16 -> 32 -> 60s
+    final baseSeconds = (2 * (1 << math.min(_reconnectAttempts - 1, 5))).clamp(2, 60);
+    final jitter = math.Random().nextDouble() * 1.5;
+    final delaySeconds = (baseSeconds + jitter).clamp(2.0, 60.0);
+
+    _setConnectionState(BleConnectionState.backoff);
+    debugPrint('UteBleBridge: scheduling backoff reconnect in ${delaySeconds.toStringAsFixed(1)}s (attempt $_reconnectAttempts)');
+
+    _backoffTimer = Timer(Duration(milliseconds: (delaySeconds * 1000).toInt()), () async {
+      if (_realTelemetry?.isConnected == true || _isConnecting) return;
+      final ok = await connect(macAddress);
+      if (!ok && _realTelemetry?.isConnected != true) {
+        _scheduleBackoffReconnect(macAddress);
+      }
+    });
   }
 
   // --- Команды часам ---

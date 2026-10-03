@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:barys_biotracker/data/ble/ute_ble_bridge.dart';
 import 'package:barys_biotracker/data/history/biometrics_history_repository.dart';
 import 'package:barys_biotracker/data/services/user_session_manager.dart';
 import 'package:barys_biotracker/data/storage/day_journal_repository.dart';
@@ -164,6 +165,28 @@ void main() {
       expect(prefs.getString('kalkan_reminder_morning_2026-10-01'), isNull);
       expect(prefs.getString('kalkan_preg_note'), isNull);
       expect(UserProfileRepository.profileNotifier.value.isAuthenticated, isFalse);
+    });
+
+    test('6. BLE State Machine & Persistent MAC guards (BLE-02)', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final bridge = UteBleBridge();
+
+      // Initial state is idle
+      expect(bridge.connectionState, BleConnectionState.idle);
+      expect(bridge.connectionStateNotifier.value, BleConnectionState.idle);
+
+      // Verify MAC is not persisted prior to connection ready
+      expect(prefs.getString('kalkan_last_connected_device_mac'), isNull);
+
+      // Verify connection states exist and are distinct
+      expect(BleConnectionState.values, containsAll([
+        BleConnectionState.idle,
+        BleConnectionState.connecting,
+        BleConnectionState.discovering,
+        BleConnectionState.ready,
+        BleConnectionState.backoff,
+        BleConnectionState.failed,
+      ]));
     });
   });
 }

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../data/ble/ute_ble_bridge.dart';
-import '../../domain/models/telemetry.dart';
 import '../widgets/circa_band_radar.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
@@ -101,19 +100,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
       _connectingAddress = device.address;
     });
 
-    await widget.bleBridge.connect(device.address);
-
-    bool connected = widget.bleBridge.currentTelemetry.isConnected;
-    if (!connected) {
-      try {
-        final confirmed = await widget.bleBridge.telemetryStream
-            .firstWhere((t) => t.isConnected, orElse: () => BleTelemetry.empty())
-            .timeout(const Duration(seconds: 8), onTimeout: () => BleTelemetry.empty());
-        connected = confirmed.isConnected;
-      } catch (_) {
-        connected = false;
-      }
-    }
+    final connected = await widget.bleBridge.connect(device.address);
 
     if (!mounted) return;
     setState(() {
@@ -150,7 +137,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Не удалось установить соединение. Убедитесь, что часы не подключены к другому устройству и находятся рядом.',
+                  'Не удалось установить соединение. Убедитесь, что часы заряжены и находятся рядом.',
                   style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
                 ),
               ),

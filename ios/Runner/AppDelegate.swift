@@ -58,6 +58,24 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private var skinTempDeviation: Double = 0.0
 
   private var lastConnectedAddress: String?
+  private var pendingConnectResult: FlutterResult?
+  private var connectTimeoutWorkItem: DispatchWorkItem?
+
+  private func resolvePendingConnect(success: Bool, errorMessage: String? = nil) {
+    connectTimeoutWorkItem?.cancel()
+    connectTimeoutWorkItem = nil
+    if !success {
+      pendingConnectAddress = nil
+    }
+    if let result = pendingConnectResult {
+      pendingConnectResult = nil
+      if success {
+        result(true)
+      } else {
+        result(FlutterError(code: "CONNECT_FAILED", message: errorMessage ?? "BLE connection failed", details: nil))
+      }
+    }
+  }
 
   func initSdk() {
     if centralManager == nil {
@@ -189,10 +207,31 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   func connect(address: String, result: @escaping FlutterResult) {
-    #if canImport(UTEBluetoothRYApi)
-    lastConnectedAddress = address
-    UserDefaults.standard.set(address, forKey: "kalkan_last_connected_address")
+    if isConnected {
+      #if canImport(UTEBluetoothRYApi)
+      if let model = mgr.connnectModel, (deviceAddress(model) == address || model.identifier == address) {
+        result(true)
+        return
+      }
+      #endif
+      if let p = connectedPeripheral, p.identifier.uuidString == address {
+        result(true)
+        return
+      }
+    }
 
+    resolvePendingConnect(success: false, errorMessage: "Superceded by new connection request")
+    pendingConnectResult = result
+    let timeoutItem = DispatchWorkItem { [weak self] in
+      guard let self = self else { return }
+      if self.pendingConnectResult != nil {
+        self.resolvePendingConnect(success: false, errorMessage: "Connection to \(address) timed out after 15 seconds")
+      }
+    }
+    connectTimeoutWorkItem = timeoutItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + 15.0, execute: timeoutItem)
+
+    #if canImport(UTEBluetoothRYApi)
     if mgr.connectStatus == .connected, let model = mgr.connnectModel {
       if deviceAddress(model) == address || model.identifier == address {
         isConnected = true
@@ -201,7 +240,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         bindLiveStreams()
         refreshWorkout()
         pushTelemetry()
-        result(true)
+        resolvePendingConnect(success: true)
         return
       }
     }
@@ -211,9 +250,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       for dev in connectedDevs {
         if deviceAddress(dev) == address || dev.identifier == address {
           discoveredUteDevices[address] = dev
-          pendingConnectAddress = nil
+          pendingConnectAddress = address
           mgr.connect(dev)
-          result(true)
           return
         }
       }
@@ -245,7 +283,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     if let model = targetUte {
       pendingConnectAddress = address
       mgr.connect(model)
-      result(true)
       return
     }
     #endif
@@ -261,8 +298,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     if let peripheral = targetPeripheral {
       connectedPeripheral = peripheral
       peripheral.delegate = self
+      pendingConnectAddress = address
       centralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])
-      result(true)
       return
     }
 
@@ -270,14 +307,14 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     if centralManager?.state == .poweredOn && !address.isEmpty {
       pendingConnectAddress = address
       centralManager?.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
-      result(true)
       return
     }
 
-    result(FlutterError(code: "DEVICE_NOT_FOUND", message: "Device \(address) not found", details: nil))
+    resolvePendingConnect(success: false, errorMessage: "Device \(address) not found")
   }
 
   func disconnect(result: @escaping FlutterResult) {
+    resolvePendingConnect(success: false, errorMessage: "Disconnected by user")
     lastConnectedAddress = nil
     UserDefaults.standard.removeObject(forKey: "kalkan_last_connected_address")
     pendingConnectAddress = nil
@@ -424,6 +461,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
       }
     case .poweredOff, .unsupported, .unauthorized, .resetting:
+      resolvePendingConnect(success: false, errorMessage: "Bluetooth powered off or unauthorized")
       if isConnected {
         isConnected = false
         pushTelemetry()
@@ -478,10 +516,12 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
   func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
     isConnected = false
+    resolvePendingConnect(success: false, errorMessage: error?.localizedDescription ?? "CoreBluetooth failed to connect")
     pushTelemetry()
   }
 
   func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+    resolvePendingConnect(success: false, errorMessage: error?.localizedDescription ?? "CoreBluetooth disconnected")
     isConnected = false
     connectedPeripheral = nil
     batteryCharacteristic = nil
@@ -550,6 +590,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
     if !isConnected {
       isConnected = true
+      let addr = peripheral.identifier.uuidString
+      lastConnectedAddress = addr
+      UserDefaults.standard.set(addr, forKey: "kalkan_last_connected_address")
+      resolvePendingConnect(success: true)
       pushTelemetry()
     }
 
@@ -1028,6 +1072,7 @@ extension KalkanBleManager: UTEBluetoothDelegate {
         UserDefaults.standard.set(addr, forKey: "kalkan_last_connected_address")
       }
       pendingConnectAddress = nil
+      resolvePendingConnect(success: true)
       currentDeviceName = connectedModel?.name ?? "KALKAN СААТ-1"
 
       // Handshake: query supported services
@@ -1049,6 +1094,7 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       break
 
     case 1, 2, 3, 5, -1: // Disconnected, ConnectingError, ConnectionTimedout, Disconnecting, ConnectCheckFail
+      resolvePendingConnect(success: false, errorMessage: "UTE connection status error: \(status.rawValue)")
       isConnected = false
       connectedModel = nil
       stopTelemetryPoll()
@@ -1058,9 +1104,10 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       pushTelemetry()
 
       // Auto-reconnect if device was paired and user didn't manually disconnect
-      if let addr = lastConnectedAddress, !addr.isEmpty, pendingConnectAddress == nil {
-        pendingConnectAddress = addr
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+      pendingConnectAddress = nil
+      let savedAddr = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
+      if let addr = savedAddr, !addr.isEmpty {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
           guard let self = self, !self.isConnected else { return }
           self.connect(address: addr) { _ in }
         }
