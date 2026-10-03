@@ -362,58 +362,120 @@ class CloudSyncService {
   /// 1. Удаление данных пользователя в Firestore (users, cycle, partners, days, friends, invites).
   /// 2. Удаление учетной записи в Firebase Auth.
   /// 3. Очистка локального хранилища (SharedPreferences).
-  static Future<void> deleteAccountAndData() async {
-    final db = _db;
-    final id = uid;
+  /// Полное удаление аккаунта и связанных данных (App Store Guideline 5.1.1(v)):
+  /// 1. (Опционально) Повторная аутентификация с паролем (reauthenticateWithCredential).
+  /// 2. Каскадное удаление всех данных пользователя в Firestore:
+  ///    - Удаление своей карточки из кругов друзей (friends/{friendId}/members/{id})
+  ///    - Удаление снимков дней (days/{id}/snapshots/*) через batch
+  ///    - Удаление участников своего круга (friends/{id}/members/*) через batch
+  ///    - Удаление инвайтов (invites/{cycleCode}, invites/{leagueCode})
+  ///    - Удаление partners/{id}, cycle/{id}, users/{id}
+  /// 3. Удаление учетной записи в Firebase Auth (user.delete()).
+  /// 4. Только при 100% успехе (Firestore + Auth) — очистка локального хранилища и сессии.
+  /// 5. При любой ошибке — проброс исключения, локальные данные НЕ стираются!
+  static Future<void> deleteAccountAndData({String? password}) async {
     final user = FirebaseAuth.instance.currentUser;
+    final id = uid;
+    final db = _db;
 
-    if (db != null && id != null) {
+    if (user == null || id == null || db == null) {
+      throw Exception('Пользователь не авторизован или облачный сервис недоступен.');
+    }
+
+    // 1. Повторная аутентификация при наличии пароля
+    if (password != null && password.isNotEmpty && user.email != null) {
+      final cred = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(cred).timeout(const Duration(seconds: 10));
+    }
+
+    // 2. Каскадное удаление данных в Firestore (выполняется строго ДО удаления Auth, чтобы не потерять права)
+    try {
+      // 2a. Удаляем свою карточку из кругов друзей
       try {
-        // Удаляем документы пользователя
-        await db.collection('users').doc(id).delete().timeout(const Duration(seconds: 4));
-        await db.collection('cycle').doc(id).delete().timeout(const Duration(seconds: 4));
-        await db.collection('partners').doc(id).delete().timeout(const Duration(seconds: 4));
-
-        // Удаляем снимки дней
-        final daysSnap = await db.collection('days').doc(id).collection('snapshots').get().timeout(const Duration(seconds: 4));
-        for (final doc in daysSnap.docs) {
-          await doc.reference.delete().timeout(const Duration(seconds: 2));
+        final league = await PrivateLeagueRepository.loadLeague();
+        for (final member in league.members) {
+          if (member.id.isNotEmpty && member.id != id) {
+            try {
+              await db
+                  .collection('friends')
+                  .doc(member.id)
+                  .collection('members')
+                  .doc(id)
+                  .delete()
+                  .timeout(const Duration(seconds: 4));
+            } catch (e) {
+              debugPrint('CloudSync.deleteAccountAndData: could not remove from friend ${member.id}: $e');
+            }
+          }
         }
+      } catch (e) {
+        debugPrint('CloudSync.deleteAccountAndData: league members traversal note: $e');
+      }
 
-        // Удаляем записи участников круга
-        final friendsSnap = await db.collection('friends').doc(id).collection('members').get().timeout(const Duration(seconds: 4));
-        for (final doc in friendsSnap.docs) {
-          await doc.reference.delete().timeout(const Duration(seconds: 2));
-        }
+      // 2b. Пакетное удаление снимков дней (days/{id}/snapshots/*)
+      final daysSnap = await db
+          .collection('days')
+          .doc(id)
+          .collection('snapshots')
+          .get()
+          .timeout(const Duration(seconds: 8));
 
-        // Удаляем свои инвайты
-        final prefs = await SharedPreferences.getInstance();
-        final cycleCode = prefs.getString(_keyCycleInviteCode);
-        if (cycleCode != null && cycleCode.isNotEmpty) {
-          await db.collection('invites').doc(cycleCode).delete().timeout(const Duration(seconds: 2));
-        }
+      // 2c. Пакетное удаление участников своего круга (friends/{id}/members/*)
+      final friendsSnap = await db
+          .collection('friends')
+          .doc(id)
+          .collection('members')
+          .get()
+          .timeout(const Duration(seconds: 8));
+
+      final batch = db.batch();
+      for (final doc in daysSnap.docs) {
+        batch.delete(doc.reference);
+      }
+      for (final doc in friendsSnap.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // 2d. Инвайты
+      final prefs = await SharedPreferences.getInstance();
+      final cycleCode = prefs.getString(_keyCycleInviteCode);
+      if (cycleCode != null && cycleCode.isNotEmpty) {
+        batch.delete(db.collection('invites').doc(cycleCode));
+      }
+      try {
         final league = await PrivateLeagueRepository.loadLeague();
         if (league.inviteCode.isNotEmpty) {
-          await db.collection('invites').doc(league.inviteCode).delete().timeout(const Duration(seconds: 2));
+          batch.delete(db.collection('invites').doc(league.inviteCode));
         }
-      } catch (e) {
-        debugPrint('CloudSync.deleteAccountAndData firestore: $e');
-      }
+      } catch (_) {}
+
+      // 2e. Корневые документы
+      batch.delete(db.collection('partners').doc(id));
+      batch.delete(db.collection('cycle').doc(id));
+      batch.delete(db.collection('users').doc(id));
+
+      // Фиксируем пакетное удаление
+      await batch.commit().timeout(const Duration(seconds: 15));
+    } catch (e) {
+      debugPrint('CloudSync.deleteAccountAndData firestore failed: $e');
+      throw Exception('Ошибка при удалении данных из облака: $e. Аккаунт не был удален.');
     }
 
-    // Удаляем Firebase Auth пользователя
-    if (user != null) {
-      try {
-        await user.delete().timeout(const Duration(seconds: 6));
-      } catch (e) {
-        debugPrint('CloudSync.deleteAccountAndData auth delete note: $e');
-        try {
-          await FirebaseAuth.instance.signOut();
-        } catch (_) {}
+    // 3. Удаляем учетную запись Firebase Auth
+    try {
+      await user.delete().timeout(const Duration(seconds: 10));
+    } on FirebaseAuthException catch (e) {
+      debugPrint('CloudSync.deleteAccountAndData auth delete error: ${e.code}');
+      if (e.code == 'requires-recent-login') {
+        rethrow;
       }
+      throw Exception('Не удалось удалить профиль авторизации: ${e.message ?? e.code}');
     }
 
-    // Очищаем локальные хранилища
+    // 4. Очищаем локальные хранилища ТОЛЬКО при полном успехе
     await UserSessionManager.clearLocalUserData();
     await UserProfileRepository.saveProfile(const UserProfile(isAuthenticated: false));
   }

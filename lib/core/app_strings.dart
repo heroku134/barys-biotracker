@@ -151,6 +151,16 @@ class AppStrings {
       AppLanguage.kyrgyz: 'БИРОТОЛО ӨЧҮРҮҮ',
       AppLanguage.english: 'DELETE FOREVER',
     },
+    'account_delete_pass_prompt': {
+      AppLanguage.russian: 'Для подтверждения введите текущий пароль:',
+      AppLanguage.kyrgyz: 'Ырастоо үчүн учурдагы сырсөзүңүздү киргизиңиз:',
+      AppLanguage.english: 'Enter your current password to confirm:',
+    },
+    'account_delete_pass_hint': {
+      AppLanguage.russian: 'Пароль учетной записи',
+      AppLanguage.kyrgyz: 'Аккаунттун сырсөзү',
+      AppLanguage.english: 'Account password',
+    },
 
     // Спорт и кнопки
     'sport_history': {

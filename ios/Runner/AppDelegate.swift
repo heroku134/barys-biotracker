@@ -61,7 +61,14 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
   func initSdk() {
     if centralManager == nil {
-      centralManager = CBCentralManager(delegate: self, queue: .main)
+      centralManager = CBCentralManager(
+        delegate: self,
+        queue: .main,
+        options: [
+          CBCentralManagerOptionRestoreIdentifierKey: "sport.kalkan.central_restore_id",
+          CBCentralManagerOptionShowPowerAlertKey: true
+        ]
+      )
     }
     #if canImport(UTEBluetoothRYApi)
     mgr.initUTEMgr()
@@ -381,6 +388,26 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
   // MARK: - CBCentralManagerDelegate
 
+  func centralManager(_ central: CBCentralManager, willRestoreState dict: [String : Any]) {
+    if let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] {
+      for p in peripherals {
+        let id = p.identifier.uuidString
+        discoveredPeripherals[id] = p
+        p.delegate = self
+        if p.state == .connected {
+          connectedPeripheral = p
+          isConnected = true
+          currentDeviceName = p.name ?? "СААТ-1"
+          #if canImport(UTEBluetoothRYApi)
+          bindLiveStreams()
+          pullNightAndDay()
+          #endif
+          pushTelemetry()
+        }
+      }
+    }
+  }
+
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
     switch central.state {
     case .poweredOn:
@@ -637,7 +664,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private func pushTelemetry() {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
-      self.telemetrySink?([
+      let snapshot: [String: Any] = [
         "heartRate": self.currentBpm,
         "steps": self.currentSteps,
         "calories": self.currentCalories,
@@ -657,8 +684,31 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         "isOffWrist": self.isOffWrist,
         "skinTempDeviation": self.skinTempDeviation,
         "respiratoryRate": 0.0
-      ] as [String: Any])
+      ]
+      self.telemetrySink?(snapshot)
+      UserDefaults.standard.set(snapshot, forKey: "kalkan_latest_telemetry_snapshot")
     }
+  }
+
+  func performBackgroundSync(completion: @escaping (Bool) -> Void) {
+    #if canImport(UTEBluetoothRYApi)
+    guard isConnected else {
+      let knownServices = ["6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "EFF5", "6540", "FEE7", "180D", "180F", "180A", "FEF5"]
+      if let connectedDevs = mgr.retrieveConnectedDevice(withServers: knownServices), let first = connectedDevs.first {
+        mgr.connect(first)
+      }
+      completion(true)
+      return
+    }
+    pullNightAndDay()
+    refreshWorkout()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) { [weak self] in
+      self?.pushTelemetry()
+      completion(true)
+    }
+    #else
+    completion(true)
+    #endif
   }
 
   func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
@@ -1045,10 +1095,31 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     BGTaskScheduler.shared.register(forTaskWithIdentifier: "sport.kalkan.bio.refresh", using: nil) { task in
+      guard let appRefreshTask = task as? BGAppRefreshTask else {
+        task.setTaskCompleted(success: true)
+        return
+      }
+
+      // Schedule next 15-minute background refresh
       let request = BGAppRefreshTaskRequest(identifier: "sport.kalkan.bio.refresh")
       request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
       try? BGTaskScheduler.shared.submit(request)
-      task.setTaskCompleted(success: true)
+
+      var isCompleted = false
+      appRefreshTask.expirationHandler = {
+        if !isCompleted {
+          isCompleted = true
+          appRefreshTask.setTaskCompleted(success: false)
+        }
+      }
+
+      // Execute actual telemetry backfill and buffer sync
+      KalkanBleManager.shared.performBackgroundSync { success in
+        if !isCompleted {
+          isCompleted = true
+          appRefreshTask.setTaskCompleted(success: success)
+        }
+      }
     }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)

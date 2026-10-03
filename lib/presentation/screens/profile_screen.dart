@@ -451,6 +451,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final navigator = Navigator.of(context);
     final language = AppLocaleNotifier.current;
     final palette = KalkanColors.of(context);
+    final passwordCtrl = TextEditingController();
+    final isEmailUser = FirebaseAuth.instance.currentUser?.email != null;
 
     showDialog(
       context: context,
@@ -461,9 +463,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
           AppStrings.tr('account_delete_title', language),
           style: AppTypography.screenTitle(AppColors.rose),
         ),
-        content: Text(
-          AppStrings.tr('account_delete_confirm_msg', language),
-          style: AppTypography.bodyMuted(palette.secondary),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppStrings.tr('account_delete_confirm_msg', language),
+              style: AppTypography.bodyMuted(palette.secondary),
+            ),
+            if (isEmailUser) ...[
+              const SizedBox(height: 16),
+              Text(
+                AppStrings.tr('account_delete_pass_prompt', language),
+                style: AppTypography.caption(palette.fg),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: passwordCtrl,
+                obscureText: true,
+                style: TextStyle(color: palette.fg, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: AppStrings.tr('account_delete_pass_hint', language),
+                  hintStyle: TextStyle(color: palette.muted, fontSize: 13),
+                  filled: true,
+                  fillColor: palette.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                    borderSide: BorderSide(color: palette.lineStrong),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+            ],
+          ],
         ),
         actions: [
           TextButton(
@@ -481,7 +513,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               elevation: 0,
             ),
             onPressed: () async {
+              final password = passwordCtrl.text.trim();
               Navigator.pop(dialogCtx);
+
+              // Показываем спиннер удаления
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -489,15 +524,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: CircularProgressIndicator(color: AppColors.rose),
                 ),
               );
+
               try {
-                await CloudSyncService.deleteAccountAndData();
+                await CloudSyncService.deleteAccountAndData(
+                  password: password.isNotEmpty ? password : null,
+                );
+
+                // Закрываем спиннер
+                if (mounted) Navigator.pop(context);
+
+                // Успешный переход
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => AuthScreen(bleBridge: widget.bleBridge)),
+                  (_) => false,
+                );
               } catch (e) {
-                debugPrint('deleteAccount error: $e');
+                // Закрываем спиннер
+                if (mounted) Navigator.pop(context);
+
+                // Оповещаем пользователя об ошибке — данные и сессия НЕ удалены!
+                debugPrint('deleteAccount failed: $e');
+                if (mounted) {
+                  showDialog(
+                    context: context,
+                    builder: (errCtx) => AlertDialog(
+                      backgroundColor: palette.raised,
+                      title: Text(
+                        AppStrings.tr('account_delete_title', language),
+                        style: TextStyle(color: AppColors.rose, fontWeight: FontWeight.bold),
+                      ),
+                      content: Text(
+                        e is FirebaseAuthException && (e.code == 'wrong-password' || e.code == 'requires-recent-login')
+                            ? 'Неверный пароль или сессия устарела. Введите актуальный пароль и повторите попытку.'
+                            : 'Не удалось удалить аккаунт: $e\n\nВсе ваши локальные данные и аккаунт сохранены.',
+                        style: TextStyle(color: palette.fg),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(errCtx),
+                          child: const Text('OK', style: TextStyle(color: AppColors.amber)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
               }
-              navigator.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => AuthScreen(bleBridge: widget.bleBridge)),
-                (_) => false,
-              );
             },
             child: Text(
               AppStrings.tr('account_delete_action', language),

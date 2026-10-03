@@ -58,6 +58,10 @@ class KalkanBleService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
 
+        // Initialize BLE manager and ensure continuous background polling
+        KalkanBleManager.init(applicationContext)
+        KalkanBleManager.startBackgroundPolling()
+
         return START_STICKY
     }
 
