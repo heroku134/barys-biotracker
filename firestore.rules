@@ -64,6 +64,7 @@ service cloud.firestore {
     // Fields:
     //   - uid: string (optional, must match memberId) - Friend UID
     //   - name: string (optional, max 100 chars) - Friend display name
+    //   - code: string (optional, 1..64 chars) - Invite code used to link
     //   - recovery: number (optional, 0..100) - Recovery score for Dunbar league
     //   - hrv: number (optional, 0..500) - Friend HRV
     //   - rhr: number (optional, 0..250) - Friend RHR
@@ -189,9 +190,10 @@ service cloud.firestore {
 
     // --- 4. Friend Circle Member Validator ---
     function isValidFriendMember(data, memberId) {
-      return data.keys().hasOnly(['uid', 'name', 'recovery', 'hrv', 'rhr', 'updatedAt']) &&
+      return data.keys().hasOnly(['uid', 'name', 'code', 'recovery', 'hrv', 'rhr', 'updatedAt']) &&
         (!( 'uid' in data ) || (data.uid is string && data.uid == memberId)) &&
         isValidOptionalString(data, 'name', 0, 100) &&
+        isValidOptionalString(data, 'code', 1, 64) &&
         isValidOptionalNumber(data, 'recovery', 0, 100) &&
         isValidOptionalNumber(data, 'hrv', 0, 500) &&
         isValidOptionalNumber(data, 'rhr', 0, 250) &&
@@ -250,6 +252,26 @@ service cloud.firestore {
         inviteData.ownerUid == userId;
     }
 
+    // --- Friend Member Authorization Chain ---
+    // Strictly verifies that the member record includes an invite code,
+    // that the invite code exists, belongs to the circle owner (userId),
+    // and has type == 'friend'.
+    function isAuthorizedFriendInvite(userId, memberData) {
+      return ('code' in memberData) &&
+        memberData.code is string &&
+        memberData.code.size() > 0 &&
+        memberData.code.size() <= 64 &&
+        exists(/databases/$(database)/documents/invites/$(memberData.code)) &&
+        isFriendInviteValid(userId, get(/databases/$(database)/documents/invites/$(memberData.code)).data);
+    }
+
+    function isFriendInviteValid(userId, inviteData) {
+      return ('type' in inviteData) &&
+        inviteData.type == 'friend' &&
+        ('ownerUid' in inviteData) &&
+        inviteData.ownerUid == userId;
+    }
+
     // ===============================================================
     // Collection Rules
     // ===============================================================
@@ -293,17 +315,20 @@ service cloud.firestore {
       // Owner can read their circle
       allow read: if isOwner(userId);
 
-      // Allowed if owner managing their circle OR friend updating their own card/accepting invite
-      allow create: if isAuthenticated() &&
-        (request.auth.uid == userId || request.auth.uid == memberId) &&
-        isValidFriendMember(request.resource.data, memberId);
+      // Allowed if owner managing their circle OR friend accepting invite with verified code
+      allow create: if (isOwner(userId) && isValidFriendMember(request.resource.data, memberId)) ||
+        (isAuthenticated() && request.auth.uid == memberId &&
+         isValidFriendMember(request.resource.data, memberId) &&
+         isAuthorizedFriendInvite(userId, request.resource.data));
 
-      allow update: if isAuthenticated() &&
-        (request.auth.uid == userId || request.auth.uid == memberId) &&
-        isValidFriendMember(request.resource.data, memberId);
+      // Allowed if owner updating member OR friend updating their own metrics
+      allow update: if (isOwner(userId) && isValidFriendMember(request.resource.data, memberId)) ||
+        (isAuthenticated() && request.auth.uid == memberId &&
+         isValidFriendMember(request.resource.data, memberId) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recovery', 'hrv', 'rhr', 'name', 'updatedAt']));
 
-      allow delete: if isAuthenticated() &&
-        (request.auth.uid == userId || request.auth.uid == memberId);
+      // Allowed if owner removing a member OR friend leaving the circle
+      allow delete: if isOwner(userId) || (isAuthenticated() && request.auth.uid == memberId);
     }
 
     // 5. Single-use and Multi-use Invite Codes

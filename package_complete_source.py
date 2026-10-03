@@ -62,6 +62,7 @@ def main():
         names = set(zf.namelist())
         
         must_have = [
+            "android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanBleManager.kt",
             "android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanBleService.kt",
             "android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanNotify.kt",
             "android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanAlarmReceiver.kt",

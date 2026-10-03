@@ -224,10 +224,12 @@ class CloudSyncService {
       await db.collection('friends').doc(id).collection('members').doc(owner).set({
         'name': name,
         'uid': owner,
+        'code': raw,
       }).timeout(const Duration(seconds: 4));
       await db.collection('friends').doc(owner).collection('members').doc(id).set({
         'name': me.name,
         'uid': id,
+        'code': raw,
       }).timeout(const Duration(seconds: 4));
       await PrivateLeagueRepository.addFriend(name: name, inviteCode: raw);
       return true;
