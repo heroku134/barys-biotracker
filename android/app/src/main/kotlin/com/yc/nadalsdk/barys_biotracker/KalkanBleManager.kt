@@ -23,6 +23,30 @@ import java.util.TimeZone
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+
+data class TelemetrySnapshot(
+    val currentBpm: Int = 0,
+    val currentSteps: Int = 0,
+    val currentCalories: Int = 0,
+    val currentBattery: Int = 0,
+    val isCharging: Boolean = false,
+    val currentDeviceName: String = "",
+    val isConnected: Boolean = false,
+    val currentHrv: Double = 0.0,
+    val currentRhr: Int = 0,
+    val currentSleepMinutes: Int = 0,
+    val currentDeepSleepMinutes: Int = 0,
+    val currentRemSleepMinutes: Int = 0,
+    val timeInBedMinutes: Int = 0,
+    val currentSleepEfficiency: Double = 0.0,
+    val currentHypnogram: List<Map<String, Any>> = emptyList(),
+    val currentStressScore: Int = 0,
+    val isOffWrist: Boolean = false,
+    val skinTempDeviation: Double = 0.0,
+    val respiratoryRate: Double = 0.0
+)
 
 object KalkanBleManager {
     private var appContext: Context? = null
@@ -36,30 +60,51 @@ object KalkanBleManager {
     private var telemetryEventSink: EventChannel.EventSink? = null
     private var scanEventSink: EventChannel.EventSink? = null
 
-    var currentBpm: Int = 0
-    var currentSteps: Int = 0
-    var currentCalories: Int = 0
-    var currentBattery: Int = 0
-    var isCharging: Boolean = false
-    var currentDeviceName: String = ""
-    var isConnected: Boolean = false
-    var currentHrv: Double = 0.0
-    var currentRhr: Int = 0
-    var currentSleepMinutes: Int = 0
-    var currentDeepSleepMinutes: Int = 0
-    var currentRemSleepMinutes: Int = 0
-    var timeInBedMinutes: Int = 0
-    var currentSleepEfficiency: Double = 0.0
-    var currentHypnogram: List<Map<String, Any>> = emptyList()
-    var currentStressScore: Int = 0
-    var isOffWrist: Boolean = false
-    var skinTempDeviation: Double = 0.0
+    // BLE-05: Thread-safe atomic telemetry snapshot preventing race conditions
+    private val snapshotRef = AtomicReference(TelemetrySnapshot())
+
+    // Backward-compatible properties backed by atomic snapshot
+    val currentBpm: Int get() = snapshotRef.get().currentBpm
+    val currentSteps: Int get() = snapshotRef.get().currentSteps
+    val currentCalories: Int get() = snapshotRef.get().currentCalories
+    val currentBattery: Int get() = snapshotRef.get().currentBattery
+    val isCharging: Boolean get() = snapshotRef.get().isCharging
+    val currentDeviceName: String get() = snapshotRef.get().currentDeviceName
+    val isConnected: Boolean get() = snapshotRef.get().isConnected
+    val currentHrv: Double get() = snapshotRef.get().currentHrv
+    val currentRhr: Int get() = snapshotRef.get().currentRhr
+    val currentSleepMinutes: Int get() = snapshotRef.get().currentSleepMinutes
+    val currentDeepSleepMinutes: Int get() = snapshotRef.get().currentDeepSleepMinutes
+    val currentRemSleepMinutes: Int get() = snapshotRef.get().currentRemSleepMinutes
+    val timeInBedMinutes: Int get() = snapshotRef.get().timeInBedMinutes
+    val currentSleepEfficiency: Double get() = snapshotRef.get().currentSleepEfficiency
+    val currentHypnogram: List<Map<String, Any>> get() = snapshotRef.get().currentHypnogram
+    val currentStressScore: Int get() = snapshotRef.get().currentStressScore
+    val isOffWrist: Boolean get() = snapshotRef.get().isOffWrist
+    val skinTempDeviation: Double get() = snapshotRef.get().skinTempDeviation
 
     private const val PREFS_NAME = "kalkan_ble_prefs"
     private const val KEY_SNAPSHOT = "kalkan_latest_telemetry_snapshot"
 
     private var pendingConnectCallback: ((Boolean, String?) -> Unit)? = null
     private var connectTimeoutRunnable: Runnable? = null
+
+    // BLE-05: Polling rate control & queue bounding guards
+    private val isPollingInProgress = AtomicBoolean(false)
+    private var lastBatteryPollTimeMs: Long = 0L
+    private var lastSleepPollTimeMs: Long = 0L
+
+    // BLE-05: Throttled telemetry push (1 Hz max coalescing)
+    private var lastPushTimeMs: Long = 0L
+    private val pushLock = Any()
+    private var isPushScheduled = false
+    private val pushRunnable = Runnable {
+        synchronized(pushLock) {
+            isPushScheduled = false
+            lastPushTimeMs = System.currentTimeMillis()
+        }
+        sendTelemetryToSink()
+    }
 
     fun init(context: Context) {
         if (appContext == null) {
@@ -77,7 +122,7 @@ object KalkanBleManager {
         telemetryEventSink = sink
         if (sink != null) {
             setupDeviceListeners()
-            pushTelemetry()
+            pushTelemetry(immediate = true)
         }
     }
 
@@ -149,6 +194,12 @@ object KalkanBleManager {
         uteBleClient?.cancelScan()
     }
 
+    fun updateSnapshot(immediate: Boolean = false, transform: (TelemetrySnapshot) -> TelemetrySnapshot): TelemetrySnapshot {
+        val next = snapshotRef.updateAndGet(transform)
+        pushTelemetry(immediate = immediate)
+        return next
+    }
+
     fun connect(address: String, callback: (Boolean, String?) -> Unit) {
         val client = uteBleClient
         if (client == null) {
@@ -173,9 +224,13 @@ object KalkanBleManager {
             override fun onConnecteStateChange(state: Int) {
                 when (state) {
                     BleConnectStateListener.STATE_CONNECTED -> {
-                        isConnected = true
-                        currentDeviceName = uteBleClient?.deviceName ?: "СААТ-1"
-                        
+                        updateSnapshot(immediate = true) { prev ->
+                            prev.copy(
+                                isConnected = true,
+                                currentDeviceName = uteBleClient?.deviceName ?: "СААТ-1"
+                            )
+                        }
+
                         setupDeviceListeners()
 
                         bleExecutor.execute {
@@ -202,33 +257,43 @@ object KalkanBleManager {
                                 uteBleConnection?.setAutoHeartRate(true)
                                 uteBleConnection?.setAutoStress(true)
 
-                                val cached = uteBleConnection?.smartGetBatteryInfo()?.data
-                                if (cached != null) {
-                                    if (cached.percents > 0) currentBattery = cached.percents
-                                    isCharging = (cached.status == BatteryInfo.CHARGING)
-                                }
+                                // Initial battery query on connect
                                 val fresh = uteBleConnection?.getBatteryInfo()?.data
                                 if (fresh != null) {
-                                    if (fresh.percents > 0) currentBattery = fresh.percents
-                                    isCharging = (fresh.status == BatteryInfo.CHARGING)
+                                    lastBatteryPollTimeMs = System.currentTimeMillis()
+                                    updateSnapshot { prev ->
+                                        prev.copy(
+                                            currentBattery = if (fresh.percents > 0) fresh.percents else prev.currentBattery,
+                                            isCharging = (fresh.status == BatteryInfo.CHARGING)
+                                        )
+                                    }
                                 }
+
+                                // Initial motion query on connect
                                 val motion = uteBleConnection?.getMotionSummaryData()?.data
                                 if (motion != null) {
                                     val stepsSum = motion.motionDetailList?.sumOf { it.step } ?: 0
-                                    if (stepsSum > 0) currentSteps = stepsSum
-                                    if (motion.calorieSum > 0) currentCalories = motion.calorieSum
                                     val hr = motion.heartRate?.rate ?: 0
-                                    if (hr in 30..240) currentBpm = hr
+                                    updateSnapshot { prev ->
+                                        prev.copy(
+                                            currentSteps = if (stepsSum > 0) stepsSum else prev.currentSteps,
+                                            currentCalories = if (motion.calorieSum > 0) motion.calorieSum else prev.currentCalories,
+                                            currentBpm = if (hr in 30..240) hr else prev.currentBpm
+                                        )
+                                    }
                                 }
+
+                                // Initial sleep query on connect (once per connection)
+                                lastSleepPollTimeMs = System.currentTimeMillis()
+                                querySleepDataInternal()
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             }
-                            pushTelemetry()
                         }
 
                         appContext?.let { KalkanBleService.start(it) }
                         startBackgroundPolling()
-                        pushTelemetry()
+                        pushTelemetry(immediate = true)
 
                         connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
                         connectTimeoutRunnable = null
@@ -237,16 +302,20 @@ object KalkanBleManager {
                         cb?.invoke(true, null)
                     }
                     BleConnectStateListener.STATE_DISCONNECTED -> {
-                        isConnected = false
-                        isCharging = false
-                        currentBpm = 0
-                        isOffWrist = false
-                        skinTempDeviation = 0.0
+                        updateSnapshot(immediate = true) { prev ->
+                            prev.copy(
+                                isConnected = false,
+                                isCharging = false,
+                                currentBpm = 0,
+                                isOffWrist = false,
+                                skinTempDeviation = 0.0
+                            )
+                        }
                         stopBackgroundPolling()
+
                         // BLE-04: DO NOT stop KalkanBleService on transient disconnection!
                         // FGS must continue running so that auto-reconnect can work in background.
                         // DO NOT zero steps, calories, sleep, hypnogram, HRV, RHR, battery, or deviceName!
-                        pushTelemetry()
 
                         connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
                         connectTimeoutRunnable = null
@@ -263,30 +332,23 @@ object KalkanBleManager {
 
     fun disconnect(forget: Boolean = false) {
         uteBleClient?.disconnect()
-        isConnected = false
-        isCharging = false
-        currentBpm = 0
-        isOffWrist = false
-        skinTempDeviation = 0.0
         stopBackgroundPolling()
 
         if (forget) {
-            currentBattery = 0
-            currentSteps = 0
-            currentCalories = 0
-            currentHrv = 0.0
-            currentRhr = 0
-            currentSleepMinutes = 0
-            currentDeepSleepMinutes = 0
-            currentRemSleepMinutes = 0
-            timeInBedMinutes = 0
-            currentSleepEfficiency = 0.0
-            currentHypnogram = emptyList()
-            currentStressScore = 0
-            currentDeviceName = ""
+            snapshotRef.set(TelemetrySnapshot())
             appContext?.let { KalkanBleService.stop(it) }
+            pushTelemetry(immediate = true)
+        } else {
+            updateSnapshot(immediate = true) { prev ->
+                prev.copy(
+                    isConnected = false,
+                    isCharging = false,
+                    currentBpm = 0,
+                    isOffWrist = false,
+                    skinTempDeviation = 0.0
+                )
+            }
         }
-        pushTelemetry()
     }
 
     fun findDevice(callback: (Boolean, String?) -> Unit) {
@@ -340,13 +402,24 @@ object KalkanBleManager {
         }
     }
 
+    // BLE-05: Sequential polling with chained execution (next poll scheduled strictly after previous completes)
     fun startBackgroundPolling() {
         stopBackgroundPolling()
         val scheduler = Executors.newSingleThreadScheduledExecutor()
         backgroundScheduler = scheduler
-        scheduler.scheduleWithFixedDelay({
-            pollTelemetryNow()
-        }, 1, 5, TimeUnit.SECONDS)
+        scheduleNextPoll(initialDelayMs = 5000L)
+    }
+
+    private fun scheduleNextPoll(initialDelayMs: Long = 30000L) {
+        val scheduler = backgroundScheduler ?: return
+        if (scheduler.isShutdown) return
+        try {
+            scheduler.schedule({
+                pollTelemetryNow {
+                    scheduleNextPoll(30000L)
+                }
+            }, initialDelayMs, TimeUnit.MILLISECONDS)
+        } catch (_: Exception) {}
     }
 
     fun stopBackgroundPolling() {
@@ -356,89 +429,127 @@ object KalkanBleManager {
         backgroundScheduler = null
     }
 
-    fun pollTelemetryNow() {
-        if (!isConnected || uteBleConnection == null) return
+    fun pollTelemetryNow(onComplete: (() -> Unit)? = null) {
+        if (!snapshotRef.get().isConnected || uteBleConnection == null) {
+            onComplete?.invoke()
+            return
+        }
+        if (!isPollingInProgress.compareAndSet(false, true)) {
+            // BLE-05: Queue bounding guard - skip if previous poll is still in flight
+            onComplete?.invoke()
+            return
+        }
+
         bleExecutor.execute {
             try {
-                val cachedBattery = uteBleConnection?.smartGetBatteryInfo()?.data
-                if (cachedBattery != null) {
-                    if (cachedBattery.percents > 0) currentBattery = cachedBattery.percents
-                    isCharging = (cachedBattery.status == BatteryInfo.CHARGING)
-                }
+                val now = System.currentTimeMillis()
 
-                val batteryResp = uteBleConnection?.getBatteryInfo()
-                batteryResp?.data?.let { batteryInfo ->
-                    if (batteryInfo.percents > 0) currentBattery = batteryInfo.percents
-                    isCharging = (batteryInfo.status == BatteryInfo.CHARGING)
-                }
-
+                // 1. Motion / Steps query (every 30s)
                 val motionResp = uteBleConnection?.getMotionSummaryData()
                 motionResp?.data?.let { motion ->
                     val stepsSum = motion.motionDetailList?.sumOf { it.step } ?: 0
-                    if (stepsSum > 0) currentSteps = stepsSum
-                    if (motion.calorieSum > 0) currentCalories = motion.calorieSum
                     val hr = motion.heartRate?.rate ?: 0
-                    if (hr in 30..240) currentBpm = hr
+                    updateSnapshot { prev ->
+                        prev.copy(
+                            currentSteps = if (stepsSum > 0) stepsSum else prev.currentSteps,
+                            currentCalories = if (motion.calorieSum > 0) motion.calorieSum else prev.currentCalories,
+                            currentBpm = if (hr in 30..240) hr else prev.currentBpm
+                        )
+                    }
                 }
 
-                try {
-                    val sleep = uteBleConnection?.getSciSleepData()
-                    if (sleep != null && sleep.sleepTotalTime > 0) {
-                        val detailList = sleep.sleepDetailList
-                        if (!detailList.isNullOrEmpty()) {
-                            var total = 0
-                            var deep = 0
-                            var light = 0
-                            var rem = 0
-                            var awake = 0
-                            val epochs = mutableListOf<Map<String, Any>>()
-                            val nowSec = (System.currentTimeMillis() / 1000).toInt()
-
-                            for (item in detailList) {
-                                val dur = item.sleepTime
-                                if (dur <= 0) continue
-                                val stage = when (item.sleepType) {
-                                    1 -> { deep += dur; total += dur; "deep" }
-                                    2, 5, 6 -> { light += dur; total += dur; "light" }
-                                    4 -> { rem += dur; total += dur; "rem" }
-                                    3, 7, 8 -> { awake += dur; "awake" }
-                                    else -> { light += dur; total += dur; "light" }
-                                }
-                                val startSec = if (item.startTime > 0) item.startTime else (nowSec - (total + awake) * 60)
-                                val endSec = if (item.endTime > startSec) item.endTime else (startSec + dur * 60)
-                                epochs.add(
-                                    mapOf(
-                                        "stage" to stage,
-                                        "startTime" to startSec.toLong() * 1000L,
-                                        "endTime" to endSec.toLong() * 1000L,
-                                        "durationMinutes" to dur
-                                    )
-                                )
-                            }
-                            currentSleepMinutes = if (total > 0) total else sleep.sleepTotalTime
-                            currentDeepSleepMinutes = deep
-                            currentRemSleepMinutes = rem
-                            val inBed = total + awake
-                            timeInBedMinutes = if (inBed > 0) inBed else total
-                            currentSleepEfficiency = if (timeInBedMinutes > 0 && total > 0) {
-                                Math.round((currentSleepMinutes.toDouble() / timeInBedMinutes.toDouble()) * 100.0) / 100.0
-                            } else 0.0
-                            currentHypnogram = epochs
-                        } else {
-                            currentSleepMinutes = sleep.sleepTotalTime
-                            currentDeepSleepMinutes = 0
-                            currentRemSleepMinutes = 0
-                            timeInBedMinutes = sleep.sleepTotalTime
-                            currentSleepEfficiency = 0.0
-                            currentHypnogram = emptyList()
+                // 2. Battery query - only once every 5 minutes (300s)
+                if (now - lastBatteryPollTimeMs >= 5 * 60 * 1000L) {
+                    lastBatteryPollTimeMs = now
+                    val fresh = uteBleConnection?.getBatteryInfo()?.data
+                    if (fresh != null) {
+                        updateSnapshot { prev ->
+                            prev.copy(
+                                currentBattery = if (fresh.percents > 0) fresh.percents else prev.currentBattery,
+                                isCharging = (fresh.status == BatteryInfo.CHARGING)
+                            )
                         }
                     }
-                } catch (_: Exception) {}
+                }
+
+                // 3. Sleep query - only once every 60 minutes during routine background polling
+                if (now - lastSleepPollTimeMs >= 60 * 60 * 1000L) {
+                    lastSleepPollTimeMs = now
+                    querySleepDataInternal()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                isPollingInProgress.set(false)
+                onComplete?.invoke()
             }
-            pushTelemetry()
         }
+    }
+
+    fun querySleepDataInternal() {
+        try {
+            val sleep = uteBleConnection?.getSciSleepData()
+            if (sleep != null && sleep.sleepTotalTime > 0) {
+                val detailList = sleep.sleepDetailList
+                if (!detailList.isNullOrEmpty()) {
+                    var total = 0
+                    var deep = 0
+                    var light = 0
+                    var rem = 0
+                    var awake = 0
+                    val epochs = mutableListOf<Map<String, Any>>()
+                    val nowSec = (System.currentTimeMillis() / 1000).toInt()
+
+                    for (item in detailList) {
+                        val dur = item.sleepTime
+                        if (dur <= 0) continue
+                        val stage = when (item.sleepType) {
+                            1 -> { deep += dur; total += dur; "deep" }
+                            2, 5, 6 -> { light += dur; total += dur; "light" }
+                            4 -> { rem += dur; total += dur; "rem" }
+                            3, 7, 8 -> { awake += dur; "awake" }
+                            else -> { light += dur; total += dur; "light" }
+                        }
+                        val startSec = if (item.startTime > 0) item.startTime else (nowSec - (total + awake) * 60)
+                        val endSec = if (item.endTime > startSec) item.endTime else (startSec + dur * 60)
+                        epochs.add(
+                            mapOf(
+                                "stage" to stage,
+                                "startTime" to startSec.toLong() * 1000L,
+                                "endTime" to endSec.toLong() * 1000L,
+                                "durationMinutes" to dur
+                            )
+                        )
+                    }
+                    val inBed = total + awake
+                    val efficiency = if (inBed > 0 && total > 0) {
+                        Math.round((total.toDouble() / inBed.toDouble()) * 100.0) / 100.0
+                    } else 0.0
+
+                    updateSnapshot { prev ->
+                        prev.copy(
+                            currentSleepMinutes = if (total > 0) total else sleep.sleepTotalTime,
+                            currentDeepSleepMinutes = deep,
+                            currentRemSleepMinutes = rem,
+                            timeInBedMinutes = if (inBed > 0) inBed else total,
+                            currentSleepEfficiency = efficiency,
+                            currentHypnogram = epochs
+                        )
+                    }
+                } else {
+                    updateSnapshot { prev ->
+                        prev.copy(
+                            currentSleepMinutes = sleep.sleepTotalTime,
+                            currentDeepSleepMinutes = 0,
+                            currentRemSleepMinutes = 0,
+                            timeInBedMinutes = sleep.sleepTotalTime,
+                            currentSleepEfficiency = 0.0,
+                            currentHypnogram = emptyList()
+                        )
+                    }
+                }
+            }
+        } catch (_: Exception) {}
     }
 
     private fun setupDeviceListeners() {
@@ -449,57 +560,79 @@ object KalkanBleManager {
                         NotifyType.DEVICE_BATTERY_REPORT -> {
                             val batteryInfo = notify.data as? BatteryInfo
                             if (batteryInfo != null) {
-                                if (batteryInfo.percents > 0) currentBattery = batteryInfo.percents
-                                isCharging = (batteryInfo.status == BatteryInfo.CHARGING)
+                                updateSnapshot { prev ->
+                                    prev.copy(
+                                        currentBattery = if (batteryInfo.percents > 0) batteryInfo.percents else prev.currentBattery,
+                                        isCharging = (batteryInfo.status == BatteryInfo.CHARGING)
+                                    )
+                                }
                             }
                         }
                         NotifyType.HEART_RATE_REPORT -> {
                             val hrReport = notify.data as? HeartRateReport
                             val latestRate = hrReport?.heartRateList?.lastOrNull()?.rate ?: 0
-                            if (latestRate in 30..240) currentBpm = latestRate
+                            if (latestRate in 30..240) {
+                                updateSnapshot { prev -> prev.copy(currentBpm = latestRate) }
+                            }
                         }
                         NotifyType.DEVICE_HEALTH_TEST_RESULT_NOTIFY -> {
                             val health = notify.data as? DeviceHealthDataInfo
                             if (health != null) {
-                                if (health.heartRateValue in 30..240) currentBpm = health.heartRateValue
-                                if (health.hrvValue in 5..250) currentHrv = health.hrvValue.toDouble()
-                                if (health.stressValue in 1..100) currentStressScore = health.stressValue
+                                updateSnapshot { prev ->
+                                    prev.copy(
+                                        currentBpm = if (health.heartRateValue in 30..240) health.heartRateValue else prev.currentBpm,
+                                        currentHrv = if (health.hrvValue in 5..250) health.hrvValue.toDouble() else prev.currentHrv,
+                                        currentStressScore = if (health.stressValue in 1..100) health.stressValue else prev.currentStressScore
+                                    )
+                                }
                             }
                         }
                         NotifyType.MOTION_CURRENT_MINUTE_NOTIFY -> {
                             val motion = notify.data as? MotionCurrentMinute
                             if (motion != null) {
-                                if (motion.dynamicHeartRate in 30..240) currentBpm = motion.dynamicHeartRate
-                                if (motion.step > 0) currentSteps = motion.step
-                                if (motion.calorie > 0) currentCalories = motion.calorie
-                                if (motion.restingHeartRate in 35..110) currentRhr = motion.restingHeartRate
-                                if (motion.hrvValue > 0) currentHrv = motion.hrvValue.toDouble()
+                                updateSnapshot { prev ->
+                                    prev.copy(
+                                        currentBpm = if (motion.dynamicHeartRate in 30..240) motion.dynamicHeartRate else prev.currentBpm,
+                                        currentSteps = if (motion.step > 0) motion.step else prev.currentSteps,
+                                        currentCalories = if (motion.calorie > 0) motion.calorie else prev.currentCalories,
+                                        currentRhr = if (motion.restingHeartRate in 35..110) motion.restingHeartRate else prev.currentRhr,
+                                        currentHrv = if (motion.hrvValue > 0) motion.hrvValue.toDouble() else prev.currentHrv
+                                    )
+                                }
                             }
                         }
                         NotifyType.WORKOUT_REAL_TIME_DATE_REPORT -> {
                             val wReport = notify.data as? WorkoutRealTimeDataReport
                             if (wReport != null) {
-                                if (wReport.heartRate in 30..240) currentBpm = wReport.heartRate
-                                if (wReport.step > 0) currentSteps = wReport.step
-                                if (wReport.calorie > 0) currentCalories = wReport.calorie
+                                updateSnapshot { prev ->
+                                    prev.copy(
+                                        currentBpm = if (wReport.heartRate in 30..240) wReport.heartRate else prev.currentBpm,
+                                        currentSteps = if (wReport.step > 0) wReport.step else prev.currentSteps,
+                                        currentCalories = if (wReport.calorie > 0) wReport.calorie else prev.currentCalories
+                                    )
+                                }
                             }
                             val wData = notify.data as? WorkoutRealTimeData
                             if (wData != null) {
-                                if (wData.realTimeHeartRate in 30..240) currentBpm = wData.realTimeHeartRate
-                                if (wData.steps > 0) currentSteps = wData.steps
-                                if (wData.calorie > 0) currentCalories = wData.calorie
+                                updateSnapshot { prev ->
+                                    prev.copy(
+                                        currentBpm = if (wData.realTimeHeartRate in 30..240) wData.realTimeHeartRate else prev.currentBpm,
+                                        currentSteps = if (wData.steps > 0) wData.steps else prev.currentSteps,
+                                        currentCalories = if (wData.calorie > 0) wData.calorie else prev.currentCalories
+                                    )
+                                }
                             }
                         }
                         NotifyType.STRESS_TEST_RESULT_NOTIFY -> {
                             val stress = notify.data as? StressData
                             if (stress != null && stress.pressureValue in 1..100) {
-                                currentStressScore = stress.pressureValue
+                                updateSnapshot { prev -> prev.copy(currentStressScore = stress.pressureValue) }
                             }
                         }
                         NotifyType.WEARING_STATE_INFO_NOTIFY -> {
                             val wear = notify.data as? WearingStateInfo
                             if (wear != null) {
-                                isOffWrist = (wear.wearingState == WearingStateInfo.OFF_HAND)
+                                updateSnapshot { prev -> prev.copy(isOffWrist = (wear.wearingState == WearingStateInfo.OFF_HAND)) }
                             }
                         }
                         NotifyType.CAMERA_CONTROL -> {
@@ -542,32 +675,53 @@ object KalkanBleManager {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-                pushTelemetry()
             }
         })
     }
 
-    private fun pushTelemetry() {
+    // BLE-05: Coalesced 1 Hz max telemetry push
+    fun pushTelemetry(immediate: Boolean = false) {
+        val now = System.currentTimeMillis()
+        var runNow = false
+        synchronized(pushLock) {
+            if (immediate || (now - lastPushTimeMs >= 1000L && !isPushScheduled)) {
+                mainHandler.removeCallbacks(pushRunnable)
+                isPushScheduled = false
+                lastPushTimeMs = now
+                runNow = true
+            } else if (!isPushScheduled) {
+                isPushScheduled = true
+                val delay = (1000L - (now - lastPushTimeMs)).coerceIn(50L, 1000L)
+                mainHandler.postDelayed(pushRunnable, delay)
+            }
+        }
+        if (runNow) {
+            mainHandler.post { sendTelemetryToSink() }
+        }
+    }
+
+    private fun sendTelemetryToSink() {
+        val s = snapshotRef.get()
         val telemetry = mapOf(
-            "heartRate" to currentBpm,
-            "steps" to currentSteps,
-            "calories" to currentCalories,
-            "batteryLevel" to currentBattery,
-            "isCharging" to isCharging,
-            "isConnected" to isConnected,
-            "deviceName" to (if (isConnected) currentDeviceName else ""),
-            "hrv" to currentHrv,
-            "restingHeartRate" to currentRhr,
-            "sleepMinutes" to currentSleepMinutes,
-            "deepSleepMinutes" to currentDeepSleepMinutes,
-            "remSleepMinutes" to currentRemSleepMinutes,
-            "timeInBedMinutes" to timeInBedMinutes,
-            "sleepEfficiency" to currentSleepEfficiency,
-            "sleepHypnogram" to currentHypnogram,
-            "currentStressScore" to currentStressScore,
-            "isOffWrist" to isOffWrist,
-            "skinTempDeviation" to skinTempDeviation,
-            "respiratoryRate" to 0.0
+            "heartRate" to s.currentBpm,
+            "steps" to s.currentSteps,
+            "calories" to s.currentCalories,
+            "batteryLevel" to s.currentBattery,
+            "isCharging" to s.isCharging,
+            "isConnected" to s.isConnected,
+            "deviceName" to (if (s.isConnected) s.currentDeviceName else ""),
+            "hrv" to s.currentHrv,
+            "restingHeartRate" to s.currentRhr,
+            "sleepMinutes" to s.currentSleepMinutes,
+            "deepSleepMinutes" to s.deepSleepMinutes,
+            "remSleepMinutes" to s.remSleepMinutes,
+            "timeInBedMinutes" to s.timeInBedMinutes,
+            "sleepEfficiency" to s.sleepEfficiency,
+            "sleepHypnogram" to s.currentHypnogram,
+            "currentStressScore" to s.currentStressScore,
+            "isOffWrist" to s.isOffWrist,
+            "skinTempDeviation" to s.skinTempDeviation,
+            "respiratoryRate" to s.respiratoryRate
         )
 
         try {
@@ -578,8 +732,6 @@ object KalkanBleManager {
             }
         } catch (_: Exception) {}
 
-        mainHandler.post {
-            telemetryEventSink?.success(telemetry)
-        }
+        telemetryEventSink?.success(telemetry)
     }
 }

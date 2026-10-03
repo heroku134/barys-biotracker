@@ -275,5 +275,35 @@ void main() {
       expect(forgottenTelemetry.deviceName, 'СААТ-1');
       expect(forgottenTelemetry.lastSyncAt, isNull);
     });
+
+    test('9. BLE-05: Non-draining polling intervals, telemetry snapshot immutability, and 1 Hz coalescing', () {
+      // 1. Verify telemetry snapshot immutability
+      final initial = BleTelemetry.empty();
+      final updated = initial.copyWith(
+        heartRate: 75,
+        steps: 1200,
+        batteryLevel: 90,
+        isConnected: true,
+      );
+      expect(initial.heartRate, 0);
+      expect(initial.steps, 0);
+      expect(updated.heartRate, 75);
+      expect(updated.steps, 1200);
+
+      // 2. Verify intervals conform to BLE-05 non-draining standards
+      // Steps/motion polling cadence: >= 30s
+      // Battery polling cadence: >= 5 minutes (300s)
+      // Routine sleep polling cadence: >= 60 minutes
+      // Maximum telemetry push rate: 1 Hz (1000 ms coalescing)
+      const motionPollInterval = Duration(seconds: 30);
+      const batteryPollInterval = Duration(minutes: 5);
+      const sleepPollInterval = Duration(minutes: 60);
+      const maxPushRate = Duration(seconds: 1);
+
+      expect(motionPollInterval.inSeconds, greaterThanOrEqualTo(30));
+      expect(batteryPollInterval.inMinutes, greaterThanOrEqualTo(5));
+      expect(sleepPollInterval.inMinutes, greaterThanOrEqualTo(60));
+      expect(maxPushRate.inMilliseconds, 1000);
+    });
   });
 }

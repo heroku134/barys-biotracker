@@ -40,6 +40,12 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private var alertCharacteristic: CBCharacteristic?
   private var writeCharacteristic: CBCharacteristic?
 
+  // BLE-05: Telemetry coalescing (1 Hz max) and non-draining polling controls
+  private var lastPushTime: TimeInterval = 0
+  private var pendingPushWorkItem: DispatchWorkItem?
+  private var lastBatteryPollDate: Date?
+  private var isPollingWorkout: Bool = false
+
   private var currentBpm: Int = 0
   private var currentSteps: Int = 0
   private var currentCalories: Int = 0
@@ -367,7 +373,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     currentBpm = 0
     isOffWrist = false
     skinTempDeviation = 0.0
-    pushTelemetry()
+    pushTelemetry(immediate: true)
     result(true)
   }
 
@@ -523,7 +529,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
     isConnected = false
     resolvePendingConnect(success: false, errorMessage: error?.localizedDescription ?? "CoreBluetooth failed to connect")
-    pushTelemetry()
+    pushTelemetry(immediate: true)
   }
 
   func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
@@ -540,7 +546,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     isOffWrist = false
     skinTempDeviation = 0.0
     // BLE-04: Preserve accumulated metrics: steps, calories, battery, hrv, rhr, sleep, hypnogram, deviceName
-    pushTelemetry()
+    pushTelemetry(immediate: true)
   }
 
   // MARK: - CBPeripheralDelegate
@@ -596,10 +602,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       lastConnectedAddress = addr
       UserDefaults.standard.set(addr, forKey: "kalkan_last_connected_address")
       resolvePendingConnect(success: true)
-      pushTelemetry()
+      pushTelemetry(immediate: true)
     }
 
-    // Handshake: Send initial time sync, battery query, and continuous HR enable packet
+    #if !canImport(UTEBluetoothRYApi)
+    // BLE-05: Handshake only for raw CoreBluetooth fallback (no dual-stack collision with UTE SDK)
     if let wChar = self.writeCharacteristic {
       let writeType: CBCharacteristicWriteType = wChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
       let now = Date()
@@ -620,22 +627,16 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       peripheral.writeValue(hrPacket, for: wChar, type: writeType)
     }
 
-    // Start background poll timer for battery refresh if not already active
+    // BLE-05: Gentle 30s battery check for fallback (no duplicate 5s raw timer)
     if pollTimer == nil && isConnected {
-      pollTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self, weak peripheral] _ in
+      pollTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self, weak peripheral] _ in
         guard let self = self, let p = peripheral, self.isConnected else { return }
         if let bChar = self.batteryCharacteristic {
           p.readValue(for: bChar)
         }
-        if let wChar = self.writeCharacteristic {
-          let writeType: CBCharacteristicWriteType = wChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
-          let batPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x70, 0x01])
-          p.writeValue(batPacket, for: wChar, type: writeType)
-          let stepPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x07, 0x01])
-          p.writeValue(stepPacket, for: wChar, type: writeType)
-        }
       }
     }
+    #endif
   }
 
   func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -705,35 +706,55 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     }
   }
 
-  // MARK: - Telemetry Push & FlutterStreamHandler
+  // MARK: - Telemetry Push & FlutterStreamHandler (BLE-05: Coalesced 1 Hz max)
 
-  private func pushTelemetry() {
+  private func pushTelemetry(immediate: Bool = false) {
     DispatchQueue.main.async { [weak self] in
       guard let self = self else { return }
-      let snapshot: [String: Any] = [
-        "heartRate": self.currentBpm,
-        "steps": self.currentSteps,
-        "calories": self.currentCalories,
-        "batteryLevel": self.currentBattery,
-        "isCharging": self.isCharging,
-        "isConnected": self.isConnected,
-        "deviceName": self.isConnected ? self.currentDeviceName : "",
-        "hrv": self.currentHrv,
-        "restingHeartRate": self.currentRhr,
-        "sleepMinutes": self.currentSleepMinutes,
-        "deepSleepMinutes": self.currentDeepSleepMinutes,
-        "remSleepMinutes": self.currentRemSleepMinutes,
-        "timeInBedMinutes": self.timeInBedMinutes,
-        "sleepEfficiency": self.currentSleepEfficiency,
-        "sleepHypnogram": self.currentHypnogram,
-        "currentStressScore": self.currentStressScore,
-        "isOffWrist": self.isOffWrist,
-        "skinTempDeviation": self.skinTempDeviation,
-        "respiratoryRate": 0.0
-      ]
-      self.telemetrySink?(snapshot)
-      UserDefaults.standard.set(snapshot, forKey: "kalkan_latest_telemetry_snapshot")
+      let now = Date().timeIntervalSince1970
+      if immediate || (now - self.lastPushTime >= 1.0 && self.pendingPushWorkItem == nil) {
+        self.pendingPushWorkItem?.cancel()
+        self.pendingPushWorkItem = nil
+        self.lastPushTime = now
+        self.sendTelemetrySnapshot()
+      } else if self.pendingPushWorkItem == nil {
+        let delay = max(0.05, 1.0 - (now - self.lastPushTime))
+        let item = DispatchWorkItem { [weak self] in
+          guard let self = self else { return }
+          self.pendingPushWorkItem = nil
+          self.lastPushTime = Date().timeIntervalSince1970
+          self.sendTelemetrySnapshot()
+        }
+        self.pendingPushWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+      }
     }
+  }
+
+  private func sendTelemetrySnapshot() {
+    let snapshot: [String: Any] = [
+      "heartRate": self.currentBpm,
+      "steps": self.currentSteps,
+      "calories": self.currentCalories,
+      "batteryLevel": self.currentBattery,
+      "isCharging": self.isCharging,
+      "isConnected": self.isConnected,
+      "deviceName": self.isConnected ? self.currentDeviceName : "",
+      "hrv": self.currentHrv,
+      "restingHeartRate": self.currentRhr,
+      "sleepMinutes": self.currentSleepMinutes,
+      "deepSleepMinutes": self.currentDeepSleepMinutes,
+      "remSleepMinutes": self.currentRemSleepMinutes,
+      "timeInBedMinutes": self.timeInBedMinutes,
+      "sleepEfficiency": self.currentSleepEfficiency,
+      "sleepHypnogram": self.currentHypnogram,
+      "currentStressScore": self.currentStressScore,
+      "isOffWrist": self.isOffWrist,
+      "skinTempDeviation": self.skinTempDeviation,
+      "respiratoryRate": 0.0
+    ]
+    self.telemetrySink?(snapshot)
+    UserDefaults.standard.set(snapshot, forKey: "kalkan_latest_telemetry_snapshot")
   }
 
   func performBackgroundSync(completion: @escaping (Bool) -> Void) {
@@ -857,15 +878,27 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   private func refreshWorkout() {
-    device.getBatteryInfo { [weak self] percent, code, _ in
-      if percent > 0 && percent <= 100 {
-        self?.currentBattery = Int(percent)
-        self?.pushTelemetry()
+    guard isConnected else { return }
+    if isPollingWorkout { return }
+    isPollingWorkout = true
+
+    let now = Date()
+    // BLE-05: Battery query at most once every 5 minutes (300 seconds)
+    if lastBatteryPollDate == nil || now.timeIntervalSince(lastBatteryPollDate!) >= 300 {
+      lastBatteryPollDate = now
+      device.getBatteryInfo { [weak self] percent, code, _ in
+        if percent > 0 && percent <= 100 {
+          self?.currentBattery = Int(percent)
+          self?.pushTelemetry()
+        }
       }
     }
+
     device.getCurrentDayTotalWorkoutData { [weak self] todayModel, code, _ in
-      guard let self = self, self.sdkOk(Int(code)), let model = todayModel else {
-        self?.pushTelemetry()
+      guard let self = self else { return }
+      defer { self.isPollingWorkout = false }
+      guard self.sdkOk(Int(code)), let model = todayModel else {
+        self.pushTelemetry()
         return
       }
       if model.totalCalorie > 0 { self.currentCalories = Int(model.totalCalorie) }
@@ -884,10 +917,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     }
   }
 
+  // BLE-05: 30-second cadence instead of battery-draining 8-second polling
   private func startTelemetryPoll() {
     stopTelemetryPoll()
     DispatchQueue.main.async { [weak self] in
-      self?.pollTimer = Timer.scheduledTimer(withTimeInterval: 8.0, repeats: true) { [weak self] _ in
+      self?.pollTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
         self?.refreshWorkout()
       }
     }
@@ -1092,7 +1126,7 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       pullNightAndDay()
       startTelemetryPoll()
       refreshWorkout()
-      pushTelemetry()
+      pushTelemetry(immediate: true)
 
     case 4: // UTEDevicesStatusConnecting
       // Connection in progress; do not mark isConnected = true yet
@@ -1106,7 +1140,7 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       currentBpm = 0
       isOffWrist = false
       skinTempDeviation = 0.0
-      pushTelemetry()
+      pushTelemetry(immediate: true)
 
       // Auto-reconnect if device was paired and user didn't manually disconnect
       pendingConnectAddress = nil
