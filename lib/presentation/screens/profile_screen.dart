@@ -615,7 +615,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
               final code = codeCtrl.text.trim();
               if (code.isEmpty) return;
               Navigator.pop(ctx);
-              await CloudSyncService.linkPartner(code);
+              final success = await CloudSyncService.linkPartner(code);
+              if (mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: AppColors.sage,
+                      content: Text(_ru ? 'Партнёр успешно привязан!' : 'Өнөктөш ийгиликтүү байланды!'),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      backgroundColor: AppColors.rose,
+                      content: Text(_ru ? 'Не удалось привязать: неверный код или ошибка сети.' : 'Байлоо мүмкүн болбоду: код ката же интернет жок.'),
+                    ),
+                  );
+                }
+              }
               await _loadPartnerCycle();
             },
             child: Text(_ru ? 'Привязать' : 'Байлоо'),

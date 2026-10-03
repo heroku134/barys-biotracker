@@ -290,43 +290,57 @@ class CloudSyncService {
     final raw = code.trim().toUpperCase();
     if (raw.isEmpty) return false;
 
+    // Partner cycle is a cloud-synchronized feature; require active session & database
+    if (db == null || id == null) {
+      debugPrint('CloudSync.linkPartner: cloud db unavailable or user not authenticated');
+      return false;
+    }
+
     String resolvedName = (name ?? '').trim();
 
     try {
-      if (db != null && id != null) {
-        final inv = await db.collection('invites').doc(raw).get().timeout(const Duration(seconds: 4));
-        if (inv.exists) {
-          final type = inv.data()?['type'] as String?;
-          if (type != null && type != 'cycle') {
-            return false; // Prevent using non-cycle invite codes
-          }
-          final owner = inv.data()?['ownerUid'] as String?;
-          final inviteName = inv.data()?['name'] as String?;
-          if (resolvedName.isEmpty && inviteName != null && inviteName.isNotEmpty) {
-            resolvedName = inviteName;
-          }
-          if (owner != null) {
-            await db.collection('partners').doc(id).set({
-              'partnerUid': owner,
-              'code': raw,
-              'linkedAt': FieldValue.serverTimestamp(),
-            }).timeout(const Duration(seconds: 4));
-          }
-        } else {
-          return false;
-        }
+      final inv = await db.collection('invites').doc(raw).get().timeout(const Duration(seconds: 6));
+      if (!inv.exists) {
+        debugPrint('CloudSync.linkPartner: invite code $raw not found');
+        return false;
       }
+
+      final invData = inv.data();
+      final type = invData?['type'] as String?;
+      if (type != 'cycle') {
+        debugPrint('CloudSync.linkPartner: invite code $raw has invalid type ($type)');
+        return false; // Prevent using non-cycle invite codes
+      }
+
+      final owner = invData?['ownerUid'] as String?;
+      if (owner == null || owner.isEmpty || owner == id) {
+        debugPrint('CloudSync.linkPartner: invalid partner owner ($owner)');
+        return false; // Cannot link self or empty owner
+      }
+
+      final inviteName = invData?['name'] as String?;
+      if (resolvedName.isEmpty && inviteName != null && inviteName.isNotEmpty) {
+        resolvedName = inviteName;
+      }
+      if (resolvedName.isEmpty) {
+        resolvedName = 'Партнёр';
+      }
+
+      // Write verified partner link to Firestore
+      await db.collection('partners').doc(id).set({
+        'partnerUid': owner,
+        'code': raw,
+        'linkedAt': FieldValue.serverTimestamp(),
+      }).timeout(const Duration(seconds: 6));
+
+      // Successfully written to cloud -> link locally and trigger initial pull
+      await PartnerCycleRepository.linkPartner(partnerCode: raw, partnerName: resolvedName);
+      await pullPartnerCycle();
+      return true;
     } catch (e) {
-      debugPrint('CloudSync.linkPartner: $e');
+      debugPrint('CloudSync.linkPartner error: $e');
+      return false;
     }
-
-    if (resolvedName.isEmpty) {
-      resolvedName = 'Партнёр';
-    }
-
-    await PartnerCycleRepository.linkPartner(partnerCode: raw, partnerName: resolvedName);
-    await pullPartnerCycle();
-    return true;
   }
 
   static Future<void> pullPartnerCycle() async {

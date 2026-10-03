@@ -212,14 +212,15 @@ service cloud.firestore {
 
     // --- 6. Partner Record Validator ---
     function isValidPartnerRecord(data) {
-      return data.keys().hasOnly(['partnerUid', 'code']) &&
+      return data.keys().hasOnly(['partnerUid', 'code', 'linkedAt']) &&
         data.keys().hasAll(['partnerUid', 'code']) &&
         data.partnerUid is string &&
         data.partnerUid.size() > 0 &&
         data.partnerUid.size() <= 128 &&
         data.code is string &&
         data.code.size() > 0 &&
-        data.code.size() <= 64;
+        data.code.size() <= 64 &&
+        isValidOptionalTimestamp(data, 'linkedAt');
     }
 
     // --- Partner Cycle Authorization Chain ---
