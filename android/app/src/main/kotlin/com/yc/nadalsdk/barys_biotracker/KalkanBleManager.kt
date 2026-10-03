@@ -721,7 +721,8 @@ object KalkanBleManager {
             "currentStressScore" to s.currentStressScore,
             "isOffWrist" to s.isOffWrist,
             "skinTempDeviation" to s.skinTempDeviation,
-            "respiratoryRate" to s.respiratoryRate
+            "respiratoryRate" to s.respiratoryRate,
+            "isBluetoothEnabled" to isBluetoothEnabled()
         )
 
         try {
@@ -733,5 +734,23 @@ object KalkanBleManager {
         } catch (_: Exception) {}
 
         telemetryEventSink?.success(telemetry)
+    }
+
+    // BLE-06: Reactive adapter state handler for Bluetooth on/off transitions
+    fun onBluetoothAdapterStateChanged(isEnabled: Boolean) {
+        if (!isEnabled) {
+            updateSnapshot(immediate = true) { prev ->
+                prev.copy(
+                    isConnected = false,
+                    isCharging = false,
+                    currentBpm = 0,
+                    isOffWrist = false,
+                    skinTempDeviation = 0.0
+                )
+            }
+            stopBackgroundPolling()
+        } else {
+            pushTelemetry(immediate = true)
+        }
     }
 }

@@ -42,6 +42,25 @@ class DaySnapshot {
         preview: j['preview'] as bool? ?? false,
       );
 
+  DaySnapshot copyWith({
+    String? dateKey,
+    int? recovery,
+    double? strain,
+    int? sleep,
+    double? hrv,
+    int? rhr,
+    bool? preview,
+  }) =>
+      DaySnapshot(
+        dateKey: dateKey ?? this.dateKey,
+        recovery: recovery ?? this.recovery,
+        strain: strain ?? this.strain,
+        sleep: sleep ?? this.sleep,
+        hrv: hrv ?? this.hrv,
+        rhr: rhr ?? this.rhr,
+        preview: preview ?? this.preview,
+      );
+
   static String keyFor(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }
@@ -68,12 +87,34 @@ class DaySnapshotRepository {
     await prefs.setStringList(_key, trimmed.map((e) => jsonEncode(e.toJson())).toList());
   }
 
-  static Future<void> upsert(DaySnapshot snap) async {
+  static Future<void> upsert(DaySnapshot snap, {bool syncToCloud = true}) async {
     final all = await loadAll();
     all.removeWhere((e) => e.dateKey == snap.dateKey);
     all.add(snap);
     await _saveAll(all);
-    CloudSyncService.pushDay(snap);
+    if (syncToCloud) {
+      CloudSyncService.pushDay(snap);
+    }
+  }
+
+  /// Пакетное сохранение снапшотов (например, при загрузке из облака в pullDays)
+  /// без вызова каскадной обратной синхронизации в облако (PERF-01)
+  static Future<void> upsertAll(List<DaySnapshot> snaps, {bool syncToCloud = false}) async {
+    if (snaps.isEmpty) return;
+    final all = await loadAll();
+    final newKeys = snaps.map((s) => s.dateKey).toSet();
+    all.removeWhere((e) => newKeys.contains(e.dateKey));
+    all.addAll(snaps);
+    await _saveAll(all);
+    if (syncToCloud) {
+      final today = DaySnapshot.keyFor(DateTime.now());
+      for (final s in snaps) {
+        if (s.dateKey == today) {
+          CloudSyncService.pushDay(s);
+          break;
+        }
+      }
+    }
   }
 
   static Future<void> recordTelemetry(BleTelemetry t, {required int recovery, required int sleep}) async {

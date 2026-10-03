@@ -130,38 +130,99 @@ class CloudSyncService {
     } catch (_) {}
   }
 
+  static String? _lastPushedDayKey;
+  static int? _lastPushedRecovery;
+  static double? _lastPushedStrain;
+  static DateTime? _lastPushDayTime;
+
   static Future<void> pushDay(DaySnapshot day) async {
     final db = _db;
     final id = uid;
     if (db == null || id == null) return;
+
+    final today = DaySnapshot.keyFor(DateTime.now());
+    final isToday = day.dateKey == today;
+
+    // PERF-01: Debounce duplicate or very rapid writes within 3 seconds if data didn't change meaningfully
+    final now = DateTime.now();
+    if (_lastPushedDayKey == day.dateKey &&
+        _lastPushedRecovery == day.recovery &&
+        _lastPushedStrain != null &&
+        (day.strain - _lastPushedStrain!).abs() < 0.1 &&
+        _lastPushDayTime != null &&
+        now.difference(_lastPushDayTime!).inSeconds < 3) {
+      return;
+    }
+
+    _lastPushedDayKey = day.dateKey;
+    _lastPushedRecovery = day.recovery;
+    _lastPushedStrain = day.strain;
+    _lastPushDayTime = now;
+
     try {
-      await db.collection('days').doc(id).collection('snapshots').doc(day.dateKey).set(day.toJson()).timeout(const Duration(seconds: 4));
-      await publishRecovery(recovery: day.recovery, hrv: day.hrv, rhr: day.rhr);
+      await db
+          .collection('days')
+          .doc(id)
+          .collection('snapshots')
+          .doc(day.dateKey)
+          .set(day.toJson())
+          .timeout(const Duration(seconds: 4));
+      // Only today's snapshot updates can publish active recovery to friend circle
+      if (isToday) {
+        await publishRecovery(recovery: day.recovery, hrv: day.hrv, rhr: day.rhr);
+      }
     } catch (e) {
       debugPrint('CloudSync.pushDay: $e');
     }
   }
 
+  static int? _lastPublishedRecovery;
+  static double? _lastPublishedHrv;
+  static int? _lastPublishedRhr;
+
   static Future<void> publishRecovery({required int recovery, required double hrv, required int rhr}) async {
     final db = _db;
     final id = uid;
     if (db == null || id == null) return;
+
+    // PERF-01: Avoid redundant cloud writes if values haven't changed
+    if (_lastPublishedRecovery == recovery &&
+        _lastPublishedHrv != null &&
+        (hrv - _lastPublishedHrv!).abs() < 0.5 &&
+        _lastPublishedRhr == rhr) {
+      return;
+    }
+
+    _lastPublishedRecovery = recovery;
+    _lastPublishedHrv = hrv;
+    _lastPublishedRhr = rhr;
+
     try {
-      await db.collection('users').doc(id).set({
+      final mine = await db
+          .collection('friends')
+          .doc(id)
+          .collection('members')
+          .get()
+          .timeout(const Duration(seconds: 4));
+
+      final batch = db.batch();
+      batch.set(db.collection('users').doc(id), {
         'recovery': recovery,
         'hrv': hrv,
         'rhr': rhr,
         'recoveryAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
-      final mine = await db.collection('friends').doc(id).collection('members').get().timeout(const Duration(seconds: 4));
+      }, SetOptions(merge: true));
+
       for (final f in mine.docs) {
-        await db.collection('friends').doc(f.id).collection('members').doc(id).set({
+        batch.set(db.collection('friends').doc(f.id).collection('members').doc(id), {
           'recovery': recovery,
           'hrv': hrv,
           'rhr': rhr,
           'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
+        }, SetOptions(merge: true));
       }
+
+      await batch.commit().timeout(const Duration(seconds: 4));
     } catch (e) {
       debugPrint('CloudSync.publishRecovery: $e');
     }
@@ -172,10 +233,23 @@ class CloudSyncService {
     final id = uid;
     if (db == null || id == null) return;
     try {
-      final qs = await db.collection('days').doc(id).collection('snapshots').get().timeout(const Duration(seconds: 4));
+      final qs = await db
+          .collection('days')
+          .doc(id)
+          .collection('snapshots')
+          .orderBy(FieldPath.documentId, descending: true)
+          .limit(60)
+          .get()
+          .timeout(const Duration(seconds: 4));
+
+      final items = <DaySnapshot>[];
       for (final doc in qs.docs) {
-        await DaySnapshotRepository.upsert(DaySnapshot.fromJson(doc.data()));
+        try {
+          items.add(DaySnapshot.fromJson(doc.data()));
+        } catch (_) {}
       }
+      // PERF-01: Save all loaded days strictly locally without triggering cloud write cascade!
+      await DaySnapshotRepository.upsertAll(items, syncToCloud: false);
     } catch (e) {
       debugPrint('CloudSync.pullDays: $e');
     }

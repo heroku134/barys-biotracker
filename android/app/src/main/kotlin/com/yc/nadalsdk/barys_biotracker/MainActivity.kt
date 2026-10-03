@@ -1,9 +1,17 @@
 package com.yc.nadalsdk.barys_biotracker
 
 import android.Manifest
+import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
@@ -18,12 +26,37 @@ class MainActivity : FlutterActivity() {
     private val SCAN_CHANNEL = "com.nadal.ble/scan"
     private val EVENT_CHANNEL = "com.nadal.ble/telemetry"
     private val PERMISSION_REQUEST_CODE = 4101
+    private val NOTIFICATION_PERMISSION_REQUEST_CODE = 4103
 
     private var pendingPermissionResult: MethodChannel.Result? = null
+    private var pendingNotifyPermissionResult: MethodChannel.Result? = null
+    private var hasEverRequestedBlePermission: Boolean = false
+
+    // BLE-06: Reactive broadcast receiver for Bluetooth on/off transitions
+    private val bluetoothStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
+                val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
+                val isEnabled = (state == BluetoothAdapter.STATE_ON)
+                KalkanBleManager.onBluetoothAdapterStateChanged(isEnabled)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         KalkanBleManager.init(applicationContext)
+        val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        registerReceiver(bluetoothStateReceiver, filter)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(bluetoothStateReceiver)
+        } catch (_: Exception) {}
+        KalkanBleManager.setTelemetrySink(null)
+        KalkanBleManager.setScanSink(null)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -34,7 +67,21 @@ class MainActivity : FlutterActivity() {
                 when (call.method) {
                     "requestPermission" -> {
                         KalkanNotify.ensureChannels(this)
-                        result.success(true)
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                                result.success(true)
+                            } else {
+                                pendingNotifyPermissionResult?.success(false)
+                                pendingNotifyPermissionResult = result
+                                ActivityCompat.requestPermissions(
+                                    this,
+                                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                                )
+                            }
+                        } else {
+                            result.success(true)
+                        }
                     }
                     "scheduleDaily" -> {
                         val args = call.arguments as? Map<*, *>
@@ -82,13 +129,26 @@ class MainActivity : FlutterActivity() {
                     "isBluetoothEnabled" -> {
                         result.success(KalkanBleManager.isBluetoothEnabled())
                     }
+                    "isLocationServiceEnabled" -> {
+                        result.success(isLocationServiceEnabled())
+                    }
+                    "openAppSettings" -> {
+                        openAppSettings()
+                        result.success(true)
+                    }
+                    "openLocationSettings" -> {
+                        openLocationSettings()
+                        result.success(true)
+                    }
                     "checkPermissions" -> {
-                        result.success(hasRequiredPermissions())
+                        result.success(getPermissionStatusString())
                     }
                     "requestPermissions" -> {
                         if (hasRequiredPermissions()) {
-                            result.success(true)
+                            result.success("granted")
                         } else {
+                            // BLE-06: Resolve any previous pending request so it never hangs in Dart
+                            pendingPermissionResult?.success("denied")
                             pendingPermissionResult = result
                             requestRequiredPermissions()
                         }
@@ -96,6 +156,10 @@ class MainActivity : FlutterActivity() {
                     "startScan" -> {
                         if (!hasRequiredPermissions()) {
                             result.error("PERMISSION_DENIED", "Bluetooth scan permissions not granted", null)
+                            return@setMethodCallHandler
+                        }
+                        if (!isLocationServiceEnabled()) {
+                            result.error("LOCATION_DISABLED", "Location services must be enabled on Android <12 for BLE scan", null)
                             return@setMethodCallHandler
                         }
                         if (!KalkanBleManager.isBluetoothEnabled()) {
@@ -111,6 +175,15 @@ class MainActivity : FlutterActivity() {
                         result.success(true)
                     }
                     "connect" -> {
+                        // BLE-06: Validate permissions and adapter power before attempting connect
+                        if (!hasConnectPermission()) {
+                            result.error("PERMISSION_DENIED", "BLUETOOTH_CONNECT permission not granted", null)
+                            return@setMethodCallHandler
+                        }
+                        if (!KalkanBleManager.isBluetoothEnabled()) {
+                            result.error("BLUETOOTH_DISABLED", "Bluetooth is turned off", null)
+                            return@setMethodCallHandler
+                        }
                         val address = call.argument<String>("address")
                         if (!address.isNullOrEmpty()) {
                             KalkanBleManager.connect(address) { success, err ->
@@ -169,10 +242,41 @@ class MainActivity : FlutterActivity() {
             })
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        KalkanBleManager.setTelemetrySink(null)
-        KalkanBleManager.setScanSink(null)
+    private fun isLocationServiceEnabled(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return true
+        }
+        val lm = getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return false
+        val gpsEnabled = try { lm.isProviderEnabled(LocationManager.GPS_PROVIDER) } catch (_: Exception) { false }
+        val netEnabled = try { lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) } catch (_: Exception) { false }
+        return gpsEnabled || netEnabled
+    }
+
+    private fun openAppSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (_: Exception) {}
+    }
+
+    private fun openLocationSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (_: Exception) {}
+    }
+
+    private fun hasConnectPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
     }
 
     private fun hasRequiredPermissions(): Boolean {
@@ -182,6 +286,19 @@ class MainActivity : FlutterActivity() {
         } else {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         }
+    }
+
+    private fun getPermissionStatusString(): String {
+        if (hasRequiredPermissions()) return "granted"
+        if (!hasEverRequestedBlePermission) return "denied"
+
+        val isPermanentlyDenied = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.BLUETOOTH_SCAN) &&
+            !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+        return if (isPermanentlyDenied) "permanentlyDenied" else "denied"
     }
 
     private fun requestRequiredPermissions() {
@@ -202,9 +319,22 @@ class MainActivity : FlutterActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_CODE) {
+            hasEverRequestedBlePermission = true
             val allGranted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            pendingPermissionResult?.success(allGranted)
+            if (allGranted) {
+                pendingPermissionResult?.success("granted")
+            } else {
+                val anyPermanentlyDenied = permissions.indices.any { i ->
+                    grantResults.getOrNull(i) != PackageManager.PERMISSION_GRANTED &&
+                    !ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[i])
+                }
+                pendingPermissionResult?.success(if (anyPermanentlyDenied) "permanentlyDenied" else "denied")
+            }
             pendingPermissionResult = null
+        } else if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            pendingNotifyPermissionResult?.success(granted)
+            pendingNotifyPermissionResult = null
         }
     }
 }

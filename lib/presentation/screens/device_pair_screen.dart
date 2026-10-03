@@ -27,7 +27,20 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
   @override
   void initState() {
     super.initState();
+    _isBluetoothEnabled = widget.bleBridge.isBluetoothEnabledNotifier.value;
+    widget.bleBridge.isBluetoothEnabledNotifier.addListener(_onBluetoothStateChanged);
     _checkAndStart();
+  }
+
+  void _onBluetoothStateChanged() {
+    if (!mounted) return;
+    final enabled = widget.bleBridge.isBluetoothEnabledNotifier.value;
+    if (_isBluetoothEnabled != enabled) {
+      setState(() => _isBluetoothEnabled = enabled);
+      if (enabled && !_isScanning) {
+        _checkAndStart();
+      }
+    }
   }
 
   Future<void> _checkAndStart() async {
@@ -38,7 +51,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
 
     if (!btEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           backgroundColor: AppColors.rose,
           content: Text(
             'Внимание: Bluetooth выключен на телефоне. Включите Bluetooth для поиска часов.',
@@ -49,16 +62,53 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
       return;
     }
 
-    // 2. Проверяем и запрашиваем разрешения
-    final hasPerms = await widget.bleBridge.checkPermissions();
-    if (!hasPerms) {
-      final granted = await widget.bleBridge.requestPermissions();
-      if (!granted && mounted) {
+    // 2. Проверяем геолокацию (критично для Android <12)
+    final locEnabled = await widget.bleBridge.isLocationServiceEnabled();
+    if (!locEnabled && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.rose,
+          content: const Text(
+            'Для поиска BLE-устройств необходимо включить службы геолокации.',
+            style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+          ),
+          action: SnackBarAction(
+            label: 'Включить',
+            textColor: Colors.white,
+            onPressed: () => widget.bleBridge.openLocationSettings(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // 3. Проверяем и запрашиваем разрешения
+    final status = await widget.bleBridge.checkPermissionStatus();
+    if (status != BlePermissionStatus.granted) {
+      final reqStatus = await widget.bleBridge.requestPermissionStatus();
+      if (!mounted) return;
+      if (reqStatus == BlePermissionStatus.permanentlyDenied) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.rose,
+            content: const Text(
+              'Разрешение на Bluetooth отключено. Предоставьте доступ в настройках.',
+              style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
+            ),
+            action: SnackBarAction(
+              label: 'Настройки',
+              textColor: Colors.white,
+              onPressed: () => widget.bleBridge.openAppSettings(),
+            ),
+          ),
+        );
+        return;
+      } else if (reqStatus != BlePermissionStatus.granted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.rose,
             content: Text(
-              'Для поиска часов необходимо предоставить разрешение на доступ к Bluetooth и геолокации.',
+              'Для поиска часов необходимо предоставить разрешение на доступ к Bluetooth.',
               style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
             ),
           ),
@@ -163,6 +213,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
 
   @override
   void dispose() {
+    widget.bleBridge.isBluetoothEnabledNotifier.removeListener(_onBluetoothStateChanged);
     _scanSub?.cancel();
     widget.bleBridge.stopScan();
     super.dispose();

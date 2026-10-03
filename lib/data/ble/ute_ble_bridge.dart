@@ -15,6 +15,21 @@ enum BleConnectionState {
   failed,
 }
 
+/// Статус разрешений BLE (BLE-06)
+enum BlePermissionStatus {
+  granted,
+  denied,
+  permanentlyDenied,
+  restricted,
+}
+
+BlePermissionStatus _parsePermissionStatus(dynamic status) {
+  if (status == 'granted' || status == true) return BlePermissionStatus.granted;
+  if (status == 'permanentlyDenied') return BlePermissionStatus.permanentlyDenied;
+  if (status == 'restricted') return BlePermissionStatus.restricted;
+  return BlePermissionStatus.denied;
+}
+
 class DiscoveredBleDevice {
   final String name;
   final String address;
@@ -57,6 +72,7 @@ class UteBleBridge {
   BleConnectionState _connectionState = BleConnectionState.idle;
   final ValueNotifier<BleConnectionState> connectionStateNotifier =
       ValueNotifier<BleConnectionState>(BleConnectionState.idle);
+  final ValueNotifier<bool> isBluetoothEnabledNotifier = ValueNotifier<bool>(true);
 
   BleConnectionState get connectionState => _connectionState;
 
@@ -87,6 +103,12 @@ class UteBleBridge {
       _eventSub = _eventChannel.receiveBroadcastStream().listen(
         (dynamic event) {
           if (event is Map) {
+            if (event.containsKey('isBluetoothEnabled')) {
+              final enabled = _parseBool(event['isBluetoothEnabled'], true);
+              if (isBluetoothEnabledNotifier.value != enabled) {
+                isBluetoothEnabledNotifier.value = enabled;
+              }
+            }
             final isConnected = _parseBool(event['isConnected'], false);
             final prev = _realTelemetry;
 
@@ -155,31 +177,75 @@ class UteBleBridge {
   Future<bool> isBluetoothEnabled() async {
     try {
       final res = await _methodChannel.invokeMethod<bool>('isBluetoothEnabled');
-      return res ?? false;
+      final val = res ?? false;
+      if (isBluetoothEnabledNotifier.value != val) {
+        isBluetoothEnabledNotifier.value = val;
+      }
+      return val;
     } catch (e) {
       debugPrint('UteBleBridge isBluetoothEnabled error: $e');
       return false;
     }
   }
 
-  Future<bool> checkPermissions() async {
+  Future<bool> isLocationServiceEnabled() async {
     try {
-      final res = await _methodChannel.invokeMethod<bool>('checkPermissions');
+      final res = await _methodChannel.invokeMethod<bool>('isLocationServiceEnabled');
+      return res ?? true;
+    } catch (e) {
+      debugPrint('UteBleBridge isLocationServiceEnabled error: $e');
+      return true;
+    }
+  }
+
+  Future<bool> openAppSettings() async {
+    try {
+      final res = await _methodChannel.invokeMethod<bool>('openAppSettings');
       return res ?? false;
     } catch (e) {
-      debugPrint('UteBleBridge checkPermissions error: $e');
+      debugPrint('UteBleBridge openAppSettings error: $e');
       return false;
     }
   }
 
-  Future<bool> requestPermissions() async {
+  Future<bool> openLocationSettings() async {
     try {
-      final res = await _methodChannel.invokeMethod<bool>('requestPermissions');
+      final res = await _methodChannel.invokeMethod<bool>('openLocationSettings');
       return res ?? false;
     } catch (e) {
-      debugPrint('UteBleBridge requestPermissions error: $e');
+      debugPrint('UteBleBridge openLocationSettings error: $e');
       return false;
     }
+  }
+
+  Future<BlePermissionStatus> checkPermissionStatus() async {
+    try {
+      final res = await _methodChannel.invokeMethod<dynamic>('checkPermissions');
+      return _parsePermissionStatus(res);
+    } catch (e) {
+      debugPrint('UteBleBridge checkPermissionStatus error: $e');
+      return BlePermissionStatus.denied;
+    }
+  }
+
+  Future<BlePermissionStatus> requestPermissionStatus() async {
+    try {
+      final res = await _methodChannel.invokeMethod<dynamic>('requestPermissions');
+      return _parsePermissionStatus(res);
+    } catch (e) {
+      debugPrint('UteBleBridge requestPermissionStatus error: $e');
+      return BlePermissionStatus.denied;
+    }
+  }
+
+  Future<bool> checkPermissions() async {
+    final status = await checkPermissionStatus();
+    return status == BlePermissionStatus.granted;
+  }
+
+  Future<bool> requestPermissions() async {
+    final status = await requestPermissionStatus();
+    return status == BlePermissionStatus.granted;
   }
 
   // --- Сканирование и обнаружение устройств ---
@@ -268,6 +334,19 @@ class UteBleBridge {
     // Если подключение уже в процессе — ожидаем завершения текущего
     if (_isConnecting && _connectCompleter != null) {
       return _connectCompleter!.future;
+    }
+
+    final btEnabled = await isBluetoothEnabled();
+    if (!btEnabled) {
+      debugPrint('UteBleBridge.connect: aborted because Bluetooth is disabled');
+      _setConnectionState(BleConnectionState.failed);
+      return false;
+    }
+    final permStatus = await checkPermissionStatus();
+    if (permStatus != BlePermissionStatus.granted) {
+      debugPrint('UteBleBridge.connect: aborted because permissions not granted ($permStatus)');
+      _setConnectionState(BleConnectionState.failed);
+      return false;
     }
 
     _isConnecting = true;
@@ -375,6 +454,17 @@ class UteBleBridge {
     if (_isConnecting) return;
     if (_realTelemetry?.isConnected == true) return;
     if (_connectionState == BleConnectionState.connecting || _connectionState == BleConnectionState.discovering) return;
+
+    final btEnabled = await isBluetoothEnabled();
+    if (!btEnabled) {
+      debugPrint('UteBleBridge: auto-reconnect skipped because Bluetooth is disabled');
+      return;
+    }
+    final permStatus = await checkPermissionStatus();
+    if (permStatus != BlePermissionStatus.granted) {
+      debugPrint('UteBleBridge: auto-reconnect skipped because permissions not granted ($permStatus)');
+      return;
+    }
 
     try {
       final prefs = await SharedPreferences.getInstance();

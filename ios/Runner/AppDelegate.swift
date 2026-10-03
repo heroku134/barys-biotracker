@@ -175,19 +175,57 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     #endif
   }
 
-  func checkPermissions() -> Bool {
+  func checkPermissions() -> String {
     if #available(iOS 13.1, *) {
-      return CBCentralManager.authorization == .allowedAlways
+      switch CBCentralManager.authorization {
+      case .allowedAlways:
+        return "granted"
+      case .denied:
+        return "permanentlyDenied"
+      case .restricted:
+        return "restricted"
+      case .notDetermined:
+        return "denied"
+      @unknown default:
+        return "denied"
+      }
     } else {
-      return true
+      return "granted"
     }
   }
 
   func requestPermissions(result: @escaping FlutterResult) {
-    if centralManager == nil {
-      centralManager = CBCentralManager(delegate: self, queue: .main)
+    if #available(iOS 13.1, *) {
+      switch CBCentralManager.authorization {
+      case .allowedAlways:
+        result("granted")
+        return
+      case .denied:
+        result("permanentlyDenied")
+        return
+      case .restricted:
+        result("restricted")
+        return
+      case .notDetermined:
+        break
+      @unknown default:
+        break
+      }
     }
-    result(true)
+    // Cancel prior pending result to avoid hanging Flutter Futures
+    pendingPermissionResult?(FlutterError(code: "CANCELLED", message: "Superseded by newer permission request", details: nil))
+    pendingPermissionResult = result
+
+    if centralManager == nil {
+      centralManager = CBCentralManager(
+        delegate: self,
+        queue: .main,
+        options: [
+          CBCentralManagerOptionRestoreIdentifierKey: "sport.kalkan.central_restore_id",
+          CBCentralManagerOptionShowPowerAlertKey: true
+        ]
+      )
+    }
   }
 
   func startScan(result: @escaping FlutterResult) {
@@ -224,6 +262,15 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   func connect(address: String, result: @escaping FlutterResult) {
+    if !isBluetoothEnabled() {
+      result(FlutterError(code: "BLUETOOTH_DISABLED", message: "Bluetooth is powered off", details: nil))
+      return
+    }
+    if checkPermissions() != "granted" {
+      result(FlutterError(code: "PERMISSION_DENIED", message: "Bluetooth permission not granted", details: nil))
+      return
+    }
+
     if isConnected {
       #if canImport(UTEBluetoothRYApi)
       if let model = mgr.connnectModel, (deviceAddress(model) == address || model.identifier == address) {
@@ -465,6 +512,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
+    if let pendingResult = pendingPermissionResult {
+      pendingPermissionResult = nil
+      pendingResult(checkPermissions())
+    }
     switch central.state {
     case .poweredOn:
       #if canImport(UTEBluetoothRYApi)
@@ -479,12 +530,13 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       if isScanning {
         central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
       }
+      pushTelemetry(immediate: true)
     case .poweredOff, .unsupported, .unauthorized, .resetting:
       resolvePendingConnect(success: false, errorMessage: "Bluetooth powered off or unauthorized")
       if isConnected {
         isConnected = false
-        pushTelemetry()
       }
+      pushTelemetry(immediate: true)
     @unknown default:
       break
     }
@@ -733,6 +785,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
   private func sendTelemetrySnapshot() {
     let snapshot: [String: Any] = [
+      "isBluetoothEnabled": self.isBluetoothEnabled(),
       "heartRate": self.currentBpm,
       "steps": self.currentSteps,
       "calories": self.currentCalories,
@@ -1361,6 +1414,16 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
       case "disconnect":
         let forget = (call.arguments as? [String: Any])?["forget"] as? Bool ?? false
         KalkanBleManager.shared.disconnect(forget: forget, result: result)
+      case "isLocationServiceEnabled":
+        result(true)
+      case "openAppSettings", "openLocationSettings":
+        if let url = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(url) {
+          UIApplication.shared.open(url, options: [:]) { success in
+            result(success)
+          }
+        } else {
+          result(false)
+        }
       case "findDevice":
         KalkanBleManager.shared.findDevice(result: result)
       case "measureHeartRate":

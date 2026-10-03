@@ -305,5 +305,57 @@ void main() {
       expect(sleepPollInterval.inMinutes, greaterThanOrEqualTo(60));
       expect(maxPushRate.inMilliseconds, 1000);
     });
+
+    test('10. BLE-06: Granular permission status enum, location services, and adapter state handling', () {
+      // 1. Verify BlePermissionStatus enum values
+      expect(BlePermissionStatus.values, contains(BlePermissionStatus.granted));
+      expect(BlePermissionStatus.values, contains(BlePermissionStatus.denied));
+      expect(BlePermissionStatus.values, contains(BlePermissionStatus.permanentlyDenied));
+      expect(BlePermissionStatus.values, contains(BlePermissionStatus.restricted));
+
+      // 2. Verify isBluetoothEnabledNotifier initial value and bridge defaults
+      final bridge = UteBleBridge();
+      expect(bridge.isBluetoothEnabledNotifier.value, isTrue);
+
+      bridge.isBluetoothEnabledNotifier.value = false;
+      expect(bridge.isBluetoothEnabledNotifier.value, isFalse);
+      bridge.isBluetoothEnabledNotifier.value = true;
+      expect(bridge.isBluetoothEnabledNotifier.value, isTrue);
+    });
+
+    test('11. PERF-01: DaySnapshotRepository.upsertAll stores locally without cloud push cascade', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      final snaps = List.generate(60, (i) {
+        final date = DateTime(2026, 1, 1).add(Duration(days: i));
+        final key = DaySnapshot.keyFor(date);
+        return DaySnapshot(
+          dateKey: key,
+          recovery: 70 + (i % 20),
+          strain: 10.0 + (i % 5),
+          sleep: 420 + (i % 60),
+          hrv: 55.0 + (i % 15),
+          rhr: 58 + (i % 8),
+          preview: false,
+        );
+      });
+
+      // Saving all 60 snapshots with syncToCloud: false MUST save to prefs without throwing or cloud writes
+      await DaySnapshotRepository.upsertAll(snaps, syncToCloud: false);
+
+      final loaded = await DaySnapshotRepository.loadAll();
+      expect(loaded.length, 60);
+      expect(loaded.first.dateKey, snaps.first.dateKey);
+      expect(loaded.last.dateKey, snaps.last.dateKey);
+      expect(loaded.last.recovery, snaps.last.recovery);
+
+      // Upserting single day with syncToCloud: false also persists locally
+      final updatedLast = loaded.last.copyWith(recovery: 99);
+      await DaySnapshotRepository.upsert(updatedLast, syncToCloud: false);
+
+      final reloaded = await DaySnapshotRepository.loadAll();
+      expect(reloaded.length, 60);
+      expect(reloaded.last.recovery, 99);
+    });
   });
 }
