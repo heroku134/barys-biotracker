@@ -31,6 +31,8 @@
 	<string>Приложению требуется доступ к геолокации для записи маршрута, темпа и дистанции беговой тренировки.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Приложению требуется доступ к геолокации в фоновом режиме для точной записи бегового трека.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Приложению требуется доступ к геолокации в фоновом режиме для точной непрерывной записи бегового трека при заблокированном экране.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>КАЛКАН считывает пульс, вариабельность (HRV), сон, шаги и тренировки для расчёта показателей готовности и восстановления.</string>
 	<key>NSHealthUpdateUsageDescription</key>
@@ -41,6 +43,7 @@
 	<array>
 		<string>bluetooth-central</string>
 		<string>fetch</string>
+		<string>location</string>
 		<string>processing</string>
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>

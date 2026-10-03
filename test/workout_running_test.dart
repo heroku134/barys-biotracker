@@ -4,6 +4,7 @@ import 'package:barys_biotracker/domain/models/workout_session.dart';
 import 'package:barys_biotracker/data/storage/calibration_store.dart';
 import 'package:barys_biotracker/data/storage/private_league_repository.dart';
 import 'package:barys_biotracker/data/storage/workout_repository.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:barys_biotracker/data/storage/partner_cycle_repository.dart';
 
@@ -124,6 +125,49 @@ void main() {
       expect(loaded.length, 1);
       expect(loaded.first.id, 'legacy_01');
       expect(loaded.first.sport, SportType.cycling);
+    });
+
+    test('AppleSettings and AndroidSettings background location configuration for continuous outdoor GPS tracking', () {
+      final appleSettings = AppleSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        activityType: ActivityType.fitness,
+        distanceFilter: 3,
+        pauseLocationUpdatesAutomatically: false,
+        showBackgroundLocationIndicator: true,
+        allowBackgroundLocationUpdates: true,
+      );
+
+      expect(appleSettings.accuracy, LocationAccuracy.bestForNavigation);
+      expect(appleSettings.activityType, ActivityType.fitness);
+      expect(appleSettings.distanceFilter, 3);
+      expect(appleSettings.pauseLocationUpdatesAutomatically, isFalse);
+      expect(appleSettings.showBackgroundLocationIndicator, isTrue);
+      expect(appleSettings.allowBackgroundLocationUpdates, isTrue);
+
+      final appleJson = appleSettings.toJson();
+      expect(appleJson['allowBackgroundLocationUpdates'], isTrue);
+      expect(appleJson['pauseLocationUpdatesAutomatically'], isFalse);
+      expect(appleJson['showBackgroundLocationIndicator'], isTrue);
+      expect(appleJson['activityType'], ActivityType.fitness.index);
+
+      final androidSettings = AndroidSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 3,
+        intervalDuration: const Duration(seconds: 2),
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: 'KALKAN SPORT',
+          notificationText: 'Запись маршрута тренировки...',
+          enableWakeLock: true,
+          setOngoing: true,
+        ),
+      );
+
+      expect(androidSettings.accuracy, LocationAccuracy.bestForNavigation);
+      expect(androidSettings.distanceFilter, 3);
+      expect(androidSettings.intervalDuration, const Duration(seconds: 2));
+      expect(androidSettings.foregroundNotificationConfig?.enableWakeLock, isTrue);
+      expect(androidSettings.foregroundNotificationConfig?.setOngoing, isTrue);
+      expect(androidSettings.foregroundNotificationConfig?.notificationTitle, 'KALKAN SPORT');
     });
   });
 }

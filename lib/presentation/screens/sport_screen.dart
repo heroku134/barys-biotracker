@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -265,26 +266,59 @@ class _SportScreenState extends State<SportScreen> {
         return;
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 4),
-        ),
-      );
+      // Try initial position fix (non-blocking if slow or indoors)
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 4),
+          ),
+        );
+        final startPos = LatLng(pos.latitude, pos.longitude);
+        if (mounted && _isWorkoutActive) {
+          setState(() {
+            _currentGpsPosition = startPos;
+            if (_routePoints.isEmpty) {
+              _routePoints.add(startPos);
+            }
+          });
+        }
+      } catch (e) {
+        debugPrint('SportScreen initial position fix skipped or timed out: $e');
+      }
 
-      final startPos = LatLng(pos.latitude, pos.longitude);
-      if (mounted && _isWorkoutActive) {
-        setState(() {
-          _currentGpsPosition = startPos;
-          _routePoints.add(startPos);
-        });
+      // Platform-specific settings enabling continuous background tracking
+      late final LocationSettings locationSettings;
+      if (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS) {
+        locationSettings = AppleSettings(
+          accuracy: LocationAccuracy.bestForNavigation,
+          activityType: ActivityType.fitness,
+          distanceFilter: 3,
+          pauseLocationUpdatesAutomatically: false,
+          showBackgroundLocationIndicator: true,
+          allowBackgroundLocationUpdates: true,
+        );
+      } else if (defaultTargetPlatform == TargetPlatform.android) {
+        locationSettings = AndroidSettings(
+          accuracy: LocationAccuracy.bestForNavigation,
+          distanceFilter: 3,
+          intervalDuration: const Duration(seconds: 2),
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationTitle: 'KALKAN SPORT',
+            notificationText: 'Запись маршрута тренировки...',
+            enableWakeLock: true,
+            setOngoing: true,
+          ),
+        );
+      } else {
+        locationSettings = const LocationSettings(
+          accuracy: LocationAccuracy.bestForNavigation,
+          distanceFilter: 3,
+        );
       }
 
       _gpsSub = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.bestForNavigation,
-          distanceFilter: 3,
-        ),
+        locationSettings: locationSettings,
       ).listen((p) {
         if (!mounted || !_isWorkoutActive || _isWorkoutPaused) return;
         final next = LatLng(p.latitude, p.longitude);
