@@ -11,9 +11,11 @@ import ActivityKit
 
 #if canImport(UTEBluetoothRYApi)
 import UTEBluetoothRYApi
+#else
+#error("UTEBluetoothRYApi framework is required for building KALKAN SPORT iOS")
 #endif
 
-class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, FlutterStreamHandler {
+class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate, FlutterStreamHandler {
   static let shared = KalkanBleManager()
 
   private var centralManager: CBCentralManager?
@@ -21,24 +23,18 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   private var telemetrySink: FlutterEventSink?
 
   private var isScanning = false
-  private var discoveredPeripherals: [String: CBPeripheral] = [:]
-  private var connectedPeripheral: CBPeripheral?
-  private var pendingConnectAddress: String?
-
-  #if canImport(UTEBluetoothRYApi)
   private var discoveredUteDevices: [String: UTEModelDevice] = [:]
   private var connectedModel: UTEModelDevice?
+  private var pendingConnectAddress: String?
+  private var connectingUteModel: UTEModelDevice?
+
   private var mgr: UTEBluetoothMgr { UTEBluetoothMgr.sharedInstance() }
   private var device: UTEDeviceMgr { mgr.mgrDevice }
   private func sdkOk(_ code: Int) -> Bool { code == 100000 }
-  #endif
 
   private var isConnected = false
   private var currentDeviceName = ""
   private var pollTimer: Timer?
-  private var batteryCharacteristic: CBCharacteristic?
-  private var alertCharacteristic: CBCharacteristic?
-  private var writeCharacteristic: CBCharacteristic?
 
   // BLE-05: Telemetry coalescing (1 Hz max) and non-draining polling controls
   private var lastPushTime: TimeInterval = 0
@@ -65,35 +61,20 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
   private var lastConnectedAddress: String?
   private var pendingConnectResult: FlutterResult?
+  private var pendingPermissionResult: FlutterResult?
   private var connectTimeoutWorkItem: DispatchWorkItem?
   private var isManualDisconnect = false
-  #if canImport(UTEBluetoothRYApi)
-  private var connectingUteModel: UTEModelDevice?
-  #endif
-  private var connectingPeripheral: CBPeripheral?
 
   private func resolvePendingConnect(success: Bool, errorMessage: String? = nil) {
     connectTimeoutWorkItem?.cancel()
     connectTimeoutWorkItem = nil
-    #if canImport(UTEBluetoothRYApi)
     let targetModel = connectingUteModel
     connectingUteModel = nil
-    #endif
-    let targetPeriph = connectingPeripheral
-    connectingPeripheral = nil
 
     if !success {
       pendingConnectAddress = nil
-      #if canImport(UTEBluetoothRYApi)
       if let model = targetModel {
         _ = mgr.disconnectDevices(model)
-      }
-      #endif
-      if let p = targetPeriph, !isConnected {
-        centralManager?.cancelPeripheralConnection(p)
-      }
-      if centralManager?.isScanning == true && !isScanning {
-        centralManager?.stopScan()
       }
     }
     if let result = pendingConnectResult {
@@ -112,24 +93,14 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         delegate: self,
         queue: .main,
         options: [
-          CBCentralManagerOptionRestoreIdentifierKey: "sport.kalkan.central_restore_id",
           CBCentralManagerOptionShowPowerAlertKey: true
         ]
       )
     }
-    #if canImport(UTEBluetoothRYApi)
     mgr.initUTEMgr()
     mgr.delegate = self
     mgr.isScanRepeat = true
     lastConnectedAddress = UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
-    #endif
-
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleAppForeground),
-      name: UIApplication.didBecomeActiveNotification,
-      object: nil
-    )
   }
 
   private func isKalkanDevice(_ name: String) -> Bool {
@@ -145,8 +116,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   @objc func handleAppForeground() {
-    #if canImport(UTEBluetoothRYApi)
-    // 1. If UTE SDK already maintains an active connection:
+    // If UTE SDK already maintains an active connection, refresh data & streams
     if mgr.connectStatus.rawValue == 0, let model = mgr.connnectModel {
       isConnected = true
       connectedModel = model
@@ -156,46 +126,14 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       pushTelemetry()
       return
     }
-
-    // 2. ONLY auto-reconnect to the specifically saved watch identifier:
-    let savedAddress = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
-    if let addr = savedAddress, !addr.isEmpty && !isConnected {
-      let knownServices = ["6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "EFF5", "6540", "FEE7", "180D", "180F", "180A", "FEF5", "FEE0", "FFE0", "FFE5"]
-      if let connectedDevs = mgr.retrieveConnectedDevice(withServers: knownServices) {
-        for dev in connectedDevs {
-          if deviceAddress(dev) == addr || dev.identifier == addr {
-            discoveredUteDevices[addr] = dev
-            mgr.connect(dev)
-            return
-          }
-        }
-      }
-      connect(address: addr) { _ in }
-    }
-    #endif
-
-    // CoreBluetooth fallback: ONLY reconnect to saved address!
-    if let cm = centralManager, cm.state == .poweredOn && !isConnected {
-      let savedAddress = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address")
-      if let addr = savedAddress, !addr.isEmpty, let uuid = UUID(uuidString: addr) {
-        let connectedList = cm.retrievePeripherals(withIdentifiers: [uuid])
-        if let dev = connectedList.first {
-          discoveredPeripherals[dev.identifier.uuidString] = dev
-          connect(address: dev.identifier.uuidString) { _ in }
-        }
-      }
-    }
+    // Reconnection is orchestrator-driven by Dart UteBleBridge to prevent native race conditions
   }
 
   func isBluetoothEnabled() -> Bool {
     if let cm = centralManager {
-      return cm.state != .poweredOff && cm.state != .unauthorized && cm.state != .unsupported
+      return cm.state == .poweredOn
     }
-    #if canImport(UTEBluetoothRYApi)
     return mgr.isOpenBluetooth
-    #else
-    return true
-    #endif
   }
 
   func checkPermissions() -> String {
@@ -244,7 +182,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         delegate: self,
         queue: .main,
         options: [
-          CBCentralManagerOptionRestoreIdentifierKey: "sport.kalkan.central_restore_id",
           CBCentralManagerOptionShowPowerAlertKey: true
         ]
       )
@@ -253,31 +190,16 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
 
   func startScan(result: @escaping FlutterResult) {
     isScanning = true
-    discoveredPeripherals.removeAll()
-    #if canImport(UTEBluetoothRYApi)
     discoveredUteDevices.removeAll()
     mgr.delegate = self
     mgr.isScanRepeat = true
     mgr.startScanDevices()
-    #else
-    if centralManager == nil {
-      centralManager = CBCentralManager(delegate: self, queue: .main)
-    } else if centralManager?.state == .poweredOn {
-      centralManager?.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
-    }
-    #endif
-
     result(true)
   }
 
   func stopScan(result: @escaping FlutterResult) {
     isScanning = false
-    #if canImport(UTEBluetoothRYApi)
     mgr.stopScanDevices()
-    #else
-    centralManager?.stopScan()
-    #endif
-
     DispatchQueue.main.async { [weak self] in
       self?.scanSink?(["isScanComplete": true])
     }
@@ -296,13 +218,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     }
 
     if isConnected {
-      #if canImport(UTEBluetoothRYApi)
-      if let model = mgr.connnectModel, (deviceAddress(model) == address || model.identifier == address) {
-        result(true)
-        return
-      }
-      #endif
-      if let p = connectedPeripheral, p.identifier.uuidString == address {
+      if let model = mgr.connnectModel, (deviceAddress(model).caseInsensitiveCompare(address) == .orderedSame || model.identifier?.caseInsensitiveCompare(address) == .orderedSame || model.addressStr?.caseInsensitiveCompare(address) == .orderedSame) {
         result(true)
         return
       }
@@ -319,9 +235,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     connectTimeoutWorkItem = timeoutItem
     DispatchQueue.main.asyncAfter(deadline: .now() + 15.0, execute: timeoutItem)
 
-    #if canImport(UTEBluetoothRYApi)
     if mgr.connectStatus == .connected, let model = mgr.connnectModel {
-      if deviceAddress(model) == address || model.identifier == address {
+      if deviceAddress(model).caseInsensitiveCompare(address) == .orderedSame || model.identifier?.caseInsensitiveCompare(address) == .orderedSame || model.addressStr?.caseInsensitiveCompare(address) == .orderedSame {
         isConnected = true
         connectedModel = model
         currentDeviceName = model.name ?? "KALKAN СААТ-1"
@@ -336,7 +251,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     let knownServices = ["6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "EFF5", "6540", "FEE7", "180D", "180F", "180A", "FEF5"]
     if let connectedDevs = mgr.retrieveConnectedDevice(withServers: knownServices) {
       for dev in connectedDevs {
-        if deviceAddress(dev) == address || dev.identifier == address {
+        if deviceAddress(dev).caseInsensitiveCompare(address) == .orderedSame || dev.identifier?.caseInsensitiveCompare(address) == .orderedSame {
           discoveredUteDevices[address] = dev
           pendingConnectAddress = address
           connectingUteModel = dev
@@ -349,12 +264,15 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     var targetUte: UTEModelDevice? = discoveredUteDevices[address]
     if targetUte == nil {
       for dev in discoveredUteDevices.values {
-        if deviceAddress(dev) == address || (dev.identifier ?? "") == address {
+        if deviceAddress(dev).caseInsensitiveCompare(address) == .orderedSame ||
+           dev.identifier?.caseInsensitiveCompare(address) == .orderedSame ||
+           dev.addressStr?.caseInsensitiveCompare(address) == .orderedSame {
           targetUte = dev
           break
         }
       }
     }
+
     // If not in current scan cache (e.g. app restart), instantiate model with identifier
     // UTE SDK internally uses retrievePeripheralsWithIdentifiers on CBCentralManager
     if targetUte == nil && !address.isEmpty {
@@ -369,35 +287,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
         mgr.startScanDevices()
       }
     }
+
     if let model = targetUte {
       pendingConnectAddress = address
       connectingUteModel = model
       mgr.connect(model)
-      return
-    }
-    #endif
-
-    var targetPeripheral = discoveredPeripherals[address]
-    if targetPeripheral == nil, let uuid = UUID(uuidString: address) {
-      if let retrieved = centralManager?.retrievePeripherals(withIdentifiers: [uuid]).first {
-        discoveredPeripherals[address] = retrieved
-        targetPeripheral = retrieved
-      }
-    }
-
-    if let peripheral = targetPeripheral {
-      connectedPeripheral = peripheral
-      connectingPeripheral = peripheral
-      peripheral.delegate = self
-      pendingConnectAddress = address
-      centralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])
-      return
-    }
-
-    // If device not yet cached, start background scan and auto-connect upon discovery
-    if centralManager?.state == .poweredOn && !address.isEmpty {
-      pendingConnectAddress = address
-      centralManager?.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
       return
     }
 
@@ -430,25 +324,13 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       currentDeviceName = ""
     }
     pendingConnectAddress = nil
-    #if canImport(UTEBluetoothRYApi)
     if let model = connectedModel {
       _ = mgr.disconnectDevices(model)
     }
     connectedModel = nil
-    #endif
-
-    if let peripheral = connectedPeripheral {
-      centralManager?.cancelPeripheralConnection(peripheral)
-      connectedPeripheral = nil
-    }
 
     isConnected = false
     isCharging = false
-    pollTimer?.invalidate()
-    pollTimer = nil
-    batteryCharacteristic = nil
-    alertCharacteristic = nil
-    writeCharacteristic = nil
     stopTelemetryPoll()
     currentBpm = 0
     isOffWrist = false
@@ -458,33 +340,15 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   func findDevice(result: @escaping FlutterResult) {
-    #if canImport(UTEBluetoothRYApi)
     guard isConnected else {
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
       return
     }
     device.setFindWearCmd(1) { _, _ in }
     result(true)
-    #else
-    guard isConnected, let peripheral = connectedPeripheral else {
-      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
-      return
-    }
-    if let alertChar = alertCharacteristic {
-      peripheral.writeValue(Data([0x02]), for: alertChar, type: .withoutResponse)
-    }
-    if let writeChar = writeCharacteristic {
-      let findPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x70, 0x01])
-      let writeType: CBCharacteristicWriteType = writeChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
-      peripheral.writeValue(findPacket, for: writeChar, type: writeType)
-      peripheral.writeValue(Data([0x01]), for: writeChar, type: writeType)
-    }
-    result(true)
-    #endif
   }
 
   func measureHeartRate(result: @escaping FlutterResult) {
-    #if canImport(UTEBluetoothRYApi)
     guard isConnected else {
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
       return
@@ -493,22 +357,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     device.click(.HRM) { _ in }
     device.oneClickMeasurement { _ in }
     result(true)
-    #else
-    guard isConnected, let peripheral = connectedPeripheral else {
-      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
-      return
-    }
-    if let writeChar = writeCharacteristic {
-      let measurePacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x31, 0x01])
-      let writeType: CBCharacteristicWriteType = writeChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
-      peripheral.writeValue(measurePacket, for: writeChar, type: writeType)
-    }
-    result(true)
-    #endif
   }
 
   func syncTime(result: @escaping FlutterResult) {
-    #if canImport(UTEBluetoothRYApi)
     guard isConnected else {
       result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
       return
@@ -517,32 +368,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     let timeZone = TimeZone.current.secondsFromGMT() / 3600
     device.setTimeClock(seconds, timeZone: timeZone, minuteOffset: 0) { _, _ in }
     result(true)
-    #else
-    result(true)
-    #endif
   }
 
   // MARK: - CBCentralManagerDelegate
-
-  func centralManager(_ central: CBCentralManager, willRestoreState dict: [String : Any]) {
-    if let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] {
-      for p in peripherals {
-        let id = p.identifier.uuidString
-        discoveredPeripherals[id] = p
-        p.delegate = self
-        if p.state == .connected {
-          connectedPeripheral = p
-          isConnected = true
-          currentDeviceName = p.name ?? "СААТ-1"
-          #if canImport(UTEBluetoothRYApi)
-          bindLiveStreams()
-          pullNightAndDay()
-          #endif
-          pushTelemetry()
-        }
-      }
-    }
-  }
 
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
     if let pendingResult = pendingPermissionResult {
@@ -551,18 +379,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     }
     switch central.state {
     case .poweredOn:
-      #if canImport(UTEBluetoothRYApi)
-      mgr.initUTEMgr()
-      mgr.delegate = self
-      mgr.isScanRepeat = true
-      let target = lastConnectedAddress ?? UserDefaults.standard.string(forKey: "kalkan_last_connected_address") ?? pendingConnectAddress
-      if let addr = target, !addr.isEmpty && !isConnected {
-        connect(address: addr) { _ in }
-      }
-      #endif
-      if isScanning {
-        central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
-      }
       pushTelemetry(immediate: true)
     case .poweredOff, .unsupported, .unauthorized, .resetting:
       resolvePendingConnect(success: false, errorMessage: "Bluetooth powered off or unauthorized")
@@ -572,222 +388,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       pushTelemetry(immediate: true)
     @unknown default:
       break
-    }
-  }
-
-  func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-    let rawName = (advertisementData[CBAdvertisementDataLocalNameKey] as? String) ?? peripheral.name ?? ""
-    let cleanName = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
-    let isKalkan = isKalkanDevice(cleanName)
-    let displayName = !cleanName.isEmpty ? cleanName : (isKalkan ? "KALKAN СААТ-1" : "BLE Устройство")
-
-    let address = peripheral.identifier.uuidString
-    if discoveredPeripherals.count >= 100 && discoveredPeripherals[address] == nil {
-      return
-    }
-    discoveredPeripherals[address] = peripheral
-
-    DispatchQueue.main.async { [weak self] in
-      self?.scanSink?([
-        "name": displayName,
-        "address": address,
-        "rssi": RSSI.intValue,
-        "isKalkan": isKalkan
-      ])
-    }
-
-    if let pending = pendingConnectAddress, address.caseInsensitiveCompare(pending) == .orderedSame {
-      pendingConnectAddress = nil
-      centralManager?.stopScan()
-      connectedPeripheral = peripheral
-      peripheral.delegate = self
-      centralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])
-    }
-  }
-
-  func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-    // Await characteristic discovery before marking isConnected = true
-    currentDeviceName = peripheral.name ?? "СААТ-1"
-    peripheral.discoverServices(nil)
-  }
-
-  func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-    isConnected = false
-    resolvePendingConnect(success: false, errorMessage: error?.localizedDescription ?? "CoreBluetooth failed to connect")
-    pushTelemetry(immediate: true)
-  }
-
-  func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-    resolvePendingConnect(success: false, errorMessage: error?.localizedDescription ?? "CoreBluetooth disconnected")
-    isConnected = false
-    connectedPeripheral = nil
-    batteryCharacteristic = nil
-    alertCharacteristic = nil
-    writeCharacteristic = nil
-    isCharging = false
-    pollTimer?.invalidate()
-    pollTimer = nil
-    currentBpm = 0
-    isOffWrist = false
-    skinTempDeviation = 0.0
-    // BLE-04: Preserve accumulated metrics: steps, calories, battery, hrv, rhr, sleep, hypnogram, deviceName
-    pushTelemetry(immediate: true)
-  }
-
-  // MARK: - CBPeripheralDelegate
-
-  func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-    guard let services = peripheral.services else { return }
-    for s in services {
-      peripheral.discoverCharacteristics(nil, for: s)
-    }
-  }
-
-  func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-    guard let chars = service.characteristics else { return }
-    for c in chars {
-      let uuid = c.uuid.uuidString.uppercased()
-
-      // Heart Rate Measurement: 0x2A37
-      if uuid == "2A37" {
-        peripheral.setNotifyValue(true, for: c)
-      }
-      // Battery Level: 0x2A19
-      else if uuid == "2A19" {
-        self.batteryCharacteristic = c
-        peripheral.readValue(for: c)
-        peripheral.setNotifyValue(true, for: c)
-      }
-      // Immediate Alert: 0x2A06
-      else if uuid == "2A06" {
-        self.alertCharacteristic = c
-      }
-
-      // JieLi / UTE Vendor Write: 0xAE01 or any writable characteristic
-      if c.properties.contains(.write) || c.properties.contains(.writeWithoutResponse) {
-        if self.writeCharacteristic == nil || uuid == "AE01" {
-          self.writeCharacteristic = c
-        }
-      }
-
-      // JieLi / UTE Vendor Notify: 0xAE02 or any notify
-      if uuid == "AE02" || c.properties.contains(.notify) || c.properties.contains(.indicate) {
-        peripheral.setNotifyValue(true, for: c)
-      }
-
-      // Read readable characteristics (except standard stream)
-      if c.properties.contains(.read) && uuid != "2A37" {
-        peripheral.readValue(for: c)
-      }
-    }
-
-    if !isConnected {
-      isConnected = true
-      let addr = peripheral.identifier.uuidString
-      lastConnectedAddress = addr
-      UserDefaults.standard.set(addr, forKey: "kalkan_last_connected_address")
-      resolvePendingConnect(success: true)
-      pushTelemetry(immediate: true)
-    }
-
-    #if !canImport(UTEBluetoothRYApi)
-    // BLE-05: Handshake only for raw CoreBluetooth fallback (no dual-stack collision with UTE SDK)
-    if let wChar = self.writeCharacteristic {
-      let writeType: CBCharacteristicWriteType = wChar.properties.contains(.writeWithoutResponse) ? .withoutResponse : .withResponse
-      let now = Date()
-      let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: now)
-      let y = comps.year ?? 2026
-      let m = comps.month ?? 1
-      let d = comps.day ?? 1
-      let h = comps.hour ?? 12
-      let min = comps.minute ?? 0
-      let s = comps.second ?? 0
-      let timePacket = Data([0xAB, 0x00, 0x08, 0xFF, 0x01, UInt8((y >> 8) & 0xFF), UInt8(y & 0xFF), UInt8(m), UInt8(d), UInt8(h), UInt8(min), UInt8(s)])
-      peripheral.writeValue(timePacket, for: wChar, type: writeType)
-
-      let batPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x70, 0x01])
-      peripheral.writeValue(batPacket, for: wChar, type: writeType)
-
-      let hrPacket = Data([0xAB, 0x00, 0x04, 0xFF, 0x31, 0x01])
-      peripheral.writeValue(hrPacket, for: wChar, type: writeType)
-    }
-
-    // BLE-05: Gentle 30s battery check for fallback (no duplicate 5s raw timer)
-    if pollTimer == nil && isConnected {
-      pollTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self, weak peripheral] _ in
-        guard let self = self, let p = peripheral, self.isConnected else { return }
-        if let bChar = self.batteryCharacteristic {
-          p.readValue(for: bChar)
-        }
-      }
-    }
-    #endif
-  }
-
-  func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-    guard let data = characteristic.value, !data.isEmpty else { return }
-    let uuid = characteristic.uuid.uuidString.uppercased()
-
-    if uuid == "2A37" {
-      let flags = data[0]
-      let is16Bit = (flags & 0x01) != 0
-      let bpm: Int
-      if is16Bit && data.count >= 3 {
-        bpm = Int(data[1]) | (Int(data[2]) << 8)
-      } else if data.count >= 2 {
-        bpm = Int(data[1])
-      } else {
-        bpm = 0
-      }
-      if bpm > 0 {
-        currentBpm = bpm
-        pushTelemetry()
-      }
-    } else if uuid == "2A19" || characteristic == batteryCharacteristic {
-      let bat = Int(data[0])
-      if bat >= 0 && bat <= 100 {
-        currentBattery = bat
-      }
-      if data.count >= 2 {
-        isCharging = (data[1] == 1)
-      }
-      pushTelemetry()
-    } else {
-      // Vendor frame parsing (e.g. JieLi / UTE packet starting with 0xAB)
-      if data[0] == 0xAB && data.count >= 5 {
-        let cmd = data[4]
-        // Battery report (0x70 or 0x08)
-        if cmd == 0x70 || cmd == 0x08 {
-          if data.count >= 6 {
-            let bat = Int(data[5])
-            if bat >= 0 && bat <= 100 {
-              currentBattery = bat
-            }
-          }
-          if data.count >= 7 {
-            isCharging = (data[6] == 1)
-          }
-          pushTelemetry()
-        }
-        // Heart rate report (0x31 or 0x09)
-        else if cmd == 0x31 || cmd == 0x09 {
-          if data.count >= 6 {
-            let hr = Int(data[5])
-            if hr >= 30 && hr <= 240 {
-              currentBpm = hr
-              pushTelemetry()
-            }
-          }
-        }
-        // Steps report (0x07 or 0x51 or 0x52)
-        else if (cmd == 0x07 || cmd == 0x51 || cmd == 0x52) && data.count >= 8 {
-          let steps = (Int(data[5]) << 16) | (Int(data[6]) << 8) | Int(data[7])
-          if steps > 0 && steps < 200000 {
-            currentSteps = steps
-            pushTelemetry()
-          }
-        }
-      }
     }
   }
 
@@ -844,12 +444,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
   }
 
   func performBackgroundSync(completion: @escaping (Bool) -> Void) {
-    #if canImport(UTEBluetoothRYApi)
     guard isConnected else {
-      let knownServices = ["6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "EFF5", "6540", "FEE7", "180D", "180F", "180A", "FEF5"]
-      if let connectedDevs = mgr.retrieveConnectedDevice(withServers: knownServices), let first = connectedDevs.first {
-        mgr.connect(first)
-      }
       completion(true)
       return
     }
@@ -859,9 +454,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       self?.pushTelemetry()
       completion(true)
     }
-    #else
-    completion(true)
-    #endif
   }
 
   func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
@@ -879,15 +471,18 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     scanSink = sink
   }
 
-  #if canImport(UTEBluetoothRYApi)
-  // MARK: - UTE SDK Integration
+  // MARK: - UTE SDK Device Identifier Resolution
+
+  /// Returns the persistent peripheral identifier (UUID) as the primary key on iOS.
+  /// Falls back to addressStr (MAC) if present. Never generates a random UUID!
   private func deviceAddress(_ model: UTEModelDevice) -> String {
-    if let s = model.addressStr, !s.isEmpty { return s }
     if let s = model.identifier, !s.isEmpty { return s }
-    return UUID().uuidString
+    if let s = model.addressStr, !s.isEmpty { return s }
+    return ""
   }
 
   // MARK: - Scientific Sleep Processing & Primary Session Isolation
+
   private struct ParsedSleepSession {
     var epochs: [[String: Any]] = []
     var startSec: Int = 0
@@ -1245,10 +840,6 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     return bestSession
   }
 
-  private func sleepMinutes(from dict: [AnyHashable: Any]?) -> Int? {
-    return extractSleepSession(from: dict)?.sleep
-  }
-
   private func bindLiveStreams() {
     device.setContinueMeasureHeartRateSwitch(true) { _, _ in }
     device.setAutoHeartRate(true) { _, _ in }
@@ -1331,14 +922,14 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     // Live body temperature notification
     device.onNotifyBodyTemperatureValueBlock { [weak self] time, state, value in
       guard let self = self, value > 0 else { return }
-      // Spot skin temperature in Celsius: do not subtract synthetic 36.6 constant
       self.pushTelemetry()
     }
 
     // Wearing state (off wrist)
+    // UTE SDK: state 0 = off wrist (снято), 1 = on wrist (надето)
     device.onNotifyOffWristBlock { [weak self] _, _, state in
       guard let self = self else { return }
-      self.isOffWrist = (state == 1)
+      self.isOffWrist = (state == 0)
       self.pushTelemetry()
     }
 
@@ -1353,16 +944,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
       AudioServicesPlaySystemSound(1108)
     }
   }
-  #else
-  private func stopTelemetryPoll() {
-    pollTimer?.invalidate()
-    pollTimer = nil
-  }
-  #endif
-}
 
-#if canImport(UTEBluetoothRYApi)
-extension KalkanBleManager: UTEBluetoothDelegate {
+  // MARK: - UTEBluetoothDelegate
+
   func uteDiscoverDevices(_ model: UTEModelDevice?) {
     guard let model = model else { return }
     let rawName = model.name ?? ""
@@ -1370,13 +954,17 @@ extension KalkanBleManager: UTEBluetoothDelegate {
     let isKalkan = isKalkanDevice(cleanName)
     let displayName = !cleanName.isEmpty ? cleanName : (isKalkan ? "KALKAN СААТ-1" : "BLE Устройство")
     let addr = deviceAddress(model)
+    if addr.isEmpty { return }
 
     if discoveredUteDevices.count >= 100 && discoveredUteDevices[addr] == nil {
       return
     }
     discoveredUteDevices[addr] = model
-    if let id = model.identifier {
+    if let id = model.identifier, !id.isEmpty {
       discoveredUteDevices[id] = model
+    }
+    if let mac = model.addressStr, !mac.isEmpty {
+      discoveredUteDevices[mac] = model
     }
     DispatchQueue.main.async { [weak self] in
       self?.scanSink?([
@@ -1387,10 +975,11 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       ])
     }
 
-    // Auto-connect ONLY if this was a pending auto-reconnect target matching the exact address/identifier
+    // Auto-connect ONLY if this was an explicit pending connect target matching the exact address/identifier
     if let pending = pendingConnectAddress, !pending.isEmpty && !isConnected {
       let isMatch = addr.caseInsensitiveCompare(pending) == .orderedSame ||
-                    model.identifier?.caseInsensitiveCompare(pending) == .orderedSame
+                    model.identifier?.caseInsensitiveCompare(pending) == .orderedSame ||
+                    model.addressStr?.caseInsensitiveCompare(pending) == .orderedSame
       if isMatch {
         pendingConnectAddress = nil
         mgr.stopScanDevices()
@@ -1440,6 +1029,7 @@ extension KalkanBleManager: UTEBluetoothDelegate {
       isOffWrist = false
       skinTempDeviation = 0.0
       pendingConnectAddress = nil
+      // BLE-04: Preserve accumulated metrics: steps, calories, battery, hrv, rhr, sleep, hypnogram, deviceName
       pushTelemetry(immediate: true)
 
     default:
@@ -1448,7 +1038,6 @@ extension KalkanBleManager: UTEBluetoothDelegate {
     }
   }
 }
-#endif
 
 class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
   func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
@@ -1508,7 +1097,7 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
 
   override func applicationWillEnterForeground(_ application: UIApplication) {
     super.applicationWillEnterForeground(application)
-    KalkanBleManager.shared.handleAppForeground()
+    // Avoid double trigger with applicationDidBecomeActive
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {

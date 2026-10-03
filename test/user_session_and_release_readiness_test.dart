@@ -470,5 +470,41 @@ void main() {
       expect(analysis.sleepPerformanceScore, lessThanOrEqualTo(100));
       expect(analysis.hypnogram.length, 7);
     });
+
+    test('14. BLE Off-Wrist Detection & Device Identifier Integrity', () {
+      // 1. Off-wrist state representation:
+      // SDK onNotifyOffWristBlock: state 0 = off-wrist (снято), state 1 = on-wrist (надето)
+      // When state is 0: isOffWrist must be true
+      final offWristTelemetry = BleTelemetry.empty().copyWith(
+        isOffWrist: true,
+        isConnected: true,
+      );
+      expect(offWristTelemetry.isOffWrist, isTrue);
+
+      // When state is 1: isOffWrist must be false
+      final onWristTelemetry = BleTelemetry.empty().copyWith(
+        isOffWrist: false,
+        isConnected: true,
+      );
+      expect(onWristTelemetry.isOffWrist, isFalse);
+
+      // 2. Strict Kalkan name filtering:
+      // Rejects non-Kalkan/non-UTE devices like TVs, PCs, generic fitness trackers
+      expect(UteBleBridge.matchesKalkanFilter('KALKAN СААТ-1'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('Kalkan Band Pro'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('Nadal Sport'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('UTE-Watch-99'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('ute_device_12'), isTrue);
+      expect(UteBleBridge.matchesKalkanFilter('Smart Saat'), isTrue);
+
+      // Must reject generic devices
+      expect(UteBleBridge.matchesKalkanFilter('Samsung Smart TV'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter('MacBook Pro'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter('Apple Watch Series 9'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter('Sony WH-1000XM5'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter('Unknown'), isFalse);
+      expect(UteBleBridge.matchesKalkanFilter(''), isFalse);
+    });
   });
 }
+
