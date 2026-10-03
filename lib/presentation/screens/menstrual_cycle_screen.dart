@@ -11,6 +11,7 @@ import '../../data/storage/partner_cycle_repository.dart';
 import '../../data/storage/user_profile_repository.dart';
 import '../../data/services/cloud_sync_service.dart';
 import '../../domain/intelligence/menstrual_cycle_engine.dart';
+import '../../domain/models/partner_cycle_data.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/kalkan_ui.dart';
@@ -696,6 +697,7 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
 
   Future<void> _openPartnerSheet() async {
     final code = await CloudSyncService.publishCycleInvite();
+    List<CycleViewer> viewers = await CloudSyncService.pullCycleViewers();
     if (mounted) {
       setState(() => _partnerInviteCode = code);
     }
@@ -703,74 +705,160 @@ class _MenstrualCycleScreenState extends State<MenstrualCycleScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 16, KalkanUi.pagePadding, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_tr('Пригласить партнёра', 'Өнөктөштү чакыруу', 'Invite Partner'), style: AppTypography.screenTitle(AppColors.fg)),
-            const SizedBox(height: 8),
-            Text(
-              _tr(
-                'Передайте этот код партнёру. В его приложении ваши имя и фаза определятся автоматически.',
-                'Бул кодду өнөктөшүңүзгө бериңиз. Анын колдонмосунда атыңыз жана фазаңыз автоматтык түрдө чыгат.',
-                'Share this code with your partner. Your name and phase will be detected automatically.',
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (modalCtx, setModalState) => Padding(
+          padding: EdgeInsets.fromLTRB(
+            KalkanUi.pagePadding,
+            16,
+            KalkanUi.pagePadding,
+            MediaQuery.of(modalCtx).viewInsets.bottom + 32,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_tr('Пригласить партнёра', 'Өнөктөштү чакыруу', 'Invite Partner'), style: AppTypography.screenTitle(AppColors.fg)),
+              const SizedBox(height: 8),
+              Text(
+                _tr(
+                  'Передайте этот код партнёру. В его приложении ваши имя и фаза определятся автоматически. Срок действия кода: 7 дней.',
+                  'Бул кодду өнөктөшүңүзгө бериңиз. Фазаңыз автоматтык түрдө чыгат. Коддун мөөнөтү: 7 күн.',
+                  'Share this code with your partner. Your phase will be detected automatically. Code validity: 7 days.',
+                ),
+                style: AppTypography.bodyMuted(AppColors.secondary),
               ),
-              style: AppTypography.bodyMuted(AppColors.secondary),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.raised,
-                borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                border: Border.all(color: AppColors.hairline, width: KalkanUi.hairline),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.raised,
+                  borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                  border: Border.all(color: AppColors.hairline, width: KalkanUi.hairline),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _partnerInviteCode,
+                        style: AppTypography.metric(AppColors.fg).copyWith(letterSpacing: 1.2),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.copy, size: 18, color: AppColors.sage),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: _partnerInviteCode));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_tr('Код скопирован: $_partnerInviteCode', 'Код көчүрүлдү: $_partnerInviteCode', 'Code copied: $_partnerInviteCode')),
+                            backgroundColor: AppColors.surface,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
+              const SizedBox(height: 12),
+              Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      _partnerInviteCode,
-                      style: AppTypography.metric(AppColors.fg).copyWith(letterSpacing: 1.2),
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final newCode = await CloudSyncService.rotateCycleInvite();
+                        setModalState(() => _partnerInviteCode = newCode);
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_tr('Сгенерирован новый код (7 дней). Старый аннулирован.', 'Жаңы код түзүлдү (7 күн). Эскиси өчүрүлдү.', 'New code generated (7 days). Old code revoked.')),
+                            backgroundColor: AppColors.surface,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: Text(_tr('Сменить код', 'Кодду алмаштыруу', 'Rotate code')),
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.copy, size: 18, color: AppColors.sage),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: _partnerInviteCode));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(_tr('Код скопирован: $_partnerInviteCode', 'Код көчүрүлдү: $_partnerInviteCode', 'Code copied: $_partnerInviteCode')),
-                          backgroundColor: AppColors.surface,
-                        ),
-                      );
-                    },
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: _partnerInviteCode));
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_tr('Код скопирован: $_partnerInviteCode', 'Код көчүрүлдү: $_partnerInviteCode', 'Code copied: $_partnerInviteCode')),
+                            backgroundColor: AppColors.surface,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy, size: 16),
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.sage, foregroundColor: Colors.white, elevation: 0),
+                      label: Text(_tr('Скопировать', 'Көчүрүү', 'Copy Code')),
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: _partnerInviteCode));
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(_tr('Код скопирован: $_partnerInviteCode', 'Код көчүрүлдү: $_partnerInviteCode', 'Code copied: $_partnerInviteCode')),
-                        backgroundColor: AppColors.surface,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.copy, size: 16),
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.sage, foregroundColor: Colors.white, elevation: 0),
-                  label: Text(_tr('Скопировать код', 'Кодду көчүрүү', 'Copy Code')),
-                ),
+              const SizedBox(height: 20),
+              const Divider(color: AppColors.hairline),
+              const SizedBox(height: 8),
+              Text(
+                _tr('Кто имеет доступ к циклу', 'Циклди ким көрөт', 'Who sees my cycle'),
+                style: AppTypography.bodySemibold(AppColors.fg),
               ),
-            ]),
-          ],
+              const SizedBox(height: 6),
+              if (viewers.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    _tr('Пока никто не подключен к вашему циклу.', 'Азырынча эч ким кошула элек.', 'No viewers linked to your cycle yet.'),
+                    style: AppTypography.caption(AppColors.secondary),
+                  ),
+                )
+              else
+                ...viewers.map((v) => Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.raised,
+                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                    border: Border.all(color: AppColors.hairline, width: KalkanUi.hairline),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person_outline, size: 18, color: AppColors.sage),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          v.name,
+                          style: AppTypography.bodySemibold(AppColors.fg),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final ok = await CloudSyncService.revokeCycleViewer(v.uid);
+                          if (ok) {
+                            final updated = await CloudSyncService.pullCycleViewers();
+                            setModalState(() => viewers = updated);
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(_tr('Доступ отозван', 'Кирүү өчүрүлдү', 'Access revoked')),
+                                backgroundColor: AppColors.surface,
+                              ),
+                            );
+                          }
+                        },
+                        child: Text(
+                          _tr('Отозвать', 'Өчүрүү', 'Revoke'),
+                          style: const TextStyle(color: AppColors.rose, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+            ],
+          ),
         ),
       ),
     );

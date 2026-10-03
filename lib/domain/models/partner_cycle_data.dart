@@ -174,3 +174,45 @@ class PartnerCycleData {
     }
   }
 }
+
+/// Информация о партнёре, имеющем доступ к просмотру цикла (SEC-02)
+class CycleViewer {
+  final String uid;
+  final String name;
+  final DateTime? linkedAt;
+  final String? code;
+
+  const CycleViewer({
+    required this.uid,
+    required this.name,
+    this.linkedAt,
+    this.code,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'uid': uid,
+    'name': name,
+    if (linkedAt != null) 'linkedAt': linkedAt!.toIso8601String(),
+    if (code != null) 'code': code,
+  };
+
+  factory CycleViewer.fromMap(String uid, Map<String, dynamic> data) {
+    DateTime? dt;
+    final rawDate = data['linkedAt'];
+    if (rawDate != null) {
+      if (rawDate is DateTime) {
+        dt = rawDate;
+      } else if (rawDate.runtimeType.toString().contains('Timestamp')) {
+        dt = (rawDate as dynamic).toDate();
+      } else if (rawDate is String) {
+        dt = DateTime.tryParse(rawDate);
+      }
+    }
+    return CycleViewer(
+      uid: uid,
+      name: (data['partnerName'] ?? data['name'] ?? 'Партнёр') as String,
+      linkedAt: dt,
+      code: data['code'] as String?,
+    );
+  }
+}

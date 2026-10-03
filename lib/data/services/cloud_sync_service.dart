@@ -182,6 +182,7 @@ class CloudSyncService {
   }
 
   static const String _keyCycleInviteCode = 'kalkan_cycle_partner_invite_code_v1';
+  static const String _keyCycleInviteExpiresAt = 'kalkan_cycle_partner_invite_expires_at_v1';
 
   static Future<String> publishFriendInvite() async {
     final db = _db;
@@ -239,23 +240,30 @@ class CloudSyncService {
     }
   }
 
-  static Future<String> publishCycleInvite() async {
+  static Future<String> publishCycleInvite({bool forceRotate = false}) async {
     final db = _db;
     final id = uid;
     final prefs = await SharedPreferences.getInstance();
     var code = prefs.getString(_keyCycleInviteCode);
-    if (code == null || code.length < 12 || !code.startsWith('KLK-')) {
+    final expiresAtMillis = prefs.getInt(_keyCycleInviteExpiresAt) ?? 0;
+    final isExpired = expiresAtMillis > 0 && DateTime.now().millisecondsSinceEpoch > expiresAtMillis;
+
+    if (forceRotate || code == null || code.length < 12 || !code.startsWith('KLK-CYC-') || isExpired) {
       code = SecureInviteGenerator.generateCycleCode();
+      final exp = DateTime.now().add(const Duration(days: 7));
       await prefs.setString(_keyCycleInviteCode, code);
+      await prefs.setInt(_keyCycleInviteExpiresAt, exp.millisecondsSinceEpoch);
     }
     if (db == null || id == null) return code;
     try {
       final profile = UserProfileRepository.profileNotifier.value;
+      final expMillis = prefs.getInt(_keyCycleInviteExpiresAt) ?? (DateTime.now().add(const Duration(days: 7)).millisecondsSinceEpoch);
       await db.collection('invites').doc(code).set({
         'ownerUid': id,
         'type': 'cycle',
         'name': profile.name.isNotEmpty ? profile.name : 'Партнёр',
         'createdAt': FieldValue.serverTimestamp(),
+        'expiresAt': Timestamp.fromMillisecondsSinceEpoch(expMillis),
       }).timeout(const Duration(seconds: 4));
     } catch (e) {
       debugPrint('CloudSync.publishCycleInvite: $e');
@@ -314,6 +322,12 @@ class CloudSyncService {
         return false; // Prevent using non-cycle invite codes
       }
 
+      final exp = invData?['expiresAt'];
+      if (exp is Timestamp && exp.toDate().isBefore(DateTime.now())) {
+        debugPrint('CloudSync.linkPartner: invite code $raw has expired');
+        return false; // Invite code expired
+      }
+
       final owner = invData?['ownerUid'] as String?;
       if (owner == null || owner.isEmpty || owner == id) {
         debugPrint('CloudSync.linkPartner: invalid partner owner ($owner)');
@@ -335,6 +349,19 @@ class CloudSyncService {
         'linkedAt': FieldValue.serverTimestamp(),
       }).timeout(const Duration(seconds: 6));
 
+      // Also register as an authorized viewer in cycle owner's subcollection (SEC-02)
+      final me = UserProfileRepository.profileNotifier.value;
+      try {
+        await db.collection('cycle').doc(owner).collection('viewers').doc(id).set({
+          'partnerUid': id,
+          'partnerName': me.name.isNotEmpty ? me.name : 'Партнёр',
+          'code': raw,
+          'linkedAt': FieldValue.serverTimestamp(),
+        }).timeout(const Duration(seconds: 6));
+      } catch (e) {
+        debugPrint('CloudSync.linkPartner viewer registration error: $e');
+      }
+
       // Successfully written to cloud -> link locally and trigger initial pull
       await PartnerCycleRepository.linkPartner(partnerCode: raw, partnerName: resolvedName);
       await pullPartnerCycle();
@@ -343,6 +370,39 @@ class CloudSyncService {
       debugPrint('CloudSync.linkPartner error: $e');
       return false;
     }
+  }
+
+  /// Получение списка партнёров, имеющих доступ к просмотру цикла (SEC-02)
+  static Future<List<CycleViewer>> pullCycleViewers() async {
+    final db = _db;
+    final id = uid;
+    if (db == null || id == null) return [];
+    try {
+      final snap = await db.collection('cycle').doc(id).collection('viewers').get().timeout(const Duration(seconds: 4));
+      return snap.docs.map((d) => CycleViewer.fromMap(d.id, d.data())).toList();
+    } catch (e) {
+      debugPrint('CloudSync.pullCycleViewers: $e');
+      return [];
+    }
+  }
+
+  /// Отзыв доступа партнёра к просмотру цикла (SEC-02)
+  static Future<bool> revokeCycleViewer(String viewerUid) async {
+    final db = _db;
+    final id = uid;
+    if (db == null || id == null) return false;
+    try {
+      await db.collection('cycle').doc(id).collection('viewers').doc(viewerUid).delete().timeout(const Duration(seconds: 4));
+      return true;
+    } catch (e) {
+      debugPrint('CloudSync.revokeCycleViewer: $e');
+      return false;
+    }
+  }
+
+  /// Ротация инвайт-кода цикла с автоматическим аннулированием старого (SEC-02)
+  static Future<String> rotateCycleInvite() async {
+    return publishCycleInvite(forceRotate: true);
   }
 
   static Future<void> pullPartnerCycle() async {

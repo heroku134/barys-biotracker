@@ -25,11 +25,11 @@ class SecureInviteGenerator {
     return 'KLK-CYC-${_randomSegment(4)}-${_randomSegment(4)}';
   }
 
-  /// Проверка базовой структуры кода (поддерживает и новые KLK-*, и legacy KALKAN-*)
+  /// Проверка базовой структуры кода (строго требует современный формат KLK- с высокой энтропией)
   static bool isValidCode(String? code) {
     if (code == null) return false;
     final trimmed = code.trim().toUpperCase();
-    if (trimmed.length < 8) return false;
-    return trimmed.startsWith('KLK-') || trimmed.startsWith('KALKAN-');
+    if (trimmed.length < 12) return false;
+    return trimmed.startsWith('KLK-');
   }
 }

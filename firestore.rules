@@ -48,6 +48,14 @@ service cloud.firestore {
     //   - note: string (optional, max 2000 chars) - Private cycle note
     //   - updatedAt: timestamp (optional) - Last sync timestamp
     //
+    // Subcollection: /cycle/{userId}/viewers/{viewerUid}
+    // Document ID: Firebase Auth UID of authorized viewer
+    // Fields:
+    //   - partnerUid: string (required, 1..128 chars, matches viewerUid)
+    //   - code: string (required, 1..64 chars) - Secret invite code used for link
+    //   - partnerName: string (optional, max 100 chars) - Viewer display name
+    //   - linkedAt: timestamp (optional) - Link establishment timestamp
+    //
     // Subcollection: /days/{userId}/snapshots/{dateKey}
     // Document ID: ISO Date string (YYYY-MM-DD)
     // Fields:
@@ -77,6 +85,7 @@ service cloud.firestore {
     //   - type: string (required, 'friend' or 'cycle') - Invite purpose
     //   - name: string (optional, max 100 chars) - Owner display name
     //   - createdAt: timestamp (optional) - Creation timestamp
+    //   - expiresAt: timestamp (optional) - Invite expiration timestamp
     //
     // Collection: /partners/{userId}
     // Document ID: Firebase Auth UID of the linked partner
@@ -202,14 +211,15 @@ service cloud.firestore {
 
     // --- 5. Invite Code Validator ---
     function isValidInvite(data) {
-      return data.keys().hasOnly(['ownerUid', 'type', 'name', 'createdAt']) &&
+      return data.keys().hasOnly(['ownerUid', 'type', 'name', 'createdAt', 'expiresAt']) &&
         data.keys().hasAll(['ownerUid', 'type']) &&
         data.ownerUid is string &&
         data.ownerUid.size() > 0 &&
         data.ownerUid.size() <= 128 &&
         (data.type == 'friend' || data.type == 'cycle') &&
         isValidOptionalString(data, 'name', 0, 100) &&
-        isValidOptionalTimestamp(data, 'createdAt');
+        isValidOptionalTimestamp(data, 'createdAt') &&
+        isValidOptionalTimestamp(data, 'expiresAt');
     }
 
     // --- 6. Partner Record Validator ---
@@ -223,6 +233,20 @@ service cloud.firestore {
         data.code.size() > 0 &&
         data.code.size() <= 64 &&
         isValidOptionalTimestamp(data, 'linkedAt');
+    }
+
+    // --- 7. Cycle Viewer Record Validator ---
+    function isValidCycleViewerRecord(data, userId) {
+      return data.keys().hasOnly(['partnerUid', 'partnerName', 'linkedAt', 'code']) &&
+        data.keys().hasAll(['partnerUid', 'code']) &&
+        data.partnerUid == request.auth.uid &&
+        data.code is string &&
+        data.code.size() > 0 &&
+        data.code.size() <= 64 &&
+        isValidOptionalString(data, 'partnerName', 0, 100) &&
+        isValidOptionalTimestamp(data, 'linkedAt') &&
+        exists(/databases/$(database)/documents/invites/$(data.code)) &&
+        isCycleInviteActive(userId, get(/databases/$(database)/documents/invites/$(data.code)).data);
     }
 
     // --- Partner Cycle Authorization Chain ---
@@ -242,14 +266,19 @@ service cloud.firestore {
         partnerData.code is string &&
         partnerData.code.size() > 0 &&
         exists(/databases/$(database)/documents/invites/$(partnerData.code)) &&
-        isCycleInviteValid(userId, get(/databases/$(database)/documents/invites/$(partnerData.code)).data);
+        isCycleInviteActive(userId, get(/databases/$(database)/documents/invites/$(partnerData.code)).data);
     }
 
-    function isCycleInviteValid(userId, inviteData) {
+    function isCycleInviteActive(userId, inviteData) {
       return ('type' in inviteData) &&
         inviteData.type == 'cycle' &&
         ('ownerUid' in inviteData) &&
-        inviteData.ownerUid == userId;
+        inviteData.ownerUid == userId &&
+        (!('expiresAt' in inviteData) || inviteData.expiresAt > request.time);
+    }
+
+    function isCycleInviteValid(userId, inviteData) {
+      return isCycleInviteActive(userId, inviteData);
     }
 
     // --- Friend Member Authorization Chain ---
@@ -295,9 +324,19 @@ service cloud.firestore {
       allow update: if isOwner(userId) && isValidCycleData(request.resource.data);
       allow delete: if isOwner(userId);
 
-      // Reader must be the owner OR an authorized partner who possesses
-      // a valid invite created by the cycle owner.
-      allow read: if isOwner(userId) || isAuthorizedCyclePartner(userId);
+      // Reader must be the owner OR an authorized viewer listed in cycle's viewers subcollection
+      // OR an authorized partner who possesses a valid invite created by the cycle owner.
+      allow read: if isOwner(userId) ||
+        (isAuthenticated() && exists(/databases/$(database)/documents/cycle/$(userId)/viewers/$(request.auth.uid))) ||
+        isAuthorizedCyclePartner(userId);
+
+      // Dedicated viewers subcollection for cycle data access
+      match /viewers/{viewerUid} {
+        allow read: if isOwner(userId) || (isAuthenticated() && request.auth.uid == viewerUid);
+        allow create: if isAuthenticated() && request.auth.uid == viewerUid && isValidCycleViewerRecord(request.resource.data, userId);
+        allow update: if false;
+        allow delete: if isOwner(userId) || (isAuthenticated() && request.auth.uid == viewerUid);
+      }
     }
 
     // 3. Daily Biometric Snapshots

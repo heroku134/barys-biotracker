@@ -290,7 +290,7 @@ void main() {
       expect(friendCode1.length, greaterThanOrEqualTo(16));
       expect(SecureInviteGenerator.isValidCode(friendCode1), isTrue);
       expect(SecureInviteGenerator.isValidCode(cycleCode), isTrue);
-      expect(SecureInviteGenerator.isValidCode('KALKAN-1234'), isTrue);
+      expect(SecureInviteGenerator.isValidCode('KALKAN-1234'), isFalse);
       expect(SecureInviteGenerator.isValidCode('INVALID'), isFalse);
     });
 
