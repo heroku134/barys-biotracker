@@ -121,7 +121,8 @@ class MainActivity : FlutterActivity() {
                         }
                     }
                     "disconnect" -> {
-                        KalkanBleManager.disconnect()
+                        val forget = call.argument<Boolean>("forget") ?: false
+                        KalkanBleManager.disconnect(forget)
                         result.success(true)
                     }
                     "findDevice" -> {

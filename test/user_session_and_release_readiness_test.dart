@@ -12,6 +12,7 @@ import 'package:barys_biotracker/data/storage/pregnancy_log_repository.dart';
 import 'package:barys_biotracker/data/storage/user_profile_repository.dart';
 import 'package:barys_biotracker/data/storage/workout_repository.dart';
 import 'package:barys_biotracker/domain/avatar/avatar_manager.dart';
+import 'package:barys_biotracker/domain/models/telemetry.dart';
 import 'package:barys_biotracker/domain/models/workout_session.dart';
 
 void main() {
@@ -217,6 +218,62 @@ void main() {
         isKalkanBand: false,
       );
       expect(foreignDevice.isKalkanBand, isFalse);
+    });
+
+    test('8. BLE-04: Metric retention on link loss and wipe strictly on forget', () {
+      final syncTime = DateTime(2026, 10, 3, 22, 0, 0);
+      final activeTelemetry = BleTelemetry(
+        isConnected: true,
+        heartRate: 72,
+        steps: 6420,
+        calories: 285,
+        hrv: 68.0,
+        restingHeartRate: 54,
+        sleepMinutes: 450,
+        batteryLevel: 85,
+        deviceName: 'KALKAN BAND 01',
+        isCharging: false,
+        isOffWrist: false,
+        skinTempDeviation: 0.2,
+        timestamp: syncTime,
+        lastSyncAt: syncTime,
+      );
+
+      // On link loss / disconnect, live metrics zero out, but accumulated metrics and lastSyncAt are preserved
+      final disconnectedTelemetry = activeTelemetry.copyWith(
+        isConnected: false,
+        heartRate: 0,
+        isOffWrist: false,
+        skinTempDeviation: 0.0,
+        isCharging: false,
+      );
+
+      expect(disconnectedTelemetry.isConnected, isFalse);
+      expect(disconnectedTelemetry.heartRate, 0);
+      expect(disconnectedTelemetry.isOffWrist, isFalse);
+      expect(disconnectedTelemetry.skinTempDeviation, 0.0);
+      // Accumulated metrics MUST be preserved:
+      expect(disconnectedTelemetry.steps, 6420);
+      expect(disconnectedTelemetry.calories, 285);
+      expect(disconnectedTelemetry.hrv, 68.0);
+      expect(disconnectedTelemetry.restingHeartRate, 54);
+      expect(disconnectedTelemetry.sleepMinutes, 450);
+      expect(disconnectedTelemetry.batteryLevel, 85);
+      expect(disconnectedTelemetry.deviceName, 'KALKAN BAND 01');
+      expect(disconnectedTelemetry.lastSyncAt, syncTime);
+
+      // Strictly on explicit forget/wipe, all metrics return to empty state
+      final forgottenTelemetry = BleTelemetry.empty();
+      expect(forgottenTelemetry.isConnected, isFalse);
+      expect(forgottenTelemetry.steps, 0);
+      expect(forgottenTelemetry.calories, 0);
+      expect(forgottenTelemetry.hrv, 0.0);
+      expect(forgottenTelemetry.restingHeartRate, 0);
+      expect(forgottenTelemetry.sleepMinutes, 0);
+      expect(forgottenTelemetry.sleepHypnogram, isEmpty);
+      expect(forgottenTelemetry.batteryLevel, 0);
+      expect(forgottenTelemetry.deviceName, 'СААТ-1');
+      expect(forgottenTelemetry.lastSyncAt, isNull);
     });
   });
 }

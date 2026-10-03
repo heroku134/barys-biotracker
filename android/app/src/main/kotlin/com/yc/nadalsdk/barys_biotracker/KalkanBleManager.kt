@@ -240,23 +240,12 @@ object KalkanBleManager {
                         isConnected = false
                         isCharging = false
                         currentBpm = 0
-                        currentBattery = 0
-                        currentSteps = 0
-                        currentCalories = 0
-                        currentHrv = 0.0
-                        currentRhr = 0
-                        currentSleepMinutes = 0
-                        currentDeepSleepMinutes = 0
-                        currentRemSleepMinutes = 0
-                        timeInBedMinutes = 0
-                        currentSleepEfficiency = 0.0
-                        currentHypnogram = emptyList()
-                        currentStressScore = 0
                         isOffWrist = false
                         skinTempDeviation = 0.0
-                        currentDeviceName = ""
                         stopBackgroundPolling()
-                        appContext?.let { KalkanBleService.stop(it) }
+                        // BLE-04: DO NOT stop KalkanBleService on transient disconnection!
+                        // FGS must continue running so that auto-reconnect can work in background.
+                        // DO NOT zero steps, calories, sleep, hypnogram, HRV, RHR, battery, or deviceName!
                         pushTelemetry()
 
                         connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
@@ -272,28 +261,31 @@ object KalkanBleManager {
         uteBleConnection = client.connect(address)
     }
 
-    fun disconnect() {
+    fun disconnect(forget: Boolean = false) {
         uteBleClient?.disconnect()
         isConnected = false
         isCharging = false
         currentBpm = 0
-        currentBattery = 0
-        currentSteps = 0
-        currentCalories = 0
-        currentHrv = 0.0
-        currentRhr = 0
-        currentSleepMinutes = 0
-        currentDeepSleepMinutes = 0
-        currentRemSleepMinutes = 0
-        timeInBedMinutes = 0
-        currentSleepEfficiency = 0.0
-        currentHypnogram = emptyList()
-        currentStressScore = 0
         isOffWrist = false
         skinTempDeviation = 0.0
-        currentDeviceName = ""
         stopBackgroundPolling()
-        appContext?.let { KalkanBleService.stop(it) }
+
+        if (forget) {
+            currentBattery = 0
+            currentSteps = 0
+            currentCalories = 0
+            currentHrv = 0.0
+            currentRhr = 0
+            currentSleepMinutes = 0
+            currentDeepSleepMinutes = 0
+            currentRemSleepMinutes = 0
+            timeInBedMinutes = 0
+            currentSleepEfficiency = 0.0
+            currentHypnogram = emptyList()
+            currentStressScore = 0
+            currentDeviceName = ""
+            appContext?.let { KalkanBleService.stop(it) }
+        }
         pushTelemetry()
     }
 

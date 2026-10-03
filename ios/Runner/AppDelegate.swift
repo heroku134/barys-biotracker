@@ -324,10 +324,25 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     resolvePendingConnect(success: false, errorMessage: "Device \(address) not found")
   }
 
-  func disconnect(result: @escaping FlutterResult) {
+  func disconnect(forget: Bool = false, result: @escaping FlutterResult) {
     resolvePendingConnect(success: false, errorMessage: "Disconnected by user")
-    lastConnectedAddress = nil
-    UserDefaults.standard.removeObject(forKey: "kalkan_last_connected_address")
+    if forget {
+      lastConnectedAddress = nil
+      UserDefaults.standard.removeObject(forKey: "kalkan_last_connected_address")
+      currentBattery = 0
+      currentSteps = 0
+      currentCalories = 0
+      currentHrv = 0
+      currentRhr = 0
+      currentSleepMinutes = 0
+      currentDeepSleepMinutes = 0
+      currentRemSleepMinutes = 0
+      timeInBedMinutes = 0
+      currentSleepEfficiency = 0.0
+      currentHypnogram = []
+      currentStressScore = 0
+      currentDeviceName = ""
+    }
     pendingConnectAddress = nil
     #if canImport(UTEBluetoothRYApi)
     if let model = connectedModel {
@@ -350,21 +365,8 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     writeCharacteristic = nil
     stopTelemetryPoll()
     currentBpm = 0
-    currentBattery = 0
-    currentSteps = 0
-    currentCalories = 0
-    currentHrv = 0
-    currentRhr = 0
-    currentSleepMinutes = 0
-    currentDeepSleepMinutes = 0
-    currentRemSleepMinutes = 0
-    timeInBedMinutes = 0
-    currentSleepEfficiency = 0.0
-    currentHypnogram = []
-    currentStressScore = 0
     isOffWrist = false
     skinTempDeviation = 0.0
-    currentDeviceName = ""
     pushTelemetry()
     result(true)
   }
@@ -535,13 +537,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate
     pollTimer?.invalidate()
     pollTimer = nil
     currentBpm = 0
-    currentBattery = 0
-    currentSteps = 0
-    currentCalories = 0
-    currentHrv = 0
-    currentRhr = 0
-    currentSleepMinutes = 0
-    currentDeviceName = ""
+    isOffWrist = false
+    skinTempDeviation = 0.0
+    // BLE-04: Preserve accumulated metrics: steps, calories, battery, hrv, rhr, sleep, hypnogram, deviceName
     pushTelemetry()
   }
 
@@ -1327,7 +1325,8 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
         let address = (call.arguments as? [String: Any])?["address"] as? String ?? ""
         KalkanBleManager.shared.connect(address: address, result: result)
       case "disconnect":
-        KalkanBleManager.shared.disconnect(result: result)
+        let forget = (call.arguments as? [String: Any])?["forget"] as? Bool ?? false
+        KalkanBleManager.shared.disconnect(forget: forget, result: result)
       case "findDevice":
         KalkanBleManager.shared.findDevice(result: result)
       case "measureHeartRate":

@@ -99,6 +99,7 @@ class UteBleBridge {
               isConnected: isConnected,
               deviceName: event['deviceName']?.toString() ?? (isConnected ? 'KALKAN СААТ-1' : (prev?.deviceName ?? 'СААТ-1')),
               timestamp: DateTime.now(),
+              lastSyncAt: isConnected ? DateTime.now() : (prev?.lastSyncAt ?? prev?.timestamp),
               hrv: _parseDouble(event['hrv'], prev?.hrv ?? 0.0),
               restingHeartRate: _parseInt(event['restingHeartRate'], prev?.restingHeartRate ?? 0),
               respiratoryRate: _parseDouble(event['respiratoryRate'], prev?.respiratoryRate ?? 0.0),
@@ -339,13 +340,23 @@ class UteBleBridge {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('kalkan_last_device_mac');
       }
-      await _methodChannel.invokeMethod('disconnect');
+      await _methodChannel.invokeMethod('disconnect', {'forget': forget});
     } catch (e) {
       debugPrint('UteBleBridge disconnect error: $e');
     }
     _setConnectionState(BleConnectionState.idle);
     if (_realTelemetry != null) {
-      _realTelemetry = _realTelemetry!.copyWith(isConnected: false, isCharging: false);
+      if (forget) {
+        _realTelemetry = BleTelemetry.empty();
+      } else {
+        _realTelemetry = _realTelemetry!.copyWith(
+          isConnected: false,
+          isCharging: false,
+          heartRate: 0,
+          isOffWrist: false,
+          skinTempDeviation: 0.0,
+        );
+      }
       _telemetryController.add(_realTelemetry!);
     }
   }

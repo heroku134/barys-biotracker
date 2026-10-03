@@ -38,6 +38,7 @@ class BleTelemetry {
   final bool isConnected;
   final String deviceName;
   final DateTime timestamp;
+  final DateTime? lastSyncAt;
 
   // Ночные биомаркеры (строго NREM/глубокий сон)
   final double hrv; // rMSSD в мс
@@ -81,6 +82,7 @@ class BleTelemetry {
     this.isConnected = false,
     this.deviceName = 'СААТ-1',
     required this.timestamp,
+    this.lastSyncAt,
 
     // Ночные маркеры
     this.hrv = 0.0,
@@ -121,6 +123,7 @@ class BleTelemetry {
     bool? isConnected,
     String? deviceName,
     DateTime? timestamp,
+    DateTime? lastSyncAt,
     double? hrv,
     int? restingHeartRate,
     double? respiratoryRate,
@@ -148,6 +151,7 @@ class BleTelemetry {
       isConnected: isConnected ?? this.isConnected,
       deviceName: deviceName ?? this.deviceName,
       timestamp: timestamp ?? this.timestamp,
+      lastSyncAt: lastSyncAt ?? this.lastSyncAt,
       hrv: hrv ?? this.hrv,
       restingHeartRate: restingHeartRate ?? this.restingHeartRate,
       respiratoryRate: respiratoryRate ?? this.respiratoryRate,
