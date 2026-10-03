@@ -497,7 +497,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       return
     }
     // Do NOT enable continuous measurement switch here! Measure on-demand optical HRM cleanly.
-    device.clickMeasurementType(.HRM) { [weak self] code in
+    device.click(.HRM) { [weak self] code in
       guard let self = self else { return }
       if self.sdkOk(Int(code)) {
         result(true)
