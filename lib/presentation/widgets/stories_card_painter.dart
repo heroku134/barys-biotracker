@@ -288,7 +288,7 @@ class StoriesCardWidget extends StatelessWidget {
               child: _buildMetricTile(
                 title: 'HRV',
                 value: telemetry.hrv > 0 ? telemetry.hrv.toStringAsFixed(0) : '—',
-                unit: 'ms',
+                unit: '',
                 accent: AppColors.sage,
                 subtext: '',
               ),

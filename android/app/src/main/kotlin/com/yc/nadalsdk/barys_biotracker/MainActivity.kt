@@ -229,6 +229,71 @@ class MainActivity : FlutterActivity() {
                         KalkanBleManager.configureHeartRateMonitoring(interval, continuous)
                         result.success(true)
                     }
+                    "setDisconnectRemind" -> {
+                        val enable = call.argument<Boolean>("enable") ?: true
+                        KalkanBleManager.setDisconnectRemind(enable) { success, err ->
+                            if (success) result.success(true) else result.error("CMD_FAILED", err, null)
+                        }
+                    }
+                    "isNotificationListenerGranted" -> {
+                        result.success(KalkanNotificationListenerService.isNotificationAccessGranted(this))
+                    }
+                    "openNotificationListenerSettings" -> {
+                        openNotificationListenerSettings()
+                        result.success(true)
+                    }
+                    "setCallRemindEnable" -> {
+                        val enable = call.argument<Boolean>("enable") ?: true
+                        KalkanBleManager.setCallRemindEnable(enable) { success, err ->
+                            if (success) result.success(true) else result.error("CMD_FAILED", err, null)
+                        }
+                    }
+                    "getHeartRateHistory" -> {
+                        KalkanBleManager.getHeartRateHistory { list ->
+                            result.success(list)
+                        }
+                    }
+                    "setSmartAlarm" -> {
+                        val enable = call.argument<Boolean>("enable") ?: false
+                        val hour = call.argument<Int>("hour") ?: 7
+                        val minute = call.argument<Int>("minute") ?: 0
+                        KalkanBleManager.setSmartAlarm(enable, hour, minute) { success, err ->
+                            if (success) result.success(true) else result.error("CMD_FAILED", err, null)
+                        }
+                    }
+                    "setHydrationReminder" -> {
+                        val enable = call.argument<Boolean>("enable") ?: false
+                        val interval = call.argument<Int>("intervalMinutes") ?: 120
+                        KalkanBleManager.setHydrationReminder(enable, interval) { success, err ->
+                            if (success) result.success(true) else result.error("CMD_FAILED", err, null)
+                        }
+                    }
+                    "clearAccountData" -> {
+                        KalkanBleManager.clearAccountData { success, err ->
+                            if (success) result.success(true) else result.error("CMD_FAILED", err, null)
+                        }
+                    }
+                    "getWorkoutHistory" -> {
+                        KalkanBleManager.getWorkoutHistory { list ->
+                            result.success(list)
+                        }
+                    }
+                    "pullNightAndDay", "syncSleepData" -> {
+                        KalkanBleManager.pullNightAndDay { success, err ->
+                            if (success) result.success(true) else result.error("SLEEP_SYNC_ERROR", err, null)
+                        }
+                    }
+                    "setUserProfile" -> {
+                        val heightCm = call.argument<Int>("heightCm") ?: 175
+                        val weightKg = call.argument<Int>("weightKg") ?: 72
+                        val age = call.argument<Int>("age") ?: 28
+                        val gender = call.argument<String>("gender") ?: "male"
+                        val stepGoal = call.argument<Int>("stepGoal") ?: 10000
+                        val calorieGoal = call.argument<Int>("calorieGoal") ?: 650
+                        KalkanBleManager.setUserProfile(heightCm, weightKg, age, gender, stepGoal, calorieGoal) { success, err ->
+                            if (success) result.success(true) else result.error("PROFILE_SYNC_ERROR", err, null)
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }
@@ -291,6 +356,15 @@ class MainActivity : FlutterActivity() {
     private fun openLocationSettings() {
         try {
             val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+        } catch (_: Exception) {}
+    }
+
+    private fun openNotificationListenerSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             startActivity(intent)

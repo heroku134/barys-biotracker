@@ -19,6 +19,7 @@ import com.yc.nadalsdk.scan.UteScanCallback
 import com.yc.nadalsdk.scan.UteScanDevice
 import io.flutter.plugin.common.EventChannel
 import org.json.JSONObject
+import java.util.Calendar
 import java.util.TimeZone
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -45,10 +46,32 @@ data class TelemetrySnapshot(
     val currentStressScore: Int = 0,
     val isOffWrist: Boolean = false,
     val skinTempDeviation: Double = 0.0,
-    val respiratoryRate: Double = 0.0
+    val respiratoryRate: Double = 0.0,
+    val bloodOxygen: Int = 0
 )
 
+private data class ParsedSleepSession(
+    var startSec: Int,
+    var endSec: Int,
+    var totalSleepMinutes: Int = 0,
+    var deepSleepMinutes: Int = 0,
+    var lightSleepMinutes: Int = 0,
+    var remSleepMinutes: Int = 0,
+    var awakeMinutes: Int = 0,
+    val epochs: MutableList<Map<String, Any>> = mutableListOf()
+) {
+    val timeInBedMinutes: Int
+        get() = totalSleepMinutes + awakeMinutes
+
+    val sleepEfficiency: Double
+        get() = if (timeInBedMinutes > 0 && totalSleepMinutes > 0) {
+            Math.round((totalSleepMinutes.toDouble() / timeInBedMinutes.toDouble()) * 100.0) / 100.0
+        } else 0.0
+}
+
 object KalkanBleManager {
+    val bloodOxygen: Int get() = snapshotRef.get().bloodOxygen
+
     private var appContext: Context? = null
     var uteBleClient: UteBleClient? = null
     var uteBleConnection: UteBleConnection? = null
@@ -85,15 +108,25 @@ object KalkanBleManager {
 
     private const val PREFS_NAME = "kalkan_ble_prefs"
     private const val KEY_SNAPSHOT = "kalkan_latest_telemetry_snapshot"
+    private const val KEY_LAST_MAC = "last_device_mac"
+    private const val KEY_MANUAL = "manual_disconnect"
 
     private var pendingConnectCallback: ((Boolean, String?) -> Unit)? = null
     private var connectTimeoutRunnable: Runnable? = null
+
+    // BLE-01: Нативный фоновый reconnect (живёт при убитой Flutter-активности)
+    private var lastConnectedMac: String? = null
+    private var nativeManualDisconnect = false
+    private var nativeReconnectAttempts = 0
+    private var nativeReconnectRunnable: Runnable? = null
 
     // BLE-05: Polling rate control & queue bounding guards
     private val isPollingInProgress = AtomicBoolean(false)
     private val isScanning = AtomicBoolean(false)
     private var lastBatteryPollTimeMs: Long = 0L
     private var lastSleepPollTimeMs: Long = 0L
+    private var lastStressPollTimeMs: Long = 0L
+    private var lastWorkoutPollTimeMs: Long = 0L
 
     // BLE-05: Throttled telemetry push (1 Hz max coalescing)
     private var lastPushTimeMs: Long = 0L
@@ -119,19 +152,27 @@ object KalkanBleManager {
 
     fun init(context: Context) {
         if (appContext == null) {
-            appContext = context.applicationContext
+            val ctx = context.applicationContext ?: context
+            appContext = ctx
             try {
-                uteBleClient = UteBleClient.initialize(appContext)
+                uteBleClient = UteBleClient.initialize(ctx)
+                uteBleClient?.setSupportUserIdPair(false)
                 uteBleConnection = uteBleClient?.getUteBleConnection()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+            try {
+                val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                lastConnectedMac = prefs.getString(KEY_LAST_MAC, null)
+                nativeManualDisconnect = prefs.getBoolean(KEY_MANUAL, false)
+            } catch (_: Exception) {}
         }
     }
 
     fun setTelemetrySink(sink: EventChannel.EventSink?) {
         telemetryEventSink = sink
         if (sink != null) {
+            cancelNativeReconnect()
             setupDeviceListeners()
             pushTelemetry(immediate = true)
         }
@@ -139,6 +180,60 @@ object KalkanBleManager {
 
     fun setScanSink(sink: EventChannel.EventSink?) {
         scanEventSink = sink
+    }
+
+    private fun persistLastMac(mac: String?) {
+        lastConnectedMac = mac
+        try {
+            val ctx = appContext ?: return
+            val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            if (mac.isNullOrEmpty()) {
+                prefs.edit().remove(KEY_LAST_MAC).apply()
+            } else {
+                prefs.edit().putString(KEY_LAST_MAC, mac).apply()
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun persistManualDisconnect(manual: Boolean) {
+        nativeManualDisconnect = manual
+        try {
+            val ctx = appContext ?: return
+            ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .edit().putBoolean(KEY_MANUAL, manual).apply()
+        } catch (_: Exception) {}
+    }
+
+    private fun cancelNativeReconnect() {
+        nativeReconnectRunnable?.let { mainHandler.removeCallbacks(it) }
+        nativeReconnectRunnable = null
+        nativeReconnectAttempts = 0
+    }
+
+    private fun scheduleNativeReconnect() {
+        if (nativeManualDisconnect) return
+        if (telemetryEventSink != null) return
+        val mac = lastConnectedMac ?: return
+        if (mac.isEmpty()) return
+
+        cancelNativeReconnect()
+        val attempt = nativeReconnectAttempts
+        val baseSec = (2 shl minOf(attempt, 5)).coerceIn(2, 60).toLong()
+        val jitterMs = (Math.random() * 1500).toLong()
+        val delayMs = (baseSec * 1000 + jitterMs).coerceIn(2000L, 60000L)
+        nativeReconnectAttempts = attempt + 1
+
+        val task = Runnable {
+            nativeReconnectRunnable = null
+            if (nativeManualDisconnect || telemetryEventSink != null || isConnected) return@Runnable
+            try {
+                connect(mac) { _, _ -> }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        nativeReconnectRunnable = task
+        mainHandler.postDelayed(task, delayMs)
     }
 
     fun isBluetoothEnabled(): Boolean {
@@ -233,6 +328,9 @@ object KalkanBleManager {
 
     fun connect(address: String, callback: (Boolean, String?) -> Unit) {
         stopScan()
+        persistLastMac(address)
+        persistManualDisconnect(false)
+        cancelNativeReconnect()
         val client = uteBleClient
         if (client == null) {
             callback(false, "UteBleClient not initialized")
@@ -265,6 +363,7 @@ object KalkanBleManager {
                                 currentDeviceName = uteBleClient?.deviceName ?: "СААТ-1"
                             )
                         }
+                        cancelNativeReconnect()
 
                         val conn = uteBleConnection ?: uteBleClient?.getUteBleConnection()
                         uteBleConnection = conn
@@ -286,18 +385,26 @@ object KalkanBleManager {
                                 val nowMs = System.currentTimeMillis()
                                 val totalOffsetMillis = TimeZone.getDefault().getOffset(nowMs)
                                 val totalMinutes = totalOffsetMillis / (1000 * 60)
-                                val timeZoneHours = totalMinutes / 60
-                                val minuteOffset = Math.abs(totalMinutes % 60)
+                                val timeZoneHours = Math.floorDiv(totalMinutes, 60)
+                                val minuteOffset = Math.abs(Math.floorMod(totalMinutes, 60))
 
                                 val tc = TimeClock()
                                 tc.timeSeconds = (nowMs / 1000).toInt()
                                 tc.timeZone = timeZoneHours
                                 tc.minuteOffset = minuteOffset
+                                tc.dateFormat = TimeClock.DATE_YYYY_MM_DD
+                                tc.timeFormat = TimeClock.TIME_HOUR_24
                                 uteBleConnection?.setTimeClock(tc)
 
                                 uteBleConnection?.setContinuousHeartRate(false)
                                 uteBleConnection?.setAutoHeartRate(true)
                                 uteBleConnection?.setAutoStress(true)
+                                uteBleConnection?.setCallRemindEnable(true)
+                                uteBleConnection?.setContinuousBloodOxygen(true)
+                                uteBleConnection?.setAutoOxygenInterval(15)
+                                try {
+                                    uteBleClient?.setSupportUserIdPair(false)
+                                } catch (_: Exception) {}
 
                                 // Initial battery query on connect
                                 val fresh = uteBleConnection?.getBatteryInfo()?.data
@@ -328,12 +435,24 @@ object KalkanBleManager {
                                 // Initial sleep query on connect (once per connection)
                                 lastSleepPollTimeMs = System.currentTimeMillis()
                                 querySleepDataInternal()
+
+                                // Initial stress history query on connect (once per connection)
+                                lastStressPollTimeMs = System.currentTimeMillis()
+                                queryStressHistoryDataInternal()
+
+                                // Initial workout history query on connect (once per connection)
+                                lastWorkoutPollTimeMs = System.currentTimeMillis()
+                                queryWorkoutHistoryInternal()
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             }
                         }
 
-                        appContext?.let { KalkanBleService.start(it) }
+                        try {
+                            appContext?.let { KalkanBleService.start(it) }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                         startBackgroundPolling()
                         pushTelemetry(immediate = true)
 
@@ -364,6 +483,7 @@ object KalkanBleManager {
                         val cb = pendingConnectCallback
                         pendingConnectCallback = null
                         cb?.invoke(false, "Disconnected before ready")
+                        scheduleNativeReconnect()
                     }
                 }
             }
@@ -394,6 +514,9 @@ object KalkanBleManager {
 
     fun disconnect(forget: Boolean = false) {
         stopScan()
+        persistManualDisconnect(true)
+        if (forget) persistLastMac(null)
+        cancelNativeReconnect()
         connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
         connectTimeoutRunnable = null
         val cb = pendingConnectCallback
@@ -471,13 +594,15 @@ object KalkanBleManager {
                     val nowMs = System.currentTimeMillis()
                     val totalOffsetMillis = TimeZone.getDefault().getOffset(nowMs)
                     val totalMinutes = totalOffsetMillis / (1000 * 60)
-                    val timeZoneHours = totalMinutes / 60
-                    val minuteOffset = Math.abs(totalMinutes % 60)
+                    val timeZoneHours = Math.floorDiv(totalMinutes, 60)
+                    val minuteOffset = Math.abs(Math.floorMod(totalMinutes, 60))
 
                     val tc = TimeClock()
                     tc.timeSeconds = (nowMs / 1000).toInt()
                     tc.timeZone = timeZoneHours
                     tc.minuteOffset = minuteOffset
+                    tc.dateFormat = TimeClock.DATE_YYYY_MM_DD
+                    tc.timeFormat = TimeClock.TIME_HOUR_24
                     uteBleConnection?.setTimeClock(tc)
                     mainHandler.post { callback(true, null) }
                 } catch (e: Exception) {
@@ -517,6 +642,193 @@ object KalkanBleManager {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    fun setDisconnectRemind(enable: Boolean, callback: (Boolean, String?) -> Unit) {
+        if (!isConnected || uteBleConnection == null) {
+            callback(false, "Watch is not connected")
+            return
+        }
+        bleExecutor.execute {
+            try {
+                uteBleConnection?.setDisconnectRemind(enable)
+                mainHandler.post { callback(true, null) }
+            } catch (e: Exception) {
+                mainHandler.post { callback(false, e.localizedMessage) }
+            }
+        }
+    }
+
+    fun setCallRemindEnable(enable: Boolean, callback: ((Boolean, String?) -> Unit)? = null) {
+        if (!isConnected || uteBleConnection == null) {
+            callback?.invoke(false, "Watch is not connected")
+            return
+        }
+        bleExecutor.execute {
+            try {
+                uteBleConnection?.setCallRemindEnable(enable)
+                mainHandler.post { callback?.invoke(true, null) }
+            } catch (e: Exception) {
+                mainHandler.post { callback?.invoke(false, e.localizedMessage) }
+            }
+        }
+    }
+
+    fun notifyIncomingCall(name: String, number: String) {
+        if (!isConnected || uteBleConnection == null) return
+        bleExecutor.execute {
+            try {
+                uteBleConnection?.notifyIncomingCall(name, number)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun notifyCallEnded() {
+        if (!isConnected || uteBleConnection == null) return
+        bleExecutor.execute {
+            try {
+                uteBleConnection?.notifyAnswerCall()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun sendMessageToWatch(message: MessageInfo) {
+        if (!isConnected || uteBleConnection == null) return
+        bleExecutor.execute {
+            try {
+                uteBleConnection?.sendMessage(message)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun setSmartAlarm(enable: Boolean, hour: Int = 7, minute: Int = 0, callback: ((Boolean, String?) -> Unit)? = null) {
+        if (!isConnected || uteBleConnection == null) {
+            callback?.invoke(false, "Watch is not connected")
+            return
+        }
+        bleExecutor.execute {
+            try {
+                val alarm = Alarm()
+                alarm.index = 0
+                alarm.enable = enable
+                alarm.hour = hour
+                alarm.minute = minute
+                alarm.name = "Smart Alarm"
+                alarm.cycle = 127
+                alarm.cycleList = listOf(1, 2, 3, 4, 5, 6, 7)
+                uteBleConnection?.setAlarmList(listOf(alarm))
+                mainHandler.post { callback?.invoke(true, null) }
+            } catch (e: Exception) {
+                mainHandler.post { callback?.invoke(false, e.localizedMessage) }
+            }
+        }
+    }
+
+    fun setHydrationReminder(enable: Boolean, interval: Int = 120, callback: ((Boolean, String?) -> Unit)? = null) {
+        if (!isConnected || uteBleConnection == null) {
+            callback?.invoke(false, "Watch is not connected")
+            return
+        }
+        bleExecutor.execute {
+            try {
+                val remind = DrinkWaterRemindInfo(enable, 9, 0, 21, 0, interval)
+                uteBleConnection?.setDrinkWaterRemind(remind)
+                mainHandler.post { callback?.invoke(true, null) }
+            } catch (e: Exception) {
+                mainHandler.post { callback?.invoke(false, e.localizedMessage) }
+            }
+        }
+    }
+
+    fun clearAccountData(callback: ((Boolean, String?) -> Unit)? = null) {
+        bleExecutor.execute {
+            try {
+                uteBleConnection?.clearAccountID()
+                mainHandler.post { callback?.invoke(true, null) }
+            } catch (e: Exception) {
+                mainHandler.post { callback?.invoke(false, e.localizedMessage) }
+            }
+        }
+    }
+
+    fun setUserProfile(
+        heightCm: Int,
+        weightKg: Int,
+        age: Int,
+        gender: String,
+        stepGoal: Int = 10000,
+        calorieGoal: Int = 650,
+        callback: ((Boolean, String?) -> Unit)? = null
+    ) {
+        if (!isConnected || uteBleConnection == null) {
+            callback?.invoke(false, "Watch is not connected")
+            return
+        }
+        bleExecutor.execute {
+            try {
+                val info = UserPhysicalInfo().apply {
+                    this.height = heightCm
+                    this.weight = weightKg
+                    this.age = age
+                    this.gender = if (gender.lowercase() == "female") UserPhysicalInfo.GENDER_FEMALE else UserPhysicalInfo.GENDER_MALE
+                    this.walkStepLength = (heightCm * 0.415).toInt().coerceAtLeast(30)
+                    this.runStepLength = (heightCm * 0.45).toInt().coerceAtLeast(40)
+                }
+                uteBleConnection?.setUserPhysicalInfo(info)
+
+                val goal = MotionGoalConfig().apply {
+                    this.goalType = MotionGoalConfig.GOAL_DAY
+                    this.goalStep = stepGoal
+                    this.goalCalorie = calorieGoal
+                    this.goalDistance = (stepGoal * (heightCm * 0.415) / 100).toInt()
+                    this.goalDuration = 3600
+                }
+                uteBleConnection?.setMotionGoal(goal)
+                mainHandler.post { callback?.invoke(true, null) }
+            } catch (e: Exception) {
+                mainHandler.post { callback?.invoke(false, e.localizedMessage) }
+            }
+        }
+    }
+
+    fun getWorkoutHistory(callback: (List<Map<String, Any>>) -> Unit) {
+        if (!isConnected || uteBleConnection == null) {
+            mainHandler.post { callback(emptyList()) }
+            return
+        }
+        bleExecutor.execute {
+            val results = mutableListOf<Map<String, Any>>()
+            try {
+                val nowSec = (System.currentTimeMillis() / 1000).toInt()
+                val resp = uteBleConnection?.syncWorkoutHistoryData(nowSec - 7 * 24 * 3600, nowSec)
+                val list = resp?.data
+                if (!list.isNullOrEmpty()) {
+                    for (w in list) {
+                        val item = mutableMapOf<String, Any>()
+                        item["startTime"] = w.startTime ?: ""
+                        item["endTime"] = w.endTime ?: ""
+                        item["duration"] = w.duration
+                        item["calories"] = w.calories.toInt()
+                        item["distance"] = w.distance
+                        item["steps"] = w.step
+                        item["heart"] = w.heart
+                        item["maxHeart"] = w.maxHeart
+                        item["minHeart"] = w.minHeart
+                        item["sportsType"] = w.sportsType
+                        results.add(item)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            mainHandler.post { callback(results) }
         }
     }
 
@@ -595,6 +907,18 @@ object KalkanBleManager {
                     lastSleepPollTimeMs = now
                     querySleepDataInternal()
                 }
+
+                // 4. Stress history query - only once every 30 minutes during routine background polling
+                if (now - lastStressPollTimeMs >= 30 * 60 * 1000L) {
+                    lastStressPollTimeMs = now
+                    queryStressHistoryDataInternal()
+                }
+
+                // 5. Workout history query - only once every 60 minutes during routine background polling
+                if (now - lastWorkoutPollTimeMs >= 60 * 60 * 1000L) {
+                    lastWorkoutPollTimeMs = now
+                    queryWorkoutHistoryInternal()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -606,122 +930,215 @@ object KalkanBleManager {
 
     fun querySleepDataInternal() {
         try {
-            val sleep = uteBleConnection?.getSciSleepData()
-            if (sleep != null && sleep.sleepTotalTime > 0) {
-                val detailList = sleep.sleepDetailList
-                if (!detailList.isNullOrEmpty()) {
-                    var total = 0
-                    var deep = 0
-                    var light = 0
-                    var rem = 0
-                    var awake = 0
-                    val epochs = mutableListOf<Map<String, Any>>()
+            val nowSec = (System.currentTimeMillis() / 1000).toInt()
+            val resp = uteBleConnection?.syncSleepHistoryData(nowSec - 36 * 3600, nowSec)
+            val list = resp?.data
+            if (list.isNullOrEmpty()) return
 
-                    // Baseline reference for sleep timeline in unix seconds
-                    val sessionStartSec = sleep.startTime
-                    val sessionEndSec = sleep.endTime
-                    val nowSec = (System.currentTimeMillis() / 1000).toInt()
+            val sessions = mutableListOf<ParsedSleepSession>()
+            var currentSession: ParsedSleepSession? = null
+            var sessionCursorSec = 0
 
-                    val baseStartSec = if (sessionStartSec > 0) {
-                        sessionStartSec
-                    } else if (sessionEndSec > 0) {
-                        sessionEndSec - (sleep.sleepTotalTime * 60)
-                    } else {
-                        nowSec - (sleep.sleepTotalTime * 60)
-                    }
+            for (item in list) {
+                val dur = item.sleepTime // minutes
+                // Skip placeholder items with zero duration unless explicit start/end markers
+                if (dur <= 0 && item.sleepType != SciSleepData.SCI_SLEEP_TYPE_START && item.sleepType != SciSleepData.SCI_SLEEP_TYPE_END) {
+                    continue
+                }
 
-                    var cursorSec = baseStartSec
+                var startSec = item.startTime
+                var endSec = item.endTime
+                if (startSec <= 0) {
+                    startSec = if (sessionCursorSec > 0) sessionCursorSec else (nowSec - Math.max(1, dur) * 60)
+                }
+                if (endSec <= startSec) {
+                    endSec = if (dur > 0) startSec + dur * 60 else startSec
+                }
 
-                    for (item in detailList) {
-                        val dur = item.sleepTime // in minutes
-                        if (dur <= 0) continue
+                // Detect session boundaries (Section 2.41):
+                // 1. SCI_SLEEP_TYPE_START marks new session
+                // 2. Gap of > 60 minutes between records breaks into a new session
+                val isNewSessionBreak = currentSession != null && (
+                    item.sleepType == SciSleepData.SCI_SLEEP_TYPE_START ||
+                    (startSec - sessionCursorSec) > 3600
+                )
 
-                        val stage = when (item.sleepType) {
-                            SciSleepData.SCI_SLEEP_TYPE_DEEP -> {
-                                deep += dur
-                                total += dur
-                                "deep"
-                            }
-                            SciSleepData.SCI_SLEEP_TYPE_LIGHT,
-                            SciSleepData.SCI_SLEEP_TYPE_SNOOZE,
-                            SciSleepData.SCI_SLEEP_TYPE_SNORE -> {
-                                light += dur
-                                total += dur
-                                "light"
-                            }
-                            SciSleepData.SCI_SLEEP_TYPE_REM -> {
-                                rem += dur
-                                total += dur
-                                "rem"
-                            }
-                            SciSleepData.SCI_SLEEP_TYPE_AWAKE,
-                            SciSleepData.SCI_SLEEP_TYPE_START,
-                            SciSleepData.SCI_SLEEP_TYPE_END -> {
-                                awake += dur
-                                "awake"
-                            }
-                            else -> {
-                                light += dur
-                                total += dur
-                                "light"
-                            }
+                if (isNewSessionBreak) {
+                    currentSession?.let { cs ->
+                        if (cs.totalSleepMinutes > 0 || cs.awakeMinutes > 0) {
+                            sessions.add(cs)
                         }
-
-                        val rawStart = item.startTime
-                        val rawEnd = item.endTime
-
-                        val epochStartSec = if (rawStart > 0) {
-                            rawStart
-                        } else {
-                            cursorSec
-                        }
-
-                        val epochEndSec = if (rawEnd > epochStartSec) {
-                            rawEnd
-                        } else {
-                            epochStartSec + (dur * 60)
-                        }
-
-                        cursorSec = epochEndSec
-
-                        epochs.add(
-                            mapOf(
-                                "stage" to stage,
-                                "startTime" to epochStartSec.toLong() * 1000L,
-                                "endTime" to epochEndSec.toLong() * 1000L,
-                                "durationMinutes" to dur
-                            )
-                        )
                     }
-                    val inBed = total + awake
-                    val efficiency = if (inBed > 0 && total > 0) {
-                        Math.round((total.toDouble() / inBed.toDouble()) * 100.0) / 100.0
-                    } else 0.0
+                    currentSession = null
+                }
 
-                    updateSnapshot { prev ->
-                        prev.copy(
-                            currentSleepMinutes = if (total > 0) total else sleep.sleepTotalTime,
-                            currentDeepSleepMinutes = deep,
-                            currentRemSleepMinutes = rem,
-                            timeInBedMinutes = if (inBed > 0) inBed else total,
-                            currentSleepEfficiency = efficiency,
-                            currentHypnogram = epochs
-                        )
+                if (currentSession == null) {
+                    currentSession = ParsedSleepSession(startSec = startSec, endSec = endSec)
+                }
+
+                val session = currentSession!!
+                val stage: String
+                when (item.sleepType) {
+                    SciSleepData.SCI_SLEEP_TYPE_DEEP -> {
+                        stage = "deep"
+                        session.deepSleepMinutes += dur
+                        session.totalSleepMinutes += dur
                     }
-                } else {
-                    updateSnapshot { prev ->
-                        prev.copy(
-                            currentSleepMinutes = sleep.sleepTotalTime,
-                            currentDeepSleepMinutes = 0,
-                            currentRemSleepMinutes = 0,
-                            timeInBedMinutes = sleep.sleepTotalTime,
-                            currentSleepEfficiency = 0.0,
-                            currentHypnogram = emptyList()
-                        )
+                    SciSleepData.SCI_SLEEP_TYPE_LIGHT -> {
+                        stage = "light"
+                        session.lightSleepMinutes += dur
+                        session.totalSleepMinutes += dur
                     }
+                    SciSleepData.SCI_SLEEP_TYPE_REM -> {
+                        stage = "rem"
+                        session.remSleepMinutes += dur
+                        session.totalSleepMinutes += dur
+                    }
+                    SciSleepData.SCI_SLEEP_TYPE_AWAKE,
+                    SciSleepData.SCI_SLEEP_TYPE_SNOOZE,
+                    SciSleepData.SCI_SLEEP_TYPE_SNORE -> {
+                        stage = "awake"
+                        session.awakeMinutes += dur
+                    }
+                    SciSleepData.SCI_SLEEP_TYPE_START,
+                    SciSleepData.SCI_SLEEP_TYPE_END -> {
+                        stage = ""
+                    }
+                    else -> {
+                        stage = "light"
+                        session.lightSleepMinutes += dur
+                        session.totalSleepMinutes += dur
+                    }
+                }
+
+                if (stage.isNotEmpty() && dur > 0) {
+                    session.epochs.add(
+                        mapOf(
+                            "stage" to stage,
+                            "startTime" to startSec.toLong() * 1000L,
+                            "endTime" to endSec.toLong() * 1000L,
+                            "durationMinutes" to dur
+                        )
+                    )
+                }
+
+                if (endSec > session.endSec) {
+                    session.endSec = endSec
+                }
+                sessionCursorSec = Math.max(sessionCursorSec, endSec)
+
+                if (item.sleepType == SciSleepData.SCI_SLEEP_TYPE_END) {
+                    if (session.totalSleepMinutes > 0 || session.awakeMinutes > 0) {
+                        sessions.add(session)
+                    }
+                    currentSession = null
+                }
+            }
+
+            currentSession?.let { cs ->
+                if (cs.totalSleepMinutes > 0 || cs.awakeMinutes > 0) {
+                    sessions.add(cs)
+                }
+            }
+
+            // Select single primary night sleep session (Section 2.41 & iOS AppDelegate parity)
+            val cal = Calendar.getInstance()
+            val currentHour = cal.get(Calendar.HOUR_OF_DAY)
+            val cycleCal = Calendar.getInstance()
+            if (currentHour < 20) {
+                cycleCal.add(Calendar.DAY_OF_YEAR, -1)
+            }
+            cycleCal.set(Calendar.HOUR_OF_DAY, 20)
+            cycleCal.set(Calendar.MINUTE, 0)
+            cycleCal.set(Calendar.SECOND, 0)
+            cycleCal.set(Calendar.MILLISECOND, 0)
+            val cycleStartSec = (cycleCal.timeInMillis / 1000).toInt()
+            val windowStartSec = cycleStartSec - 2 * 3600
+
+            val candidates = sessions.filter { it.endSec >= windowStartSec }
+            val primaryCandidates = candidates.filter { it.totalSleepMinutes >= 60 }
+
+            val selectedSession = primaryCandidates.maxByOrNull { it.totalSleepMinutes }
+                ?: candidates.maxByOrNull { it.totalSleepMinutes }
+                ?: sessions.lastOrNull()
+
+            if (selectedSession != null && (selectedSession.totalSleepMinutes > 0 || selectedSession.awakeMinutes > 0)) {
+                updateSnapshot { prev ->
+                    prev.copy(
+                        currentSleepMinutes = selectedSession.totalSleepMinutes,
+                        currentDeepSleepMinutes = selectedSession.deepSleepMinutes,
+                        currentRemSleepMinutes = selectedSession.remSleepMinutes,
+                        timeInBedMinutes = selectedSession.timeInBedMinutes,
+                        currentSleepEfficiency = selectedSession.sleepEfficiency,
+                        currentHypnogram = selectedSession.epochs
+                    )
+                }
+                pushTelemetry()
+            }
+        } catch (_: Exception) {}
+    }
+
+    fun pullNightAndDay(callback: ((Boolean, String?) -> Unit)? = null) {
+        if (!isConnected || uteBleConnection == null) {
+            callback?.invoke(false, "Watch is not connected")
+            return
+        }
+        bleExecutor.execute {
+            try {
+                querySleepDataInternal()
+                mainHandler.post { callback?.invoke(true, null) }
+            } catch (e: Exception) {
+                mainHandler.post { callback?.invoke(false, e.localizedMessage) }
+            }
+        }
+    }
+
+    fun queryWorkoutHistoryInternal() {
+        try {
+            val nowSec = (System.currentTimeMillis() / 1000).toInt()
+            // Подтверждаем/подтягиваем завершённые тренировки (протокол 2.42).
+            // Полный импорт в локальную историю — отдельная задача (маппинг SportType + единиц).
+            uteBleConnection?.syncWorkoutHistoryData(nowSec - 7 * 24 * 3600, nowSec)
+        } catch (_: Exception) {}
+    }
+
+    fun queryStressHistoryDataInternal() {
+        try {
+            val nowSec = (System.currentTimeMillis() / 1000).toInt()
+            val resp = uteBleConnection?.syncStressHistoryData(nowSec - 24 * 3600, nowSec)
+            val list = resp?.data
+            if (!list.isNullOrEmpty()) {
+                val latest = list.lastOrNull { it.pressureValue in 1..100 }
+                if (latest != null) {
+                    updateSnapshot { prev -> prev.copy(currentStressScore = latest.pressureValue) }
                 }
             }
         } catch (_: Exception) {}
+    }
+
+    fun getHeartRateHistory(callback: (List<Map<String, Any>>) -> Unit) {
+        if (!isConnected || uteBleConnection == null) {
+            mainHandler.post { callback(emptyList()) }
+            return
+        }
+        bleExecutor.execute {
+            val result = mutableListOf<Map<String, Any>>()
+            try {
+                val nowSec = (System.currentTimeMillis() / 1000).toInt()
+                val data = uteBleConnection?.syncFitnessHistoryData(nowSec - 24 * 3600, nowSec)?.data
+                val hrList = data?.heartRateData
+                if (!hrList.isNullOrEmpty()) {
+                    for (item in hrList) {
+                        val ts = item.startTime
+                        val bpm = item.rate
+                        if (ts > 0 && bpm in 30..240) {
+                            result.add(mapOf("t" to (ts.toLong() * 1000L), "bpm" to bpm))
+                        }
+                    }
+                }
+            } catch (_: Exception) {}
+            mainHandler.post { callback(result) }
+        }
     }
 
     private fun setupDeviceListeners() {
@@ -756,11 +1173,13 @@ object KalkanBleManager {
                                     val rhr = prev.currentRhr
                                     val hrv = if (health.hrvValue in 5..250) health.hrvValue.toDouble() else prev.currentHrv
                                     val rr = if (rhr > 0) deriveRespiratoryRate(rhr, hrv) else prev.respiratoryRate
+                                    val oxy = if (health.bloodOxygenValue in 70..100) health.bloodOxygenValue else prev.bloodOxygen
                                     prev.copy(
                                         currentBpm = if (health.heartRateValue in 30..240) health.heartRateValue else prev.currentBpm,
                                         currentHrv = hrv,
                                         currentStressScore = if (health.stressValue in 1..100) health.stressValue else prev.currentStressScore,
-                                        respiratoryRate = rr
+                                        respiratoryRate = rr,
+                                        bloodOxygen = oxy
                                     )
                                 }
                             }
@@ -769,16 +1188,17 @@ object KalkanBleManager {
                             val motion = notify.data as? MotionCurrentMinute
                             if (motion != null) {
                                 updateSnapshot { prev ->
-                                    val rhr = if (motion.restingHeartRate in 35..110) motion.restingHeartRate else prev.currentRhr
+                                    val rawRhr = if (motion.restingHeartRateV3 in 35..110) motion.restingHeartRateV3 else motion.restingHeartRate
+                                    val rhr = if (rawRhr in 35..110) rawRhr else prev.currentRhr
                                     val hrv = if (motion.hrvValue > 0) motion.hrvValue.toDouble() else prev.currentHrv
                                     val rr = if (rhr > 0) deriveRespiratoryRate(rhr, hrv) else prev.respiratoryRate
+                                    val oxy = if (motion.bloodOxygen in 70..100) motion.bloodOxygen else prev.bloodOxygen
                                     prev.copy(
                                         currentBpm = if (motion.dynamicHeartRate in 30..240) motion.dynamicHeartRate else prev.currentBpm,
-                                        currentSteps = if (motion.step > 0) motion.step else prev.currentSteps,
-                                        currentCalories = if (motion.calorie > 0) motion.calorie else prev.currentCalories,
                                         currentRhr = rhr,
                                         currentHrv = hrv,
-                                        respiratoryRate = rr
+                                        respiratoryRate = rr,
+                                        bloodOxygen = oxy
                                     )
                                 }
                             }
@@ -862,6 +1282,18 @@ object KalkanBleManager {
                                 uteBleConnection?.setHonorAccount(honorConfig)
                             } catch (_: Exception) {}
                         }
+                        NotifyType.FITNESS_DATA_UPDATE -> {
+                            bleExecutor.execute {
+                                try {
+                                    querySleepDataInternal()
+                                } catch (_: Exception) {}
+                            }
+                        }
+                        NotifyType.DEVICE_RESET_NOTIFY -> {
+                            updateSnapshot(immediate = true) { prev ->
+                                prev.copy(isConnected = false, isCharging = false, currentBpm = 0)
+                            }
+                        }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -904,15 +1336,16 @@ object KalkanBleManager {
             "hrv" to s.currentHrv,
             "restingHeartRate" to s.currentRhr,
             "sleepMinutes" to s.currentSleepMinutes,
-            "deepSleepMinutes" to s.deepSleepMinutes,
-            "remSleepMinutes" to s.remSleepMinutes,
+            "deepSleepMinutes" to s.currentDeepSleepMinutes,
+            "remSleepMinutes" to s.currentRemSleepMinutes,
             "timeInBedMinutes" to s.timeInBedMinutes,
-            "sleepEfficiency" to s.sleepEfficiency,
+            "sleepEfficiency" to s.currentSleepEfficiency,
             "sleepHypnogram" to s.currentHypnogram,
             "currentStressScore" to s.currentStressScore,
             "isOffWrist" to s.isOffWrist,
             "skinTempDeviation" to s.skinTempDeviation,
             "respiratoryRate" to s.respiratoryRate,
+            "bloodOxygen" to s.bloodOxygen,
             "isAncsAuthorized" to true,
             "isBluetoothEnabled" to isBluetoothEnabled()
         )
@@ -943,6 +1376,7 @@ object KalkanBleManager {
             stopBackgroundPolling()
         } else {
             pushTelemetry(immediate = true)
+            scheduleNativeReconnect()
         }
     }
 }

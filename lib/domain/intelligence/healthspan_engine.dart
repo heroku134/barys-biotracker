@@ -35,6 +35,21 @@ class HealthspanEngine {
     double sleepConsistency = 0.88,
     double rhrSixMonthDelta = -2.8, // Пульс покоя снизился за полгода
   }) {
+    if (restingHeartRate <= 0 || maxHeartRate <= 0) {
+      return HealthspanResult(
+        chronologicalAge: chronologicalAge,
+        circaBiologicalAge: chronologicalAge.toDouble(),
+        ageDeltaYears: 0,
+        estimatedVo2Max: 0,
+        rhrSixMonthTrend: rhrSixMonthDelta,
+        weeklyZone2Minutes: weeklyZone2Minutes,
+        weeklyZone5Minutes: weeklyZone5Minutes,
+        sleepConsistencyPercent: (sleepConsistency * 100).round().toDouble(),
+        headline: 'Недостаточно данных для оценки',
+        physiologicalDetails: 'Носите часы ночью для измерения пульса покоя.',
+      );
+    }
+
     // 1. Оценка VO2max (формула Uth-Sorensen с коррекцией на объем зоны 2 и 5)
     final baseVo2 = 15.3 * (maxHeartRate / restingHeartRate);
     final trainingBonus = (weeklyZone2Minutes / 60.0) * 0.45 + (weeklyZone5Minutes / 10.0) * 0.6;

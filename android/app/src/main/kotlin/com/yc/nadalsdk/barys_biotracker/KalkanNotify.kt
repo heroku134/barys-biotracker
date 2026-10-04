@@ -10,12 +10,60 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import java.util.Calendar
+import android.content.SharedPreferences
 
 object KalkanNotify {
     const val EXTRA_ID = "nid"
     const val EXTRA_TITLE = "title"
     const val EXTRA_BODY = "body"
     const val EXTRA_CHANNEL = "channel"
+
+    private const val PREFS = "kalkan_reminders"
+    private const val KEY_IDS = "ids"
+
+    private fun prefs(ctx: Context): SharedPreferences =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    private fun storeReminder(ctx: Context, id: Int, hour: Int, minute: Int, title: String, body: String, channel: String) {
+        val p = prefs(ctx)
+        val ids = p.getStringSet(KEY_IDS, emptySet()) ?: emptySet()
+        p.edit()
+            .putStringSet(KEY_IDS, ids + id.toString())
+            .putInt("hour_$id", hour)
+            .putInt("minute_$id", minute)
+            .putString("title_$id", title)
+            .putString("body_$id", body)
+            .putString("channel_$id", channel)
+            .apply()
+    }
+
+    private fun removeReminder(ctx: Context, id: Int) {
+        val p = prefs(ctx)
+        val ids = p.getStringSet(KEY_IDS, emptySet()) ?: emptySet()
+        p.edit()
+            .putStringSet(KEY_IDS, ids - id.toString())
+            .remove("hour_$id")
+            .remove("minute_$id")
+            .remove("title_$id")
+            .remove("body_$id")
+            .remove("channel_$id")
+            .apply()
+    }
+
+    fun rescheduleAll(ctx: Context) {
+        val p = prefs(ctx)
+        val ids = p.getStringSet(KEY_IDS, emptySet()) ?: return
+        for (idStr in ids) {
+            val id = idStr.toIntOrNull() ?: continue
+            val hour = p.getInt("hour_$id", -1)
+            val minute = p.getInt("minute_$id", -1)
+            val title = p.getString("title_$id", null) ?: continue
+            val body = p.getString("body_$id", "") ?: ""
+            val channel = p.getString("channel_$id", "morning") ?: "morning"
+            if (hour < 0 || minute < 0) continue
+            scheduleDaily(ctx, id, hour, minute, title, body, channel)
+        }
+    }
 
     fun ensureChannels(ctx: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -51,6 +99,7 @@ object KalkanNotify {
         val intent = Intent(ctx, KalkanAlarmReceiver::class.java)
         val pi = PendingIntent.getBroadcast(ctx, id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         am.cancel(pi)
+        removeReminder(ctx, id)
     }
 
     fun scheduleDaily(ctx: Context, id: Int, hour: Int, minute: Int, title: String, body: String, channel: String = "morning") {
@@ -80,5 +129,6 @@ object KalkanNotify {
         } else {
             am.set(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
         }
+        storeReminder(ctx, id, hour, minute, title, body, channel)
     }
 }

@@ -83,6 +83,7 @@ class DaySnapshotRepository {
 
   static Future<void> _saveAll(List<DaySnapshot> items) async {
     final prefs = await SharedPreferences.getInstance();
+    items.sort((a, b) => a.dateKey.compareTo(b.dateKey));
     final trimmed = items.length > 60 ? items.sublist(items.length - 60) : items;
     await prefs.setStringList(_key, trimmed.map((e) => jsonEncode(e.toJson())).toList());
   }
@@ -179,7 +180,7 @@ class DaySnapshotRepository {
     for (final s in all.reversed) {
       if (s.dateKey == key) return s;
     }
-    return all.length >= 2 ? all[all.length - 2] : null;
+    return null;
   }
 
   static Future<String> exportJson() async {

@@ -118,7 +118,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _syncIosWidgets() {
     final readiness = ReadinessEngine.calculate(_telemetry, baseline: _baseline);
-    final strain = StrainEngine.evaluate(currentStrain: _telemetry.currentDayStrain, recoveryZone: readiness.zone);
+    final fromWatch = _telemetry.currentDayStrain > 0
+        ? _telemetry.currentDayStrain
+        : StrainEngine.calculateStrainFromZones(_telemetry.zoneMinutes);
+    final reconciledStrain = fromWatch + LocalDayStrain.current();
+    final strain = StrainEngine.evaluate(currentStrain: reconciledStrain, recoveryZone: readiness.zone);
     final sleep = SleepEngine.analyze(_telemetry);
     final hasNight = _telemetry.sleepMinutes > 0 || _telemetry.hrv > 0;
     final line = DayCopy.morning(
@@ -131,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     IosWidgetService.updateWidgets(
       telemetry: _telemetry,
       readiness: readiness,
-      currentStrain: _telemetry.currentDayStrain > 0 ? _telemetry.currentDayStrain : 0,
+      currentStrain: reconciledStrain,
       targetStrainMax: strain.targetStrainMax,
       sleepScore: sleep.sleepPerformanceScore,
       morningLine: line,
@@ -142,7 +146,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       recovery: readiness.score,
       targetMin: strain.targetStrainMin,
       targetMax: strain.targetStrainMax,
-      strainNow: _telemetry.currentDayStrain,
+      strainNow: reconciledStrain,
       sleepMinutes: _telemetry.sleepMinutes,
       hrv: _telemetry.hrv,
       baselineHrv: _baseline.meanHrv,
@@ -332,6 +336,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         TextButton(
                           onPressed: () async {
                             await ReminderService.dismiss(_banner!);
+                            if (!mounted) return;
                             setState(() => _banner = null);
                           },
                           child: Text(AppLocaleNotifier.pick('Ок', 'Макул', 'OK'), style: TextStyle(color: AppColors.sage)),
@@ -671,7 +676,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         palette,
                         'HRV',
                         _telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '—',
-                        _telemetry.hrv > 0 ? 'мс' : '',
+                        _telemetry.hrv > 0 ? '' : '',
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -681,6 +686,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         AppLocaleNotifier.pick('Покой', 'Тынч', 'Resting'),
                         _telemetry.restingHeartRate > 0 ? '${_telemetry.restingHeartRate}' : '—',
                         _telemetry.restingHeartRate > 0 ? 'bpm' : '',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _stat(
+                        palette,
+                        AppLocaleNotifier.pick('SpO2', 'Кычкылтек', 'SpO2'),
+                        _telemetry.hasBloodOxygen ? '${_telemetry.bloodOxygen}' : '—',
+                        _telemetry.hasBloodOxygen ? '%' : '',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _stat(
+                        palette,
+                        AppLocaleNotifier.pick('Дыхание', 'Дем алуу', 'Resp'),
+                        _telemetry.hasRespiratoryRate ? _telemetry.respiratoryRate.toStringAsFixed(1) : '—',
+                        _telemetry.hasRespiratoryRate ? '/мин' : '',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _stat(
+                        palette,
+                        AppLocaleNotifier.pick('Кожа', 'Тери', 'Temp'),
+                        _telemetry.hasSkinTempDeviation
+                            ? '${_telemetry.skinTempDeviation >= 0 ? '+' : ''}${_telemetry.skinTempDeviation.toStringAsFixed(1)}'
+                            : '—',
+                        _telemetry.hasSkinTempDeviation ? '°C' : '',
                       ),
                     ),
                   ],

@@ -31,7 +31,9 @@ class _CircaStressTimelineState extends State<CircaStressTimeline> {
   @override
   void didUpdateWidget(covariant CircaStressTimeline oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.stressSummary != widget.stressSummary) {
+    final oldSig = oldWidget.stressSummary.timeline.map((s) => s.id).join('|');
+    final newSig = widget.stressSummary.timeline.map((s) => s.id).join('|');
+    if (oldSig != newSig) {
       _slots = List.from(widget.stressSummary.timeline);
       _loadCustomTags();
     }

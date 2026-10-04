@@ -140,7 +140,7 @@ class MenstrualCycleEngine {
     final phase = determinePhase(currentDay, cycleLength: cycleLength, periodDuration: periodDuration);
     final skinTemp = telemetry.skinTempDeviation;
     final expectedTemp = expectedThermalDelta(currentDay, cycleLength: cycleLength);
-    final isShiftConfirmed = (skinTemp - expectedTemp).abs() < 0.45;
+    final isShiftConfirmed = telemetry.hasSkinTempDeviation && (skinTemp - expectedTemp).abs() < 0.45;
 
     // Расчет адаптивного бюджета нагрузки Strain на день
     double strainMin = 10.0;

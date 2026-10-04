@@ -171,14 +171,16 @@ class CompletedWorkout {
     if (avgPaceMinPerKm <= 0 || avgPaceMinPerKm > 60) {
       if (distanceKm > 0 && durationSeconds > 0) {
         final paceDec = (durationSeconds / 60.0) / distanceKm;
-        final pm = paceDec.toInt();
-        final ps = ((paceDec - pm) * 60).round();
+        var pm = paceDec.toInt();
+        var ps = ((paceDec - pm) * 60).round();
+        if (ps >= 60) { pm += 1; ps -= 60; }
         return "$pm'${ps.toString().padLeft(2, '0')}\" / км";
       }
       return "--'--\" / км";
     }
-    final m = avgPaceMinPerKm.toInt();
-    final s = ((avgPaceMinPerKm - m) * 60).round();
+    var m = avgPaceMinPerKm.toInt();
+    var s = ((avgPaceMinPerKm - m) * 60).round();
+    if (s >= 60) { m += 1; s -= 60; }
     return "$m'${s.toString().padLeft(2, '0')}\" / км";
   }
 

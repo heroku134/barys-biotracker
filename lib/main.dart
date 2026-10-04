@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'firebase_options.dart';
 import 'core/app_colors.dart';
 import 'core/app_language.dart';
@@ -23,6 +26,12 @@ void main() {
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       debugPrint('KALKAN FlutterError: ${details.exceptionAsString()}');
+      FirebaseCrashlytics.instance.recordFlutterError(details);
+    };
+
+    PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
     };
 
     // 1. Мгновенная инициализация локальных настроек UI
@@ -69,6 +78,8 @@ void main() {
             options: DefaultFirebaseOptions.currentPlatform,
           );
         }
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+        FirebaseAnalytics.instance.logAppOpen();
         await FcmService.init();
       } catch (e) {
         debugPrint('KALKAN Firebase deferred init note: $e');
@@ -112,6 +123,7 @@ void main() {
     });
   }, (error, stack) {
     debugPrint('KALKAN Global unhandled error: $error\n$stack');
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
   });
 }
 

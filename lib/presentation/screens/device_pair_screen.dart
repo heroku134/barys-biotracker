@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
+import '../../core/app_language.dart';
 import '../../data/ble/ute_ble_bridge.dart';
 import '../widgets/circa_band_radar.dart';
 import '../widgets/glass_card.dart';
@@ -23,6 +24,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
   bool _showAllDevices = false;
   List<DiscoveredBleDevice> _devices = [];
   StreamSubscription? _scanSub;
+  Timer? _scanStopTimer;
 
   @override
   void initState() {
@@ -51,10 +53,14 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
 
     if (!btEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: AppColors.rose,
           content: Text(
-            'Внимание: Bluetooth выключен на телефоне. Включите Bluetooth для поиска часов.',
+            AppLocaleNotifier.pick(
+              'Внимание: Bluetooth выключен на телефоне. Включите Bluetooth для поиска часов.',
+              'Bluetooth өчүк. Издөө үчүн Bluetooth күйгүзүңүз.',
+              'Bluetooth is off. Turn it on to search for the watch.',
+            ),
             style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
           ),
         ),
@@ -68,12 +74,16 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.rose,
-          content: const Text(
-            'Для поиска BLE-устройств необходимо включить службы геолокации.',
+          content: Text(
+            AppLocaleNotifier.pick(
+              'Для поиска BLE-устройств необходимо включить службы геолокации.',
+              'BLE түзмөктөрдү издөө үчүн геолокацияны күйгүзүңүз.',
+              'Enable location services to find BLE devices.',
+            ),
             style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
           ),
           action: SnackBarAction(
-            label: 'Включить',
+            label: AppLocaleNotifier.pick('Включить', 'Күйгүзүү', 'Enable'),
             textColor: Colors.white,
             onPressed: () => widget.bleBridge.openLocationSettings(),
           ),
@@ -91,12 +101,16 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: AppColors.rose,
-            content: const Text(
-              'Разрешение на Bluetooth отключено. Предоставьте доступ в настройках.',
+            content: Text(
+              AppLocaleNotifier.pick(
+                'Разрешение на Bluetooth отключено. Предоставьте доступ в настройках.',
+                'Bluetooth уруксаты өчүк. Жөндөөлөрдөн уруксат бериңиз.',
+                'Bluetooth permission is off. Grant access in Settings.',
+              ),
               style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
             ),
             action: SnackBarAction(
-              label: 'Настройки',
+              label: AppLocaleNotifier.pick('Настройки', 'Жөндөөлөр', 'Settings'),
               textColor: Colors.white,
               onPressed: () => widget.bleBridge.openAppSettings(),
             ),
@@ -105,10 +119,14 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
         return;
       } else if (reqStatus != BlePermissionStatus.granted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             backgroundColor: AppColors.rose,
             content: Text(
-              'Для поиска часов необходимо предоставить разрешение на доступ к Bluetooth.',
+              AppLocaleNotifier.pick(
+                'Для поиска часов необходимо предоставить разрешение на доступ к Bluetooth.',
+                'Саатты издөө үчүн Bluetooth уруксатын бериңиз.',
+                'Grant Bluetooth permission to search for the watch.',
+              ),
               style: TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
             ),
           ),
@@ -145,7 +163,8 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
     }
 
     // Автоматический останов анимации и нативного сканирования через 15 секунд
-    Future.delayed(const Duration(seconds: 15), () {
+    _scanStopTimer?.cancel();
+    _scanStopTimer = Timer(const Duration(seconds: 15), () {
       if (mounted && _isScanning) {
         widget.bleBridge.stopScan();
         setState(() => _isScanning = false);
@@ -181,7 +200,11 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Часы ${device.name.isNotEmpty ? device.name : "СААТ-1"} успешно подключены',
+                  AppLocaleNotifier.pick(
+                    'Часы ${device.name.isNotEmpty ? device.name : "СААТ-1"} успешно подключены',
+                    'Саат ${device.name.isNotEmpty ? device.name : "СААТ-1"} туташты',
+                    'Watch ${device.name.isNotEmpty ? device.name : "SAAT-1"} connected',
+                  ),
                   style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -200,7 +223,11 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Не удалось установить соединение. Убедитесь, что часы заряжены и находятся рядом.',
+                  AppLocaleNotifier.pick(
+                    'Не удалось установить соединение. Убедитесь, что часы заряжены и находятся рядом.',
+                    'Туташуу ишке ашпады. Сааттын кубатталганын жана жакын экенин текшериңиз.',
+                    'Could not connect. Make sure the watch is charged and nearby.',
+                  ),
                   style: const TextStyle(color: AppColors.fg, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -227,6 +254,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
   void dispose() {
     widget.bleBridge.isBluetoothEnabledNotifier.removeListener(_onBluetoothStateChanged);
     _scanSub?.cancel();
+    _scanStopTimer?.cancel();
     widget.bleBridge.stopScan();
     super.dispose();
   }
@@ -355,7 +383,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Поиск браслета',
+          AppLocaleNotifier.pick('Поиск браслета', 'Билерик издөө', 'Find band'),
           style: TextStyle(
             color: AppColors.fg,
             fontSize: 18,
@@ -384,7 +412,11 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Bluetooth выключен. Пожалуйста, включите его в настройках телефона.',
+                          AppLocaleNotifier.pick(
+                            'Bluetooth выключен. Пожалуйста, включите его в настройках телефона.',
+                            'Bluetooth өчүк. Телефондун жөндөөлөрүнөн күйгүзүңүз.',
+                            'Bluetooth is off. Please enable it in phone settings.',
+                          ),
                           style: TextStyle(color: AppColors.fg, fontSize: 12),
                         ),
                       ),
@@ -405,8 +437,8 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
 
               Text(
                 _isScanning
-                    ? 'СКАНИРОВАНИЕ РАДИОЭФИРА...'
-                    : (hasDevices ? 'НАЙДЕНЫ УСТРОЙСТВА (${_devices.length})' : 'УСТРОЙСТВА НЕ НАЙДЕНЫ'),
+                    ? AppLocaleNotifier.pick('СКАНИРОВАНИЕ РАДИОЭФИРА...', 'СКАНДОО...', 'SCANNING...')
+                    : (hasDevices ? '${AppLocaleNotifier.pick('НАЙДЕНЫ УСТРОЙСТВА', 'ТАБЫЛГАН ТҮЗМӨКТӨР', 'DEVICES FOUND')} (${_devices.length})' : AppLocaleNotifier.pick('УСТРОЙСТВА НЕ НАЙДЕНЫ', 'ТҮЗМӨКТӨР ТАБЫЛГАН ЖОК', 'NO DEVICES FOUND')),
                 style: TextStyle(
                   color: AppColors.muted,
                   fontSize: 11,
@@ -416,7 +448,11 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
               ),
               SizedBox(height: 6),
               Text(
-                'Включите часы и поднесите их близко к смартфону.',
+                AppLocaleNotifier.pick(
+                  'Включите часы и поднесите их близко к смартфону.',
+                  'Саатты күйгүзүп, смартфонго жакын алыңыз.',
+                  'Turn on the watch and bring it close to the phone.',
+                ),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: AppColors.muted,
@@ -436,9 +472,9 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                               padding: const EdgeInsets.only(bottom: 8, top: 2),
                               child: Row(
                                 children: [
-                                  const Text(
-                                    'УСТРОЙСТВА KALKAN',
-                                    style: TextStyle(
+Text(
+                                      '${AppLocaleNotifier.pick('УСТРОЙСТВА', 'ТҮЗМӨКТӨР', 'DEVICES')} KALKAN',
+                                      style: TextStyle(
                                       color: AppColors.muted,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w800,
@@ -472,8 +508,8 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                                     ),
                                     label: Text(
                                       _showAllDevices
-                                          ? 'Скрыть сторонние устройства'
-                                          : 'Показать все устройства (${otherDevices.length})',
+                                          ? AppLocaleNotifier.pick('Скрыть сторонние устройства', 'Башка түзмөктөрдү жашыруу', 'Hide other devices')
+                                          : '${AppLocaleNotifier.pick('Показать все устройства', 'Бардык түзмөктөрдү көрсөтүү', 'Show all devices')} (${otherDevices.length})',
                                       style: const TextStyle(
                                         color: AppColors.muted,
                                         fontSize: 11,
@@ -488,8 +524,8 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                                 padding: const EdgeInsets.only(bottom: 8, top: 6),
                                 child: Row(
                                   children: [
-                                    const Text(
-                                      'ДРУГИЕ BLE УСТРОЙСТВА',
+                                    Text(
+                                      AppLocaleNotifier.pick('ДРУГИЕ BLE УСТРОЙСТВА', 'БАШКА BLE ТҮЗМӨКТӨР', 'OTHER BLE DEVICES'),
                                       style: TextStyle(
                                         color: AppColors.muted,
                                         fontSize: 11,
@@ -516,8 +552,8 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                     : Center(
                         child: Text(
                           _isScanning
-                              ? 'Идет поиск устройств KALKAN по Bluetooth...'
-                              : 'В радиусе действия устройства не обнаружены.\nНажмите «Искать снова».',
+                              ? AppLocaleNotifier.pick('Идет поиск устройств KALKAN по Bluetooth...', 'KALKAN түзмөктөрү Bluetooth аркылуу изделүүдө...', 'Searching for KALKAN devices...')
+                              : AppLocaleNotifier.pick('В радиусе действия устройства не обнаружены.\nНажмите «Искать снова».', 'Жакын жерде түзмөк табылган жок.\n«Кайра издөө» дегенди басыңыз.', 'No devices found nearby.\nTap "Search again".'),
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: AppColors.muted, fontSize: 12, height: 1.5),
                         ),
@@ -533,7 +569,7 @@ class _DevicePairScreenState extends State<DevicePairScreen> {
                       onPressed: _isScanning ? null : _checkAndStart,
                       icon: Icon(Icons.refresh, size: 18),
                       label: Text(
-                        _isScanning ? 'ПОИСК В ЭФИРЕ...' : 'ИСКАТЬ СНОВА',
+                        _isScanning ? AppLocaleNotifier.pick('ПОИСК В ЭФИРЕ...', 'ИЗДӨӨ...', 'SEARCHING...') : AppLocaleNotifier.pick('ИСКАТЬ СНОВА', 'КАЙРА ИЗДӨӨ', 'SEARCH AGAIN'),
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5),
                       ),
                       style: ElevatedButton.styleFrom(

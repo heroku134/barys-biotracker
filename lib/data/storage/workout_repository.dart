@@ -32,25 +32,23 @@ class WorkoutRepository {
     }
 
     if (listJson != null && listJson.isNotEmpty) {
-      try {
-        final parsed = listJson
-            .map((s) => CompletedWorkout.fromJson(jsonDecode(s) as Map<String, dynamic>))
-            .where((w) {
-              // Автоматическая фильтрация тестовых или устаревших фиктивных сессий
-              final id = w.id.toLowerCase();
-              final extId = (w.externalId ?? '').toLowerCase();
-              if (id.startsWith('ext_strava_') ||
-                  id.startsWith('hk_strava_') ||
-                  id.startsWith('ext_test_') ||
-                  extId.startsWith('hk_strava_') ||
-                  extId.startsWith('ext_strava_')) {
-                return false;
-              }
-              return true;
-            })
-            .toList();
-        return parsed;
-      } catch (_) {}
+      final parsed = <CompletedWorkout>[];
+      for (final s in listJson) {
+        try {
+          final w = CompletedWorkout.fromJson(jsonDecode(s) as Map<String, dynamic>);
+          final id = w.id.toLowerCase();
+          final extId = (w.externalId ?? '').toLowerCase();
+          if (id.startsWith('ext_strava_') ||
+              id.startsWith('hk_strava_') ||
+              id.startsWith('ext_test_') ||
+              extId.startsWith('hk_strava_') ||
+              extId.startsWith('ext_strava_')) {
+            continue;
+          }
+          parsed.add(w);
+        } catch (_) {}
+      }
+      return parsed;
     }
     return [];
   }
@@ -81,5 +79,26 @@ class WorkoutRepository {
         await prefs.remove(k);
       }
     }
+  }
+
+  /// Суммарные секунды в 5 пульсовых зонах за текущую неделю (с понедельника)
+  static List<int> weeklyZoneSecondsFrom(List<CompletedWorkout> workouts, {DateTime? now}) {
+    final n = now ?? DateTime.now();
+    final weekStart = n.subtract(Duration(days: n.weekday - 1));
+    final from = DateTime(weekStart.year, weekStart.month, weekStart.day);
+    final sums = [0, 0, 0, 0, 0];
+    for (final w in workouts) {
+      if (w.startedAt.isBefore(from)) continue;
+      final z = w.hrZoneSeconds;
+      for (var i = 0; i < 5 && i < z.length; i++) {
+        sums[i] += z[i];
+      }
+    }
+    return sums;
+  }
+
+  static Future<List<int>> weeklyZoneSeconds({DateTime? now}) async {
+    final workouts = await loadWorkouts();
+    return weeklyZoneSecondsFrom(workouts, now: now);
   }
 }

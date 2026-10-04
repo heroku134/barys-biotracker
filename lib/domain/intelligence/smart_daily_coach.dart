@@ -62,7 +62,7 @@ class SmartDailyCoach {
     }
 
     // 2. Проактивный Check-in: ранний маркер ОРВИ/воспаления (HRV падает, температура кожи растет)
-    final isIllnessRisk = telemetry.hrv < (base.meanHrv * 0.75) && telemetry.skinTempDeviation >= 0.4;
+    final isIllnessRisk = telemetry.hasHrv && telemetry.hrv < (base.meanHrv * 0.75) && telemetry.skinTempDeviation >= 0.4;
     if (isIllnessRisk) {
       return CoachAdvice(
         title: 'Физиологический стресс / Риск ОРВИ',

@@ -381,7 +381,6 @@ class WorkoutSummaryScreen extends StatelessWidget {
       AppColors.rose,       // Z5 Пик (#C45C5C)
     ];
     final labels = ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'];
-    final total = totalSeconds > 0 ? totalSeconds : 1;
 
     return Column(
       children: [
@@ -389,8 +388,13 @@ class WorkoutSummaryScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
           child: Row(
             children: List.generate(5, (i) {
-              final zSec = (i < zones.length && zones[i] > 0) ? zones[i] : (total * (0.1 + (i == 1 ? 0.3 : 0.15))).toInt();
-              final flex = (zSec * 100 ~/ total).clamp(5, 100);
+              final zSec = (i < zones.length) ? zones[i] : 0;
+              final int flex;
+              if (totalSeconds <= 0) {
+                flex = 20;
+              } else {
+                flex = ((zSec * 100) / totalSeconds).round().clamp(0, 100).toInt();
+              }
               return Expanded(
                 flex: flex,
                 child: Container(

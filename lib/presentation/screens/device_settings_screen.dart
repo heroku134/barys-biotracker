@@ -10,7 +10,7 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/kalkan_chrome.dart';
 import 'device_pair_screen.dart';
-import 'firmware_update_screen.dart';
+
 
 class DeviceSettingsScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -23,12 +23,13 @@ class DeviceSettingsScreen extends StatefulWidget {
 
 class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   bool _antiLoss = true;
-  bool _disconnectAlert = true;
-  bool _smartAlarm = true;
-  bool _hydrationReminder = true;
+  bool _callAlert = true;
+  bool _notificationAccessGranted = true;
   bool _isMeasuringHr = false;
   int _hrIntervalMinutes = 15;
   bool _continuousHr = false;
+  bool _smartAlarm = false;
+  bool _hydrationReminder = false;
 
   @override
   void initState() {
@@ -39,13 +40,39 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   Future<void> _loadHrSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final access = await widget.bleBridge.isNotificationListenerGranted();
       if (mounted) {
         setState(() {
           _hrIntervalMinutes = prefs.getInt('kalkan_hr_interval_minutes') ?? 15;
           _continuousHr = prefs.getBool('kalkan_hr_continuous_enabled') ?? false;
+          _callAlert = prefs.getBool('kalkan_call_remind_enabled') ?? true;
+          _antiLoss = prefs.getBool('kalkan_disconnect_alert_enabled') ?? true;
+          _smartAlarm = prefs.getBool('kalkan_smart_alarm_enabled') ?? false;
+          _hydrationReminder = prefs.getBool('kalkan_hydration_reminder_enabled') ?? false;
+          _notificationAccessGranted = access;
         });
       }
     } catch (_) {}
+  }
+
+  Future<void> _toggleAntiLoss(bool value) async {
+    setState(() => _antiLoss = value);
+    await widget.bleBridge.setDisconnectRemind(value);
+  }
+
+  Future<void> _toggleSmartAlarm(bool value) async {
+    setState(() => _smartAlarm = value);
+    await widget.bleBridge.setSmartAlarm(value);
+  }
+
+  Future<void> _toggleHydrationReminder(bool value) async {
+    setState(() => _hydrationReminder = value);
+    await widget.bleBridge.setHydrationReminder(value);
+  }
+
+  Future<void> _toggleCallAlert(bool value) async {
+    setState(() => _callAlert = value);
+    await widget.bleBridge.setCallRemindEnable(value);
   }
 
   Future<void> _updateHrInterval(int minutes) async {
@@ -341,46 +368,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 16),
-                  Divider(color: AppColors.line, height: 1),
-                  SizedBox(height: 12),
-                  InkWell(
-                    onTap: () => FirmwareUpdateScreen.open(context, watchBattery: telemetry.batteryLevel),
-                    borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Text(tr('Прошивка: v1.2.4', 'Прошивка: v1.2.4'), style: TextStyle(color: palette.secondary, fontSize: 11)),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.sage.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
-                                  border: Border.all(color: AppColors.sage.withValues(alpha: 0.4), width: KalkanUi.hairline),
-                                ),
-                                child: Text(
-                                  tr('Актуальна', 'Акыркы'),
-                                  style: const TextStyle(color: AppColors.sage, fontSize: 11, fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Text(tr('Сведения', 'Маалымат'), style: TextStyle(color: palette.secondary, fontSize: 12, fontWeight: FontWeight.w500)),
-                              const SizedBox(width: 4),
-                              Icon(Icons.arrow_forward_ios, size: 9, color: palette.secondary),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  
                 ],
               ),
             ),
@@ -703,7 +691,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             ),
             const SizedBox(height: 10),
 
-            // Антипотеря (Anti-loss)
+            // Антипотеря (Anti-loss & Disconnect alert)
             KalkanCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -713,12 +701,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr('Антипотеря', 'Жоготууга каршы'),
+                          tr('Антипотеря и разрыв связи', 'Жоготууга каршы жана үзүлүү эскертүүсү', 'Anti-loss & disconnect alert'),
                           style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tr('Сигнал, если браслет дальше 10 метров', 'Билерик 10 метрден алыс болсо сигнал'),
+                          tr('Вибрация браслета при потере Bluetooth-связи', 'Bluetooth үзүлгөндө билерик титирейт', 'Band vibration upon Bluetooth disconnect'),
                           style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                         ),
                       ],
@@ -727,14 +715,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   Switch(
                     value: _antiLoss,
                     activeThumbColor: AppColors.sage,
-                    onChanged: (val) => setState(() => _antiLoss = val),
+                    onChanged: _toggleAntiLoss,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
 
-            // Оповещение об отключении BLE
+            // Умный будильник (Smart alarm)
             KalkanCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -744,43 +732,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr('Оповещение об отключении', 'Үзүлгөндө эскертме'),
+                          tr('Умный будильник', 'Акылдуу ойготкуч', 'Smart alarm'),
                           style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tr('Пуш при разрыве Bluetooth', 'Bluetooth үзүлгөндө билдирме'),
-                          style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: _disconnectAlert,
-                    activeThumbColor: AppColors.sage,
-                    onChanged: (val) => setState(() => _disconnectAlert = val),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Умный будильник
-            KalkanCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tr('Умный будильник', 'Акылдуу ойготкуч'),
-                          style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          tr('Вибрация в лёгкой фазе сна', 'Жеңил уйку фазасында титирөө'),
+                          tr('Бесшумная тактильная вибрация в 07:00 для мягкого пробуждения', 'Жумшак ойгонуу үчүн саат 07:00дө үнсүз титирөө', 'Silent haptic vibration at 07:00 for gentle wake-up'),
                           style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                         ),
                       ],
@@ -789,14 +746,14 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   Switch(
                     value: _smartAlarm,
                     activeThumbColor: AppColors.sage,
-                    onChanged: (val) => setState(() => _smartAlarm = val),
+                    onChanged: _toggleSmartAlarm,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
 
-            // Напоминание о воде
+            // Напоминание о воде (Hydration reminder)
             KalkanCard(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -806,12 +763,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr('Напоминание пить воду', 'Суу ичүү эскертмеси'),
+                          tr('Напоминание о воде', 'Суу ичүүнү эскертүү', 'Hydration reminder'),
                           style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tr('Вибрация каждые 2 часа', 'Ар 2 саатта титирөө'),
+                          tr('Мягкий вибросигнал каждые 2 часа с 09:00 до 21:00', '09:00дөн 21:00гө чейин ар 2 саатта жумшак титирөө', 'Gentle haptic vibration every 2 hours (09:00–21:00)'),
                           style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                         ),
                       ],
@@ -820,12 +777,81 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   Switch(
                     value: _hydrationReminder,
                     activeThumbColor: AppColors.sage,
-                    onChanged: (val) => setState(() => _hydrationReminder = val),
+                    onChanged: _toggleHydrationReminder,
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
+
+            // Входящие звонки и сообщения (Whoop haptics)
+            KalkanCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tr('Входящие звонки и пуши', 'Чалуулар жана билдирүүлөр', 'Calls & notifications'),
+                              style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              tr('Вибрация браслета при звонках и сообщениях', 'Чалуу жана SMS келгенде билерик титирейт', 'Band vibration for calls & messages'),
+                              style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _callAlert,
+                        activeThumbColor: AppColors.sage,
+                        onChanged: _toggleCallAlert,
+                      ),
+                    ],
+                  ),
+                  if (!_notificationAccessGranted && _callAlert) ...[
+                    const SizedBox(height: 10),
+                    InkWell(
+                      onTap: () async {
+                        await widget.bleBridge.openNotificationListenerSettings();
+                        await Future.delayed(const Duration(seconds: 1));
+                        final acc = await widget.bleBridge.isNotificationListenerGranted();
+                        if (mounted) setState(() => _notificationAccessGranted = acc);
+                      },
+                      borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.amber.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
+                          border: Border.all(color: AppColors.amber.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.notifications_active, color: AppColors.amber, size: 16),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                tr('Разрешить доступ к уведомлениям', 'Билдирүүлөргө уруксат берүү', 'Enable notification access in settings'),
+                                style: const TextStyle(color: AppColors.amber, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right, color: AppColors.amber, size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
 
             // Ручные действия: Замер пульса и Синхронизация времени
             Row(

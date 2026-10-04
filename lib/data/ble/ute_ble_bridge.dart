@@ -4,6 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/models/telemetry.dart';
+import '../../domain/models/user_profile.dart';
+import '../../domain/models/workout_session.dart';
+import '../storage/user_profile_repository.dart';
+import '../storage/workout_repository.dart';
 
 /// Состояния конечного автомата подключения BLE (BLE-02)
 enum BleConnectionState {
@@ -54,8 +58,23 @@ class DiscoveredBleDevice {
   int get hashCode => address.hashCode;
 }
 
+/// Одна точка пульсовой истории за день (реальные данные с часов)
+class HeartRateSample {
+  final DateTime timestamp;
+  final int bpm;
+
+  const HeartRateSample({required this.timestamp, required this.bpm});
+}
+
 /// Мост к нативному BLE SDK (UTE Nadal Android AAR + iOS CoreBluetooth Framework)
 class UteBleBridge {
+  static UteBleBridge? _instance;
+  static UteBleBridge get instance => _instance ??= UteBleBridge._internal();
+
+  factory UteBleBridge() => instance;
+
+  UteBleBridge._internal();
+
   static const MethodChannel _methodChannel = MethodChannel('com.nadal.ble/methods');
   static const EventChannel _eventChannel = EventChannel('com.nadal.ble/telemetry');
   static const EventChannel _scanChannel = EventChannel('com.nadal.ble/scan');
@@ -101,6 +120,8 @@ class UteBleBridge {
   BleTelemetry get currentTelemetry {
     return _realTelemetry ?? BleTelemetry.empty();
   }
+
+  bool get isConnected => _realTelemetry?.isConnected == true && _connectionState == BleConnectionState.ready;
 
   Future<void> init() async {
     try {
@@ -148,6 +169,7 @@ class UteBleBridge {
               yesterdayStrain: _parseDouble(event['yesterdayStrain'], prev?.yesterdayStrain ?? 0.0),
               zoneMinutes: _parseZoneMinutes(event['zoneMinutes']) ?? prev?.zoneMinutes ?? const [0, 0, 0, 0, 0],
               currentStressScore: _parseInt(event['currentStressScore'], prev?.currentStressScore ?? 0),
+              bloodOxygen: _parseInt(event['bloodOxygen'], prev?.bloodOxygen ?? 0),
               isAncsAuthorized: _parseBool(event['isAncsAuthorized'], prev?.isAncsAuthorized ?? true),
             );
 
@@ -374,7 +396,7 @@ class UteBleBridge {
         return true;
       }
       // Подключены к другому устройству: сначала разрываем старое соединение
-      await disconnect(forget: false);
+      await disconnect(forget: false, markManual: false);
     }
 
     // Если подключение уже в процессе — ожидаем завершения текущего
@@ -417,6 +439,7 @@ class UteBleBridge {
       if (success) {
         _setConnectionState(BleConnectionState.ready);
         _reconnectAttempts = 0;
+        unawaited(syncUserProfile());
         try {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('kalkan_last_device_mac', trimmedMac);
@@ -481,14 +504,18 @@ class UteBleBridge {
     }
   }
 
-  Future<void> disconnect({bool forget = false}) async {
-    _isManuallyDisconnected = true;
+  Future<void> disconnect({bool forget = false, bool markManual = true}) async {
+    if (markManual) {
+      _isManuallyDisconnected = true;
+    }
     _backoffTimer?.cancel();
     _backoffTimer = null;
     _reconnectAttempts = 0;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('kalkan_is_manually_disconnected', true);
+      if (markManual) {
+        await prefs.setBool('kalkan_is_manually_disconnected', true);
+      }
       if (forget) {
         await prefs.remove('kalkan_last_device_mac');
       }
@@ -534,6 +561,206 @@ class UteBleBridge {
       await prefs.setBool('kalkan_hr_continuous_enabled', continuous);
     } catch (e) {
       debugPrint('UteBleBridge configureHeartRateMonitoring error: $e');
+    }
+  }
+
+  Future<void> setDisconnectRemind(bool enable) async {
+    try {
+      await _methodChannel.invokeMethod('setDisconnectRemind', {'enable': enable});
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('kalkan_disconnect_alert_enabled', enable);
+    } catch (e) {
+      debugPrint('UteBleBridge setDisconnectRemind error: $e');
+    }
+  }
+
+  Future<void> setSmartAlarm(bool enable, {int hour = 7, int minute = 0}) async {
+    try {
+      await _methodChannel.invokeMethod('setSmartAlarm', {
+        'enable': enable,
+        'hour': hour,
+        'minute': minute,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('kalkan_smart_alarm_enabled', enable);
+    } catch (e) {
+      debugPrint('UteBleBridge setSmartAlarm error: $e');
+    }
+  }
+
+  Future<void> setHydrationReminder(bool enable, {int intervalMinutes = 120}) async {
+    try {
+      await _methodChannel.invokeMethod('setHydrationReminder', {
+        'enable': enable,
+        'intervalMinutes': intervalMinutes,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('kalkan_hydration_reminder_enabled', enable);
+    } catch (e) {
+      debugPrint('UteBleBridge setHydrationReminder error: $e');
+    }
+  }
+
+  Future<void> clearAccountData() async {
+    try {
+      await _methodChannel.invokeMethod('clearAccountData');
+    } catch (e) {
+      debugPrint('UteBleBridge clearAccountData error: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> syncWorkoutHistory() async {
+    try {
+      final res = await _methodChannel.invokeListMethod<dynamic>('getWorkoutHistory');
+      if (res != null && res.isNotEmpty) {
+        final list = <Map<String, dynamic>>[];
+        for (final item in res) {
+          if (item is Map) {
+            final m = Map<String, dynamic>.from(item);
+            list.add(m);
+            await _persistWatchWorkout(m);
+          }
+        }
+        return list;
+      }
+    } catch (e) {
+      debugPrint('UteBleBridge syncWorkoutHistory error: $e');
+    }
+    return [];
+  }
+
+  Future<bool> pullNightAndDay() async {
+    try {
+      final res = await _methodChannel.invokeMethod<bool>('pullNightAndDay');
+      return res ?? false;
+    } catch (e) {
+      debugPrint('UteBleBridge pullNightAndDay error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> syncUserProfile([UserProfile? profile]) async {
+    try {
+      final p = profile ?? UserProfileRepository.profileNotifier.value;
+      final birthYear = p.birthYear > 1900 ? p.birthYear : 1996;
+      final age = (DateTime.now().year - birthYear).clamp(10, 100);
+      final res = await _methodChannel.invokeMethod<bool>('setUserProfile', {
+        'heightCm': p.heightCm.round(),
+        'weightKg': p.weightKg.round(),
+        'age': age,
+        'gender': p.gender.name,
+        'stepGoal': p.stepGoal,
+        'calorieGoal': p.calorieGoal,
+      });
+      return res ?? false;
+    } catch (e) {
+      debugPrint('UteBleBridge syncUserProfile error: $e');
+      return false;
+    }
+  }
+
+  Future<void> _persistWatchWorkout(Map<String, dynamic> data) async {
+    try {
+      final rawStart = data['startTime']?.toString() ?? '';
+      DateTime startedAt;
+      final asSec = int.tryParse(rawStart);
+      if (asSec != null && asSec > 1000000) {
+        startedAt = DateTime.fromMillisecondsSinceEpoch(asSec * 1000);
+      } else {
+        startedAt = DateTime.tryParse(rawStart) ?? DateTime.now();
+      }
+
+      final durationSec = (data['duration'] as num?)?.toInt() ?? 0;
+      if (durationSec < 60) return; // Игнорируем случайные включения короче 1 минуты
+
+      final id = 'watch_${startedAt.millisecondsSinceEpoch}';
+      final existing = await WorkoutRepository.loadWorkouts();
+      if (existing.any((w) => w.id == id || (w.startedAt.difference(startedAt).inMinutes.abs() < 2 && w.externalSource == 'watch'))) {
+        return;
+      }
+
+      final rawSportsType = (data['sportsType'] as num?)?.toInt() ?? 0;
+      final sport = _mapUteSportType(rawSportsType);
+      final calories = (data['calories'] as num?)?.toInt() ?? 0;
+      final distanceM = (data['distance'] as num?)?.toDouble() ?? 0.0;
+      final steps = (data['steps'] as num?)?.toInt() ?? 0;
+      final avgHr = (data['heart'] as num?)?.toInt() ?? 0;
+      final maxHr = (data['maxHeart'] as num?)?.toInt() ?? 0;
+
+      double strain = 0.0;
+      if (avgHr > 60 && durationSec > 0) {
+        strain = ((avgHr - 60) / 130.0 * (durationSec / 3600.0) * 12.0).clamp(1.0, 19.5);
+        strain = double.parse(strain.toStringAsFixed(1));
+      }
+
+      final workout = CompletedWorkout(
+        id: id,
+        sport: sport,
+        startedAt: startedAt,
+        durationSeconds: durationSec,
+        calories: calories,
+        distanceKm: distanceM > 0 ? (distanceM / 1000.0) : 0.0,
+        avgHr: avgHr,
+        maxHr: maxHr,
+        strain: strain,
+        xpEarned: (durationSec ~/ 60) * 10,
+        steps: steps,
+        externalSource: 'watch',
+        sourceAppName: 'KALKAN СААТ-1',
+      );
+
+      await WorkoutRepository.saveWorkout(workout);
+    } catch (e) {
+      debugPrint('UteBleBridge _persistWatchWorkout error: $e');
+    }
+  }
+
+  SportType _mapUteSportType(int type) {
+    switch (type) {
+      case 1:
+        return SportType.walkOutdoor;
+      case 2:
+        return SportType.cycling;
+      case 3:
+        return SportType.swimming;
+      case 4:
+        return SportType.runIndoor;
+      case 5:
+        return SportType.strength;
+      case 6:
+        return SportType.hiit;
+      case 7:
+        return SportType.yoga;
+      default:
+        return SportType.runOutdoor;
+    }
+  }
+
+  Future<void> setCallRemindEnable(bool enable) async {
+    try {
+      await _methodChannel.invokeMethod('setCallRemindEnable', {'enable': enable});
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('kalkan_call_remind_enabled', enable);
+    } catch (e) {
+      debugPrint('UteBleBridge setCallRemindEnable error: $e');
+    }
+  }
+
+  Future<bool> isNotificationListenerGranted() async {
+    try {
+      final res = await _methodChannel.invokeMethod<bool>('isNotificationListenerGranted');
+      return res ?? false;
+    } catch (e) {
+      debugPrint('UteBleBridge isNotificationListenerGranted error: $e');
+      return false;
+    }
+  }
+
+  Future<void> openNotificationListenerSettings() async {
+    try {
+      await _methodChannel.invokeMethod('openNotificationListenerSettings');
+    } catch (e) {
+      debugPrint('UteBleBridge openNotificationListenerSettings error: $e');
     }
   }
 
@@ -634,6 +861,32 @@ class UteBleBridge {
       debugPrint('UteBleBridge triggerHeartRateMeasurement error: $e');
     }
   }
+
+  /// Выгружает поминутную пульсовую историю за последние 24 часа с часов (если подключены).
+  Future<List<HeartRateSample>> fetchHeartRateHistory() async {
+    try {
+      final raw = await _methodChannel.invokeMethod<List<dynamic>>('getHeartRateHistory');
+      if (raw == null) return const [];
+      final out = <HeartRateSample>[];
+      for (final e in raw) {
+        if (e is Map) {
+          final t = _parseInt(e['t']);
+          final bpm = _parseInt(e['bpm']);
+          if (t > 0 && bpm > 0) {
+            out.add(HeartRateSample(
+              timestamp: DateTime.fromMillisecondsSinceEpoch(t),
+              bpm: bpm,
+            ));
+          }
+        }
+      }
+      out.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      return out;
+    } catch (e) {
+      debugPrint('UteBleBridge fetchHeartRateHistory error: $e');
+      return const [];
+    }
+  }
   static bool _parseBool(dynamic val, [bool fallback = false]) {
     if (val == null) return fallback;
     if (val is bool) return val;
@@ -661,7 +914,19 @@ class UteBleBridge {
 
   static List<int>? _parseZoneMinutes(dynamic raw) {
     if (raw is! List) return null;
-    final out = raw.map((e) => (e as num).round()).toList();
+    final out = <int>[];
+    for (final e in raw) {
+      final int? n;
+      if (e is num) {
+        n = e.round();
+      } else if (e is String) {
+        n = int.tryParse(e.trim());
+      } else {
+        n = null;
+      }
+      if (n == null) return null;
+      out.add(n);
+    }
     if (out.length < 5) return null;
     return out.take(5).toList();
   }

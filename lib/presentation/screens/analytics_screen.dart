@@ -10,10 +10,13 @@ import '../../data/history/biometrics_history_repository.dart';
 import '../../domain/intelligence/healthspan_engine.dart';
 import '../../domain/intelligence/sleep_engine.dart';
 import '../../domain/intelligence/stress_engine.dart';
+import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import '../../data/storage/calibration_store.dart';
 import '../../data/storage/day_snapshot_repository.dart';
+import '../../data/storage/local_day_strain.dart';
+import '../../data/storage/workout_repository.dart';
 import '../widgets/circa_healthspan_card.dart';
 import '../widgets/circa_hypnogram.dart';
 import '../widgets/circa_live_pulse_card.dart';
@@ -39,6 +42,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   PersonalBaseline _baseline = CalibrationStore.baselineNotifier.value;
   List<DaySnapshot> _week = const [];
   List<DaySnapshot> _snapshots = const [];
+  List<int> _weeklyZones = const [0, 0, 0, 0, 0];
+  List<HeartRateSample> _hrHistory = const [];
   StreamSubscription<BleTelemetry>? _telemetrySub;
 
   @override
@@ -46,6 +51,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     super.initState();
     CalibrationStore.baselineNotifier.addListener(_onBaselineChanged);
     _loadData();
+    _loadHeartRateHistory();
     _telemetrySub = widget.bleBridge.telemetryStream.listen((data) {
       if (!mounted) return;
       _onTelemetryReceived(data);
@@ -103,12 +109,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         break;
     }
     final snaps = await DaySnapshotRepository.lastDays(days);
+    final weeklyZones = await WorkoutRepository.weeklyZoneSeconds();
 
     if (mounted) {
       setState(() {
         _week = week;
         _snapshots = snaps;
+        _weeklyZones = weeklyZones;
       });
+    }
+  }
+
+  Future<void> _loadHeartRateHistory() async {
+    final history = await widget.bleBridge.fetchHeartRateHistory();
+    if (mounted && history.isNotEmpty) {
+      setState(() => _hrHistory = history);
     }
   }
 
@@ -126,23 +141,22 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   List<HistoricalPoint> _getHrPoints(BleTelemetry telemetry) {
     if (_selectedPeriod == 0) {
-      // 24-часовой суточный циркадный профиль пульса
-      final curHr = telemetry.heartRate > 0
-          ? telemetry.heartRate
-          : (telemetry.restingHeartRate > 0 ? telemetry.restingHeartRate : 70);
-      final rhr = telemetry.restingHeartRate > 0
-          ? telemetry.restingHeartRate
-          : (curHr > 10 ? curHr - 8 : 62);
-      final nowHour = DateTime.now().hour;
-      final peakHr = (curHr + 14).clamp(75, 160);
-
-      return [
-        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: 0, minute: 0), value: rhr.toDouble(), label: '00:00'),
-        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: 6, minute: 0), value: (rhr - 3).toDouble(), label: '06:00'),
-        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: 12, minute: 0), value: peakHr.toDouble(), label: '12:00'),
-        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: 18, minute: 0), value: (rhr + 5).toDouble(), label: '18:00'),
-        HistoricalPoint(timestamp: DateTime.now().copyWith(hour: nowHour), value: curHr.toDouble(), label: 'Сейчас'),
-      ];
+      if (_hrHistory.isEmpty) return const [];
+      final byHour = <int, List<int>>{};
+      for (final s in _hrHistory) {
+        final local = s.timestamp.toLocal();
+        byHour.putIfAbsent(local.hour, () => []).add(s.bpm);
+      }
+      final pts = byHour.entries.map((e) {
+        final avg = e.value.reduce((a, b) => a + b) / e.value.length;
+        return HistoricalPoint(
+          timestamp: DateTime.now().copyWith(hour: e.key, minute: 0),
+          value: avg,
+          label: '${e.key.toString().padLeft(2, '0')}:00',
+        );
+      }).toList();
+      pts.sort((a, b) => a.timestamp.hour.compareTo(b.timestamp.hour));
+      return pts;
     }
 
     final raw = [
@@ -181,6 +195,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final telemetry = widget.bleBridge.currentTelemetry;
+    final dayStrain = telemetry.currentDayStrain > 0
+        ? telemetry.currentDayStrain
+        : (StrainEngine.calculateStrainFromZones(telemetry.zoneMinutes) +
+            LocalDayStrain.current());
     final sleepAnalysis = SleepEngine.calculate(
       telemetry: telemetry,
       baseline: _baseline,
@@ -196,8 +214,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
     final healthspan = HealthspanEngine.calculate(
       restingHeartRate: telemetry.restingHeartRate,
-      weeklyZone2Minutes: 160,
-      weeklyZone5Minutes: 24,
+      weeklyZone2Minutes: _weeklyZones.length > 1 ? _weeklyZones[1] ~/ 60 : 0,
+      weeklyZone5Minutes: _weeklyZones.length > 4 ? _weeklyZones[4] ~/ 60 : 0,
       sleepConsistency: telemetry.sleepConsistency,
     );
 
@@ -234,8 +252,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ),
                 MetricDial(
                   label: AppStrings.tr('home_strain', language),
-                  value: (telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 0).toStringAsFixed(1),
-                  progress: ((telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 0) / 21).clamp(0.0, 1.0),
+                  value: dayStrain.toStringAsFixed(1),
+                  progress: (dayStrain / 21).clamp(0.0, 1.0),
                   color: AppColors.strainBlue,
                   size: 88,
                 ),

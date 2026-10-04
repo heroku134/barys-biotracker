@@ -62,6 +62,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   private var isOffWrist: Bool = false
   private var skinTempDeviation: Double = 0.0
   private var currentRespiratoryRate: Double = 0.0
+  private var currentBloodOxygen: Int = 0
   private var isAncsAuthorized: Bool = true
   private var findDeviceAutoStopWorkItem: DispatchWorkItem?
 
@@ -130,6 +131,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     if let hyp = cached["sleepHypnogram"] as? [[String: Any]], !hyp.isEmpty { currentHypnogram = hyp }
     if let sc = cached["currentStressScore"] as? Int, sc > 0 { currentStressScore = sc }
     if let sk = cached["skinTempDeviation"] as? Double { skinTempDeviation = sk }
+    if let oxy = cached["bloodOxygen"] as? Int, oxy > 0 { currentBloodOxygen = oxy }
     if let rr = cached["respiratoryRate"] as? Double, rr > 0 {
       currentRespiratoryRate = rr
     } else if currentRhr > 0 {
@@ -147,6 +149,18 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     let hrvAdjustment = (clampedHrv - 50.0) * 0.03
     let derived = min(22.0, max(11.0, baseRr - hrvAdjustment))
     return round(derived * 10.0) / 10.0
+  }
+
+  private func timezoneParts(totalOffsetSec: Int) -> (timeZone: Int, minuteOffset: Int) {
+    let totalMinutes = totalOffsetSec / 60
+    let timeZone: Int
+    if totalMinutes >= 0 {
+      timeZone = totalMinutes / 60
+    } else {
+      timeZone = -(((-totalMinutes) + 59) / 60)
+    }
+    let minuteOffset = abs(totalMinutes - timeZone * 60)
+    return (timeZone, minuteOffset)
   }
 
   private func runWhenSdkReady(_ action: @escaping () -> Void) {
@@ -462,6 +476,29 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     device.setAutoHeartRateInterval(interval) { _ in }
     device.setContinueMeasureHeartRateSwitch(continuous) { _, _ in }
     device.setProfessionalSleep(true) { _, _ in }
+    device.setPeriodSpo2Enable(true) { _, _ in }
+    device.setPeriodSpo2EnableInterval(15) { _ in }
+
+    if UserDefaults.standard.bool(forKey: "kalkan_smart_alarm_enabled") {
+      let clock = UTEModelClock()
+      clock.index = 1
+      clock.enable = true
+      clock.timeHour = 7
+      clock.timeMin = 0
+      clock.cycle = 127
+      clock.name = "Smart Alarm"
+      device.setAlarmArrayModel([clock]) { _ in }
+    }
+    if UserDefaults.standard.bool(forKey: "kalkan_hydration_reminder_enabled") {
+      let model = UTEModelWaterClock()
+      model.status = 1
+      model.startHH = 9
+      model.startMM = 0
+      model.endHH = 21
+      model.endMM = 0
+      model.cycle = 120
+      device.setWaterClock(model) { _ in }
+    }
   }
 
   func findDevice(enable: Bool = true, result: @escaping FlutterResult) {
@@ -497,7 +534,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       return
     }
     // Do NOT enable continuous measurement switch here! Measure on-demand optical HRM cleanly.
-    device.click(.HRM) { [weak self] code in
+    device.clickMeasurementType(.HRM) { [weak self] code in
       guard let self = self else { return }
       if self.sdkOk(Int(code)) {
         result(true)
@@ -520,15 +557,191 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       return
     }
     let seconds = Int(Date().timeIntervalSince1970)
-    let totalOffsetSec = TimeZone.current.secondsFromGMT()
-    let timeZone = totalOffsetSec / 3600
-    let minuteOffset = (abs(totalOffsetSec) % 3600) / 60
-    device.setTimeClock(seconds, timeZone: timeZone, minuteOffset: minuteOffset) { [weak self] code, _ in
+    let parts = timezoneParts(totalOffsetSec: TimeZone.current.secondsFromGMT())
+    device.setTimeDisplay(1, timeType: 2) { _, _ in }
+    device.setTimeClock(seconds, timeZone: parts.timeZone, minuteOffset: parts.minuteOffset) { [weak self] code, _ in
       guard let self = self else { return }
       if self.sdkOk(Int(code)) {
         result(true)
       } else {
         result(FlutterError(code: "SYNC_TIME_FAILED", message: "setTimeClock failed with code \(code)", details: nil))
+      }
+    }
+  }
+
+  func getHeartRateHistory(result: @escaping FlutterResult) {
+    guard isConnected else {
+      result([])
+      return
+    }
+    let now = Int(Date().timeIntervalSince1970)
+    let start = now - 24 * 3600
+    device.getSampleFrameListNew(start, endTime: now) { [weak self] frameCount, errorCode, _ in
+      guard let self = self, self.sdkOk(errorCode), frameCount > 0 else {
+        result([])
+        return
+      }
+      var samples: [[String: Any]] = []
+      let group = DispatchGroup()
+      for idx in 0..<frameCount {
+        group.enter()
+        self.device.getSampleDetailData(start, endTime: now, index: idx) { model, _, _ in
+          if let m = model {
+            for item in m.frameItemList {
+              let bpm = item.content.dynamicHeartRate
+              guard bpm >= 30 && bpm <= 240 else { continue }
+              let ts = m.startTime + item.offset * 60
+              samples.append(["t": Int64(ts) * 1000, "bpm": bpm])
+            }
+          }
+          group.leave()
+        }
+      }
+      group.notify(queue: .main) {
+        samples.sort { (($0["t"] as? Int64) ?? 0) < (($1["t"] as? Int64) ?? 0) }
+        result(samples)
+      }
+    }
+  }
+
+  func setDisconnectRemind(enable: Bool, result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
+      return
+    }
+    device.setDisconnectRemind(enable) { code, _ in
+      if self.sdkOk(Int(code)) {
+        result(true)
+      } else {
+        result(FlutterError(code: "CMD_FAILED", message: "setDisconnectRemind failed with code \(code)", details: nil))
+      }
+    }
+  }
+
+  func setSmartAlarm(enable: Bool, hour: Int = 7, minute: Int = 0, result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
+      return
+    }
+    let clock = UTEModelClock()
+    clock.index = 1
+    clock.enable = enable
+    clock.timeHour = hour
+    clock.timeMin = minute
+    clock.cycle = 127
+    clock.name = "Smart Alarm"
+    device.setAlarmArrayModel([clock]) { [weak self] code in
+      guard let self = self else { return }
+      if self.sdkOk(Int(code)) {
+        UserDefaults.standard.set(enable, forKey: "kalkan_smart_alarm_enabled")
+        result(true)
+      } else {
+        result(FlutterError(code: "CMD_FAILED", message: "setSmartAlarm failed with code \(code)", details: nil))
+      }
+    }
+  }
+
+  func setHydrationReminder(enable: Bool, interval: Int = 120, result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
+      return
+    }
+    let model = UTEModelWaterClock()
+    model.status = enable ? 1 : 0
+    model.startHH = 9
+    model.startMM = 0
+    model.endHH = 21
+    model.endMM = 0
+    model.cycle = interval
+    device.setWaterClock(model) { [weak self] code in
+      guard let self = self else { return }
+      if self.sdkOk(Int(code)) {
+        UserDefaults.standard.set(enable, forKey: "kalkan_hydration_reminder_enabled")
+        result(true)
+      } else {
+        result(FlutterError(code: "CMD_FAILED", message: "setWaterClock failed with code \(code)", details: nil))
+      }
+    }
+  }
+
+  func clearAccountData(result: @escaping FlutterResult) {
+    mgr.accountTool.sendDeleteAccountInformationBlock { _ in
+      result(true)
+    }
+  }
+
+  func setUserProfile(
+    heightCm: Int,
+    weightKg: Int,
+    age: Int,
+    gender: String,
+    stepGoal: Int,
+    calorieGoal: Int,
+    result: @escaping FlutterResult
+  ) {
+    guard isConnected else {
+      result(FlutterError(code: "NOT_CONNECTED", message: "Watch not connected", details: nil))
+      return
+    }
+    let p = UTEModelPersonInfo()
+    p.height = heightCm
+    p.weight = weightKg
+    p.age = age
+    p.gender = gender.lowercased() == "female" ? 2 : 1
+    p.walkStepLength = max(30, Int(Double(heightCm) * 0.415))
+    p.runStepLength = max(40, Int(Double(heightCm) * 0.45))
+    device.setUserPhysicalInfoModel(p) { _, _ in }
+
+    let g = UTEModelSportGoal()
+    g.goalType = 1
+    g.motionType = 1
+    g.goalStep = stepGoal
+    g.goalCalorie = calorieGoal
+    g.goalDistance = Int(Double(stepGoal) * Double(heightCm) * 0.415 / 100.0)
+    g.goalDuration = 3600
+    device.setMotionGoalModel([g]) { _ in }
+
+    result(true)
+  }
+
+  func getWorkoutHistory(result: @escaping FlutterResult) {
+    guard isConnected else {
+      result([])
+      return
+    }
+    let now = Int(Date().timeIntervalSince1970)
+    let start = now - 7 * 24 * 3600
+    device.getRecordList(start, endTime: now) { [weak self] model, code, _ in
+      guard let self = self, self.sdkOk(Int(code)), let model = model, let items = model.recordItemList, !items.isEmpty else {
+        result([])
+        return
+      }
+      var summaries: [[String: Any]] = []
+      let group = DispatchGroup()
+      for item in items {
+        group.enter()
+        self.device.getRecordSummary(item.id) { summary, sCode, _ in
+          defer { group.leave() }
+          if self.sdkOk(Int(sCode)), let s = summary {
+            let avgHr = (s.hrABSMinPeak > 0 && s.hrABSMaxPeak > 0) ? (s.hrABSMinPeak + s.hrABSMaxPeak) / 2 : s.hrABSMaxPeak
+            summaries.append([
+              "id": "\(s.id)",
+              "startTime": "\(s.startTime)",
+              "endTime": "\(s.endTime)",
+              "duration": s.totalTime,
+              "calories": s.calorie,
+              "distance": s.distance,
+              "steps": s.step,
+              "heart": avgHr,
+              "maxHeart": s.hrABSMaxPeak,
+              "minHeart": s.hrABSMinPeak,
+              "sportsType": 0
+            ])
+          }
+        }
+      }
+      group.notify(queue: .main) {
+        result(summaries)
       }
     }
   }
@@ -601,6 +814,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       "isOffWrist": self.isOffWrist,
       "skinTempDeviation": self.skinTempDeviation,
       "respiratoryRate": self.currentRespiratoryRate,
+      "bloodOxygen": self.currentBloodOxygen,
       "isAncsAuthorized": self.isAncsAuthorized
     ]
     self.telemetrySink?(snapshot)
@@ -613,10 +827,36 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       return
     }
     pullNightAndDay()
+    pullStressHistory()
     refreshWorkout()
     DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) { [weak self] in
       self?.pushTelemetry()
       completion(true)
+    }
+  }
+
+  private func pullStressHistory() {
+    guard isConnected else { return }
+    let now = Int(Date().timeIntervalSince1970)
+    let start = now - 24 * 3600
+    let path = NSTemporaryDirectory().appending("kalkan_stress_\(UUID().uuidString).bin")
+    device.downloadStressDataFileModel(start, endTime: now, filePath: path) { [weak self] _, isSuccess, _, _, _, array in
+      guard let self = self, isSuccess else { return }
+      var latest = 0
+      var latestTs = 0
+      for m in array {
+        let v = Int(m.stressValue)
+        if v >= 1 && v <= 100 && Int(m.startTime) >= latestTs {
+          latestTs = Int(m.startTime)
+          latest = v
+        }
+      }
+      if latest > 0 {
+        DispatchQueue.main.async {
+          self.currentStressScore = latest
+          self.pushTelemetry()
+        }
+      }
     }
   }
 
@@ -703,7 +943,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     return nil
   }
 
-  private func pullNightAndDay() {
+  func pullNightAndDay() {
     let now = Int(Date().timeIntervalSince1970)
     let start = now - 36 * 3600
     device.getSciSleepModel(withStartTime: start, endTime: now) { [weak self] debugArray, _, ok, code, _, dict in
@@ -785,7 +1025,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
               stage = "deep"
               session.deepSleepMinutes += effectiveDur
               session.totalSleepMinutes += effectiveDur
-            case 2, 5, 6:
+            case 2:
               stage = "light"
               session.lightSleepMinutes += effectiveDur
               session.totalSleepMinutes += effectiveDur
@@ -793,7 +1033,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
               stage = "rem"
               session.remSleepMinutes += effectiveDur
               session.totalSleepMinutes += effectiveDur
-            case 3, 7, 8:
+            case 3, 5, 6, 7, 8:
               stage = "awake"
               session.awakeMinutes += effectiveDur
             default:
@@ -887,10 +1127,12 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     // BLE-05: Battery query at most once every 5 minutes (300 seconds)
     if lastBatteryPollDate == nil || now.timeIntervalSince(lastBatteryPollDate!) >= 300 {
       lastBatteryPollDate = now
-      device.getBatteryInfo { [weak self] percent, code, _ in
-        if percent > 0 && percent <= 100 {
-          self?.currentBattery = Int(percent)
-          self?.pushTelemetry()
+      device.getBatteryInfoModel { [weak self] model, _ in
+        guard let self = self else { return }
+        if let bmodel = model {
+          if bmodel.value > 0 && bmodel.value <= 100 { self.currentBattery = Int(bmodel.value) }
+          self.isCharging = (bmodel.status == .charging)
+          self.pushTelemetry()
         }
       }
     }
@@ -919,6 +1161,15 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       }
       self.pushTelemetry()
     }
+  }
+
+  // Отвечает на onNotifySportData 0x08: вызов getRecordList помечает завершённые
+  // тренировки синхронизированными, иначе часы повторяют уведомление.
+  private func pullWorkoutRecords() {
+    guard isConnected else { return }
+    let now = Int(Date().timeIntervalSince1970)
+    let start = now - 24 * 3600
+    device.getRecordList(start, endTime: now) { _, _, _ in }
   }
 
   // BLE-05: 30-second cadence instead of battery-draining polling
@@ -1023,6 +1274,9 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       if (type & 0x01) != 0 || (type & 0x02) != 0 {
         self.refreshWorkout()
       }
+      if (type & 0x08) != 0 {
+        self.pullWorkoutRecords()
+      }
     }
 
     // Heart rate alarm trigger notification (m.rate is threshold value triggering alarm)
@@ -1035,11 +1289,17 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     // Live real-time minute data stream (steps, dynamic/resting heart rate, calories)
     device.onNotifyCurrentData { [weak self] currentModel in
       guard let self = self, let m = currentModel else { return }
-      if m.step > 0 { self.currentSteps = Int(m.step) }
-      if m.calorie > 0 { self.currentCalories = Int(m.calorie) }
-      if m.restingHeartRate > 0 {
-        self.currentRhr = Int(m.restingHeartRate)
+      // m.step/m.calorie — кадр текущей минуты, дневную сумму даёт getCurrentDayTotalWorkoutData
+      let rawRhr = (m.isSupportHeartRateV3 && m.restingHeartRateV3 > 0) ? m.restingHeartRateV3 : m.restingHeartRate
+      if rawRhr >= 35 && rawRhr <= 110 {
+        self.currentRhr = Int(rawRhr)
         self.currentRespiratoryRate = self.deriveRespiratoryRate(rhr: self.currentRhr, hrv: self.currentHrv)
+      }
+      if m.heartRateVariability >= 5 && m.heartRateVariability <= 250 {
+        self.currentHrv = Double(m.heartRateVariability)
+        if self.currentRhr > 0 {
+          self.currentRespiratoryRate = self.deriveRespiratoryRate(rhr: self.currentRhr, hrv: self.currentHrv)
+        }
       }
       if m.dynamicHeartRate > 0 { self.currentBpm = Int(m.dynamicHeartRate) }
       self.pushTelemetry()
@@ -1055,9 +1315,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     }
 
     // One-click measurement notification
-    device.onNotifyOneClickMeasurementBlock { [weak self] _, hrm, _, _ in
-      guard let self = self, hrm > 0 else { return }
-      self.currentBpm = Int(hrm)
+    device.onNotifyOneClickMeasurementBlock { [weak self] _, hrm, oxy, _ in
+      guard let self = self else { return }
+      if hrm > 0 { self.currentBpm = Int(hrm) }
+      if oxy >= 70 && oxy <= 100 { self.currentBloodOxygen = Int(oxy) }
       self.pushTelemetry()
     }
 
@@ -1094,6 +1355,11 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
         let tempC: Double = value > 1000 ? Double(value) / 100.0 : (value > 100 ? Double(value) / 10.0 : Double(value))
         if tempC >= 30.0 && tempC <= 45.0 {
           self.skinTempDeviation = round((tempC - 36.6) * 100.0) / 100.0
+          self.pushTelemetry()
+        }
+      } else if type == .OXY {
+        if value >= 70 && value <= 100 {
+          self.currentBloodOxygen = Int(value)
           self.pushTelemetry()
         }
       } else {
@@ -1219,14 +1485,14 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
 
       // Sync time
       let now = Int(Date().timeIntervalSince1970)
-      let totalOffsetSec = TimeZone.current.secondsFromGMT()
-      let timeZone = totalOffsetSec / 3600
-      let minuteOffset = (abs(totalOffsetSec) % 3600) / 60
-      device.setTimeClock(now, timeZone: timeZone, minuteOffset: minuteOffset) { _, _ in }
+      let parts = timezoneParts(totalOffsetSec: TimeZone.current.secondsFromGMT())
+      device.setTimeClock(now, timeZone: parts.timeZone, minuteOffset: parts.minuteOffset) { _, _ in }
+      device.setTimeDisplay(1, timeType: 2) { _, _ in }
 
       bindLiveStreams()
       applyDeviceHardwareSettings()
       pullNightAndDay()
+      pullStressHistory()
       startTelemetryPoll()
       refreshWorkout()
       pushTelemetry(immediate: true)
@@ -1490,6 +1756,52 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
         KalkanBleManager.shared.measureHeartRate(result: result)
       case "syncTime":
         KalkanBleManager.shared.syncTime(result: result)
+      case "getHeartRateHistory":
+        KalkanBleManager.shared.getHeartRateHistory(result: result)
+      case "setDisconnectRemind":
+        let enable = (call.arguments as? [String: Any])?["enable"] as? Bool ?? true
+        KalkanBleManager.shared.setDisconnectRemind(enable: enable, result: result)
+      case "setCallRemindEnable":
+        result(true)
+      case "isNotificationListenerGranted":
+        result(true)
+      case "openNotificationListenerSettings":
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+          UIApplication.shared.open(url, options: [:], completionHandler: nil)
+        }
+        result(true)
+      case "setSmartAlarm":
+        let enable = (call.arguments as? [String: Any])?["enable"] as? Bool ?? false
+        let hour = (call.arguments as? [String: Any])?["hour"] as? Int ?? 7
+        let minute = (call.arguments as? [String: Any])?["minute"] as? Int ?? 0
+        KalkanBleManager.shared.setSmartAlarm(enable: enable, hour: hour, minute: minute, result: result)
+      case "setHydrationReminder":
+        let enable = (call.arguments as? [String: Any])?["enable"] as? Bool ?? false
+        let interval = (call.arguments as? [String: Any])?["intervalMinutes"] as? Int ?? 120
+        KalkanBleManager.shared.setHydrationReminder(enable: enable, interval: interval, result: result)
+      case "clearAccountData":
+        KalkanBleManager.shared.clearAccountData(result: result)
+      case "getWorkoutHistory":
+        KalkanBleManager.shared.getWorkoutHistory(result: result)
+      case "pullNightAndDay", "syncSleepData":
+        KalkanBleManager.shared.pullNightAndDay()
+        result(true)
+      case "setUserProfile":
+        let heightCm = (call.arguments as? [String: Any])?["heightCm"] as? Int ?? 175
+        let weightKg = (call.arguments as? [String: Any])?["weightKg"] as? Int ?? 72
+        let age = (call.arguments as? [String: Any])?["age"] as? Int ?? 28
+        let gender = (call.arguments as? [String: Any])?["gender"] as? String ?? "male"
+        let stepGoal = (call.arguments as? [String: Any])?["stepGoal"] as? Int ?? 10000
+        let calorieGoal = (call.arguments as? [String: Any])?["calorieGoal"] as? Int ?? 650
+        KalkanBleManager.shared.setUserProfile(
+          heightCm: heightCm,
+          weightKg: weightKg,
+          age: age,
+          gender: gender,
+          stepGoal: stepGoal,
+          calorieGoal: calorieGoal,
+          result: result
+        )
       default:
         result(FlutterMethodNotImplemented)
       }

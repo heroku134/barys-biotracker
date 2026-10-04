@@ -212,14 +212,14 @@ service cloud.firestore {
     // --- 5. Invite Code Validator ---
     function isValidInvite(data) {
       return data.keys().hasOnly(['ownerUid', 'type', 'name', 'createdAt', 'expiresAt']) &&
-        data.keys().hasAll(['ownerUid', 'type']) &&
+        data.keys().hasAll(['ownerUid', 'type', 'expiresAt']) &&
         data.ownerUid is string &&
         data.ownerUid.size() > 0 &&
         data.ownerUid.size() <= 128 &&
         (data.type == 'friend' || data.type == 'cycle') &&
         isValidOptionalString(data, 'name', 0, 100) &&
         isValidOptionalTimestamp(data, 'createdAt') &&
-        isValidOptionalTimestamp(data, 'expiresAt');
+        data.expiresAt is timestamp;
     }
 
     // --- 6. Partner Record Validator ---
@@ -298,7 +298,10 @@ service cloud.firestore {
       return ('type' in inviteData) &&
         inviteData.type == 'friend' &&
         ('ownerUid' in inviteData) &&
-        inviteData.ownerUid == userId;
+        inviteData.ownerUid == userId &&
+        ('expiresAt' in inviteData) &&
+        inviteData.expiresAt is timestamp &&
+        inviteData.expiresAt > request.time;
     }
 
     // ===============================================================
@@ -375,8 +378,11 @@ service cloud.firestore {
       // Strictly prevent listing/enumeration attacks
       allow list: if false;
 
-      // Allow single get by exact code for authenticated users accepting links
-      allow get: if isAuthenticated();
+      // Allow get by exact code only until expiration (blocks enumeration & expired reuse)
+      allow get: if isAuthenticated() &&
+        'expiresAt' in resource.data &&
+        resource.data.expiresAt is timestamp &&
+        resource.data.expiresAt > request.time;
 
       // Only creator can create invites with their own UID
       allow create: if isAuthenticated() &&

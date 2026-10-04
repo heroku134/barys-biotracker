@@ -16,6 +16,7 @@ import 'package:barys_biotracker/domain/avatar/avatar_manager.dart';
 import 'package:barys_biotracker/domain/intelligence/sleep_engine.dart';
 import 'package:barys_biotracker/domain/models/personal_baseline.dart';
 import 'package:barys_biotracker/domain/models/telemetry.dart';
+import 'package:barys_biotracker/domain/models/user_profile.dart';
 import 'package:barys_biotracker/domain/models/workout_session.dart';
 
 void main() {
@@ -647,6 +648,57 @@ void main() {
       await bridge.findWatch(enable: false);
       expect(methodCalls.last.method, 'findDevice');
       expect(methodCalls.last.arguments, {'enable': false});
+    });
+
+    test('20. BLE Sleep Data Sync: pullNightAndDay invokes native channel', () async {
+      final methodCalls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('com.nadal.ble/methods'),
+        (MethodCall call) async {
+          methodCalls.add(call);
+          return true;
+        },
+      );
+
+      final bridge = UteBleBridge();
+      await bridge.init();
+
+      final res = await bridge.pullNightAndDay();
+      expect(res, isTrue);
+      expect(methodCalls.last.method, 'pullNightAndDay');
+    });
+
+    test('21. BLE User Profile Sync: syncUserProfile sends physical info and goals', () async {
+      final methodCalls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+        const MethodChannel('com.nadal.ble/methods'),
+        (MethodCall call) async {
+          methodCalls.add(call);
+          return true;
+        },
+      );
+
+      final bridge = UteBleBridge();
+      await bridge.init();
+
+      const testProfile = UserProfile(
+        heightCm: 180.0,
+        weightKg: 78.0,
+        birthYear: 1995,
+        gender: Gender.male,
+        stepGoal: 12000,
+        calorieGoal: 700,
+      );
+
+      final res = await bridge.syncUserProfile(testProfile);
+      expect(res, isTrue);
+      expect(methodCalls.last.method, 'setUserProfile');
+      expect(methodCalls.last.arguments['heightCm'], 180);
+      expect(methodCalls.last.arguments['weightKg'], 78);
+      expect(methodCalls.last.arguments['stepGoal'], 12000);
+      expect(methodCalls.last.arguments['calorieGoal'], 700);
     });
   });
 }

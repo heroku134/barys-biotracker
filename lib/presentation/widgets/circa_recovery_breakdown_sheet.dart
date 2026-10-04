@@ -210,9 +210,9 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               _buildBiomarkerRow(
                 title: 'Ритм сердца (вариабельность)',
                 weight: readiness.hasHrv ? '${readiness.hrvWeightPct}%' : '—',
-                currentVal: readiness.hasHrv ? '${readiness.currentHrv.round()} мс' : 'Ожидание ночного замера',
+                currentVal: readiness.hasHrv ? '${readiness.currentHrv.round()}' : 'Ожидание ночного замера',
                 baselineVal: readiness.hasHrv
-                    ? 'База: ${readiness.baselineHrv.round()} мс (${readiness.hrvDiffPercent >= 0 ? "+${readiness.hrvDiffPercent}" : "${readiness.hrvDiffPercent}"}%)'
+                    ? 'База: ${readiness.baselineHrv.round()} (${readiness.hrvDiffPercent >= 0 ? "+${readiness.hrvDiffPercent}" : "${readiness.hrvDiffPercent}"}%)'
                     : 'Требуется запись сна',
                 score: readiness.hasHrv ? readiness.hrvFactor : 0,
                 color: readiness.hasHrv
@@ -251,7 +251,7 @@ class CircaRecoveryBreakdownSheet extends StatelessWidget {
               ),
 
               _buildBiomarkerRow(
-                title: 'Частота дыхания',
+                title: 'Частота дыхания (оценка)',
                 weight: readiness.hasRr ? '${readiness.rrWeightPct}%' : '—',
                 currentVal: readiness.hasRr ? '${readiness.currentRr.toStringAsFixed(1)} /мин' : 'Датчик не поддерживается',
                 baselineVal: readiness.hasRr ? 'База: ${readiness.baselineRr.toStringAsFixed(1)} вдохов/мин' : 'Без синтетической интерполяции',

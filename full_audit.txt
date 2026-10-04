@@ -1,0 +1,255 @@
+# Комплексный аудит готовности проекта к релизу (Release Readiness Audit)
+
+> **Проект:** KALKAN SPORT / barys-biotracker (`c:\Users\KPK\StudioProjects\untitled1`)  
+> **Референс 1 (Android):** Официальная документация вендора *UteWatchSDK_Android_使用说明文档* (v1.0.1 – v1.4.2)  
+> **Референс 2 (iOS BLE):** Эталонный SDK вендора `C:\Users\KPK\IdeaProjects\watch\iOS-SDK1.3.1` (`UTEBluetoothRYApi.framework` v1.3.1 + `UTERYDemo`)  
+> **Инструменты проверки:** Static Analysis (`flutter analyze`), Test Suite (`flutter test`), Decompilation (`javap` на `uteWatchSdk_Android_v1.3.9.aar`), Нативная сборка (`./build_apk.ps1`), Аудит Swift/Kotlin/Dart кода.
+
+---
+
+## 1. Честный вердикт: готов ли проект к релизу?
+
+### ❌ **ОТВЕТ: К РЕЛИЗУ НЕ ГОТОВ (RELEASE NOT READY — NO-GO)**
+
+Кодовая база верхнего уровня Flutter (UI-экраны, верстка, провайдеры состояния, тесты) выполнена на высоком уровне:
+- `flutter analyze` завершается с **0 предупреждений и 0 ошибок**;
+- `flutter test` проходит **58 из 58 тестов**;
+- Архитектура Clean Architecture / Domain Models хорошо структурирована.
+
+**Однако проект категорически нельзя выпускать в App Store и Google Play прямо сейчас из-за критических блокеров (P0) и функциональных разрывов с BLE-оборудованием (P1):**
+1. **На машине разработчика полностью исчерпан диск `C:\` (0 байт свободно)** — R8/D8 упал с ошибкой `java.io.IOException: Недостаточно места на диске`.
+2. **Проект Android настроен на debug-подпись** и не имеет настроенного Release Keystore и правил ProGuard для сжатия.
+3. **Отсутствует обязательная зависимость `net.jpountz.lz4:lz4:1.3.0`** (требование Раздела 1.1 официальной документации): без неё любые функции передачи циферблатов вызывают фатальный краш.
+4. **В `AndroidManifest.xml` отсутствует ключ производителя `YCAPPKEY`** (Раздел 1.3): облачные функции часов (AGPS, OTA, AI) отклоняются сервером производителя.
+5. **В Android нет `NotificationListenerService`**: часы **вообще не получают push-уведомления и звонки** со смартфона на Android.
+6. **Разрыв синхронизации сна и тренировок**: на Android вызывается кеш `getSciSleepData()` вместо протокольного `syncSleepHistoryData()`, а история тренировок (`syncWorkoutHistoryData` на Android и `getRecordList` на iOS) просто игнорируется.
+7. **Ряд настроек в `DeviceSettingsScreen.dart` — фантомы**: переключатели "Умный будильник", "Напоминание о воде", "Анти-потеря" меняют локальное состояние виджета, но не отправляют команды в BLE-чип часов.
+
+---
+
+## 2. Сравнительная матрица соответствия официальным спецификациям
+
+| Модуль / Требование | Спецификация Word (Android) / iOS SDK 1.3.1 | Реализация в Android (`KalkanBleManager.kt`) | Реализация в iOS (`AppDelegate.swift`) | Статус готовности |
+| :--- | :--- | :--- | :--- | :--- |
+| **Бинарный SDK** | `uteWatchSdk_v1.3.9.aar` + JL/Actions AARs / `UTEBluetoothRYApi.framework` v1.3.1 | В наличии в `android/app/libs/` | В наличии в `ios/Frameworks/` (хеш совпадает с `iOS-SDK1.3.1`) | ✅ **Соответствует** |
+| **LZ4 сжатие** | `implementation 'net.jpountz.lz4:lz4:1.3.0'` (Word 1.1) | ❌ **Отсутствует** в `build.gradle.kts` | Реализовано внутри фреймворка | 🔴 **P0 Блокер (Android)** |
+| **Ключ `YCAPPKEY`** | `<meta-data android:name="YCAPPKEY" .../>` (Word 1.3) | ❌ **Отсутствует** в `AndroidManifest.xml` | Не требуется | 🔴 **P0 Блокер (Android)** |
+| **Привязка аккаунта (HUID)** | `setHonorAccount(HonorAccountConfig)` (Word 2.4 / 12.5) / `UTEAccountTool` | ⚠️ Вызывается, но `currentHuid` пустой; сброс не обрабатывается | ❌ `phoneSendWatchAccountWith` не вызывается | 🟠 **P1 Риск блокировки часов** |
+| **Очистка аккаунта (Logout)** | `clearAccountID()` (Word 2.5) / `sendDeleteAccountInformationBlock` | ❌ Не вызывается при выходе из аккаунта | ❌ Не вызывается при выходе из аккаунта | 🟠 **P1 Утечка сессии** |
+| **Синхронизация сна** | `syncSleepHistoryData` (Word 2.41) / `getSciSleepModelWithStartTime` | ❌ Ошибочно вызывается `getSciSleepData()` (кеш) | ✅ Корректно распарсен гипнограмма-поток | 🟠 **P1 Баг сна (Android)** |
+| **История тренировок** | `syncWorkoutHistoryData` (Word 2.42) / `getRecordList` (0x08) | ❌ Метод не вызывается | ❌ Вызывается с пустой лямбдой `{ _, _, _ in }` | 🟠 **P1 Потеря тренировок** |
+| **SpO2 (Кислород в крови)** | `setContinuousBloodOxygen` (Word 2.46) | ❌ Не активируется на часах | ❌ Не проброшен в доменную модель Dart | 🟡 **P2 Неполнота телеметрии** |
+| **Push-уведомления и звонки** | `NotificationListenerService` + `sendMessage` (Word 2.24) | ❌ Полностью отсутствует сервис пересылки | ⚠️ Apple ANCS работает, но фильтр приложений не настроен | 🔴 **P0 Блокер (Android)** |
+| **Синхронизация погоды** | `setTodayWeather` / `setFutureWeather` (Word 2.51–2.54) | ❌ Игнорируется `WEATHER_DATA_REQUIRED` | ❌ Нет провайдера погоды | 🟡 **P2 Экран погоды пустой** |
+| **Синхронизация времени** | `syncTime()` (Word 2.13) / `setTimeClock` | ✅ Реализовано через MethodChannel | ✅ Реализовано через MethodChannel | ✅ **Готово** |
+| **Пульс / Шаги / Калории / Батарея** | Live stream notify + Polling (1 Гц) | ✅ Реализовано в `KalkanBleManager.kt` | ✅ Реализовано в `AppDelegate.swift` | ✅ **Готово** |
+| **Поиск устройства (Find Watch)** | `setFindWearCmd` (Word 2.11) | ✅ Реализовано с авто-стопом через 5 сек | ✅ Реализовано с авто-стопом через 5 сек | ✅ **Готово** |
+| **OTA Обновление прошивки** | `ActsOtaUtil` / `JL_Watch` / `iOSOTAJL` | ❌ `firmware_update_screen.dart` — графический мок | ❌ UI не связан с `iOSOTAJL` | 🟡 **P2 Мок-экран** |
+
+---
+
+## 3. Детальный разбор критических проблем (P0 и P1)
+
+### 🔴 P0.1. Физический блокер сборки: Переполнение диска `C:\`
+При попытке сборки Android через Gradle возникла системная ошибка:
+```text
+Caused by: com.android.tools.r8.internal.g: java.io.IOException: Недостаточно места на диске
+Execution failed for task ':app:mergeExtDexDebug'.
+```
+Проверка `Get-PSDrive C` показала:
+- **Использовано:** `475.85 GB`
+- **Свободно:** `0.00 GB (0 байт!)`
+
+> **Что делать:** Вам необходимо освободить минимум **5–10 ГБ** на диске `C:\` (удалить временные файлы, кеши старых Gradle-демонов, неиспользуемые эмуляторы в `C:\Users\KPK\.android\avd\`). Без свободного места компилятор DEX и R8 физически не могут скомпоновать APK.
+
+---
+
+### 🔴 P0.2. Несовместимость версий AGP, Kotlin и лимиты памяти Gradle
+1. **Проблема версий:** Библиотека `firebase_auth:24.2.0` скомпилирована с метаданными Kotlin 2.3.0/2.2.0, а в `settings.gradle.kts` был указан устаревший Kotlin `2.1.10`, а также старый AGP `8.7.3`, вызвавший конфликт с `androidx.core:core-ktx:1.18.0`.
+   - *Что мы исправили в этой сессии:* В [`settings.gradle.kts`](file:///c:/Users/KPK/StudioProjects/untitled1/android/settings.gradle.kts#L20-L25) подняли `com.android.application` до `8.9.1` и `org.jetbrains.kotlin.android` до `2.2.0`.
+2. **Строгая проверка типов в Kotlin 2.2:** Компилятор выявил несоответствия nullability в [`KalkanBleManager.kt`](file:///c:/Users/KPK/StudioProjects/untitled1/android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanBleManager.kt):
+   - Строка 133: `UteBleClient.initialize(appContext)` требовал non-null `Context` вместо `Context?`. *(Исправлено)*
+   - Строка 209: `mainHandler.postDelayed(nativeReconnectRunnable, delayMs)` требовал non-null `Runnable`. *(Исправлено)*
+3. **Падение JVM по OOM:** В [`gradle.properties`](file:///c:/Users/KPK/StudioProjects/untitled1/android/gradle.properties) были выставлены завышенные параметры `-Xmx8G -XX:MaxMetaspaceSize=4G` (суммарно 12 ГБ), что приводило к падению JVM `G1 virtual space mmap failed` на машине с 15 ГБ ОЗУ. Мы оптимизировали параметры до стабильных `-Xmx3G -XX:MaxMetaspaceSize=1G`.
+
+---
+
+### 🔴 P0.3. Отсутствие обязательной библиотеки LZ4 (Раздел 1.1 Word-инструкции)
+В инструкции производителя (Раздел 1.1) указано:
+```gradle
+dependencies {
+    implementation 'net.jpountz.lz4:lz4:1.3.0'
+}
+```
+А также в ProGuard:
+```proguard
+-keep class net.jpountz.** { *; }
+```
+В файле [`android/app/build.gradle.kts`](file:///c:/Users/KPK/StudioProjects/untitled1/android/app/build.gradle.kts#L47-L51) эта зависимость отсутствует. Без неё методы сжатия циферблатов (Album Watch Dial) и упаковки бинарных пакетов падают во время выполнения с фатальным `ClassNotFoundException`.
+
+---
+
+### 🔴 P0.4. Отсутствие `YCAPPKEY` в `AndroidManifest.xml` (Раздел 1.3)
+В инструкции производителя сказано:
+```xml
+<meta-data
+    android:name="YCAPPKEY"
+    android:value="ВАШ_КЛЮЧ_ПРИЛОЖЕНИЯ" />
+```
+В файле [`android/app/src/main/AndroidManifest.xml`](file:///c:/Users/KPK/StudioProjects/untitled1/android/app/src/main/AndroidManifest.xml) тег `YCAPPKEY` не прописан. Серверная часть UTE проверяет этот ключ при обращении к серверу загрузки онлайн-циферблатов, AGPS-эфемеридам и облачным обновлениям прошивки. Без него часы не смогут обновлять GPS-спутники и циферблаты из облака.
+
+---
+
+### 🔴 P0.5. Отсутствие Android Notification Service для часов (Разделы 2.23, 2.29–2.34)
+На часах СААТ-1 есть экран входящих сообщений и уведомлений.
+В коде проекта Android есть только [`KalkanNotify.kt`](file:///c:/Users/KPK/StudioProjects/untitled1/android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanNotify.kt), который показывает уведомления в шторке самого телефона.
+**Что отсутствует:**
+- Класс `KalkanNotificationListenerService : NotificationListenerService`;
+- Обработчики входящих звонков (`TelephonyManager` / `PhoneStateListener`) и пересылка вызова через `uteBleConnection.notifyIncomingCall(...)`;
+- Пересылка текста SMS/мессенджеров через `uteBleConnection.sendMessage(MessageInfo)`.
+*Итог:* Пользователи на Android получат полностью "глухие" часы без пушей и звонков.
+
+---
+
+### 🟠 P1.1. Баг синхронизации научного сна на Android (Раздел 2.41)
+В [`KalkanBleManager.kt`](file:///c:/Users/KPK/StudioProjects/untitled1/android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanBleManager.kt#L701-L706):
+```kotlin
+private fun pullNightAndDay() {
+    // ВЫЗЫВАЕТСЯ ТОЛЬКО КЕШ:
+    val sciData = uteBleConnection?.getSciSleepData()
+    // ...
+}
+```
+Согласно разделу 2.41 спецификации, метод `getSciSleepData()` возвращает только последний сеанс, временно удерживаемый в оперативной памяти чипа.
+Чтобы вычитать данные сна из флеш-памяти часов, необходимо инициировать активную синхронизацию:
+```kotlin
+uteBleConnection?.syncSleepHistoryData(startTime, endTime)
+```
+и слушать колбэк получения пакетов сна. В iOS (`AppDelegate.swift`) этот метод реализован качественно (`getSciSleepModelWithStartTime`), а в Android — только чтение in-memory кеша.
+
+---
+
+### 🟠 P1.2. Потеря истории тренировок (Раздел 2.42 Word & iOS `pullWorkoutRecords`)
+1. **На Android:** Метод `uteBleConnection?.syncWorkoutHistoryData(...)` вообще не вызывается. Тренировки, записанные пользователем автономно на часах, никогда не переносятся в телефон.
+2. **На iOS:** В [`AppDelegate.swift`](file:///c:/Users/KPK/StudioProjects/untitled1/ios/Runner/AppDelegate.swift#L998-L1005):
+```swift
+private func pullWorkoutRecords() {
+    guard isConnected else { return }
+    let now = Int(Date().timeIntervalSince1970)
+    let start = now - 24 * 3600
+    device.getRecordList(start, endTime: now) { _, _, _ in }
+}
+```
+Блок `{ _, _, _ in }` пустой! Вызов делается лишь для того, чтобы часы сняли флаг уведомления 0x08, но сами данные тренировки не парсятся и выбрасываются в никуда.
+
+---
+
+### 🟠 P1.3. Привязка аккаунта HUID и сброс устройства (Раздел 2.4, 2.5, 12.5)
+В протоколе часов реализована защита от кражи и многопользовательской привязки:
+- Если часам не передать валидный `currentHuid`, при повторном подключении или после смены телефона часы сообщают `ACCOUNT_DIFFERENT (1)`.
+- Часы отображают на экране диалог подтверждения сброса и шлют событие `NotifyType.DEVICE_RESET_NOTIFY`.
+- В [`KalkanBleManager.kt`](file:///c:/Users/KPK/StudioProjects/untitled1/android/app/src/main/kotlin/com/yc/nadalsdk/barys_biotracker/KalkanBleManager.kt) событие `DEVICE_RESET_NOTIFY` не обрабатывается.
+- Если привязка аккаунта не требуется вашему продукту, документация требует явно вызвать при инициализации:
+  ```kotlin
+  mUteBleConnection.setSupportUserIdPair(false)
+  ```
+- При логауте пользователя в приложении (`UserSessionManager`) ни на Android, ни на iOS не вызывается `clearAccountID()` / `sendDeleteAccountInformationBlock` (см. эталон в `DeleteAccountInformation.txt`).
+
+---
+
+### 🟠 P1.4. Фантомные переключатели в настройках (`DeviceSettingsScreen.dart`)
+В файле [`lib/features/devices/presentation/screens/device_settings_screen.dart`](file:///c:/Users/KPK/StudioProjects/untitled1/lib/features/devices/presentation/screens/device_settings_screen.dart):
+- Переключатели `_antiLoss` (Анти-потеря), `_disconnectAlert` (Оповещение о разрыве), `_smartAlarm` (Умный будильник), `_hydrationReminder` (Напоминание пить воду) изменяют только локальное состояние через `setState(() => ...)`.
+- Они **не сохраняются в SharedPreferences / Hive / Firestore**.
+- Они **не вызывают нативные методы SDK**:
+  - `setDisconnectRemind` (оповещение о разрыве связи)
+  - `setAlarmList` (установка будильников на часах)
+  - `setWaterClock` / `setDrinkWaterRemind` (напоминание о воде, описанное в `Water reminder.txt`)
+
+---
+
+### 🟡 P2.1. Отсутствие SpO2 (Кислород в крови) в доменной модели
+В файле [`lib/domain/models/telemetry.dart`](file:///c:/Users/KPK/StudioProjects/untitled1/lib/domain/models/telemetry.dart) модель `BleTelemetry` содержит:
+`heartRate`, `restingHeartRate`, `hrv`, `steps`, `calories`, `batteryLevel`, `isCharging`, `sleepMinutes`, `currentStressScore`, `skinTempDeviation`, `respiratoryRate`.
+**Поле `bloodOxygen` (SpO2) отсутствует.** Хотя часы поддерживают измерение кислорода в крови, эти данные приложение игнорирует.
+
+---
+
+### 🟡 P2.2. Экран обновления прошивки — графический мок
+В [`lib/features/devices/presentation/screens/firmware_update_screen.dart`](file:///c:/Users/KPK/StudioProjects/untitled1/lib/features/devices/presentation/screens/firmware_update_screen.dart) процесс обновления имитируется таймером:
+```dart
+Future.delayed(const Duration(milliseconds: 900), ...)
+```
+Библиотеки прошивки вендора (`ActsOtaUtil.aar` для чипов Actions и `jl_bt_ota.aar` / `iOSOTAJL` для чипов JieLi) не привязаны к UI. Пользователь не сможет обновить реальную прошивку часов через этот экран.
+
+---
+
+## 4. Конкретный пошаговый план устранения для допуска к релизу
+
+```mermaid
+graph TD
+    A[1. Освободить диск C: минимум 5 ГБ] --> B[2. Добавить LZ4 и YCAPPKEY]
+    B --> C[3. Добавить NotificationListenerService в Android]
+    C --> D[4. Настроить Keystore и Release ProGuard]
+    D --> E[5. Исправить syncSleepHistoryData в Android]
+    E --> F[6. Сохранить тренировки в SQLite/Firestore]
+    F --> G[7. Привязать переключатели DeviceSettings к SDK]
+    G --> H[8. Финальный релизный билд AAB / IPA]
+```
+
+### Шаг 1: Очистить диск `C:\`
+Удалить временные файлы и неиспользуемые файлы сборки, чтобы на диске `C:\` появилось минимум **5–10 ГБ** свободного места.
+
+### Шаг 2: Добавить обязательную зависимость LZ4 в `android/app/build.gradle.kts`
+```kotlin
+dependencies {
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar", "*.jar"))))
+    implementation("com.google.code.gson:gson:2.8.6")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("net.jpountz.lz4:lz4:1.3.0") // <-- Добавить обязательно
+}
+```
+И в `android/app/proguard-rules.pro` добавить:
+```proguard
+-keep class net.jpountz.** { *; }
+```
+
+### Шаг 3: Добавить ключ вендора `YCAPPKEY` в `AndroidManifest.xml`
+Запросить у производителя ваш рабочий App Key и прописать в `<application>`:
+```xml
+<meta-data
+    android:name="YCAPPKEY"
+    android:value="ВАШ_КЛЮЧ" />
+```
+
+### Шаг 4: Реализовать `KalkanNotificationService` на Android
+Создать сервис, наследующий `NotificationListenerService`, зарегистрировать его в `AndroidManifest.xml` с разрешением `android.permission.BIND_NOTIFICATION_LISTENER_SERVICE`, и вызывать:
+```kotlin
+val msg = MessageInfo()
+msg.type = resolveAppType(sbn.packageName)
+msg.content = sbn.notification.extras.getString(Notification.EXTRA_TEXT) ?: ""
+uteBleConnection?.sendMessage(msg)
+```
+
+### Шаг 5: Переключить чтение сна на протокольный `syncSleepHistoryData` в `KalkanBleManager.kt`
+Заменить пассивный `uteBleConnection?.getSciSleepData()` на активный запрос архива сна за последние 48 часов:
+```kotlin
+uteBleConnection?.syncSleepHistoryData(startTimeSec, endTimeSec)
+```
+и обрабатывать входящие пакеты в колбэке.
+
+### Шаг 6: Настроить релизную подпись (Release Keystore)
+Создать keystore файл (`key.properties`), настроить `signingConfigs.create("release")` в `android/app/build.gradle.kts` вместо использования `signingConfigs.getByName("debug")`.
+
+### Шаг 7: Связать переключатели в `DeviceSettingsScreen.dart`
+Подключить вызовы MethodChannel к:
+- `setDisconnectRemind` (оповещение о разрыве);
+- `setAlarmList` (будильники);
+- `setWaterClock` (напоминание о воде по спецификации `Water reminder.txt`).
+
+---
+
+## Итоговое резюме
+- **Качество исходного кода Flutter/Dart:** Отличное (**58/58 тестов успешно, 0 ошибок анализа**).
+- **Синхронизация базовой телеметрии (пульс, шаги, батарея):** Работает надежно на обеих платформах с троттлингом 1 Гц.
+- **Готовность к публикации в магазины:** **НЕТ**. Требуется закрыть 5 блокеров P0 (диск, LZ4, YCAPPKEY, NotificationListener, Release Keystore) и устранить функциональные разрывы по сну, тренировкам и настройкам.

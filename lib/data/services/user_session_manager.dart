@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/avatar/avatar_manager.dart';
-import '../../domain/intelligence/baseline_calibration_manager.dart';
 import '../../domain/models/user_profile.dart';
 import '../storage/calibration_store.dart';
 import '../storage/day_journal_repository.dart';
@@ -12,7 +11,9 @@ import '../storage/pregnancy_log_repository.dart';
 import '../storage/private_league_repository.dart';
 import '../storage/user_profile_repository.dart';
 import '../storage/workout_repository.dart';
+import 'cloud_outbox.dart';
 import 'health_sync_service.dart';
+import '../ble/ute_ble_bridge.dart';
 
 /// Менеджер сессии пользователя: обеспечивает полную изоляцию данных между аккаунтами,
 /// очистку кэшей при смене пользователя, регистрации и выходе (App Store 5.1.1 & Medical Privacy).
@@ -20,6 +21,14 @@ class UserSessionManager {
   /// Полная очистка локальных пользовательских данных с устройства
   static Future<void> clearLocalUserData() async {
     debugPrint('UserSessionManager: Clearing all local user data for clean account state');
+
+    // 0. Сброс аппаратной привязки аккаунта на часах СААТ-1 (clearAccountID / sendDeleteAccountInformationBlock)
+    try {
+      await UteBleBridge.instance.clearAccountData();
+    } catch (_) {}
+
+    // 0.1. Отменяем pending-пуши, чтобы удалённые данные не «воскресли»
+    await CloudOutbox.clearOutbox();
 
     // 1. Тренировки (включая сторонние импорты Strava/Garmin)
     await WorkoutRepository.clearWorkouts();
@@ -32,7 +41,6 @@ class UserSessionManager {
     LocalDayStrain.reset();
 
     // 4. Калибровка бейзлайна СААТ-1
-    await BaselineCalibrationManager.resetCalibration();
     await CalibrationStore.reset();
 
     // 5. Дневник самочувствия и заметки

@@ -6,7 +6,10 @@ import android.content.Intent
 
 class KalkanAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) return
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            KalkanNotify.rescheduleAll(context)
+            return
+        }
         val id = intent.getIntExtra(KalkanNotify.EXTRA_ID, 1101)
         val title = intent.getStringExtra(KalkanNotify.EXTRA_TITLE) ?: "KALKAN"
         val body = intent.getStringExtra(KalkanNotify.EXTRA_BODY) ?: ""

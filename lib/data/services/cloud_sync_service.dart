@@ -12,6 +12,7 @@ import '../storage/private_league_repository.dart';
 import '../storage/user_profile_repository.dart';
 import 'fcm_service.dart';
 import 'user_session_manager.dart';
+import 'cloud_outbox.dart';
 
 /// Firestore only (Spark). No Storage.
 class CloudSyncService {
@@ -56,8 +57,10 @@ class CloudSyncService {
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
       }
+      await CloudOutbox.markClean(CloudOutbox.profile);
     } catch (e) {
       debugPrint('CloudSync.pushProfile: $e');
+      await CloudOutbox.markDirty(CloudOutbox.profile);
     }
   }
 
@@ -95,7 +98,9 @@ class CloudSyncService {
         profile = UserProfile(
           name: name,
           email: email,
-          gender: genderStr == 'female' ? Gender.female : Gender.male,
+          gender: genderStr == 'female'
+              ? Gender.female
+              : (genderStr == 'other' ? Gender.other : Gender.male),
           hasCompletedProfile: hasCompleted,
           heightCm: h,
           weightKg: w,
@@ -125,6 +130,7 @@ class CloudSyncService {
       await pushProfile(local);
     }
     await pullDays();
+    await flushOutbox();
     try {
       await FcmService.init();
     } catch (_) {}
@@ -171,8 +177,10 @@ class CloudSyncService {
       if (isToday) {
         await publishRecovery(recovery: day.recovery, hrv: day.hrv, rhr: day.rhr);
       }
+      await CloudOutbox.markClean(CloudOutbox.day);
     } catch (e) {
       debugPrint('CloudSync.pushDay: $e');
+      await CloudOutbox.markDirty(CloudOutbox.day);
     }
   }
 
@@ -275,6 +283,9 @@ class CloudSyncService {
         'type': 'friend',
         'name': profile.name,
         'createdAt': FieldValue.serverTimestamp(),
+        'expiresAt': Timestamp.fromMillisecondsSinceEpoch(
+          DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch,
+        ),
       }).timeout(const Duration(seconds: 4));
     } catch (e) {
       debugPrint('CloudSync.publishFriendInvite: $e');
@@ -295,6 +306,8 @@ class CloudSyncService {
       final owner = inv.data()?['ownerUid'] as String?;
       final name = inv.data()?['name'] as String? ?? raw;
       if (owner == null || owner == id) return false;
+      final expires = inv.data()?['expiresAt'] as Timestamp?;
+      if (expires != null && expires.toDate().isBefore(DateTime.now())) return false;
       final me = UserProfileRepository.profileNotifier.value;
       await db.collection('friends').doc(id).collection('members').doc(owner).set({
         'name': name,
@@ -363,8 +376,33 @@ class CloudSyncService {
         'partnerName': profile.name.isNotEmpty ? profile.name : data.partnerName,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true)).timeout(const Duration(seconds: 4));
+    await CloudOutbox.markClean(CloudOutbox.cycle);
     } catch (e) {
       debugPrint('CloudSync.pushCycle: $e');
+      await CloudOutbox.markDirty(CloudOutbox.cycle);
+    }
+  }
+
+  static Future<void> flushOutbox() async {
+    if (!ready) return;
+    final pending = await CloudOutbox.pending();
+    for (final type in pending) {
+      try {
+        switch (type) {
+          case CloudOutbox.profile:
+            await pushProfile(UserProfileRepository.profileNotifier.value);
+            break;
+          case CloudOutbox.day:
+            final latest = await DaySnapshotRepository.lastDays(1);
+            if (latest.isNotEmpty) await pushDay(latest.first);
+            break;
+          case CloudOutbox.cycle:
+            await pushCycle(PartnerCycleRepository.notifier.value);
+            break;
+        }
+      } catch (e) {
+        debugPrint('CloudSync.flushOutbox: $e');
+      }
     }
   }
 
@@ -543,26 +581,32 @@ class CloudSyncService {
 
     // 2. Каскадное удаление данных в Firestore (выполняется строго ДО удаления Auth, чтобы не потерять права)
     try {
-      // 2a. Удаляем свою карточку из кругов друзей
+      // 2a. Удаляем свою карточку из кругов друзей (friends/{friendUid}/members/{id})
       try {
-        final league = await PrivateLeagueRepository.loadLeague();
-        for (final member in league.members) {
-          if (member.id.isNotEmpty && member.id != id) {
+        final myFriends = await db
+            .collection('friends')
+            .doc(id)
+            .collection('members')
+            .get()
+            .timeout(const Duration(seconds: 8));
+        for (final f in myFriends.docs) {
+          final friendUid = f.id;
+          if (friendUid.isNotEmpty && friendUid != id) {
             try {
               await db
                   .collection('friends')
-                  .doc(member.id)
+                  .doc(friendUid)
                   .collection('members')
                   .doc(id)
                   .delete()
                   .timeout(const Duration(seconds: 4));
             } catch (e) {
-              debugPrint('CloudSync.deleteAccountAndData: could not remove from friend ${member.id}: $e');
+              debugPrint('CloudSync.deleteAccountAndData: could not remove from friend $friendUid: $e');
             }
           }
         }
       } catch (e) {
-        debugPrint('CloudSync.deleteAccountAndData: league members traversal note: $e');
+        debugPrint('CloudSync.deleteAccountAndData: friends traversal note: $e');
       }
 
       // 2b. Пакетное удаление снимков дней (days/{id}/snapshots/*)
@@ -626,6 +670,7 @@ class CloudSyncService {
     }
 
     // 4. Очищаем локальные хранилища ТОЛЬКО при полном успехе
+    await CloudOutbox.clearOutbox();
     await UserSessionManager.clearLocalUserData();
     await UserProfileRepository.saveProfile(const UserProfile(isAuthenticated: false));
   }

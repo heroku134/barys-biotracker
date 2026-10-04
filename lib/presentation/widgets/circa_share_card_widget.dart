@@ -394,7 +394,7 @@ class CircaShareCardWidget extends StatelessWidget {
                 child: _buildMetricColumn(
                   'HRV rMSSD',
                   telemetry.hrv > 0 ? '${(telemetry.hrv * progress).round()}' : '—',
-                  telemetry.hrv > 0 ? 'мс' : '',
+                  telemetry.hrv > 0 ? '' : '',
                 ),
               ),
               _buildVerticalHairline(),
@@ -409,8 +409,8 @@ class CircaShareCardWidget extends StatelessWidget {
               Expanded(
                 child: _buildMetricColumn(
                   'RESP RATE',
-                  telemetry.respiratoryRate > 0 ? telemetry.respiratoryRate.toStringAsFixed(1) : '—',
-                  telemetry.respiratoryRate > 0 ? 'rpm' : '',
+                  telemetry.respiratoryRate > 0 ? '≈${telemetry.respiratoryRate.toStringAsFixed(1)}' : '—',
+                  telemetry.respiratoryRate > 0 ? 'оценка' : '',
                 ),
               ),
               _buildVerticalHairline(),
@@ -418,9 +418,9 @@ class CircaShareCardWidget extends StatelessWidget {
                 child: _buildMetricColumn(
                   'SKIN TEMP',
                   telemetry.skinTempDeviation != 0.0
-                      ? '${telemetry.skinTempDeviation >= 0 ? '+' : ''}${telemetry.skinTempDeviation.toStringAsFixed(1)}°'
+                      ? '≈${telemetry.skinTempDeviation >= 0 ? '+' : ''}${telemetry.skinTempDeviation.toStringAsFixed(1)}°'
                       : '—',
-                  telemetry.skinTempDeviation != 0.0 ? 'C' : '',
+                  telemetry.skinTempDeviation != 0.0 ? 'оценка' : '',
                 ),
               ),
             ],

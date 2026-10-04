@@ -118,7 +118,7 @@ class CircaHypnogram extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildNeedItem(palette, AppLocaleNotifier.pick('База', 'База', 'Base'), '${sleepResult.baselineNeedMinutes ~/ 60}ч'),
+                      _buildNeedItem(palette, AppLocaleNotifier.pick('База', 'База', 'Base'), '${sleepResult.baselineNeedMinutes ~/ 60}ч ${sleepResult.baselineNeedMinutes % 60}м'),
                       Text('+', style: TextStyle(color: palette.secondary, fontSize: 13)),
                       _buildNeedItem(palette, AppLocaleNotifier.pick('Долг 14д', 'Карыз 14к', 'Debt 14d'), '+${sleepResult.sleepDebtPortionMinutes}м'),
                       Text('+', style: TextStyle(color: palette.secondary, fontSize: 13)),

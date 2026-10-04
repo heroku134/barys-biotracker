@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/user_profile.dart';
+import '../ble/ute_ble_bridge.dart';
 import '../services/cloud_sync_service.dart';
 
 class UserProfileRepository {
@@ -34,6 +36,9 @@ class UserProfileRepository {
     await prefs.setBool(_keyAuth, profile.isAuthenticated);
     profileNotifier.value = profile;
     CloudSyncService.pushProfile(profile);
+    if (UteBleBridge.instance.isConnected) {
+      unawaited(UteBleBridge.instance.syncUserProfile(profile));
+    }
   }
 
   static Future<void> setAuthenticated(bool isAuth) async {

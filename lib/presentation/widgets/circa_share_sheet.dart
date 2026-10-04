@@ -90,7 +90,7 @@ class _CircaShareSheetState extends State<CircaShareSheet>
     final readiness = ReadinessEngine.calculate(widget.telemetry, baseline: widget.baseline);
     final recoveryText = '${readiness.score}% (${readiness.zone.label})';
     final heartRate = '${widget.telemetry.heartRate} уд/мин';
-    final hrv = '${widget.telemetry.hrv.round()} мс';
+    final hrv = '${widget.telemetry.hrv.round()}';
     final strain = widget.telemetry.currentDayStrain.toStringAsFixed(1);
     final sleepH = widget.telemetry.sleepMinutes ~/ 60;
     final sleepM = widget.telemetry.sleepMinutes % 60;

@@ -65,7 +65,7 @@ class CalibrationStore {
     DateTime? now,
   }) async {
     final moment = now ?? DateTime.now();
-    if (hrv <= 0) return false;
+    if (hrv <= 0 || rhr <= 0) return false;
     final prefs = await SharedPreferences.getInstance();
     final key = _todayKey(moment);
     if (prefs.getString(_lastKey) == key) return false;

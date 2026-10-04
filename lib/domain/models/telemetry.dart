@@ -65,6 +65,9 @@ class BleTelemetry {
   // Дневной стресс
   final int currentStressScore; // 0..100
 
+  // Кислород в крови
+  final int bloodOxygen; // Уровень SpO2 в % (0..100)
+
   // Apple Notification Center Service (iOS Bluetooth permissions)
   final bool isAncsAuthorized;
 
@@ -74,6 +77,7 @@ class BleTelemetry {
   bool get hasSleep => sleepMinutes > 0;
   bool get hasRespiratoryRate => respiratoryRate > 0;
   bool get hasSkinTempDeviation => skinTempDeviation != 0.0;
+  bool get hasBloodOxygen => bloodOxygen >= 70 && bloodOxygen <= 100;
   bool get hasNocturnalData => hasSleep || hasHrv || hasRhr;
 
   const BleTelemetry({
@@ -112,6 +116,9 @@ class BleTelemetry {
     // Стресс
     this.currentStressScore = 0,
 
+    // Кислород в крови
+    this.bloodOxygen = 0,
+
     // Уведомления iOS
     this.isAncsAuthorized = true,
   });
@@ -147,6 +154,7 @@ class BleTelemetry {
     double? yesterdayStrain,
     List<int>? zoneMinutes,
     int? currentStressScore,
+    int? bloodOxygen,
     bool? isAncsAuthorized,
   }) {
     return BleTelemetry(
@@ -176,6 +184,7 @@ class BleTelemetry {
       yesterdayStrain: yesterdayStrain ?? this.yesterdayStrain,
       zoneMinutes: zoneMinutes ?? this.zoneMinutes,
       currentStressScore: currentStressScore ?? this.currentStressScore,
+      bloodOxygen: bloodOxygen ?? this.bloodOxygen,
       isAncsAuthorized: isAncsAuthorized ?? this.isAncsAuthorized,
     );
   }

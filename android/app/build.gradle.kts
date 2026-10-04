@@ -48,5 +48,6 @@ dependencies {
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar", "*.jar"))))
     implementation("com.google.code.gson:gson:2.8.6")
     implementation("androidx.core:core-ktx:1.13.1")
+    implementation("net.jpountz.lz4:lz4:1.3.0")
 }
 

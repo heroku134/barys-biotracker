@@ -7,6 +7,7 @@ import '../../domain/intelligence/readiness_engine.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/intelligence/sleep_engine.dart';
 import 'ios_widget_service.dart';
+import 'cloud_sync_service.dart';
 import '../storage/calibration_store.dart';
 import '../storage/day_snapshot_repository.dart';
 
@@ -41,9 +42,16 @@ class BackgroundBleSyncService {
     try {
       debugPrint('BackgroundBleSyncService: Polling watch buffer...');
 
+      await CloudSyncService.flushOutbox();
+
+      if (bridge.isConnected) {
+        await bridge.pullNightAndDay();
+        await bridge.syncWorkoutHistory();
+      }
+
       // Чтение текущих телеметрических данных с часов
       final telemetry = bridge.currentTelemetry;
-      final readiness = ReadinessEngine.calculate(telemetry);
+      final readiness = ReadinessEngine.calculate(telemetry, baseline: CalibrationStore.baselineNotifier.value);
       final currentStrain = telemetry.currentDayStrain > 0 ? telemetry.currentDayStrain : 0.0;
       final strainResult = StrainEngine.evaluate(
         currentStrain: currentStrain,

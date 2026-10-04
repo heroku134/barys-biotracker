@@ -1,0 +1,51 @@
+# Комплексный аудит готовности проекта к релизу (Release Readiness Audit)
+
+> **Проект:** KALKAN SPORT / barys-biotracker (`c:\Users\KPK\StudioProjects\untitled1`)  
+> **Референс 1 (Android):** Официальная документация вендора *UteWatchSDK_Android_使用说明文档* (v1.0.1 – v1.4.2)  
+> **Референс 2 (iOS BLE):** Эталонный SDK вендора `C:\Users\KPK\IdeaProjects\watch\iOS-SDK1.3.1` (`UTEBluetoothRYApi.framework` v1.3.1 + `UTERYDemo`)  
+> **Инструменты проверки:** Static Analysis (`flutter analyze`), Test Suite (`flutter test`), Decompilation (`javap` на `uteWatchSdk_Android_v1.3.9.aar`), Нативная сборка (`./build_apk.ps1`), Аудит Swift/Kotlin/Dart кода.
+
+---
+
+## 1. Честный вердикт: готов ли проект к релизу?
+
+### ❌ **ОТВЕТ: К РЕЛИЗУ НЕ ГОТОВ (RELEASE NOT READY — NO-GO)**
+
+Кодовая база верхнего уровня Flutter (UI-экраны, верстка, провайдеры состояния, тесты) выполнена на высоком уровне:
+- `flutter analyze` завершается с **0 предупреждений и 0 ошибок**;
+- `flutter test` проходит **58 из 58 тестов**;
+- Архитектура Clean Architecture / Domain Models хорошо структурирована.
+
+**Однако проект категорически нельзя выпускать в App Store и Google Play прямо сейчас из-за критических блокеров (P0) и функциональных разрывов с BLE-оборудованием (P1):**
+1. **На машине разработчика полностью исчерпан диск `C:\` (0 байт свободно)** — R8/D8 упал с ошибкой `java.io.IOException: Недостаточно места на диске`.
+2. **Проект Android настроен на debug-п
+<truncated 19741 bytes>
+``kotlin
+val msg = MessageInfo()
+msg.type = resolveAppType(sbn.packageName)
+msg.content = sbn.notification.extras.getString(Notification.EXTRA_TEXT) ?: ""
+uteBleConnection?.sendMessage(msg)
+```
+
+### Шаг 5: Переключить чтение сна на протокольный `syncSleepHistoryData` в `KalkanBleManager.kt`
+Заменить пассивный `uteBleConnection?.getSciSleepData()` на активный запрос архива сна за последние 48 часов:
+```kotlin
+uteBleConnection?.syncSleepHistoryData(startTimeSec, endTimeSec)
+```
+и обрабатывать входящие пакеты в колбэке.
+
+### Шаг 6: Настроить релизную подпись (Release Keystore)
+Создать keystore файл (`key.properties`), настроить `signingConfigs.create("release")` в `android/app/build.gradle.kts` вместо использования `signingConfigs.getByName("debug")`.
+
+### Шаг 7: Связать переключатели в `DeviceSettingsScreen.dart`
+Подключить вызовы MethodChannel к:
+- `setDisconnectRemind` (оповещение о разрыве);
+- `setAlarmList` (будильники);
+- `setWaterClock` (напоминание о воде по спецификации `Water reminder.txt`).
+
+---
+
+## Итоговое резюме
+- **Качество исходного кода Flutter/Dart:** Отличное (**58/58 тестов успешно, 0 ошибок анализа**).
+- **Синхронизация базовой телеметрии (пульс, шаги, батарея):** Работает надежно на обеих платформах с троттлингом 1 Гц.
+- **Готовность к публикации в магазины:** **НЕТ**. Требуется закрыть 5 блокеров P0 (диск, LZ4, YCAPPKEY, NotificationListener, Release Keystore) и устранить функциональные разрывы по сну, тренировкам и настройкам.

@@ -256,7 +256,7 @@ class CircaFriendDetailSheet extends StatelessWidget {
               Expanded(
                 child: _buildMetricTile(
                   label: AppStrings.tr('friend_detail_hrv', language),
-                  value: '${member.hrv.round()} ms',
+                  value: '${member.hrv.round()}',
                   sub: AppLocaleNotifier.pick('Баланс вегетатики', 'Вегетативдик тең салмак', 'Autonomic balance'),
                   icon: Icons.graphic_eq,
                   color: AppColors.sage,

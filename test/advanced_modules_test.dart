@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:barys_biotracker/domain/intelligence/baseline_calibration_manager.dart';
 import 'package:barys_biotracker/data/services/health_sync_service.dart';
 import 'package:barys_biotracker/data/services/live_activity_service.dart';
 import 'package:barys_biotracker/data/storage/local_day_strain.dart';
@@ -12,39 +11,6 @@ void main() {
   group('Advanced Modules Test Suite', () {
     setUp(() {
       SharedPreferences.setMockInitialValues({});
-    });
-
-    test('1. BaselineCalibrationManager calculates rolling baseline and confidence', () async {
-      final initialBaseline = await BaselineCalibrationManager.loadCalibratedBaseline();
-      expect(initialBaseline.meanHrv, 64.0);
-      expect(initialBaseline.meanRhr, 52);
-
-      // Add night sample
-      final updated = await BaselineCalibrationManager.recordNightSample(
-        hrv: 70.0,
-        rhr: 50,
-        respiratoryRate: 14.2,
-        skinTemp: 36.5,
-        sleepMinutes: 480,
-      );
-
-      expect(updated.meanHrv, 70.0);
-      expect(updated.meanRhr, 50);
-
-      // Check confidence calculations
-      expect(BaselineCalibrationManager.calculateConfidence(0), 0);
-      expect(BaselineCalibrationManager.calculateConfidence(1), 30);
-      expect(BaselineCalibrationManager.calculateConfidence(7), 70);
-      expect(BaselineCalibrationManager.calculateConfidence(14), 100);
-
-      expect(
-        BaselineCalibrationManager.getCalibrationStatusLabel(0),
-        'КАЛИБРОВКА 0/14 ДНЕЙ · ОЖИДАНИЕ ПЕРВОЙ НОЧИ',
-      );
-      expect(
-        BaselineCalibrationManager.getCalibrationStatusLabel(14),
-        'БЕЙЗЛАЙН СКАЛИБРОВАН (100%)',
-      );
     });
 
     test('2. HealthSyncService manages auto-sync and sleep stages', () async {

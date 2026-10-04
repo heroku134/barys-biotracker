@@ -103,7 +103,7 @@ class PartnerCycleRepository {
     final phase = MenstrualCycleEngine.determinePhase(day, cycleLength: len, periodDuration: profile.periodDurationDays);
     final temp = skinTempDeviation ?? MenstrualCycleEngine.expectedThermalDelta(day, cycleLength: len);
 
-    final partnerCode = prefs.getString('cycle_partner_invite_code') ?? '';
+    final partnerCode = prefs.getString('kalkan_cycle_partner_invite_code_v1') ?? '';
     final partnerName = profile.name;
 
     final updated = notifier.value.copyWith(

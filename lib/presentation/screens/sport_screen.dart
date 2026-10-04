@@ -67,6 +67,8 @@ class _SportScreenState extends State<SportScreen> {
   final MapController _mapController = MapController();
   int _initialWatchSteps = 0;
   List<int> _hrZoneSeconds = [0, 0, 0, 0, 0];
+  int _hrSum = 0;
+  int _hrSamples = 0;
 
   @override
   void initState() {
@@ -127,14 +129,14 @@ class _SportScreenState extends State<SportScreen> {
     }
   }
 
-  int get _weekMinutes {
-    final now = DateTime.now();
-    final start = now.subtract(Duration(days: now.weekday - 1));
-    final from = DateTime(start.year, start.month, start.day);
-    return _history
-        .where((w) => !w.startedAt.isBefore(from))
-        .fold<int>(0, (s, w) => s + (w.durationSeconds ~/ 60));
-  }
+  List<int> get _weekZoneSeconds =>
+      WorkoutRepository.weeklyZoneSecondsFrom(_history);
+
+  int get _weekZone2Minutes =>
+      _weekZoneSeconds.length > 1 ? _weekZoneSeconds[1] ~/ 60 : 0;
+
+  int get _weekZone5Minutes =>
+      _weekZoneSeconds.length > 4 ? _weekZoneSeconds[4] ~/ 60 : 0;
 
   List<SportType> get _filteredSports {
     switch (_categoryFilter) {
@@ -195,6 +197,8 @@ class _SportScreenState extends State<SportScreen> {
       _currentGpsPosition = null;
       _initialWatchSteps = widget.bleBridge.currentTelemetry.steps;
       _hrZoneSeconds = [0, 0, 0, 0, 0];
+      _hrSum = 0;
+      _hrSamples = 0;
       _restSecondsRemaining = 0;
     });
 
@@ -220,15 +224,17 @@ class _SportScreenState extends State<SportScreen> {
           final currentBpm = widget.bleBridge.currentTelemetry.heartRate;
           if (currentBpm > 0) {
             if (currentBpm > _peakHr) _peakHr = currentBpm;
+            _hrSum += currentBpm;
+            _hrSamples++;
 
             // Фиксация пульсовых зон по формуле 220 - age
             final zi = _userProfile.getHeartRateZone(currentBpm);
             _hrZoneSeconds[zi]++;
 
-            // Расчет сожженных калорий по физиологической формуле Keytel
+            // Расчет сожженных калорий по физиологической формуле Keytel (по скользящему среднему ЧСС)
             _caloriesBurned = _userProfile.calculateCaloriesBurned(
               durationSeconds: _elapsedSeconds,
-              avgHr: currentBpm,
+              avgHr: _hrSum ~/ _hrSamples,
             );
           }
 
@@ -379,7 +385,9 @@ class _SportScreenState extends State<SportScreen> {
       } catch (_) {}
 
       final duration = _elapsedSeconds;
-      final avgHr = widget.bleBridge.currentTelemetry.heartRate;
+      final avgHr = _hrSamples > 0
+          ? _hrSum ~/ _hrSamples
+          : widget.bleBridge.currentTelemetry.heartRate;
       final maxHr = _peakHr > 0 ? _peakHr : avgHr;
       final cals = _caloriesBurned > 0
           ? _caloriesBurned
@@ -435,7 +443,9 @@ class _SportScreenState extends State<SportScreen> {
 
       final dayBefore = widget.bleBridge.currentTelemetry.currentDayStrain > 0
           ? widget.bleBridge.currentTelemetry.currentDayStrain
-          : 0.0;
+          : (StrainEngine.calculateStrainFromZones(
+                  widget.bleBridge.currentTelemetry.zoneMinutes) +
+              LocalDayStrain.current());
       final zone = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry).zone;
 
       LocalDayStrain.add(calculatedStrain);
@@ -493,8 +503,9 @@ class _SportScreenState extends State<SportScreen> {
     if (_distanceKm <= 0.02 || _elapsedSeconds < 8) return "--'--\"";
     final paceDec = (_elapsedSeconds / 60.0) / _distanceKm;
     if (paceDec <= 0 || paceDec > 30) return "--'--\"";
-    final m = paceDec.toInt();
-    final s = ((paceDec - m) * 60).round();
+    var m = paceDec.toInt();
+    var s = ((paceDec - m) * 60).round();
+    if (s >= 60) { m += 1; s -= 60; }
     return "$m'${s.toString().padLeft(2, '0')}\"";
   }
 
@@ -502,6 +513,10 @@ class _SportScreenState extends State<SportScreen> {
   Widget build(BuildContext context) {
     final telemetry = widget.bleBridge.currentTelemetry;
     final currentBpm = telemetry.heartRate;
+    final displayDayStrain = telemetry.currentDayStrain > 0
+        ? telemetry.currentDayStrain
+        : (StrainEngine.calculateStrainFromZones(telemetry.zoneMinutes) +
+            LocalDayStrain.current());
 
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
@@ -527,7 +542,7 @@ class _SportScreenState extends State<SportScreen> {
                     const Icon(Icons.bolt, color: AppColors.amber, size: 14),
                     const SizedBox(width: 4),
                     Text(
-                      '${telemetry.currentDayStrain.toStringAsFixed(1)} / 21',
+                      '${displayDayStrain.toStringAsFixed(1)} / 21',
                       style: AppTypography.caption(palette.fg).copyWith(fontWeight: FontWeight.w600),
                     ),
                   ],
@@ -657,7 +672,7 @@ class _SportScreenState extends State<SportScreen> {
                             style: AppTypography.monoLabel(palette.secondary),
                           ),
                           Text(
-                            '$_weekMinutes / 200 мин (${((_weekMinutes / 200) * 100).clamp(0, 100).round()}%)',
+                            'З2 $_weekZone2Minutes мин · З5 $_weekZone5Minutes мин',
                             style: AppTypography.bodyMuted(AppColors.sage).copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -666,7 +681,7 @@ class _SportScreenState extends State<SportScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: (_weekMinutes / 200).clamp(0.0, 1.0),
+                          value: (_weekZone2Minutes / 200).clamp(0.0, 1.0),
                           backgroundColor: palette.hairline,
                           valueColor: const AlwaysStoppedAnimation<Color>(AppColors.sage),
                           minHeight: 6,
@@ -675,9 +690,9 @@ class _SportScreenState extends State<SportScreen> {
                       const SizedBox(height: 8),
                       Text(
                         AppLocaleNotifier.pick(
-                          '128 мин в Аэробной Зоне 2 + 24 мин интервалов в Зоне 5 обеспечивают омоложение миокарда.',
-                          'Аэробдук 2-зонадагы 128 мүнөт + 5-зонадагы 24 мүнөт интервалдар жүрөктү жашартат.',
-                          '128 min in Aerobic Zone 2 + 24 min Zone 5 intervals optimize heart rejuvenation.',
+                          '$_weekZone2Minutes мин в Аэробной Зоне 2 + $_weekZone5Minutes мин интервалов в Зоне 5 (цель З2: 200 мин/нед).',
+                          'Аэробдук 2-зонадагы $_weekZone2Minutes мүнөт + 5-зонадагы $_weekZone5Minutes мүнөт интервалдар (максат З2: 200 мүн/апта).',
+                          '$_weekZone2Minutes min in Aerobic Zone 2 + $_weekZone5Minutes min Zone 5 intervals (Z2 goal: 200 min/wk).',
                         ),
                         style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
                       ),
