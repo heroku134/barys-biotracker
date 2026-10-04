@@ -96,7 +96,7 @@ class _FirmwareUpdateScreenState extends State<FirmwareUpdateScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Nordic nRF52840 · HW Rev. 2.1',
+                            'KALKAN Biotracker SoC · HW Rev. 2.1',
                             style: AppTypography.monoLabel(palette.secondary).copyWith(fontSize: 9),
                           ),
                         ],
