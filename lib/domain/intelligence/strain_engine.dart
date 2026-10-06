@@ -85,6 +85,17 @@ class StrainEngine {
     return double.parse(strain.toStringAsFixed(1));
   }
 
+  /// Расчет дневного фонового Strain бытовой активности (0..12.0) по шагам и активным калориям
+  static double calculateDailyActivityStrain({
+    required int activeCalories,
+    required int steps,
+  }) {
+    if (activeCalories < 30 && steps < 300) return 0.0;
+    final trimp = (steps / 1000.0) * 15.0 + (activeCalories / 100.0) * 20.0;
+    final strain = 21.0 * (1.0 - math.exp(-_trimpK * trimp));
+    return double.parse(strain.clamp(0.0, 12.0).toStringAsFixed(1));
+  }
+
   /// Расчет локального Strain за отдельную сессию тренировки
   static double calculateWorkoutStrain({
     required double durationMinutes,

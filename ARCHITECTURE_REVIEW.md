@@ -28,8 +28,7 @@ lib/
 │
 ├── data/                               # Слой данных, нативных мостов и хранилища
 │   ├── ble/
-│   │   ├── ute_ble_bridge.dart         # Двусторонний MethodChannel / EventChannel мост к BLE СААТ-1
-│   │   └── ble_protocol_decoder.dart   # Декодер бинарных пакетов телеметрии
+│   │   └── ute_ble_bridge.dart         # Двусторонний MethodChannel / EventChannel мост и декодер телеметрии СААТ-1
 │   ├── history/
 │   │   └── biometrics_history_repository.dart # Долговременная история HRV, RHR и дневного стресса
 │   ├── services/
@@ -54,9 +53,8 @@ lib/
 │   ├── avatar/
 │   │   └── avatar_manager.dart         # Геймификация маскота «Барыс-Батыр» (XP, ранги, уровни)
 │   ├── intelligence/
-│   │   ├── baseline_calibration_manager.dart # Алгоритм 14-дневного скользящего окна Whoop/Oura
 │   │   ├── menstrual_cycle_engine.dart       # Фазы цикла, температурные сдвиги, окно фертильности
-│   │   ├── readiness_engine.dart             # 3-компонентный индекс готовности (Recovery 0..100%)
+│   │   ├── readiness_engine.dart             # Индекс готовности (Recovery 0..100%) и скользящий бейзлайн
 │   │   ├── sleep_engine.dart                 # Оценка гипнограммы (Deep, REM, Core, Awake) и долга сна
 │   │   ├── smart_daily_coach.dart            # Умный физиологический советник на день
 │   │   ├── strain_engine.dart                # Кардио-нагрузка по шкале 0..21 (Whoop Strain)

@@ -1284,10 +1284,7 @@ object KalkanBleManager {
                             }
                         }
                         NotifyType.DEVICE_PAIRED_STATE_NOTIFY -> {
-                            try {
-                                val honorConfig = HonorAccountConfig()
-                                uteBleConnection?.setHonorAccount(honorConfig)
-                            } catch (_: Exception) {}
+                            // Pairing confirmed by watch firmware
                         }
                         NotifyType.FITNESS_DATA_UPDATE -> {
                             bleExecutor.execute {

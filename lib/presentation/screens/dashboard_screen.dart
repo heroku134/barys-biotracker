@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../core/app_language.dart';
@@ -121,8 +122,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final readiness = ReadinessEngine.calculate(_telemetry, baseline: _baseline);
     final fromWatch = _telemetry.currentDayStrain > 0
         ? _telemetry.currentDayStrain
-        : StrainEngine.calculateStrainFromZones(_telemetry.zoneMinutes);
-    final reconciledStrain = fromWatch + LocalDayStrain.current();
+        : (_telemetry.zoneMinutes.any((m) => m > 0)
+            ? StrainEngine.calculateStrainFromZones(_telemetry.zoneMinutes)
+            : StrainEngine.calculateDailyActivityStrain(
+                activeCalories: _telemetry.calories,
+                steps: _telemetry.steps,
+              ));
+    final reconciledStrain = math.max(fromWatch, LocalDayStrain.current());
     final strain = StrainEngine.evaluate(currentStrain: reconciledStrain, recoveryZone: readiness.zone);
     final sleep = SleepEngine.analyze(_telemetry);
     final hasNight = _telemetry.sleepMinutes > 0 || _telemetry.hrv > 0;
@@ -213,8 +219,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final fromWatch = _telemetry.currentDayStrain > 0
         ? _telemetry.currentDayStrain
-        : StrainEngine.calculateStrainFromZones(_telemetry.zoneMinutes);
-    final currentStrain = fromWatch + LocalDayStrain.current();
+        : (_telemetry.zoneMinutes.any((m) => m > 0)
+            ? StrainEngine.calculateStrainFromZones(_telemetry.zoneMinutes)
+            : StrainEngine.calculateDailyActivityStrain(
+                activeCalories: _telemetry.calories,
+                steps: _telemetry.steps,
+              ));
+    final currentStrain = math.max(fromWatch, LocalDayStrain.current());
     final strainResult = StrainEngine.evaluate(
       currentStrain: currentStrain,
       recoveryZone: readiness.zone,

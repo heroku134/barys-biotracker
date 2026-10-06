@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -441,11 +442,18 @@ class _SportScreenState extends State<SportScreen> {
         hrZoneSeconds: _hrZoneSeconds,
       );
 
-      final dayBefore = widget.bleBridge.currentTelemetry.currentDayStrain > 0
-          ? widget.bleBridge.currentTelemetry.currentDayStrain
-          : (StrainEngine.calculateStrainFromZones(
-                  widget.bleBridge.currentTelemetry.zoneMinutes) +
-              LocalDayStrain.current());
+      final telem = widget.bleBridge.currentTelemetry;
+      final dayBefore = telem.currentDayStrain > 0
+          ? telem.currentDayStrain
+          : math.max(
+              telem.zoneMinutes.any((m) => m > 0)
+                  ? StrainEngine.calculateStrainFromZones(telem.zoneMinutes)
+                  : StrainEngine.calculateDailyActivityStrain(
+                      activeCalories: telem.calories,
+                      steps: telem.steps,
+                    ),
+              LocalDayStrain.current(),
+            );
       final zone = ReadinessEngine.calculate(widget.bleBridge.currentTelemetry).zone;
 
       LocalDayStrain.add(calculatedStrain);
@@ -515,8 +523,15 @@ class _SportScreenState extends State<SportScreen> {
     final currentBpm = telemetry.heartRate;
     final displayDayStrain = telemetry.currentDayStrain > 0
         ? telemetry.currentDayStrain
-        : (StrainEngine.calculateStrainFromZones(telemetry.zoneMinutes) +
-            LocalDayStrain.current());
+        : math.max(
+            telemetry.zoneMinutes.any((m) => m > 0)
+                ? StrainEngine.calculateStrainFromZones(telemetry.zoneMinutes)
+                : StrainEngine.calculateDailyActivityStrain(
+                    activeCalories: telemetry.calories,
+                    steps: telemetry.steps,
+                  ),
+            LocalDayStrain.current(),
+          );
 
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
