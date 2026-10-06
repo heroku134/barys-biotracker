@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_colors.dart';
 import '../../domain/intelligence/strain_engine.dart';
-import 'glass_card.dart';
+import 'kalkan_ui.dart';
 
 class CircaStrainCard extends StatelessWidget {
   final StrainCalculationResult strainResult;
@@ -18,18 +18,9 @@ class CircaStrainCard extends StatelessWidget {
     final current = strainResult.currentStrain;
     final targetMin = strainResult.targetStrainMin;
     final targetMax = strainResult.targetStrainMax;
+    const strainColor = AppColors.strainBlue;
 
-    // Цвет акцента нагрузки (умеренно - циановый/янтарный, высокий - янтарный/розовый)
-    final Color strainColor;
-    if (current >= 18.0) {
-      strainColor = AppColors.rose;
-    } else if (current >= 14.0) {
-      strainColor = AppColors.amber;
-    } else {
-      strainColor = AppColors.sage;
-    }
-
-    return GlassCard(
+    return KalkanCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,13 +33,13 @@ class CircaStrainCard extends StatelessWidget {
                   Container(
                     width: 6,
                     height: 6,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: strainColor,
                     ),
                   ),
-                  SizedBox(width: 8),
-                  Text(
+                  const SizedBox(width: 8),
+                  const Text(
                     'НАГРУЗКА (STRAIN)',
                     style: TextStyle(
                       color: AppColors.muted,
@@ -68,7 +59,7 @@ class CircaStrainCard extends StatelessWidget {
                 ),
                 child: Text(
                   'Цель: ${targetMin.toStringAsFixed(1)}–${targetMax.toStringAsFixed(1)}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.fg,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -77,7 +68,7 @@ class CircaStrainCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
 
           // Цифра Strain и статус бюджета
           Row(
@@ -86,7 +77,7 @@ class CircaStrainCard extends StatelessWidget {
             children: [
               Text(
                 current.toStringAsFixed(1),
-                style: TextStyle(
+                style: const TextStyle(
                   color: strainColor,
                   fontSize: 44,
                   fontWeight: FontWeight.w700,
@@ -94,7 +85,7 @@ class CircaStrainCard extends StatelessWidget {
                   height: 1.0,
                 ),
               ),
-              Text(
+              const Text(
                 ' / 21.0',
                 style: TextStyle(
                   color: AppColors.muted,
@@ -102,7 +93,7 @@ class CircaStrainCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -118,8 +109,8 @@ class CircaStrainCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    SizedBox(height: 2),
-                    Text(
+                    const SizedBox(height: 2),
+                    const Text(
                       'Нагрузка',
                       style: TextStyle(
                         color: AppColors.faint,
@@ -131,53 +122,62 @@ class CircaStrainCard extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // Шкала 0–21 с целевым окном
-          Stack(
-            children: [
-              // Фон шкалы
-              Container(
+          // Шкала 0–21 с подсвеченным целевым окном (математически точный LayoutBuilder)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final leftCorridor = (targetMin / 21.0).clamp(0.0, 1.0) * w;
+              final rightCorridor = (targetMax / 21.0).clamp(0.0, 1.0) * w;
+              final corridorWidth = (rightCorridor - leftCorridor).clamp(0.0, w);
+              final fillWidth = (current / 21.0).clamp(0.0, 1.0) * w;
+
+              return SizedBox(
                 height: 8,
-                decoration: BoxDecoration(
-                  color: AppColors.raised,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              // Целевой коридор (подсветка допустимого диапазона)
-              Positioned(
-                left: (targetMin / 21.0) * MediaQuery.of(context).size.width * 0.8,
-                right: ((21.0 - targetMax) / 21.0) * MediaQuery.of(context).size.width * 0.8,
-                top: 0,
-                bottom: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.sage.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.sage.withValues(alpha: 0.5), width: 1),
-                  ),
-                ),
-              ),
-              // Заполнение текущего Strain
-              FractionallySizedBox(
-                widthFactor: (current / 21.0).clamp(0.0, 1.0),
-                child: Container(
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: strainColor,
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: strainColor.withValues(alpha: 0.5),
-                        blurRadius: 6,
+                child: Stack(
+                  children: [
+                    // Фон шкалы
+                    Container(
+                      width: w,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: AppColors.raised,
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                    ],
-                  ),
+                    ),
+                    // Целевой коридор (подсветка допустимого диапазона нагрузки)
+                    Positioned(
+                      left: leftCorridor,
+                      width: corridorWidth,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: strainColor.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: strainColor.withValues(alpha: 0.45),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Заполнение текущего Strain (плоское без glow)
+                    Container(
+                      width: fillWidth,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: strainColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // 5 зон пульса (TRIMP)
           Text(

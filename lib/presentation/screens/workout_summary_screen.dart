@@ -9,7 +9,6 @@ import '../../data/storage/day_journal_repository.dart';
 import '../../domain/intelligence/strain_engine.dart';
 import '../../domain/models/readiness.dart';
 import '../../domain/models/workout_session.dart';
-import '../widgets/glass_card.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/run_route_map_widget.dart';
 
@@ -50,23 +49,23 @@ class WorkoutSummaryScreen extends StatelessWidget {
             onPressed: () {
               CircaHaptics.selectionClick();
               final buffer = StringBuffer();
-              buffer.writeln('🛡️ KALKAN SPORT · СААТ-1');
+              buffer.writeln('KALKAN · СААТ-1');
               buffer.writeln('${workout.sport.title} · ${workout.startedAt.day}.${workout.startedAt.month}.${workout.startedAt.year}');
-              buffer.writeln('⏱️ Время: ${workout.durationFormatted}');
+              buffer.writeln('Время: ${workout.durationFormatted}');
               if (workout.distanceKm > 0) {
-                buffer.writeln('📍 Дистанция: ${workout.distanceKm.toStringAsFixed(2)} км');
+                buffer.writeln('Дистанция: ${workout.distanceKm.toStringAsFixed(2)} км');
                 if (workout.avgPaceMinPerKm > 0) {
-                  buffer.writeln('⚡ Темп: ${workout.paceFormatted}');
+                  buffer.writeln('Темп: ${workout.paceFormatted}');
                 }
               }
-              buffer.writeln('❤️ Пульс ср/макс: ${workout.avgHr} / ${workout.maxHr} bpm');
-              buffer.writeln('🔥 Калории: ${workout.calories} ккал');
+              buffer.writeln('Пульс ср/макс: ${workout.avgHr} / ${workout.maxHr} bpm');
+              buffer.writeln('Калории: ${workout.calories} ккал');
               if (workout.cadence > 0) {
-                buffer.writeln('👟 Шаги / каденс: ${workout.steps} / ${workout.cadence} спм');
+                buffer.writeln('Шаги / каденс: ${workout.steps} / ${workout.cadence} спм');
               } else if (workout.steps > 0) {
-                buffer.writeln('👟 Шаги: ${workout.steps}');
+                buffer.writeln('Шаги: ${workout.steps}');
               }
-              buffer.writeln('📈 Strain: +${workout.strain.toStringAsFixed(1)}');
+              buffer.writeln('Нагрузка: +${workout.strain.toStringAsFixed(1)} STRAIN');
               SharePlus.instance.share(ShareParams(text: buffer.toString().trim()));
             },
           ),
@@ -93,7 +92,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
           ],
 
           // 2. Хедер тренировки
-          GlassCard(
+          KalkanCard(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,7 +102,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(workout.sport.icon, color: AppColors.amber, size: 20),
+                        Icon(workout.sport.icon, color: palette.secondary, size: 20),
                         const SizedBox(width: 8),
                         Text(workout.sport.title, style: AppTypography.bodySemibold(palette.fg)),
                       ],
@@ -111,12 +110,12 @@ class WorkoutSummaryScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.sage.withValues(alpha: 0.15),
+                        color: AppColors.strainBlue.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         '+${workout.strain.toStringAsFixed(1)} STRAIN',
-                        style: AppTypography.monoBadge.copyWith(color: AppColors.sage),
+                        style: AppTypography.monoBadge.copyWith(color: AppColors.strainBlue),
                       ),
                     ),
                   ],
@@ -192,7 +191,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          GlassCard(
+          KalkanCard(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +233,7 @@ class WorkoutSummaryScreen extends StatelessWidget {
           const SizedBox(height: 14),
 
           // 4. Суточный бюджет нагрузки
-          GlassCard(
+          KalkanCard(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

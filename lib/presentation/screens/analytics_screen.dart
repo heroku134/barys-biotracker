@@ -22,11 +22,15 @@ import '../widgets/circa_hypnogram.dart';
 import '../widgets/circa_live_pulse_card.dart';
 import '../widgets/circa_sparkline.dart';
 import '../widgets/circa_stress_timeline.dart';
+import '../widgets/circa_partner_cycle_sheet.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/kalkan_chrome.dart';
-import '../widgets/metric_dial.dart';
 import '../widgets/weekly_metric_chart.dart';
+import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/intelligence/readiness_engine.dart';
+import '../../domain/models/user_profile.dart';
+import '../../data/storage/user_profile_repository.dart';
+import '../../data/storage/partner_cycle_repository.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   final UteBleBridge bleBridge;
@@ -210,7 +214,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       hrv: telemetry.hrv,
       meanHrv: _baseline.meanHrv,
       sleepMinutes: telemetry.sleepMinutes,
-      dayStrain: telemetry.currentDayStrain,
+      dayStrain: dayStrain,
     );
     final healthspan = HealthspanEngine.calculate(
       restingHeartRate: telemetry.restingHeartRate,
@@ -218,6 +222,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       weeklyZone5Minutes: _weeklyZones.length > 4 ? _weeklyZones[4] ~/ 60 : 0,
       sleepConsistency: telemetry.sleepConsistency,
     );
+
+    final userProfile = UserProfileRepository.profileNotifier.value;
+    final partnerCycle = PartnerCycleRepository.notifier.value;
+    final isFemale = userProfile.gender == Gender.female;
+    final showCycle = isFemale || partnerCycle.isLinked;
+    final cycleHeadline = isFemale
+        ? (userProfile.lastPeriodStartDate != null
+            ? '${MenstrualCycleEngine.determinePhase(MenstrualCycleEngine.calculateCurrentCycleDay(userProfile.lastPeriodStartDate!, cycleLength: userProfile.cycleLengthDays > 0 ? userProfile.cycleLengthDays : 28), cycleLength: userProfile.cycleLengthDays > 0 ? userProfile.cycleLengthDays : 28).title} · ${AppLocaleNotifier.pick("день", "күн", "day")} ${MenstrualCycleEngine.calculateCurrentCycleDay(userProfile.lastPeriodStartDate!, cycleLength: userProfile.cycleLengthDays > 0 ? userProfile.cycleLengthDays : 28)}'
+            : AppLocaleNotifier.pick('Цикл не настроен', 'Цикл жөндөлгөн эмес', 'Cycle not configured'))
+        : '${partnerCycle.partnerName} · ${partnerCycle.phaseTitle} · ${AppLocaleNotifier.pick("день", "күн", "day")} ${partnerCycle.currentCycleDay}';
 
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: AppLocaleNotifier.instance,
@@ -233,34 +247,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                MetricDial(
-                  label: AppStrings.tr('home_sleep', language),
-                  value: '${sleepAnalysis.sleepPerformanceScore}%',
-                  progress: (sleepAnalysis.sleepPerformanceScore) / 100,
-                  color: AppColors.sleepBlue,
-                  size: 88,
-                ),
-                MetricDial(
-                  label: AppStrings.tr('home_recovery', language),
-                  value: '${ReadinessEngine.calculate(telemetry, baseline: _baseline).score}%',
-                  progress: ReadinessEngine.calculate(telemetry, baseline: _baseline).score / 100,
-                  color: ReadinessEngine.calculate(telemetry, baseline: _baseline).zone.color,
-                  size: 88,
-                ),
-                MetricDial(
-                  label: AppStrings.tr('home_strain', language),
-                  value: dayStrain.toStringAsFixed(1),
-                  progress: (dayStrain / 21).clamp(0.0, 1.0),
-                  color: AppColors.strainBlue,
-                  size: 88,
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            // Переключатель временных интервалов
+            // Переключатель временных интервалов (на самом верху экрана)
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -392,68 +379,75 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             CircaHealthspanCard(healthspan: healthspan),
             const SizedBox(height: 14),
 
-            // 5. Гормональный цикл и адаптация нагрузки
-            KalkanCard(
-              padding: const EdgeInsets.all(KalkanUi.cardPadding),
-              onTap: () => _showCycleDetailsModal(context),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: AppColors.amber.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
+            // 5. Гормональный цикл и адаптация нагрузки (только для женщин или при связанном цикле партнёра)
+            if (showCycle) ...[
+              KalkanCard(
+                padding: const EdgeInsets.all(KalkanUi.cardPadding),
+                onTap: () {
+                  if (!isFemale && partnerCycle.isLinked) {
+                    CircaPartnerCycleSheet.show(context, partnerCycle);
+                  } else {
+                    _showCycleDetailsModal(context);
+                  }
+                },
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.amber.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
                     ),
-                    child: Icon(Icons.auto_graph, color: AppColors.amber, size: 20),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppLocaleNotifier.pick('Цикл', 'Цикл', 'Cycle'),
-                          style: TextStyle(
-                            color: AppColors.amber,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: -0.1,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isFemale
+                                ? AppLocaleNotifier.pick('Женский цикл', 'Аялдардын цикли', 'Cycle')
+                                : '${partnerCycle.partnerName} · ${AppLocaleNotifier.pick("Цикл партнёра", "Өнөктөштүн цикли", "Partner Cycle")}',
+                            style: const TextStyle(
+                              color: AppColors.amber,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.1,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          AppLocaleNotifier.pick(
-                            'Фолликулярная фаза · ВСР на пике',
-                            'Фолликулярдык фаза · ЖЖВ туу чокусунда',
-                            'Follicular phase · HRV peak',
+                          const SizedBox(height: 2),
+                          Text(
+                            cycleHeadline,
+                            style: TextStyle(
+                              color: palette.fg,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          style: TextStyle(
-                            color: AppColors.fg,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(height: 2),
+                          Text(
+                            AppLocaleNotifier.pick(
+                              'Нажмите для подсказки по нагрузкам ›',
+                              'Жүктөм боюнча сунуштарды көрүү ›',
+                              'Tap for strain guidance ›',
+                            ),
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 11,
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          AppLocaleNotifier.pick(
-                            'Нажмите для подсказки по нагрузкам ›',
-                            'Жүктөм боюнча сунуштарды көрүү ›',
-                            'Tap for strain guidance ›',
-                          ),
-                          style: TextStyle(
-                            color: AppColors.muted,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  Icon(Icons.arrow_forward_ios, color: AppColors.muted, size: 12),
-                ],
+                    const Icon(Icons.arrow_forward_ios, color: AppColors.muted, size: 12),
+                  ],
+                ),
               ),
-            ),
-            SizedBox(height: 20),
+              const SizedBox(height: 14),
+            ],
+            const SizedBox(height: 12),
           ],
         ),
       ),

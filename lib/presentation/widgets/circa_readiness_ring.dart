@@ -8,12 +8,16 @@ class CircaReadinessRing extends StatefulWidget {
   final int score;
   final RecoveryZone zone;
   final double size;
+  final String? label;
+  final VoidCallback? onTap;
 
   const CircaReadinessRing({
     super.key,
     required this.score,
     required this.zone,
     this.size = 190,
+    this.label,
+    this.onTap,
   });
 
   @override
@@ -91,21 +95,26 @@ class _CircaReadinessRingState extends State<CircaReadinessRing>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _progressAnim,
-      builder: (context, child) {
-        return SizedBox(
-          width: widget.size,
-          height: widget.size,
-          child: CustomPaint(
-            painter: _CircaRingPainter(
-              progress: _progressAnim.value,
-              score: (widget.score * _controller.value).round(),
-              zone: widget.zone,
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedBuilder(
+        animation: _progressAnim,
+        builder: (context, child) {
+          return SizedBox(
+            width: widget.size,
+            height: widget.size,
+            child: CustomPaint(
+              painter: _CircaRingPainter(
+                progress: _progressAnim.value,
+                score: (widget.score * _controller.value).round(),
+                zone: widget.zone,
+                label: widget.label ?? 'RECOVERY',
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -114,11 +123,13 @@ class _CircaRingPainter extends CustomPainter {
   final double progress;
   final int score;
   final RecoveryZone zone;
+  final String label;
 
   _CircaRingPainter({
     required this.progress,
     required this.score,
     required this.zone,
+    required this.label,
   });
 
   @override
@@ -136,7 +147,7 @@ class _CircaRingPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, trackPaint);
 
-    // Цвет зоны: строго однотонный без радужных переливов
+    // Цвет зоны: строго однотонный без радужных переливов и свечений
     final Color solidZoneColor;
     switch (zone) {
       case RecoveryZone.optimal:
@@ -150,15 +161,7 @@ class _CircaRingPainter extends CustomPainter {
         break;
     }
 
-    // 2. Деликатное свечение дуги
-    final glowPaint = Paint()
-      ..color = solidZoneColor.withValues(alpha: 0.16)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth + 4
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-
-    // 3. Основная дуга прогресса (однотонная)
+    // 2. Основная дуга прогресса (чистая плоская дуга одного цвета, без glow)
     final progressPaint = Paint()
       ..color = solidZoneColor
       ..style = PaintingStyle.stroke
@@ -174,19 +177,11 @@ class _CircaRingPainter extends CustomPainter {
         startAngle,
         sweepAngle,
         false,
-        glowPaint,
-      );
-
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        false,
         progressPaint,
       );
     }
 
-    // 4. Цифра Score (Display tabular figures со сжатым трекингом)
+    // 3. Цифра Score (Display tabular figures со сжатым трекингом)
     final scorePainter = TextPainter(
       text: TextSpan(
         text: '$score',
@@ -194,7 +189,7 @@ class _CircaRingPainter extends CustomPainter {
           color: AppColors.fg,
           fontSize: 54,
           fontWeight: FontWeight.w700,
-          fontFeatures: [FontFeature.tabularFigures()],
+          fontFeatures: const [FontFeature.tabularFigures()],
           letterSpacing: -1.5,
           height: 1.0,
         ),
@@ -207,11 +202,11 @@ class _CircaRingPainter extends CustomPainter {
       Offset(center.dx - scorePainter.width / 2, center.dy - scorePainter.height / 2 - 10),
     );
 
-    // 5. Подпись ВОССТАНОВЛЕНИЕ (строгий CAPS, 12, letterSpacing 2.0)
+    // 4. Подпись зоны/метрики (строгий CAPS, letterSpacing 2.0)
     final labelPainter = TextPainter(
-      text: const TextSpan(
-        text: 'ВОССТАНОВЛЕНИЕ',
-        style: TextStyle(
+      text: TextSpan(
+        text: label.toUpperCase(),
+        style: const TextStyle(
           color: AppColors.muted,
           fontSize: 10.5,
           fontWeight: FontWeight.w700,
@@ -231,6 +226,7 @@ class _CircaRingPainter extends CustomPainter {
   bool shouldRepaint(covariant _CircaRingPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.score != score ||
-        oldDelegate.zone != zone;
+        oldDelegate.zone != zone ||
+        oldDelegate.label != label;
   }
 }

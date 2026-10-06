@@ -64,7 +64,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   private var skinTempDeviation: Double = 0.0
   private var currentRespiratoryRate: Double = 0.0
   private var currentBloodOxygen: Int = 0
-  private var isAncsAuthorized: Bool = true
+  var isAncsAuthorized: Bool = true
   private var findDeviceAutoStopWorkItem: DispatchWorkItem?
 
   private var lastConnectedAddress: String?
@@ -642,10 +642,10 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       let group = DispatchGroup()
       for item in list {
         group.enter()
-        let recId = (item.value(forKey: "ID") as? Int) ?? 0
+        let recId = ((item as AnyObject).value(forKey: "ID") as? Int) ?? 0
         self.device.getRecordSummary(recId) { summary, _, _ in
           defer { group.leave() }
-          guard let s = summary else { return }
+          guard let s = summary as AnyObject? else { return }
           let st = (s.value(forKey: "startTime") as? Int) ?? 0
           let et = (s.value(forKey: "endTime") as? Int) ?? 0
           let dur = (s.value(forKey: "totalTime") as? Int) ?? 0
@@ -689,7 +689,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     switch central.state {
     case .poweredOn:
       pushTelemetry(immediate: true)
-    case .poweredOff, .unsupported, .unauthorized, .resetting:
+    case .unknown, .poweredOff, .unsupported, .unauthorized, .resetting:
       resolvePendingConnect(success: false, errorMessage: "Bluetooth powered off or unauthorized")
       if isConnected {
         isConnected = false

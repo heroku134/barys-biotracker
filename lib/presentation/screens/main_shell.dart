@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/app_colors.dart';
@@ -9,10 +8,6 @@ import '../../data/ble/ute_ble_bridge.dart';
 import '../../data/services/background_ble_sync_service.dart';
 import '../../data/storage/calibration_store.dart';
 import '../../data/storage/user_profile_repository.dart';
-import '../../domain/avatar/avatar_manager.dart';
-import '../../domain/intelligence/readiness_engine.dart';
-import '../../domain/models/personal_baseline.dart';
-import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import 'analytics_screen.dart';
 import 'bio_avatar_screen.dart';
@@ -32,9 +27,6 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
-  late BleTelemetry _telemetry;
-  PersonalBaseline _baseline = CalibrationStore.baselineNotifier.value;
-  StreamSubscription<BleTelemetry>? _sub;
 
   @override
   void initState() {
@@ -42,22 +34,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     UserProfileRepository.loadProfile();
     CalibrationStore.loadBaseline();
-    CalibrationStore.baselineNotifier.addListener(_onBaselineChanged);
-    _telemetry = widget.bleBridge.currentTelemetry;
-    _sub = widget.bleBridge.telemetryStream.listen((data) {
-      if (mounted) setState(() => _telemetry = data);
-    });
-  }
-
-  void _onBaselineChanged() {
-    if (mounted) setState(() => _baseline = CalibrationStore.baselineNotifier.value);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    CalibrationStore.baselineNotifier.removeListener(_onBaselineChanged);
-    _sub?.cancel();
     super.dispose();
   }
 
@@ -83,8 +64,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final palette = KalkanColors.of(context);
-    final avatar = AvatarManager.getProfile(_telemetry, baseline: _baseline);
-    final zone = ReadinessEngine.calculate(_telemetry, baseline: _baseline).zone;
 
     return ValueListenableBuilder<UserProfile>(
       valueListenable: UserProfileRepository.profileNotifier,
@@ -96,12 +75,15 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               DashboardScreen(
                 bleBridge: widget.bleBridge,
                 onOpenAvatar: () {
-                  setState(() => _currentIndex = 2);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => BioAvatarScreen(bleBridge: widget.bleBridge, embedded: false),
+                    ),
+                  );
                 },
                 onOpenDeviceSettings: _openDeviceSettings,
               ),
               AnalyticsScreen(bleBridge: widget.bleBridge),
-              BioAvatarScreen(bleBridge: widget.bleBridge, embedded: true),
               SportScreen(bleBridge: widget.bleBridge),
               ProfileScreen(bleBridge: widget.bleBridge),
             ];
@@ -123,9 +105,8 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                       children: [
                         _nav(palette, 0, Icons.circle_outlined, AppStrings.tr('nav_today', language)),
                         _nav(palette, 1, Icons.insights_outlined, AppStrings.tr('nav_analysis', language)),
-                        _mascotNav(palette, zone.color, avatar.state.assetFor(userProfile.gender), 2, AppStrings.tr('nav_barys', language)),
-                        _nav(palette, 3, Icons.directions_run, AppStrings.tr('nav_sport', language)),
-                        _nav(palette, 4, Icons.person_outline, AppStrings.tr('nav_profile', language)),
+                        _nav(palette, 2, Icons.directions_run, AppStrings.tr('nav_sport', language)),
+                        _nav(palette, 3, Icons.person_outline, AppStrings.tr('nav_profile', language)),
                       ],
                     ),
                   ),
@@ -140,7 +121,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   Widget _nav(KalkanColors palette, int index, IconData icon, String label) {
     final selected = _currentIndex == index;
-    final color = selected ? AppColors.sage : palette.secondary;
+    final color = selected ? palette.fg : palette.secondary;
     return Expanded(
       child: InkWell(
         onTap: () {
@@ -157,48 +138,6 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.caption(color).copyWith(
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _mascotNav(KalkanColors palette, Color ring, String asset, int index, String label) {
-    final selected = _currentIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() => _currentIndex = index);
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: selected ? AppColors.sage : ring, width: 1.4),
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  asset,
-                  fit: BoxFit.cover,
-                  alignment: Alignment.topCenter,
-                  errorBuilder: (_, _, _) => Icon(Icons.pets, color: AppColors.sage, size: 16),
-                ),
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption(selected ? AppColors.sage : palette.secondary).copyWith(
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),

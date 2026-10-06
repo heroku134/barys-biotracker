@@ -17,19 +17,16 @@ import '../../domain/models/personal_baseline.dart';
 import '../../domain/models/telemetry.dart';
 import '../../domain/models/user_profile.dart';
 import '../widgets/circa_avatar_picker_dialog.dart';
-import '../widgets/circa_calibration_card.dart';
-import '../widgets/circa_mascot_hero_card.dart';
 import '../widgets/circa_recovery_breakdown_sheet.dart';
+import '../widgets/circa_readiness_ring.dart';
+import '../widgets/circa_strain_card.dart';
+import '../widgets/circa_hypnogram.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/kalkan_chrome.dart';
-import '../widgets/metric_dial.dart';
 import '../widgets/circa_cycle_card.dart';
 import 'menstrual_cycle_screen.dart';
 import 'pregnancy_screen.dart';
-import 'private_league_screen.dart';
-import 'day_journal_screen.dart';
 import '../../domain/intelligence/day_copy.dart';
-import '../../domain/avatar/avatar_manager.dart';
 import '../../data/storage/calibration_store.dart';
 import '../../data/storage/day_snapshot_repository.dart';
 import '../../data/storage/local_day_strain.dart';
@@ -286,37 +283,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: isConnected ? AppColors.sage : AppColors.rose,
+                      color: isConnected ? palette.fg : AppColors.rose,
                       shape: BoxShape.circle,
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    isConnected
-                        ? AppStrings.tr('home_synced', language)
-                        : AppStrings.tr('home_offline', language),
-                    style: AppTypography.caption(
-                      isConnected ? AppColors.sage : AppColors.rose,
-                    ),
-                  ),
                   if (isConnected && _telemetry.batteryLevel > 0) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      _telemetry.isCharging ? Icons.battery_charging_full : Icons.battery_std,
-                      size: 13,
-                      color: _telemetry.isCharging ? AppColors.amber : palette.secondary,
-                    ),
-                    const SizedBox(width: 2),
+                    if (_telemetry.isCharging) ...[
+                      const Icon(Icons.battery_charging_full, size: 13, color: AppColors.amber),
+                      const SizedBox(width: 3),
+                    ],
                     Text(
-                      '${_telemetry.batteryLevel}%${_telemetry.isCharging ? " ⚡" : ""}',
-                      style: AppTypography.caption(_telemetry.isCharging ? AppColors.amber : palette.secondary),
+                      '${_telemetry.batteryLevel}%',
+                      style: AppTypography.caption(
+                        _telemetry.isCharging ? AppColors.amber : palette.secondary,
+                      ),
                     ),
-                  ] else if (isConnected && _telemetry.isCharging) ...[
-                    const SizedBox(width: 8),
-                    const Icon(Icons.bolt, size: 13, color: AppColors.amber),
+                  ] else ...[
                     Text(
-                      AppLocaleNotifier.pick('Зарядка', 'Заряддалууда', 'Charging'),
-                      style: AppTypography.caption(AppColors.amber),
+                      isConnected
+                          ? AppStrings.tr('home_synced', language)
+                          : AppStrings.tr('home_offline', language),
+                      style: AppTypography.caption(
+                        isConnected ? palette.secondary : AppColors.rose,
+                      ),
                     ),
                   ],
                 ],
@@ -420,127 +410,82 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 16, KalkanUi.pagePadding, 0),
+                child: Column(
                   children: [
-                    MetricDial(
-                      label: AppStrings.tr('home_sleep', language),
-                      value: hasNightData ? '$sleepScore%' : '—',
-                      progress: hasNightData ? sleepScore / 100 : 0.0,
-                      color: hasNightData ? AppColors.sleepBlue : palette.hairline,
-                      onTap: () {
-                        CircaHaptics.selectionClick();
-                        CircaRecoveryBreakdownSheet.show(
-                          context,
-                          readiness,
-                          telemetry: _telemetry,
-                          baseline: _baseline,
-                          userName: name,
-                        );
-                      },
-                    ),
-                    MetricDial(
-                      label: AppStrings.tr('home_recovery', language),
-                      value: hasNightData
-                          ? (isCalibrating ? '~${readiness.score}%' : '${readiness.score}%')
-                          : '—',
-                      progress: hasNightData ? readiness.score / 100 : 0.0,
-                      color: hasNightData ? readiness.zone.color : palette.hairline,
-                      onTap: () {
-                        CircaHaptics.selectionClick();
-                        CircaRecoveryBreakdownSheet.show(
-                          context,
-                          readiness,
-                          telemetry: _telemetry,
-                          baseline: _baseline,
-                          userName: name,
-                        );
-                      },
-                    ),
-                    MetricDial(
-                      label: AppStrings.tr('home_strain', language),
-                      value: currentStrain.toStringAsFixed(1),
-                      progress: (currentStrain / 21).clamp(0.0, 1.0),
-                      color: AppColors.strainBlue,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
-                child: CircaMascotHeroCard(
-                  state: AvatarManager.calculateState(_telemetry, baseline: _baseline),
-                  readiness: readiness,
-                  onTap: widget.onOpenAvatar,
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                child: KalkanCard(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        hasNightData
-                            ? AppLocaleNotifier.pick(
-                                'Цель нагрузки сегодня  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
-                                'Бүгүнкү жүктөм  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
-                                'Target Strain Today  ${strainResult.targetStrainMin.toStringAsFixed(0)}–${strainResult.targetStrainMax.toStringAsFixed(1)}',
-                              )
-                            : AppLocaleNotifier.pick(
-                                'Базовая цель нагрузки  8–12',
-                                'Базалык жүктөм  8–12',
-                                'Baseline Strain Target  8–12',
-                              ),
-                        style: AppTypography.bodySemibold(palette.fg),
+                    // 1. Hero Ring: Recovery 0–100, 190px, flat arc, zone color
+                    Center(
+                      child: CircaReadinessRing(
+                        score: hasNightData ? readiness.score : 0,
+                        zone: readiness.zone,
+                        size: 190,
+                        label: AppStrings.tr('home_recovery', language),
+                        onTap: () {
+                          CircaHaptics.selectionClick();
+                          CircaRecoveryBreakdownSheet.show(
+                            context,
+                            readiness,
+                            telemetry: _telemetry,
+                            baseline: _baseline,
+                            userName: name,
+                          );
+                        },
                       ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: (currentStrain / 21).clamp(0.0, 1.0),
-                          minHeight: 6,
-                          backgroundColor: palette.raised,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            strainResult.isInTargetZone ? AppColors.sage : (currentStrain > strainResult.targetStrainMax ? AppColors.rose : AppColors.strainBlue),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 2. Two clickable satellites: Sleep (Left) & Strain (Right)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _satelliteCard(
+                            palette: palette,
+                            title: AppStrings.tr('home_sleep', language),
+                            value: hasNightData ? '$sleepScore%' : '—',
+                            subtext: hasNightData
+                                ? '${_telemetry.sleepMinutes ~/ 60}ч ${_telemetry.sleepMinutes % 60}м'
+                                : AppLocaleNotifier.pick('Нет данных', 'Маалымат жок', 'No data'),
+                            accentColor: AppColors.sleepBlue,
+                            onTap: () {
+                              CircaHaptics.selectionClick();
+                              CircaHypnogram.showSleepBreakdownSheet(context, sleepResult);
+                            },
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        AppLocaleNotifier.pick(
-                          'Сейчас ${currentStrain.toStringAsFixed(1)} из 21. ${strainResult.budgetStatusText}.',
-                          'Азыр ${currentStrain.toStringAsFixed(1)} / 21. ${strainResult.budgetStatusText}.',
-                          'Currently ${currentStrain.toStringAsFixed(1)} of 21. ${strainResult.budgetStatusText}.',
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _satelliteCard(
+                            palette: palette,
+                            title: AppStrings.tr('home_strain', language),
+                            value: currentStrain.toStringAsFixed(1),
+                            subtext: '${AppLocaleNotifier.pick('Цель', 'Максат', 'Target')} ${strainResult.targetStrainMax.toStringAsFixed(1)}',
+                            accentColor: AppColors.strainBlue,
+                            onTap: () {
+                              CircaHaptics.selectionClick();
+                              _showStrainSheet(context, strainResult);
+                            },
+                          ),
                         ),
-                        style: AppTypography.caption(palette.secondary).copyWith(height: 1.35),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 3. One clear actionable sentence (DayCopy)
+                    KalkanCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            width: 32,
-                            height: 32,
+                            margin: const EdgeInsets.only(top: 4),
+                            width: 6,
+                            height: 6,
                             decoration: BoxDecoration(
-                              color: palette.raised,
-                              borderRadius: BorderRadius.circular(KalkanUi.controlRadius),
-                              border: Border.all(color: palette.hairline, width: KalkanUi.hairline),
-                            ),
-                            child: const Icon(
-                              Icons.tips_and_updates_outlined,
-                              color: AppColors.amber,
-                              size: 16,
+                              shape: BoxShape.circle,
+                              color: readiness.zone.color,
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               hasNightData
@@ -552,101 +497,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       climate: _climate,
                                     )
                                   : AppLocaleNotifier.pick(
-                                      'Ночь без данных СААТ-1 · Часы не были надеты ночью. Рекомендация базовая, без учёта ночного восстановления.',
-                                      'Түнкү маалымат жок. Калыбына келүү эсептелген жок.',
-                                      'Night without SAAT-1 data. Baseline recommendation without overnight recovery.',
+                                      'Ночь без данных СААТ-1 · Носите часы перед сном для точного расчёта восстановления.',
+                                      'СААТ-1 түнкү маалыматы жок · Калыбына келүүнү эсептөө үчүн саатты тагыңыз.',
+                                      'Night without SAAT-1 data · Wear watch overnight for calibrated recovery.',
                                     ),
-                              style: AppTypography.body(palette.fg).copyWith(height: 1.4, fontSize: 13),
+                              style: AppTypography.body(palette.fg).copyWith(
+                                height: 1.4,
+                                fontSize: 13.5,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                      if (hasNightData && isCalibrating) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          AppLocaleNotifier.pick(
-                            'Калибровка ($_calDays/14 дней) · Рекомендация адаптивная (коридор ±15%). Личная норма формируется.',
-                            'Калибрлөө ($_calDays/14 күн) · Сунуш ыңгайлаштырылган (коридор ±15%). Жеке норма калыптанууда.',
-                            'Calibrating ($_calDays/14 days) · Adaptive target (corridor ±15%). Personal baseline is forming.',
-                          ),
-                          style: AppTypography.caption(AppColors.amber),
-                        ),
-                      ],
-                      const SizedBox(height: 10),
-                      Text(
-                        _telemetry.hrv > 0
-                            ? AppLocaleNotifier.pick(
-                                'HRV ночи ${_telemetry.hrv.toStringAsFixed(0)} · норма ${_baseline.calibrationDaysDone >= 14 ? _baseline.meanHrv.toStringAsFixed(0) : "калибровка ${_baseline.calibrationDaysDone}/14"}',
-                                'Түнкү HRV ${_telemetry.hrv.toStringAsFixed(0)} · норма ${_baseline.calibrationDaysDone >= 14 ? _baseline.meanHrv.toStringAsFixed(0) : "калибрлөө ${_baseline.calibrationDaysDone}/14"}',
-                                'Night HRV ${_telemetry.hrv.toStringAsFixed(0)} · baseline ${_baseline.calibrationDaysDone >= 14 ? _baseline.meanHrv.toStringAsFixed(0) : "calibrating ${_baseline.calibrationDaysDone}/14"}',
-                              )
-                            : (hasNightData
-                                ? AppLocaleNotifier.pick(
-                                    'HRV ночи: нет данных · калибровка ${_baseline.calibrationDaysDone}/14 дней',
-                                    'Түнкү HRV: маалымат жок · калибрлөө ${_baseline.calibrationDaysDone}/14 күн',
-                                    'Night HRV: no data yet · calibrating ${_baseline.calibrationDaysDone}/14 days',
-                                  )
-                                : AppLocaleNotifier.pick(
-                                    'HRV ночи: часы не были надеты ночью · Нет данных',
-                                    'Түнкү HRV: саат тагылган эмес · Маалымат жок',
-                                    'Night HRV: watch not worn overnight · No data',
-                                  )),
-                        style: AppTypography.bodySemibold(palette.fg),
-                      ),
-                      if (_miss != null) ...[
-                        const SizedBox(height: 6),
-                        Text(_miss!, style: AppTypography.caption(palette.secondary)),
-                      ],
-                      if (_climate != ClimateMode.normal) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          _climate == ClimateMode.altitude
-                              ? AppLocaleNotifier.pick('Режим высокогорья: цель нагрузки снижена.', 'Бийик тоо режими.', 'Altitude mode: strain budget cut.')
-                              : AppLocaleNotifier.pick('Режим жары: цель нагрузки снижена.', 'Ысык режим.', 'Heat mode: strain budget cut.'),
-                          style: AppTypography.caption(AppColors.amber),
-                        ),
-                      ],
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const DayJournalScreen()),
-                          ),
-                          child: Text(AppLocaleNotifier.pick('Записать день', 'Күндү жазуу', 'Log the day')),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () async {
-                            await widget.bleBridge.triggerHeartRateMeasurement();
-                          },
-                          icon: const Icon(Icons.favorite_outline, size: 16),
-                          label: Text(AppLocaleNotifier.pick('Замерить пульс', 'Пульсту өлчөө', 'Measure heart rate')),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            if (_calDays < 14)
+
+            // 4. Calibration progress indicator (discreet hairline, only when < 14 days)
+            if (isCalibrating)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: CircaCalibrationCard(
-                    currentDay: _calDays,
-                    totalDays: 14,
+                  padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 10, KalkanUi.pagePadding, 0),
+                  child: KalkanCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      children: [
+                        Text(
+                          AppLocaleNotifier.pick('Калибровка $_calDays/14 дней', 'Калибрлөө $_calDays/14 күн', 'Calibration $_calDays/14 days'),
+                          style: AppTypography.caption(palette.secondary),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
+                            child: LinearProgressIndicator(
+                              value: (_calDays / 14.0).clamp(0.0, 1.0),
+                              backgroundColor: palette.raised,
+                              valueColor: AlwaysStoppedAnimation<Color>(palette.secondary),
+                              minHeight: 3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
 
+            // 5. 0–21 Strain Corridor Card with heart rate zones
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 12, KalkanUi.pagePadding, 0),
+                child: CircaStrainCard(
+                  strainResult: strainResult,
+                  onOpenWorkout: () {},
+                ),
+              ),
+            ),
+
+            // 6. Female cycle or linked partner cycle card
             if (_userProfile.gender == Gender.female)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 12, KalkanUi.pagePadding, 0),
                   child: CircaCycleCard(
                     telemetry: _telemetry,
                     profile: _userProfile,
@@ -660,134 +575,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
               ),
-
             if (_userProfile.gender != Gender.female && _partner != null && _partner!.isLinked)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                  padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 12, KalkanUi.pagePadding, 0),
                   child: CircaPartnerCycleCard(
                     data: _partner!,
                     onTap: () => CircaPartnerCycleSheet.show(context, _partner!),
                   ),
                 ),
               ),
+
+            // 7. Compact single-row telemetry strip at bottom
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _stat(
-                        palette,
-                        AppLocaleNotifier.pick('ЧСС', 'ЖС', 'HR'),
-                        _telemetry.heartRate > 0 ? '${_telemetry.heartRate}' : '—',
-                        _telemetry.heartRate > 0 ? 'bpm' : '',
-                      ),
+                padding: const EdgeInsets.fromLTRB(KalkanUi.pagePadding, 12, KalkanUi.pagePadding, 32),
+                child: GestureDetector(
+                  onTap: () {
+                    CircaHaptics.selectionClick();
+                    CircaRecoveryBreakdownSheet.show(
+                      context,
+                      readiness,
+                      telemetry: _telemetry,
+                      baseline: _baseline,
+                      userName: name,
+                    );
+                  },
+                  child: KalkanCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    child: Row(
+                      children: [
+                        _miniStat(palette, 'HRV', _telemetry.hrv > 0 ? '${_telemetry.hrv.round()}' : '—', 'ms'),
+                        _statDivider(palette),
+                        _miniStat(palette, AppLocaleNotifier.pick('Покой', 'Тынч', 'RHR'), _telemetry.restingHeartRate > 0 ? '${_telemetry.restingHeartRate}' : '—', 'bpm'),
+                        _statDivider(palette),
+                        _miniStat(palette, 'SpO2', _telemetry.hasBloodOxygen ? '${_telemetry.bloodOxygen}%' : '—', ''),
+                        _statDivider(palette),
+                        _miniStat(palette, AppLocaleNotifier.pick('Кожа', 'Тери', 'Temp'), _telemetry.hasSkinTempDeviation ? '${_telemetry.skinTempDeviation >= 0 ? "+" : ""}${_telemetry.skinTempDeviation.toStringAsFixed(1)}°' : '—', ''),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _stat(
-                        palette,
-                        'HRV',
-                        _telemetry.hrv > 0 ? _telemetry.hrv.toStringAsFixed(0) : '—',
-                        _telemetry.hrv > 0 ? '' : '',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _stat(
-                        palette,
-                        AppLocaleNotifier.pick('Покой', 'Тынч', 'Resting'),
-                        _telemetry.restingHeartRate > 0 ? '${_telemetry.restingHeartRate}' : '—',
-                        _telemetry.restingHeartRate > 0 ? 'bpm' : '',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _stat(
-                        palette,
-                        AppLocaleNotifier.pick('SpO2', 'Кычкылтек', 'SpO2'),
-                        _telemetry.hasBloodOxygen ? '${_telemetry.bloodOxygen}' : '—',
-                        _telemetry.hasBloodOxygen ? '%' : '',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _stat(
-                        palette,
-                        AppLocaleNotifier.pick('Дыхание', 'Дем алуу', 'Resp'),
-                        _telemetry.hasRespiratoryRate ? _telemetry.respiratoryRate.toStringAsFixed(1) : '—',
-                        _telemetry.hasRespiratoryRate ? '/мин' : '',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _stat(
-                        palette,
-                        AppLocaleNotifier.pick('Кожа', 'Тери', 'Temp'),
-                        _telemetry.hasSkinTempDeviation
-                            ? '${_telemetry.skinTempDeviation >= 0 ? '+' : ''}${_telemetry.skinTempDeviation.toStringAsFixed(1)}'
-                            : '—',
-                        _telemetry.hasSkinTempDeviation ? '°C' : '',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _link(
-                        palette,
-                        AppLocaleNotifier.pick('Дневник', 'Күндөлүк', 'Journal'),
-                        Icons.edit_note,
-                        () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const DayJournalScreen()),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _link(
-                        palette,
-                        AppLocaleNotifier.pick('Друзья', 'Достор', 'Friends'),
-                        Icons.people_outline,
-                        () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _link(
-                        palette,
-                        AppLocaleNotifier.pick('Барыс', 'Барыс', 'Barys'),
-                        Icons.pets_outlined,
-                        widget.onOpenAvatar,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _link(
-                        palette,
-                        AppLocaleNotifier.pick('Часы', 'Саат', 'Watch'),
-                        Icons.watch_outlined,
-                        () => widget.onOpenDeviceSettings?.call(),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -797,24 +624,115 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _stat(KalkanColors palette, String label, String value, String unit) {
-    return KalkanCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+  void _showStrainSheet(BuildContext context, StrainCalculationResult strainResult) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final palette = KalkanColors.of(ctx);
+        return Container(
+          decoration: BoxDecoration(
+            color: palette.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(KalkanUi.cardRadius)),
+            border: Border(top: BorderSide(color: palette.hairline, width: KalkanUi.hairline)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: palette.hairline,
+                    borderRadius: BorderRadius.circular(KalkanUi.progressRadius),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              CircaStrainCard(strainResult: strainResult),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _satelliteCard({
+    required KalkanColors palette,
+    required String title,
+    required String value,
+    required String subtext,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: KalkanCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title.toUpperCase(),
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: accentColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: AppTypography.heroNumberMedium(palette.fg).copyWith(
+                fontSize: 26,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtext,
+              style: AppTypography.caption(palette.secondary).copyWith(fontSize: 11),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _miniStat(KalkanColors palette, String label, String value, String unit) {
+    return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTypography.caption(palette.secondary)),
-          const SizedBox(height: 4),
+          Text(label, style: AppTypography.caption(palette.secondary).copyWith(fontSize: 10)),
+          const SizedBox(height: 2),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(value, style: AppTypography.metricValue(palette.fg)),
+              Text(value, style: AppTypography.metricValue(palette.fg).copyWith(fontSize: 15)),
               if (unit.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 1),
-                  child: Text(unit, style: AppTypography.caption(palette.muted)),
-                ),
+                const SizedBox(width: 2),
+                Text(unit, style: AppTypography.caption(palette.muted).copyWith(fontSize: 9)),
               ],
             ],
           ),
@@ -823,27 +741,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _link(KalkanColors palette, String label, IconData icon, VoidCallback onTap) {
-    return OutlinedButton(
-      onPressed: () {
-        CircaHaptics.selectionClick();
-        onTap();
-      },
-      style: OutlinedButton.styleFrom(
-        foregroundColor: palette.fg,
-        backgroundColor: palette.surface,
-        minimumSize: const Size(44, KalkanUi.minTapTarget),
-        side: BorderSide(color: palette.hairline, width: KalkanUi.hairline),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(KalkanUi.controlRadius)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 16, color: palette.secondary),
-          const SizedBox(height: 4),
-          Text(label, style: AppTypography.caption(palette.fg)),
-        ],
-      ),
+  Widget _statDivider(KalkanColors palette) {
+    return Container(
+      width: 1,
+      height: 22,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      color: palette.hairline,
     );
   }
 }

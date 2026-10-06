@@ -618,60 +618,6 @@ class _SportScreenState extends State<SportScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 4. Автораспознавание движений IMU
-                GlassCard(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.memory, color: AppColors.sage, size: 16),
-                                const SizedBox(width: 8),
-                                Text(
-                                  AppLocaleNotifier.pick('Автораспознавание движений IMU', 'IMU кыймылды автоматтык таануу', 'IMU Auto Movement Detection'),
-                                  style: AppTypography.bodySemibold(palette.fg),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              AppLocaleNotifier.pick(
-                                'Алгоритм v4.2 автоматически стартует сессию при беге или шагах',
-                                'v4.2 алгоритми чуркоодо автоматтык түрдө баштайт',
-                                'v4.2 algorithm auto-starts sessions on run or walking',
-                              ),
-                              style: AppTypography.caption(palette.secondary).copyWith(height: 1.3),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Switch.adaptive(
-                        value: true,
-                        activeTrackColor: AppColors.sage.withValues(alpha: 0.5),
-                        activeThumbColor: AppColors.sage,
-                        onChanged: (val) {
-                          CircaHaptics.selectionClick();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: palette.surface,
-                              content: Text(
-                                val
-                                    ? AppLocaleNotifier.pick('IMU автодетект активен', 'IMU автодетект активдүү', 'IMU auto-detect active')
-                                    : AppLocaleNotifier.pick('IMU автодетект выключен', 'IMU автодетект өчүрүлдү', 'IMU auto-detect disabled'),
-                                style: AppTypography.body(palette.fg),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
 
                 // 5. Недельное кардио (Зоны 2 и 5)
                 GlassCard(

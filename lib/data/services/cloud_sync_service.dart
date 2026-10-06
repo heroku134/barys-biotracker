@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/secure_invite_generator.dart';
+import '../../domain/intelligence/menstrual_cycle_engine.dart';
 import '../../domain/models/partner_cycle_data.dart';
 import '../../domain/models/user_profile.dart';
 import '../storage/day_snapshot_repository.dart';
@@ -530,11 +531,24 @@ class CloudSyncService {
       if (d == null) return;
       final current = await PartnerCycleRepository.loadPartnerCycle();
       final cloudName = d['partnerName'] as String?;
+      final cycleDay = (d['cycleDay'] as num?)?.toInt() ?? current.cycleDay;
+      final cycleLength = (d['cycleLength'] as num?)?.toInt() ?? current.cycleLength;
+      final phaseStr = d['phase'] as String?;
+      HormonalCyclePhase phase;
+      if (phaseStr != null) {
+        phase = HormonalCyclePhase.values.firstWhere(
+          (p) => p.name == phaseStr,
+          orElse: () => MenstrualCycleEngine.determinePhase(cycleDay, cycleLength: cycleLength),
+        );
+      } else {
+        phase = MenstrualCycleEngine.determinePhase(cycleDay, cycleLength: cycleLength);
+      }
       await PartnerCycleRepository.savePartnerCycle(current.copyWith(
         isLinked: true,
         partnerName: cloudName != null && cloudName.isNotEmpty ? cloudName : (current.partnerName.isNotEmpty ? current.partnerName : 'Партнёр'),
-        cycleDay: (d['cycleDay'] as num?)?.toInt() ?? current.cycleDay,
-        cycleLength: (d['cycleLength'] as num?)?.toInt() ?? current.cycleLength,
+        cycleDay: cycleDay,
+        cycleLength: cycleLength,
+        phase: phase,
         mood: d['mood'] as String? ?? current.mood,
         flow: d['flow'] as String? ?? current.flow,
         energyScore: (d['energyScore'] as num?)?.toInt() ?? current.energyScore,

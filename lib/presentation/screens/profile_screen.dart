@@ -19,6 +19,7 @@ import '../widgets/circa_partner_cycle_sheet.dart';
 import '../widgets/kalkan_ui.dart';
 import '../widgets/kalkan_chrome.dart';
 import 'auth_screen.dart';
+import 'bio_avatar_screen.dart';
 import 'device_settings_screen.dart';
 import 'menstrual_cycle_screen.dart';
 import 'pregnancy_screen.dart';
@@ -104,6 +105,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: _tr('Приватная лига', 'Жеке лига', 'Private League'),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => PrivateLeagueScreen(bleBridge: widget.bleBridge)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _linkTile(
+                palette,
+                icon: Icons.pets_outlined,
+                title: AppLocaleNotifier.pick('Маскот Барыс', 'Барыс маскоту', 'Barys Mascot'),
+                subtitle: AppLocaleNotifier.pick('Био-аватар и эволюция', 'Био-аватар жана эволюция', 'Bio-avatar & evolution'),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => BioAvatarScreen(bleBridge: widget.bleBridge, embedded: false)),
                 ),
               ),
               if (_profile.gender == Gender.female) ...[
@@ -254,7 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   telemetry.isConnected
                       ? (telemetry.isCharging
-                          ? _tr('Подключены · ${telemetry.batteryLevel}% ⚡', 'Туташкан · ${telemetry.batteryLevel}% ⚡', 'Connected · ${telemetry.batteryLevel}% ⚡')
+                          ? _tr('Зарядка · ${telemetry.batteryLevel}%', 'Зарядталууда · ${telemetry.batteryLevel}%', 'Charging · ${telemetry.batteryLevel}%')
                           : _tr('Подключены · ${telemetry.batteryLevel}%', 'Туташкан · ${telemetry.batteryLevel}%', 'Connected · ${telemetry.batteryLevel}%'))
                       : (_tr('Нет связи', 'Байланыш жок', 'Not connected')),
                   style: AppTypography.caption(telemetry.isConnected ? (telemetry.isCharging ? AppColors.amber : AppColors.sage) : palette.secondary),
@@ -603,7 +614,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               textCapitalization: TextCapitalization.characters,
               decoration: InputDecoration(
                 labelText: _ru ? 'Код' : 'Код',
-                hintText: 'KALKAN-XXXX',
+                hintText: 'KLK-CYC-XXXX-XXXX',
               ),
             ),
           ],
