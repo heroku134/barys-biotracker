@@ -102,7 +102,8 @@ class HealthSyncService {
         final res = await _channel.invokeMethod<bool>('requestPermissions');
         granted = res ?? false;
       } else {
-        granted = true;
+        // Android Health Connect требует нативную интеграцию Health Connect Client
+        granted = false;
       }
       await prefs.setBool('kalkan_health_permissions_granted', granted);
       return granted;
@@ -325,7 +326,7 @@ class HealthSyncService {
       } catch (_) {}
       return ['Apple Health (HealthKit)'];
     } else {
-      return ['Google Health Connect'];
+      return [];
     }
   }
 

@@ -127,6 +127,8 @@ object KalkanBleManager {
     private var lastSleepPollTimeMs: Long = 0L
     private var lastStressPollTimeMs: Long = 0L
     private var lastWorkoutPollTimeMs: Long = 0L
+    private val cachedWorkoutsLock = Any()
+    private val cachedWorkouts = mutableListOf<Map<String, Any>>()
 
     // BLE-05: Throttled telemetry push (1 Hz max coalescing)
     private var lastPushTimeMs: Long = 0L
@@ -807,7 +809,12 @@ object KalkanBleManager {
 
     fun getWorkoutHistory(callback: (List<Map<String, Any>>) -> Unit) {
         if (!isConnected || uteBleConnection == null) {
-            mainHandler.post { callback(emptyList()) }
+            val cached: List<Map<String, Any>>
+            synchronized(cachedWorkoutsLock) {
+                cached = ArrayList(cachedWorkouts)
+                cachedWorkouts.clear()
+            }
+            mainHandler.post { callback(cached) }
             return
         }
         bleExecutor.execute {
@@ -834,6 +841,15 @@ object KalkanBleManager {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+            synchronized(cachedWorkoutsLock) {
+                for (item in cachedWorkouts) {
+                    val st = item["startTime"] as? String ?: ""
+                    if (st.isNotEmpty() && results.none { it["startTime"] == st }) {
+                        results.add(item)
+                    }
+                }
+                cachedWorkouts.clear()
             }
             mainHandler.post { callback(results) }
         }
@@ -1103,9 +1119,33 @@ object KalkanBleManager {
     fun queryWorkoutHistoryInternal() {
         try {
             val nowSec = (System.currentTimeMillis() / 1000).toInt()
-            // Подтверждаем/подтягиваем завершённые тренировки (протокол 2.42).
-            // Полный импорт в локальную историю — отдельная задача (маппинг SportType + единиц).
-            uteBleConnection?.syncWorkoutHistoryData(nowSec - 7 * 24 * 3600, nowSec)
+            val resp = uteBleConnection?.syncWorkoutHistoryData(nowSec - 7 * 24 * 3600, nowSec)
+            val list = resp?.data
+            if (!list.isNullOrEmpty()) {
+                val parsedList = mutableListOf<Map<String, Any>>()
+                for (w in list) {
+                    val item = mutableMapOf<String, Any>()
+                    item["startTime"] = w.startTime ?: ""
+                    item["endTime"] = w.endTime ?: ""
+                    item["duration"] = w.duration
+                    item["calories"] = w.calories.toInt()
+                    item["distance"] = w.distance
+                    item["steps"] = w.step
+                    item["heart"] = w.heart
+                    item["maxHeart"] = w.maxHeart
+                    item["minHeart"] = w.minHeart
+                    item["sportsType"] = w.sportsType
+                    parsedList.add(item)
+                }
+                synchronized(cachedWorkoutsLock) {
+                    for (item in parsedList) {
+                        val st = item["startTime"] as? String ?: ""
+                        if (st.isNotEmpty() && cachedWorkouts.none { it["startTime"] == st }) {
+                            cachedWorkouts.add(item)
+                        }
+                    }
+                }
+            }
         } catch (_: Exception) {}
     }
 

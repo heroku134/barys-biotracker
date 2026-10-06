@@ -603,7 +603,8 @@ class AvatarManager {
   }) {
     final now = currentTime ?? DateTime.now();
     final base = baseline ?? const PersonalBaseline();
-    final hrv = telemetry.hrv > 0 ? telemetry.hrv : base.meanHrv;
+    final refHrv = base.meanHrv > 0 ? base.meanHrv : 64.0;
+    final hrv = telemetry.hrv > 0 ? telemetry.hrv : refHrv;
     final sleepWeak = base.sleepDebtMinutes >= 45 || (telemetry.sleepMinutes > 0 && telemetry.sleepMinutes < 390);
 
     if (_lastWorkoutTime != null &&
@@ -623,13 +624,13 @@ class AvatarManager {
     if (base.yesterdayStrain >= 16.0) {
       return AvatarVisualState.tired;
     }
-    if (hrv > base.meanHrv + 2 && base.sleepDebtMinutes < 30) {
+    if (hrv > refHrv + 2 && base.sleepDebtMinutes < 30) {
       return AvatarVisualState.charged;
     }
-    if (hrv < base.meanHrv - 3 && sleepWeak) {
+    if (hrv < refHrv - 3 && sleepWeak) {
       return AvatarVisualState.tired;
     }
-    if (hrv < base.meanHrv - 6) {
+    if (hrv < refHrv - 6) {
       return AvatarVisualState.tired;
     }
     return AvatarVisualState.normal;

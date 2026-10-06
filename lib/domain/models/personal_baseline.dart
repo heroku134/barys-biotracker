@@ -38,11 +38,11 @@ class PersonalBaseline {
   final HormonalCyclePhase? cyclePhase;
 
   const PersonalBaseline({
-    this.meanHrv = 64.0,
-    this.stdHrv = 9.5,
-    this.meanRhr = 52,
-    this.meanRespiratoryRate = 14.4,
-    this.baselineSkinTemp = 36.4,
+    this.meanHrv = 0.0,
+    this.stdHrv = 0.0,
+    this.meanRhr = 0,
+    this.meanRespiratoryRate = 0.0,
+    this.baselineSkinTemp = 0.0,
     this.baselineSleepNeedMinutes = 480, // 8 часов
     this.calibrationDaysDone = 0, // По умолчанию 0 дней (калибровка 0/14)
     this.sleepDebtMinutes = 0, // 0 мин долга у нового пользователя
@@ -52,16 +52,17 @@ class PersonalBaseline {
   });
 
   bool get isCalibrating => calibrationDaysDone < 14;
+  bool get hasBaselineData => calibrationDaysDone > 0 && meanHrv > 0 && meanRhr > 0;
 
   /// Персональный допустимый коридор нормы ВСР (ВСР в пределах ±1.0 SD считается нормой)
-  double get hrvNormalMin => meanHrv - stdHrv;
-  double get hrvNormalMax => meanHrv + (stdHrv * 1.5);
+  double get hrvNormalMin => meanHrv > 0 ? (meanHrv - stdHrv) : 0.0;
+  double get hrvNormalMax => meanHrv > 0 ? (meanHrv + (stdHrv * 1.5)) : 0.0;
 
   /// Допустимый коридор пульса покоя
-  int get rhrNormalMax => meanRhr + 3;
+  int get rhrNormalMax => meanRhr > 0 ? (meanRhr + 3) : 0;
 
   /// Допустимое отклонение частоты дыхания (обычно не более ±1.0 вдоха)
-  double get rrNormalMax => meanRespiratoryRate + 1.2;
+  double get rrNormalMax => meanRespiratoryRate > 0 ? (meanRespiratoryRate + 1.2) : 0.0;
 
   PersonalBaseline copyWith({
     double? meanHrv,
