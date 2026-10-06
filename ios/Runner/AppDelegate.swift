@@ -634,7 +634,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     let nowSec = Int(Date().timeIntervalSince1970)
     let startSec = nowSec - 7 * 24 * 3600
     device.getRecordList(startSec, endTime: nowSec) { [weak self] recordModel, code, _ in
-      guard let self = self, let recordModel = recordModel, let list = recordModel.recordItemList, !list.isEmpty else {
+      guard let self = self, let recordModel = recordModel, let list = recordModel.recordItemList, list.count > 0 else {
         result([])
         return
       }
@@ -850,12 +850,12 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     return nil
   }
 
-  private func pullNightAndDay() {
+  func pullNightAndDay() {
     let now = Int(Date().timeIntervalSince1970)
     let start = now - 36 * 3600
     device.getSciSleepModel(withStartTime: start, endTime: now) { [weak self] debugArray, _, ok, code, _, dict in
       guard let self = self, self.sdkOk(Int(code)) || ok else { return }
-      if let list = debugArray, !list.isEmpty {
+      if let list = debugArray, list.count > 0 {
         var sessions: [ParsedSleepSession] = []
         var currentSession: ParsedSleepSession? = nil
         var sessionCursorSec: Int = 0
