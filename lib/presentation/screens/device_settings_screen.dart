@@ -701,12 +701,12 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr('Антипотеря и разрыв связи', 'Жоготууга каршы жана үзүлүү эскертүүсү', 'Anti-loss & disconnect alert'),
+                          tr('Оповещение о разрыве связи', 'Байланыш үзүлгөндө эскертүү', 'Disconnect alert (Link Loss)'),
                           style: TextStyle(color: palette.fg, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tr('Вибрация браслета при потере Bluetooth-связи', 'Bluetooth үзүлгөндө билерик титирейт', 'Band vibration upon Bluetooth disconnect'),
+                          tr('Вибрация браслета при потере Bluetooth-связи со смартфоном', 'Телефон менен Bluetooth үзүлгөндө билерик титирейт', 'Band vibrates if Bluetooth connection with phone is lost'),
                           style: TextStyle(color: palette.secondary, fontSize: 11, height: 1.3),
                         ),
                       ],

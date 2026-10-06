@@ -83,13 +83,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!mounted) return;
       setState(() => _telemetry = data);
       _syncIosWidgets();
-      if (data.hrv > 0) {
+      if (data.hasNightData && data.hasHrv && data.hasRhr && !data.isOffWrist) {
         _recordTelemetryCalibration(data);
       }
     });
   }
 
   Future<void> _recordTelemetryCalibration(BleTelemetry data) async {
+    if (!data.hasNightData || !data.hasHrv || !data.hasRhr || data.isOffWrist) return;
     final recorded = await CalibrationStore.recordMorningSync(
       hrv: data.hrv,
       rhr: data.restingHeartRate,
@@ -166,10 +167,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadCal() async {
-    await CalibrationStore.recordMorningSync(
-      hrv: _telemetry.hrv,
-      rhr: _telemetry.restingHeartRate,
-    );
+    if (_telemetry.hasNightData && _telemetry.hasHrv && _telemetry.hasRhr && !_telemetry.isOffWrist) {
+      await CalibrationStore.recordMorningSync(
+        hrv: _telemetry.hrv,
+        rhr: _telemetry.restingHeartRate,
+      );
+    }
     final b = await CalibrationStore.loadBaseline();
     final kind = ReminderService.activeBanner();
     var show = kind;

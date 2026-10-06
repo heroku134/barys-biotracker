@@ -228,12 +228,13 @@ class UteBleBridge {
   }
 
   Future<bool> isLocationServiceEnabled() async {
+    final isIos = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
     try {
       final res = await _methodChannel.invokeMethod<bool>('isLocationServiceEnabled');
-      return res ?? true;
+      return res ?? isIos;
     } catch (e) {
       debugPrint('UteBleBridge isLocationServiceEnabled error: $e');
-      return true;
+      return isIos;
     }
   }
 
@@ -659,16 +660,44 @@ class UteBleBridge {
     }
   }
 
+  static DateTime _parseVendorDateTime(dynamic raw) {
+    if (raw == null) return DateTime.now();
+    if (raw is num) {
+      final n = raw.toInt();
+      if (n > 1000000000000) return DateTime.fromMillisecondsSinceEpoch(n);
+      if (n > 1000000) return DateTime.fromMillisecondsSinceEpoch(n * 1000);
+    }
+    final s = raw.toString().trim();
+    if (s.isEmpty) return DateTime.now();
+
+    final asNum = int.tryParse(s);
+    if (asNum != null) {
+      if (asNum > 1000000000000) return DateTime.fromMillisecondsSinceEpoch(asNum);
+      if (asNum > 1000000) return DateTime.fromMillisecondsSinceEpoch(asNum * 1000);
+    }
+
+    final iso = DateTime.tryParse(s);
+    if (iso != null) return iso;
+
+    try {
+      final parts = s.replaceAll('/', '-').replaceAll(':', '-').replaceAll(' ', '-').split('-');
+      if (parts.length >= 3) {
+        final year = int.tryParse(parts[0]) ?? DateTime.now().year;
+        final month = int.tryParse(parts[1]) ?? 1;
+        final day = int.tryParse(parts[2]) ?? 1;
+        final hour = parts.length > 3 ? (int.tryParse(parts[3]) ?? 0) : 0;
+        final min = parts.length > 4 ? (int.tryParse(parts[4]) ?? 0) : 0;
+        final sec = parts.length > 5 ? (int.tryParse(parts[5]) ?? 0) : 0;
+        return DateTime(year, month, day, hour, min, sec);
+      }
+    } catch (_) {}
+
+    return DateTime.now();
+  }
+
   Future<void> _persistWatchWorkout(Map<String, dynamic> data) async {
     try {
-      final rawStart = data['startTime']?.toString() ?? '';
-      DateTime startedAt;
-      final asSec = int.tryParse(rawStart);
-      if (asSec != null && asSec > 1000000) {
-        startedAt = DateTime.fromMillisecondsSinceEpoch(asSec * 1000);
-      } else {
-        startedAt = DateTime.tryParse(rawStart) ?? DateTime.now();
-      }
+      final startedAt = _parseVendorDateTime(data['startTime']);
 
       final durationSec = (data['duration'] as num?)?.toInt() ?? 0;
       if (durationSec < 60) return; // Игнорируем случайные включения короче 1 минуты

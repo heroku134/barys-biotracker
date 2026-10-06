@@ -25,28 +25,28 @@ struct KalkanData {
         let groupDefaults = UserDefaults(suiteName: "group.watch.circle.kalkan")
         let defaults = groupDefaults ?? UserDefaults.standard
 
-        let score = defaults.object(forKey: "recovery_score") as? Int ?? 84
-        let zone = defaults.string(forKey: "recovery_zone") ?? "optimal"
-        let strain = defaults.double(forKey: "current_strain") > 0 ? defaults.double(forKey: "current_strain") : 11.4
-        let targetStrain = defaults.double(forKey: "target_strain_max") > 0 ? defaults.double(forKey: "target_strain_max") : 14.0
-        let hr = defaults.object(forKey: "heart_rate") as? Int ?? 68
-        let rhr = defaults.object(forKey: "resting_heart_rate") as? Int ?? 52
-        let hrvVal = defaults.object(forKey: "hrv") as? Int ?? 64
-        let sHours = defaults.object(forKey: "sleep_hours") as? Int ?? 7
-        let sMins = defaults.object(forKey: "sleep_minutes") as? Int ?? 35
-        let sScore = defaults.object(forKey: "sleep_score") as? Int ?? 88
-        let line = defaults.string(forKey: "morning_line") ?? "Тело готово к нагрузке"
-        let calDay = defaults.object(forKey: "calibration_day") as? Int ?? 14
         let hasNight = defaults.bool(forKey: "has_night_data")
+        let score = defaults.object(forKey: "recovery_score") as? Int ?? 0
+        let zone = defaults.string(forKey: "recovery_zone") ?? "low"
+        let strain = defaults.double(forKey: "current_strain")
+        let targetStrain = defaults.double(forKey: "target_strain_max") > 0 ? defaults.double(forKey: "target_strain_max") : 14.0
+        let hr = defaults.object(forKey: "heart_rate") as? Int ?? 0
+        let rhr = defaults.object(forKey: "resting_heart_rate") as? Int ?? 0
+        let hrvVal = defaults.object(forKey: "hrv") as? Int ?? 0
+        let sHours = defaults.object(forKey: "sleep_hours") as? Int ?? 0
+        let sMins = defaults.object(forKey: "sleep_minutes") as? Int ?? 0
+        let sScore = defaults.object(forKey: "sleep_score") as? Int ?? 0
+        let line = defaults.string(forKey: "morning_line") ?? (hasNight ? "Восстановление рассчитано" : "Синхронизируйте СААТ-1")
+        let calDay = defaults.object(forKey: "calibration_day") as? Int ?? 0
 
         return KalkanData(
             recoveryScore: score,
             recoveryZone: zone,
             currentStrain: strain,
             targetStrainMax: targetStrain,
-            heartRate: hr > 0 ? hr : 68,
-            restingHeartRate: rhr > 0 ? rhr : 52,
-            hrv: hrvVal > 0 ? hrvVal : 64,
+            heartRate: hr,
+            restingHeartRate: rhr,
+            hrv: hrvVal,
             sleepHours: sHours,
             sleepMinutes: sMins,
             sleepScore: sScore,
@@ -120,12 +120,14 @@ struct KalkanWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
 
     var zoneColor: Color {
+        guard entry.data.recoveryScore > 0 else { return colorMuted }
         if entry.data.recoveryScore >= 67 { return colorSage }
         if entry.data.recoveryScore >= 34 { return colorAmber }
         return colorCoral
     }
 
     var zoneTitle: String {
+        guard entry.data.recoveryScore > 0 else { return "ОЖИДАНИЕ" }
         if entry.data.recoveryScore >= 67 { return "ОПТИМАЛЬНО" }
         if entry.data.recoveryScore >= 34 { return "В НОРМЕ" }
         return "НИЗКОЕ"
@@ -171,7 +173,7 @@ struct KalkanWidgetEntryView: View {
                         .stroke(zoneColor, style: StrokeStyle(lineWidth: 5, lineCap: .round))
                         .frame(width: 52, height: 52)
                         .rotationEffect(.degrees(-90))
-                    Text("\(entry.data.recoveryScore)%")
+                    Text(entry.data.recoveryScore > 0 ? "\(entry.data.recoveryScore)%" : "--%")
                         .font(.system(size: 13, weight: .bold, design: .monospaced))
                         .foregroundColor(.white)
                 }
@@ -198,7 +200,7 @@ struct KalkanWidgetEntryView: View {
                     Image(systemName: "heart.fill")
                         .font(.system(size: 9))
                         .foregroundColor(colorCoral)
-                    Text("\(entry.data.heartRate)")
+                    Text(entry.data.heartRate > 0 ? "\(entry.data.heartRate)" : "--")
                         .font(.system(size: 10, weight: .semibold, design: .monospaced))
                         .foregroundColor(.white)
                 }
@@ -207,7 +209,7 @@ struct KalkanWidgetEntryView: View {
                     Text("HRV")
                         .font(.system(size: 8, weight: .medium, design: .monospaced))
                         .foregroundColor(colorMuted)
-                    Text("\(entry.data.hrv)мс")
+                    Text(entry.data.hrv > 0 ? "\(entry.data.hrv)мс" : "--")
                         .font(.system(size: 10, weight: .semibold, design: .monospaced))
                         .foregroundColor(.white)
                 }
@@ -245,7 +247,7 @@ struct KalkanWidgetEntryView: View {
                         .frame(width: 68, height: 68)
                         .rotationEffect(.degrees(-90))
                     VStack(spacing: 0) {
-                        Text("\(entry.data.recoveryScore)%")
+                        Text(entry.data.recoveryScore > 0 ? "\(entry.data.recoveryScore)%" : "--%")
                             .font(.system(size: 16, weight: .bold, design: .monospaced))
                             .foregroundColor(.white)
                         Text("RECOVERY")

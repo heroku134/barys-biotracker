@@ -328,7 +328,6 @@ object KalkanBleManager {
 
     fun connect(address: String, callback: (Boolean, String?) -> Unit) {
         stopScan()
-        persistLastMac(address)
         persistManualDisconnect(false)
         cancelNativeReconnect()
         val client = uteBleClient
@@ -357,6 +356,7 @@ object KalkanBleManager {
             override fun onConnecteStateChange(state: Int) {
                 when (state) {
                     BleConnectStateListener.STATE_CONNECTED -> {
+                        persistLastMac(address)
                         updateSnapshot(immediate = true) { prev ->
                             prev.copy(
                                 isConnected = true,
@@ -639,6 +639,13 @@ object KalkanBleManager {
             try {
                 uteBleConnection?.setAutoHeartRate(true)
                 uteBleConnection?.setContinuousHeartRate(continuous)
+                if (intervalMinutes > 0) {
+                    val config = HeartRateIntervalConfig().apply {
+                        enable = true
+                        interval = intervalMinutes
+                    }
+                    uteBleConnection?.setHeartRateInterval(config)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -1290,8 +1297,19 @@ object KalkanBleManager {
                             }
                         }
                         NotifyType.DEVICE_RESET_NOTIFY -> {
+                            persistLastMac(null)
+                            cancelNativeReconnect()
+                            try {
+                                uteBleConnection = null
+                                uteBleClient?.disconnect()
+                            } catch (_: Exception) {}
                             updateSnapshot(immediate = true) { prev ->
-                                prev.copy(isConnected = false, isCharging = false, currentBpm = 0)
+                                prev.copy(
+                                    isConnected = false,
+                                    isCharging = false,
+                                    currentBpm = 0,
+                                    currentDeviceName = ""
+                                )
                             }
                         }
                     }
@@ -1346,7 +1364,7 @@ object KalkanBleManager {
             "skinTempDeviation" to s.skinTempDeviation,
             "respiratoryRate" to s.respiratoryRate,
             "bloodOxygen" to s.bloodOxygen,
-            "isAncsAuthorized" to true,
+            "isAncsAuthorized" to (appContext?.let { KalkanNotificationListenerService.isNotificationAccessGranted(it) } ?: false),
             "isBluetoothEnabled" to isBluetoothEnabled()
         )
 

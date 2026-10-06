@@ -38,11 +38,11 @@ class WorkoutRepository {
           final w = CompletedWorkout.fromJson(jsonDecode(s) as Map<String, dynamic>);
           final id = w.id.toLowerCase();
           final extId = (w.externalId ?? '').toLowerCase();
-          if (id.startsWith('ext_strava_') ||
-              id.startsWith('hk_strava_') ||
+          if (id.startsWith('mock_') ||
+              id.startsWith('ext_mock_') ||
               id.startsWith('ext_test_') ||
-              extId.startsWith('hk_strava_') ||
-              extId.startsWith('ext_strava_')) {
+              extId.startsWith('mock_') ||
+              extId.startsWith('ext_mock_')) {
             continue;
           }
           parsed.add(w);

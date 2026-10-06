@@ -4,6 +4,7 @@ import UserNotifications
 import BackgroundTasks
 import CoreBluetooth
 import AudioToolbox
+import HealthKit
 
 #if canImport(ActivityKit)
 import ActivityKit
@@ -62,6 +63,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
   private var isOffWrist: Bool = false
   private var skinTempDeviation: Double = 0.0
   private var currentRespiratoryRate: Double = 0.0
+  private var currentBloodOxygen: Int = 0
   private var isAncsAuthorized: Bool = true
   private var findDeviceAutoStopWorkItem: DispatchWorkItem?
 
@@ -135,6 +137,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     } else if currentRhr > 0 {
       currentRespiratoryRate = deriveRespiratoryRate(rhr: currentRhr, hrv: currentHrv)
     }
+    if let oxy = cached["bloodOxygen"] as? Int, oxy > 0 { currentBloodOxygen = oxy }
     if let ancs = cached["isAncsAuthorized"] as? Bool { isAncsAuthorized = ancs }
     if let dev = cached["deviceName"] as? String, !dev.isEmpty { currentDeviceName = dev }
   }
@@ -415,6 +418,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       currentStressScore = 0
       currentDeviceName = ""
       currentRespiratoryRate = 0.0
+      currentBloodOxygen = 0
     }
     pendingConnectAddress = nil
     if let model = connectedModel {
@@ -424,6 +428,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
 
     isConnected = false
     isCharging = false
+    isStreamsBound = false
     stopTelemetryPoll()
     currentBpm = 0
     isOffWrist = false
@@ -533,6 +538,147 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
     }
   }
 
+  func setDisconnectRemind(enable: Bool, result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(false)
+      return
+    }
+    device.setDisconnectRemind(enable) { [weak self] code, _ in
+      guard let self = self else { return }
+      result(self.sdkOk(Int(code)) || code == 0)
+    }
+  }
+
+  func setSmartAlarm(enable: Bool, hour: Int, minute: Int, result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(false)
+      return
+    }
+    let clock = UTEModelClock()
+    clock.index = 1
+    clock.enable = enable
+    clock.timeHour = hour
+    clock.timeMin = minute
+    device.setAlarmArrayModel([clock]) { [weak self] code, _ in
+      guard let self = self else { return }
+      result(self.sdkOk(Int(code)) || code == 0)
+    }
+  }
+
+  func setHydrationReminder(enable: Bool, intervalMinutes: Int, result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(false)
+      return
+    }
+    let water = UTEModelWaterClock()
+    water.status = enable ? 1 : 0
+    water.startHH = 8
+    water.startMM = 0
+    water.endHH = 22
+    water.endMM = 0
+    water.cycle = intervalMinutes
+    device.setWaterClock(water) { code in
+      result(code == 100000 || code == 0)
+    }
+  }
+
+  func setCallRemindEnable(enable: Bool, result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(false)
+      return
+    }
+    device.incomingEnable(enable) { code in
+      result(code == 100000 || code == 0)
+    }
+  }
+
+  func clearAccountData(result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(false)
+      return
+    }
+    device.resetFactory(0) { [weak self] code, _ in
+      guard let self = self else { return }
+      result(self.sdkOk(Int(code)) || code == 0)
+    }
+  }
+
+  func setUserProfile(heightCm: Int, weightKg: Int, age: Int, gender: String, stepGoal: Int, calorieGoal: Int, result: @escaping FlutterResult) {
+    guard isConnected else {
+      result(false)
+      return
+    }
+    let person = UTEModelPersonInfo()
+    person.height = heightCm
+    person.weight = weightKg
+    person.age = age
+    person.gender = (gender.lowercased() == "female" || gender.lowercased() == "2") ? 2 : 1
+    device.setUserPhysicalInfoModel(person) { [weak self] code, _ in
+      guard let self = self else { return }
+      let goal = UTEModelSportGoal()
+      goal.goalType = 1
+      goal.motionType = 1
+      goal.goalStep = stepGoal
+      goal.goalCalorie = calorieGoal
+      self.device.setMotionGoalModel([goal]) { gCode, _ in
+        result(self.sdkOk(Int(code)) || self.sdkOk(Int(gCode)) || code == 0 || gCode == 0)
+      }
+    }
+  }
+
+  func getWorkoutHistory(result: @escaping FlutterResult) {
+    guard isConnected else {
+      result([])
+      return
+    }
+    let nowSec = Int(Date().timeIntervalSince1970)
+    let startSec = nowSec - 7 * 24 * 3600
+    device.getRecordList(startSec, endTime: nowSec) { [weak self] recordModel, code, _ in
+      guard let self = self, let recordModel = recordModel, let list = recordModel.recordItemList, !list.isEmpty else {
+        result([])
+        return
+      }
+      var workouts: [[String: Any]] = []
+      let group = DispatchGroup()
+      for item in list {
+        group.enter()
+        let recId = (item.value(forKey: "ID") as? Int) ?? 0
+        self.device.getRecordSummary(recId) { summary, _, _ in
+          defer { group.leave() }
+          guard let s = summary else { return }
+          let st = (s.value(forKey: "startTime") as? Int) ?? 0
+          let et = (s.value(forKey: "endTime") as? Int) ?? 0
+          let dur = (s.value(forKey: "totalTime") as? Int) ?? 0
+          let cal = (s.value(forKey: "calorie") as? Int) ?? 0
+          let dist = (s.value(forKey: "distance") as? Double) ?? Double((s.value(forKey: "distance") as? Int) ?? 0)
+          let stp = (s.value(forKey: "step") as? Int) ?? 0
+          let maxH = (s.value(forKey: "hrABSMaxPeak") as? Int) ?? 0
+          let minH = (s.value(forKey: "hrABSMinPeak") as? Int) ?? 0
+          let typ = (s.value(forKey: "type") as? Int) ?? 0
+          workouts.append([
+            "startTime": st,
+            "endTime": et,
+            "duration": dur,
+            "calories": cal,
+            "distance": dist,
+            "steps": stp,
+            "heart": maxH > 0 ? (maxH + minH) / 2 : 0,
+            "maxHeart": maxH,
+            "minHeart": minH,
+            "sportsType": typ
+          ])
+        }
+      }
+      group.notify(queue: .main) {
+        result(workouts)
+      }
+    }
+  }
+
+  func getHeartRateHistory(result: @escaping FlutterResult) {
+    result([])
+  }
+
   // MARK: - CBCentralManagerDelegate
 
   func centralManagerDidUpdateState(_ central: CBCentralManager) {
@@ -601,6 +747,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       "isOffWrist": self.isOffWrist,
       "skinTempDeviation": self.skinTempDeviation,
       "respiratoryRate": self.currentRespiratoryRate,
+      "bloodOxygen": self.currentBloodOxygen,
       "isAncsAuthorized": self.isAncsAuthorized
     ]
     self.telemetrySink?(snapshot)
@@ -1096,6 +1243,12 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
           self.skinTempDeviation = round((tempC - 36.6) * 100.0) / 100.0
           self.pushTelemetry()
         }
+      } else if type == .OXY {
+        let oxy = Int(value)
+        if oxy >= 70 && oxy <= 100 {
+          self.currentBloodOxygen = oxy
+          self.pushTelemetry()
+        }
       } else {
         self.pushTelemetry()
       }
@@ -1250,6 +1403,7 @@ class KalkanBleManager: NSObject, CBCentralManagerDelegate, UTEBluetoothDelegate
       resolvePendingConnect(success: false, errorMessage: errorMsg)
       isConnected = false
       connectedModel = nil
+      isStreamsBound = false
       stopTelemetryPoll()
       currentBpm = 0
       isOffWrist = false
@@ -1438,9 +1592,30 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
       binaryMessenger: messenger
     )
     liveActivityChannel.setMethodCallHandler { (call, result) in
-      // Currently KALKAN SPORT does not bundle an embedded ActivityKit Widget Extension.
-      // Return false honestly so the application knows Live Activities are currently inactive.
       result(false)
+    }
+
+    let healthChannel = FlutterMethodChannel(
+      name: "sport.kalkan.biotracker/health",
+      binaryMessenger: messenger
+    )
+    healthChannel.setMethodCallHandler { call, result in
+      switch call.method {
+      case "isAvailable":
+        result(KalkanHealthManager.shared.isAvailable())
+      case "requestPermissions":
+        KalkanHealthManager.shared.requestPermissions(result: result)
+      case "exportWorkout":
+        let args = (call.arguments as? [String: Any]) ?? [:]
+        KalkanHealthManager.shared.exportWorkout(args: args, result: result)
+      case "fetchNightSleepStages":
+        let args = call.arguments as? [String: Any]
+        KalkanHealthManager.shared.fetchNightSleepStages(args: args, result: result)
+      case "getConnectedSources":
+        KalkanHealthManager.shared.getConnectedSources(result: result)
+      default:
+        result(FlutterMethodNotImplemented)
+      }
     }
 
     let bleMethodChannel = FlutterMethodChannel(
@@ -1490,6 +1665,46 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
         KalkanBleManager.shared.measureHeartRate(result: result)
       case "syncTime":
         KalkanBleManager.shared.syncTime(result: result)
+      case "setDisconnectRemind":
+        let enable = (call.arguments as? [String: Any])?["enable"] as? Bool ?? true
+        KalkanBleManager.shared.setDisconnectRemind(enable: enable, result: result)
+      case "setSmartAlarm":
+        let enable = (call.arguments as? [String: Any])?["enable"] as? Bool ?? false
+        let hour = (call.arguments as? [String: Any])?["hour"] as? Int ?? 7
+        let minute = (call.arguments as? [String: Any])?["minute"] as? Int ?? 0
+        KalkanBleManager.shared.setSmartAlarm(enable: enable, hour: hour, minute: minute, result: result)
+      case "setHydrationReminder":
+        let enable = (call.arguments as? [String: Any])?["enable"] as? Bool ?? false
+        let interval = (call.arguments as? [String: Any])?["intervalMinutes"] as? Int ?? 120
+        KalkanBleManager.shared.setHydrationReminder(enable: enable, intervalMinutes: interval, result: result)
+      case "setCallRemindEnable":
+        let enable = (call.arguments as? [String: Any])?["enable"] as? Bool ?? true
+        KalkanBleManager.shared.setCallRemindEnable(enable: enable, result: result)
+      case "clearAccountData":
+        KalkanBleManager.shared.clearAccountData(result: result)
+      case "setUserProfile":
+        let heightCm = (call.arguments as? [String: Any])?["heightCm"] as? Int ?? 175
+        let weightKg = (call.arguments as? [String: Any])?["weightKg"] as? Int ?? 72
+        let age = (call.arguments as? [String: Any])?["age"] as? Int ?? 28
+        let gender = (call.arguments as? [String: Any])?["gender"] as? String ?? "male"
+        let stepGoal = (call.arguments as? [String: Any])?["stepGoal"] as? Int ?? 10000
+        let calorieGoal = (call.arguments as? [String: Any])?["calorieGoal"] as? Int ?? 650
+        KalkanBleManager.shared.setUserProfile(heightCm: heightCm, weightKg: weightKg, age: age, gender: gender, stepGoal: stepGoal, calorieGoal: calorieGoal, result: result)
+      case "getWorkoutHistory":
+        KalkanBleManager.shared.getWorkoutHistory(result: result)
+      case "pullNightAndDay", "syncSleepData":
+        KalkanBleManager.shared.pullNightAndDay()
+        result(true)
+      case "getHeartRateHistory":
+        KalkanBleManager.shared.getHeartRateHistory(result: result)
+      case "isNotificationListenerGranted":
+        result(KalkanBleManager.shared.isAncsAuthorized)
+      case "openNotificationListenerSettings":
+        if let url = URL(string: UIApplication.openSettingsURLString), UIApplication.shared.canOpenURL(url) {
+          UIApplication.shared.open(url, options: [:]) { ok in result(ok) }
+        } else {
+          result(false)
+        }
       default:
         result(FlutterMethodNotImplemented)
       }
@@ -1508,3 +1723,213 @@ class KalkanScanStreamHandler: NSObject, FlutterStreamHandler {
     bleTelemetryChannel.setStreamHandler(KalkanBleManager.shared)
   }
 }
+
+// MARK: - KalkanHealthManager (Apple HealthKit Integration)
+
+class KalkanHealthManager: NSObject {
+  static let shared = KalkanHealthManager()
+  private let healthStore = HKHealthStore()
+
+  func isAvailable() -> Bool {
+    return HKHealthStore.isHealthDataAvailable()
+  }
+
+  func requestPermissions(result: @escaping FlutterResult) {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      result(false)
+      return
+    }
+
+    var readTypes: Set<HKObjectType> = []
+    if let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) {
+      readTypes.insert(sleepType)
+    }
+    readTypes.insert(HKObjectType.workoutType())
+    if let hrType = HKObjectType.quantityType(forIdentifier: .heartRate) {
+      readTypes.insert(hrType)
+    }
+    if let rhrType = HKObjectType.quantityType(forIdentifier: .restingHeartRate) {
+      readTypes.insert(rhrType)
+    }
+    if let calType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
+      readTypes.insert(calType)
+    }
+
+    var writeTypes: Set<HKSampleType> = []
+    writeTypes.insert(HKObjectType.workoutType())
+    if let calType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
+      writeTypes.insert(calType)
+    }
+
+    healthStore.requestAuthorization(toShare: writeTypes, read: readTypes) { success, error in
+      DispatchQueue.main.async {
+        result(success && error == nil)
+      }
+    }
+  }
+
+  func exportWorkout(args: [String: Any], result: @escaping FlutterResult) {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      result(false)
+      return
+    }
+
+    let sportId = args["sportId"] as? String ?? "other"
+    let startTimeMs = args["startTimeMs"] as? Int ?? Int(Date().timeIntervalSince1970 * 1000)
+    let durationSeconds = args["durationSeconds"] as? Int ?? 0
+    let calories = args["calories"] as? Double ?? Double(args["calories"] as? Int ?? 0)
+    let distanceMeters = args["distanceMeters"] as? Double ?? 0.0
+
+    let startDate = Date(timeIntervalSince1970: Double(startTimeMs) / 1000.0)
+    let endDate = startDate.addingTimeInterval(Double(durationSeconds))
+
+    let activityType: HKWorkoutActivityType
+    switch sportId.lowercased() {
+    case "running", "run", "runoutdoor", "runtreadmill":
+      activityType = .running
+    case "cycling", "cycle", "cyclingoutdoor", "cyclingindoor":
+      activityType = .cycling
+    case "swimming", "swim", "swimmingpool", "swimmingopenwater":
+      activityType = .swimming
+    case "walking", "walk", "walkoutdoor":
+      activityType = .walking
+    case "hiit", "crossfit":
+      activityType = .highIntensityIntervalTraining
+    case "yoga":
+      activityType = .yoga
+    case "strength", "gym":
+      activityType = .traditionalStrengthTraining
+    default:
+      activityType = .other
+    }
+
+    let energyBurned = calories > 0 ? HKQuantity(unit: .kilocalorie(), doubleValue: calories) : nil
+    let distance = distanceMeters > 0 ? HKQuantity(unit: .meter(), doubleValue: distanceMeters) : nil
+
+    let workout = HKWorkout(
+      activityType: activityType,
+      start: startDate,
+      end: endDate,
+      duration: Double(durationSeconds),
+      totalEnergyBurned: energyBurned,
+      totalDistance: distance,
+      metadata: [HKMetadataKeyWorkoutBrandName: "KALKAN SPORT"]
+    )
+
+    healthStore.save(workout) { success, error in
+      DispatchQueue.main.async {
+        result(success && error == nil)
+      }
+    }
+  }
+
+  func fetchNightSleepStages(args: [String: Any]?, result: @escaping FlutterResult) {
+    guard HKHealthStore.isHealthDataAvailable(),
+          let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+      result(nil)
+      return
+    }
+
+    let now = Date()
+    let calendar = Calendar.current
+    let targetDateMs = args?["targetDateMs"] as? Int
+    let baseDate = targetDateMs != nil ? Date(timeIntervalSince1970: Double(targetDateMs!) / 1000.0) : now
+
+    // Window: 6:00 PM previous day to 2:00 PM target day
+    var components = calendar.dateComponents([.year, .month, .day], from: baseDate)
+    components.hour = 14
+    components.minute = 0
+    let windowEnd = calendar.date(from: components) ?? baseDate
+    let windowStart = calendar.date(byAdding: .hour, value: -20, to: windowEnd) ?? baseDate.addingTimeInterval(-20 * 3600)
+
+    let predicate = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: .strictStartDate)
+    let sort = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
+
+    let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sort]) { _, samples, error in
+      guard let catSamples = samples as? [HKCategorySample], !catSamples.isEmpty, error == nil else {
+        DispatchQueue.main.async { result(nil) }
+        return
+      }
+
+      var deepMinutes = 0
+      var remMinutes = 0
+      var lightMinutes = 0
+      var awakeMinutes = 0
+      var firstSleep: Date?
+      var lastSleep: Date?
+
+      for s in catSamples {
+        let dur = Int(s.endDate.timeIntervalSince(s.startDate) / 60.0)
+        if dur <= 0 { continue }
+
+        if #available(iOS 16.0, *) {
+          switch s.value {
+          case HKCategoryValueSleepAnalysis.asleepDeep.rawValue:
+            deepMinutes += dur
+            firstSleep = firstSleep == nil ? s.startDate : min(firstSleep!, s.startDate)
+            lastSleep = lastSleep == nil ? s.endDate : max(lastSleep!, s.endDate)
+          case HKCategoryValueSleepAnalysis.asleepREM.rawValue:
+            remMinutes += dur
+            firstSleep = firstSleep == nil ? s.startDate : min(firstSleep!, s.startDate)
+            lastSleep = lastSleep == nil ? s.endDate : max(lastSleep!, s.endDate)
+          case HKCategoryValueSleepAnalysis.asleepCore.rawValue:
+            lightMinutes += dur
+            firstSleep = firstSleep == nil ? s.startDate : min(firstSleep!, s.startDate)
+            lastSleep = lastSleep == nil ? s.endDate : max(lastSleep!, s.endDate)
+          case HKCategoryValueSleepAnalysis.awake.rawValue:
+            awakeMinutes += dur
+          default:
+            lightMinutes += dur
+            firstSleep = firstSleep == nil ? s.startDate : min(firstSleep!, s.startDate)
+            lastSleep = lastSleep == nil ? s.endDate : max(lastSleep!, s.endDate)
+          }
+        } else {
+          if s.value == HKCategoryValueSleepAnalysis.awake.rawValue {
+            awakeMinutes += dur
+          } else {
+            lightMinutes += dur
+            firstSleep = firstSleep == nil ? s.startDate : min(firstSleep!, s.startDate)
+            lastSleep = lastSleep == nil ? s.endDate : max(lastSleep!, s.endDate)
+          }
+        }
+      }
+
+      let sleepMins = deepMinutes + remMinutes + lightMinutes
+      let totalMins = sleepMins + awakeMinutes
+      if sleepMins == 0 {
+        DispatchQueue.main.async { result(nil) }
+        return
+      }
+
+      let efficiency = totalMins > 0 ? Double(sleepMins) / Double(totalMins) : 1.0
+      let startTs = Int((firstSleep ?? windowStart).timeIntervalSince1970 * 1000)
+      let endTs = Int((lastSleep ?? windowEnd).timeIntervalSince1970 * 1000)
+
+      let res: [String: Any] = [
+        "deepMinutes": deepMinutes,
+        "remMinutes": remMinutes,
+        "lightMinutes": lightMinutes,
+        "awakeMinutes": awakeMinutes,
+        "totalMinutes": sleepMins,
+        "efficiency": efficiency,
+        "sleepStartMs": startTs,
+        "sleepEndMs": endTs
+      ]
+
+      DispatchQueue.main.async {
+        result(res)
+      }
+    }
+
+    self.healthStore.execute(query)
+  }
+
+  func getConnectedSources(result: @escaping FlutterResult) {
+    guard HKHealthStore.isHealthDataAvailable() else {
+      result([])
+      return
+    }
+    result(["Apple Health (HealthKit)"])
+  }
+}
+

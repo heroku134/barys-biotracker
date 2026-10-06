@@ -34,11 +34,11 @@ void main() {
       expect(AvatarManager.currentXp, 0);
     });
 
-    test('2. WorkoutRepository filters out legacy mock Strava sessions automatically', () async {
+    test('2. WorkoutRepository filters out legacy mock sessions automatically', () async {
       final prefs = await SharedPreferences.getInstance();
-      final mockStrava = CompletedWorkout(
-        id: 'ext_strava_ride_1',
-        externalId: 'hk_strava_ride_98210',
+      final mockWorkout = CompletedWorkout(
+        id: 'ext_mock_ride_1',
+        externalId: 'ext_mock_ride_98210',
         externalSource: 'strava',
         sourceAppName: 'Strava',
         sport: SportType.cycling,
@@ -66,14 +66,14 @@ void main() {
       );
 
       await prefs.setStringList('kalkan_workouts_history_v1', [
-        jsonEncode(mockStrava.toJson()),
+        jsonEncode(mockWorkout.toJson()),
         jsonEncode(realWorkout.toJson()),
       ]);
 
       final loaded = await WorkoutRepository.loadWorkouts();
       expect(loaded.length, 1);
       expect(loaded.first.id, 'real_run_1');
-      expect(loaded.any((w) => w.id.contains('strava')), isFalse);
+      expect(loaded.any((w) => w.id.contains('mock')), isFalse);
     });
 
     test('3. Cross-Account Isolation: User A workouts never leak to User B on new account sign-up', () async {

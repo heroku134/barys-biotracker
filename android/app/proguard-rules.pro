@@ -12,3 +12,12 @@
 -keepattributes *Annotation*
 -keep class com.google.gson.** { *; }
 -dontwarn com.yc.nadalsdk.**
+
+# JieLi OTA & Watch SDK
+-dontwarn com.jieli.**
+-keep class com.jieli.** { *; }
+
+# Actions OTA & Ibluz SDK
+-dontwarn com.actions.**
+-keep class com.actions.** { *; }
+

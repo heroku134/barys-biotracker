@@ -89,9 +89,14 @@ class ReadinessEngine {
     final int hrvScore;
     final int hrvDiffPercent;
     if (hasHrv) {
-      final hrvRatio = telemetry.hrv / math.max(10.0, base.meanHrv);
-      hrvDiffPercent = (((telemetry.hrv - base.meanHrv) / base.meanHrv) * 100).round();
-      hrvScore = (hrvRatio * 85.0).clamp(10.0, 100.0).round();
+      if (base.calibrationDaysDone == 0 || base.meanHrv <= 0) {
+        hrvScore = 85;
+        hrvDiffPercent = 0;
+      } else {
+        final hrvRatio = telemetry.hrv / math.max(10.0, base.meanHrv);
+        hrvDiffPercent = (((telemetry.hrv - base.meanHrv) / base.meanHrv) * 100).round();
+        hrvScore = (hrvRatio * 85.0).clamp(10.0, 100.0).round();
+      }
     } else {
       hrvScore = 0;
       hrvDiffPercent = 0;
@@ -101,14 +106,19 @@ class ReadinessEngine {
     final int rhrScore;
     final int rhrDiffBpm;
     if (hasRhr) {
-      rhrDiffBpm = telemetry.restingHeartRate - base.meanRhr;
-      final double rhrNormalized;
-      if (rhrDiffBpm <= 0) {
-        rhrNormalized = 95.0 + (-rhrDiffBpm * 2.5).clamp(0.0, 5.0);
+      if (base.calibrationDaysDone == 0 || base.meanRhr <= 0) {
+        rhrScore = 85;
+        rhrDiffBpm = 0;
       } else {
-        rhrNormalized = 90.0 - (rhrDiffBpm * 7.5);
+        rhrDiffBpm = telemetry.restingHeartRate - base.meanRhr;
+        final double rhrNormalized;
+        if (rhrDiffBpm <= 0) {
+          rhrNormalized = 95.0 + (-rhrDiffBpm * 2.5).clamp(0.0, 5.0);
+        } else {
+          rhrNormalized = 90.0 - (rhrDiffBpm * 7.5);
+        }
+        rhrScore = rhrNormalized.clamp(15.0, 100.0).round();
       }
-      rhrScore = rhrNormalized.clamp(15.0, 100.0).round();
     } else {
       rhrScore = 0;
       rhrDiffBpm = 0;
@@ -240,10 +250,10 @@ class ReadinessEngine {
       rrFactor: rrScore,
       tempFactor: tempScore,
       currentHrv: telemetry.hrv,
-      baselineHrv: base.meanHrv,
+      baselineHrv: (base.calibrationDaysDone > 0 && base.meanHrv > 0) ? base.meanHrv : (hasHrv ? telemetry.hrv : 0.0),
       hrvDiffPercent: hrvDiffPercent,
       currentRhr: telemetry.restingHeartRate,
-      baselineRhr: base.meanRhr,
+      baselineRhr: (base.calibrationDaysDone > 0 && base.meanRhr > 0) ? base.meanRhr : (hasRhr ? telemetry.restingHeartRate : 0),
       rhrDiffBpm: rhrDiffBpm,
       currentRr: telemetry.respiratoryRate,
       baselineRr: base.meanRespiratoryRate,

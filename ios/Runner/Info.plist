@@ -25,16 +25,12 @@
 	<string>Приложению требуется доступ к галерее для выбора фото профиля и публикации фото дня.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Приложению требуется камера для создания снимков тренировок и фото дня.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Приложению требуется микрофон для записи звука во время видео-тренировок.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Приложению требуется доступ к геолокации для записи маршрута, темпа и дистанции беговой тренировки.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Приложению требуется доступ к геолокации в фоновом режиме для точной записи бегового трека.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Приложению требуется доступ к геолокации в фоновом режиме для точной непрерывной записи бегового трека при заблокированном экране.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>КАЛКАН считывает пульс, вариабельность (HRV), сон, шаги и тренировки для расчёта показателей готовности и восстановления.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>КАЛКАН сохраняет завершённые тренировки и сожжённые активные калории в Apple Health.</string>
+	<key>NSSupportsLiveActivities</key>
+	<false/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>bluetooth-central</string>

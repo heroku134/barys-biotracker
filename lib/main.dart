@@ -26,11 +26,19 @@ void main() {
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
       debugPrint('KALKAN FlutterError: ${details.exceptionAsString()}');
-      FirebaseCrashlytics.instance.recordFlutterError(details);
+      if (Firebase.apps.isNotEmpty) {
+        try {
+          FirebaseCrashlytics.instance.recordFlutterError(details);
+        } catch (_) {}
+      }
     };
 
     PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      if (Firebase.apps.isNotEmpty) {
+        try {
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        } catch (_) {}
+      }
       return true;
     };
 

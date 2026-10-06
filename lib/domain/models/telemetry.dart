@@ -79,6 +79,7 @@ class BleTelemetry {
   bool get hasSkinTempDeviation => skinTempDeviation != 0.0;
   bool get hasBloodOxygen => bloodOxygen >= 70 && bloodOxygen <= 100;
   bool get hasNocturnalData => hasSleep || hasHrv || hasRhr;
+  bool get hasNightData => hasSleep && (hasHrv || hasRhr);
 
   const BleTelemetry({
     this.heartRate = 0,

@@ -38,12 +38,13 @@ class CalibrationStore {
 
   static Future<CalibrationSnapshot> load() async {
     final prefs = await SharedPreferences.getInstance();
+    final n = prefs.getInt(_nKey) ?? 0;
     return CalibrationSnapshot(
       daysDone: prefs.getInt('kalkan_calibration_days_v1') ?? 0,
-      meanHrv: prefs.getDouble(_hrvKey) ?? 64.0,
-      meanRhr: prefs.getInt(_rhrKey) ?? 52,
+      meanHrv: prefs.getDouble(_hrvKey) ?? (n > 0 ? 64.0 : 0.0),
+      meanRhr: prefs.getInt(_rhrKey) ?? (n > 0 ? 52 : 0),
       lastMorningKey: prefs.getString(_lastKey),
-      sampleCount: prefs.getInt(_nKey) ?? 0,
+      sampleCount: n,
     );
   }
 

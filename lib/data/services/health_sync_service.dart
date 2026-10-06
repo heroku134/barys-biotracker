@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/avatar/avatar_manager.dart';
 import '../../domain/intelligence/strain_engine.dart';
@@ -89,12 +90,22 @@ class HealthSyncService {
     await prefs.setBool(_prefKeyAutoImport, enabled);
   }
 
+  static const MethodChannel _channel =
+      MethodChannel('sport.kalkan.biotracker/health');
+
   /// Запрашивает разрешения на чтение сна, тренировок и запись данных
   static Future<bool> requestPermissions() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('kalkan_health_permissions_granted', true);
-      return true;
+      bool granted = false;
+      if (Platform.isIOS) {
+        final res = await _channel.invokeMethod<bool>('requestPermissions');
+        granted = res ?? false;
+      } else {
+        granted = true;
+      }
+      await prefs.setBool('kalkan_health_permissions_granted', granted);
+      return granted;
     } catch (e) {
       debugPrint('HealthSyncService.requestPermissions error: $e');
       return false;
@@ -108,7 +119,34 @@ class HealthSyncService {
       final prefs = await SharedPreferences.getInstance();
       final lastSync = DateTime.now();
       await prefs.setString(_prefKeyLastSync, lastSync.toIso8601String());
-      // Возвращает null при отсутствии реальных данных сна из системы
+
+      if (Platform.isIOS) {
+        final args = targetDate != null ? {'targetDateMs': targetDate.millisecondsSinceEpoch} : null;
+        final res = await _channel.invokeMapMethod<dynamic, dynamic>('fetchNightSleepStages', args);
+        if (res != null && res.isNotEmpty) {
+          final deep = (res['deepMinutes'] as num?)?.toInt() ?? 0;
+          final rem = (res['remMinutes'] as num?)?.toInt() ?? 0;
+          final light = (res['lightMinutes'] as num?)?.toInt() ?? 0;
+          final awake = (res['awakeMinutes'] as num?)?.toInt() ?? 0;
+          final total = (res['totalMinutes'] as num?)?.toInt() ?? (deep + rem + light);
+          final eff = (res['efficiency'] as num?)?.toDouble() ?? 1.0;
+          final startMs = (res['sleepStartMs'] as num?)?.toInt() ?? 0;
+          final endMs = (res['sleepEndMs'] as num?)?.toInt() ?? 0;
+
+          return HealthSleepStages(
+            deepMinutes: deep,
+            remMinutes: rem,
+            lightMinutes: light,
+            awakeMinutes: awake,
+            totalMinutes: total,
+            efficiency: eff,
+            sleepStart: startMs > 0
+                ? DateTime.fromMillisecondsSinceEpoch(startMs)
+                : DateTime.now().subtract(Duration(minutes: total)),
+            sleepEnd: endMs > 0 ? DateTime.fromMillisecondsSinceEpoch(endMs) : DateTime.now(),
+          );
+        }
+      }
       return null;
     } catch (e) {
       debugPrint('HealthSyncService.fetchNightSleepStages note: $e');
@@ -132,11 +170,24 @@ class HealthSyncService {
       final prefs = await SharedPreferences.getInstance();
       final history = prefs.getStringList(_prefKeyExportedWorkouts) ?? [];
       final exportId = '${workout.id}_${workout.startedAt.millisecondsSinceEpoch}';
-      if (!history.contains(exportId)) {
+
+      bool nativeSuccess = true;
+      if (Platform.isIOS) {
+        final res = await _channel.invokeMethod<bool>('exportWorkout', {
+          'sportId': workout.sport.id,
+          'startTimeMs': workout.startedAt.millisecondsSinceEpoch,
+          'durationSeconds': workout.durationSeconds,
+          'calories': activeCalories > 0 ? activeCalories : workout.calories,
+          'distanceMeters': workout.distanceKm * 1000.0,
+        });
+        nativeSuccess = res ?? false;
+      }
+
+      if (nativeSuccess && !history.contains(exportId)) {
         history.add(exportId);
         await prefs.setStringList(_prefKeyExportedWorkouts, history);
       }
-      return true;
+      return nativeSuccess;
     } catch (e) {
       debugPrint('HealthSyncService.exportWorkoutToHealth error: $e');
       return false;
@@ -261,13 +312,21 @@ class HealthSyncService {
 
   /// Возвращает список подключенных внешних сервисов
   static Future<List<String>> getConnectedSources() async {
-    final isIos = Platform.isIOS;
-    return [
-      if (isIos) 'Apple Health (HealthKit)' else 'Google Health Connect',
-      'Strava',
-      'Garmin Connect',
-      'Apple Fitness / Watch',
-    ];
+    final prefs = await SharedPreferences.getInstance();
+    final isGranted = prefs.getBool('kalkan_health_permissions_granted') ?? false;
+    if (!isGranted) return [];
+
+    if (Platform.isIOS) {
+      try {
+        final sources = await _channel.invokeListMethod<String>('getConnectedSources');
+        if (sources != null && sources.isNotEmpty) {
+          return sources;
+        }
+      } catch (_) {}
+      return ['Apple Health (HealthKit)'];
+    } else {
+      return ['Google Health Connect'];
+    }
   }
 
   /// Возвращает время последней успешной синхронизации

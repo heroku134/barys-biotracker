@@ -7,11 +7,9 @@ class IosWidgetService {
   static const String appGroupId = 'group.watch.circle.kalkan';
   static const String iOSWidgetName = 'KalkanRecoveryWidget';
 
-  /// Sideloading via AltStore / Sideloadly on a free Apple ID cannot provision App Groups.
-  /// If home_widget tries to access UserDefaults(suiteName:) without a valid App Group entitlement,
-  /// iOS crashes natively before Dart try/catch can intercept.
-  /// Keep this false until an Apple Developer Program team with configured App Group is provisioned.
-  static const bool hasAppGroupEntitlement = false;
+  /// App Group entitlement is configured in Runner.entitlements and KalkanWidget.entitlements.
+  /// Wrapped in defensive try/catch to protect development environments without App Group profiles.
+  static const bool hasAppGroupEntitlement = true;
 
   static bool _initialized = false;
   static bool _hasAppGroupError = false;

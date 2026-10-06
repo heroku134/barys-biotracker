@@ -73,10 +73,12 @@ class BackgroundBleSyncService {
         recovery: readiness.score,
         sleep: SleepEngine.calculate(telemetry: telemetry).sleepPerformanceScore,
       );
-      await CalibrationStore.recordMorningSync(
-        hrv: telemetry.hrv,
-        rhr: telemetry.restingHeartRate,
-      );
+      if (telemetry.hasNightData && telemetry.hasHrv && telemetry.hasRhr && !telemetry.isOffWrist) {
+        await CalibrationStore.recordMorningSync(
+          hrv: telemetry.hrv,
+          rhr: telemetry.restingHeartRate,
+        );
+      }
       await prefs.setString(_prefKeyLastBackgroundSync, DateTime.now().toIso8601String());
 
       debugPrint('BackgroundBleSyncService: Synced successfully at ${DateTime.now()}');
